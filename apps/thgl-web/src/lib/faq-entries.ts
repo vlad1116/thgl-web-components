@@ -606,6 +606,36 @@ This ensures smooth gameplay without cursor visibility issues.
     `.trim(),
     labels: ["Companion App", "Technical"],
   },
+  {
+    id: "webview2-permission-error",
+    headline: "WebView2 Runtime unavailable error",
+    question: "I get 'Microsoft Edge WebView2 Runtime is unavailable' error. How do I fix this?",
+    answer: `
+This error occurs when the Companion App cannot access the WebView2 UserData folder due to incorrect permissions.
+
+## How to fix:
+
+1. **Close the Companion App** completely
+2. **Open File Explorer** and navigate to:
+   \`C:\\Users\\<YourUsername>\\AppData\\Local\\The Hidden Gaming Lair\\UserData\`
+
+   Replace \`<YourUsername>\` with your Windows username.
+
+3. **Right-click the UserData folder** → Properties
+4. Go to the **Security** tab
+5. Click **Edit** → **Add**
+6. Type \`Everyone\` and click **Check Names** → OK
+7. Select **Everyone** in the list
+8. Check **Full Control** under Allow
+9. Click **Apply** → OK
+10. **Restart the Companion App**
+
+## Still not working?
+
+If the error persists after following these steps, please reach out via Discord at [th.gl/discord](https://th.gl/discord) for further assistance.
+    `.trim(),
+    labels: ["Companion App", "Technical"],
+  },
 ];
 
 export const allLabels: FAQLabel[] = [
