@@ -84,7 +84,7 @@ export const APP_CONFIG: AppConfig = {
       href: "/maps/Skimmer's%20Lair",
       iconName: "Map",
       bgImage:
-        "https://www.th.gl/blue-protocol-star-resonance/map-tiles/skimmer_s_lair/preview.webp",
+        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/skimmer_s_lair/preview.webp",
       linkText: "Explore the Skimmer's Lair Map",
     },
     {
