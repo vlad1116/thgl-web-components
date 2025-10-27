@@ -91,7 +91,7 @@ export const APP_CONFIG: AppConfig = {
       href: "/activities-tracker",
       title: "Activities Tracker",
       linkText: "Track Daily & Weekly Activities",
-      bgImage: "https://www.th.gl/activities-tracker.webp",
+      bgImage: "https://www.th.gl/activity-tracker.webp",
       iconName: "SquareCheckBig",
     },
     {
