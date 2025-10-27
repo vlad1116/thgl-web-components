@@ -259,7 +259,9 @@ class ProfileManager {
 
   static getDefaultProfile(): Profile {
     const defaultProfile = {
-      ...DEFAULT_PROFILE,
+      id: DEFAULT_PROFILE.id,
+      name: DEFAULT_PROFILE.name,
+      settings: JSON.parse(JSON.stringify(DEFAULT_PROFILE_SETTINGS)),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -270,7 +272,7 @@ class ProfileManager {
     const newProfile = {
       id: this.createProfileId(),
       name,
-      settings: { ...DEFAULT_PROFILE_SETTINGS },
+      settings: JSON.parse(JSON.stringify(DEFAULT_PROFILE_SETTINGS)),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -835,19 +837,30 @@ export const useSettingsStore = create(
           profiles: state.profiles,
           currentProfileId: state.currentProfileId,
         }) as SettingsStore,
+      merge: (persistedState, currentState) => {
+        // Merge persisted profiles and currentProfileId with current state
+        const merged = {
+          ...currentState,
+          ...(persistedState as any),
+        };
+
+        // Flatten current profile settings to root level during merge
+        if (merged.profiles?.length) {
+          const currentProfile = merged.profiles.find(
+            (p: Profile) => p.id === merged.currentProfileId,
+          );
+          if (currentProfile) {
+            Object.assign(merged, currentProfile.settings);
+          }
+        }
+
+        return merged;
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
         if (!state._hasHydrated) {
           state.setHasHydrated(true);
-        }
-
-        // Flatten current profile settings to root level
-        const currentProfile = state.profiles.find(
-          (p) => p.id === state.currentProfileId,
-        );
-        if (currentProfile) {
-          Object.assign(state, currentProfile.settings);
         }
       },
       version: 4,
@@ -878,8 +891,11 @@ export const useSettingsStore = create(
             isNewProfile = true;
           } else {
             // Profiles exist - use the current one or first one
-            const currentProfileId = state.currentProfileId || state.profiles[0]?.id;
-            defaultProfile = state.profiles.find((p: Profile) => p.id === currentProfileId) || state.profiles[0];
+            const currentProfileId =
+              state.currentProfileId || state.profiles[0]?.id;
+            defaultProfile =
+              state.profiles.find((p: Profile) => p.id === currentProfileId) ||
+              state.profiles[0];
           }
 
           // Preserve existing settings from version 3 root level
@@ -896,7 +912,7 @@ export const useSettingsStore = create(
           } else {
             // Update the existing profile in the array
             state.profiles = state.profiles.map((p: Profile) =>
-              p.id === defaultProfile.id ? defaultProfile : p
+              p.id === defaultProfile.id ? defaultProfile : p,
             );
             state.currentProfileId = defaultProfile.id;
           }
