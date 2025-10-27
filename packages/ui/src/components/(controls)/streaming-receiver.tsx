@@ -178,14 +178,23 @@ export function StreamingReceiver({
 
   // Automatic Live Mode control based on Me selection and AutoLiveMode setting
   useEffect(() => {
-    if (withoutLiveMode) {
+    if (withoutLiveMode && liveMode) {
       setLiveMode(false);
       return; // Don't control Live Mode if disabled
     }
 
     const shouldBeLive = Boolean(inPeer && meSenderId && autoLiveModeWithMe);
-    setLiveMode(shouldBeLive);
-  }, [inPeer, meSenderId, autoLiveModeWithMe, withoutLiveMode, setLiveMode]);
+    if (liveMode !== shouldBeLive) {
+      setLiveMode(shouldBeLive);
+    }
+  }, [
+    inPeer,
+    meSenderId,
+    autoLiveModeWithMe,
+    withoutLiveMode,
+    setLiveMode,
+    liveMode,
+  ]);
 
   function processIncomingData(peerId: string, data: any) {
     // Use the ref to get the latest meSenderId value

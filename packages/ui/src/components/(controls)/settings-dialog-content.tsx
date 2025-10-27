@@ -1,6 +1,11 @@
 "use client";
 import { Button } from "../ui/button";
-import { DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import {
   writeFileOverwolf,
   saveFile,
@@ -25,6 +30,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Slider } from "../ui/slider";
+import { ProfileManager } from "./profile-manager";
 
 export function SettingsDialogContent({
   activeApp,
@@ -42,11 +48,18 @@ export function SettingsDialogContent({
   filters: FiltersConfig;
 }) {
   const settingsStore = useSettingsStore();
+  const profileSettings = useSettingsStore((state) => state);
 
   return (
-    <DialogContent onMouseDown={(e) => e.stopPropagation()}>
+    <DialogContent
+      onMouseDown={(e) => e.stopPropagation()}
+      aria-describedby="settings-dialog-description"
+    >
       <DialogHeader>
         <DialogTitle>Settings</DialogTitle>
+        <DialogDescription id="settings-dialog-description">
+          Configure your application settings below.
+        </DialogDescription>
       </DialogHeader>
       <ScrollArea>
         <div className="space-y-2 pr-3">
@@ -56,6 +69,13 @@ export function SettingsDialogContent({
               <Separator />
             </>
           ) : null}
+          <h4 className="text-md font-semibold">Profiles</h4>
+          <p className="text-muted-foreground text-xs">
+            Manage your settings profiles to quickly switch between different
+            configurations.
+          </p>
+          <ProfileManager activeApp={activeApp} />
+          <Separator />
           <h4 className="text-md font-semibold">Discovered Nodes</h4>
           <p className="text-muted-foreground text-xs">
             You discovered {settingsStore.discoveredNodes.length} nodes.
@@ -215,7 +235,7 @@ export function SettingsDialogContent({
           <div className="flex items-center gap-2 justify-between">
             <Label htmlFor="color-blind-mode">Color Blind Mode</Label>
             <Select
-              value={settingsStore.colorBlindMode}
+              value={profileSettings.colorBlindMode}
               onValueChange={settingsStore.setColorBlindMode}
             >
               <SelectTrigger className="w-[180px] h-8">
@@ -238,13 +258,13 @@ export function SettingsDialogContent({
                 min={0}
                 max={1}
                 step={0.05}
-                value={[settingsStore.colorBlindSeverity]}
+                value={[profileSettings.colorBlindSeverity]}
                 onValueChange={(values) => {
                   settingsStore.setColorBlindSeverity(values[0]);
                 }}
               />
               <span className="text-xs text-muted-foreground w-10 text-right">
-                {Math.round(settingsStore.colorBlindSeverity * 100)}%
+                {Math.round(profileSettings.colorBlindSeverity * 100)}%
               </span>
             </div>
           </div>
@@ -258,7 +278,7 @@ export function SettingsDialogContent({
                 </Label>
                 <Switch
                   id="show-trace-line"
-                  checked={settingsStore.fitBoundsOnChange}
+                  checked={profileSettings.fitBoundsOnChange}
                   onCheckedChange={settingsStore.toggleFitBoundsOnChange}
                 />
               </div>
@@ -281,7 +301,7 @@ export function SettingsDialogContent({
                     <Label htmlFor="show-trace-line">Show Trace Line</Label>
                     <Switch
                       id="show-trace-line"
-                      checked={settingsStore.showTraceLine}
+                      checked={profileSettings.showTraceLine}
                       onCheckedChange={settingsStore.toggleShowTraceLine}
                     />
                   </div>
@@ -290,7 +310,7 @@ export function SettingsDialogContent({
                     <Input
                       type="number"
                       id="trace-line-length"
-                      value={settingsStore.traceLineLength}
+                      value={profileSettings.traceLineLength}
                       className="w-fit"
                       onChange={(event) =>
                         settingsStore.setTraceLineLength(+event.target.value)
@@ -303,7 +323,7 @@ export function SettingsDialogContent({
                     <Input
                       type="number"
                       id="trace-line-rate"
-                      value={settingsStore.traceLineRate}
+                      value={profileSettings.traceLineRate}
                       className="w-fit"
                       onChange={(event) =>
                         settingsStore.setTraceLineRate(+event.target.value)
@@ -315,7 +335,7 @@ export function SettingsDialogContent({
                     <Label htmlFor="trace-line-color">Trace Line Color</Label>
                     <ColorPicker
                       id="trace-line-color"
-                      value={settingsStore.traceLineColor}
+                      value={profileSettings.traceLineColor}
                       onChange={settingsStore.setTraceLineColor}
                     />
                   </div>
