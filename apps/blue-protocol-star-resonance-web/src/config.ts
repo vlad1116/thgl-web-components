@@ -84,8 +84,15 @@ export const APP_CONFIG: AppConfig = {
       href: "/maps/Skimmer's%20Lair",
       iconName: "Map",
       bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/skimmer_s_lair/preview.webp",
+        "https://www.th.gl/blue-protocol-star-resonance/map-tiles/skimmer_s_lair/preview.webp",
       linkText: "Explore the Skimmer's Lair Map",
+    },
+    {
+      href: "/activities-tracker",
+      title: "Activities Tracker",
+      linkText: "Track Daily & Weekly Activities",
+      bgImage: "https://www.th.gl/activities-tracker.webp",
+      iconName: "SquareCheckBig",
     },
     {
       href: "/db/story",
@@ -124,16 +131,10 @@ export const APP_CONFIG: AppConfig = {
       iconName: "BookOpen",
     },
     {
-      href: "/guides/Engram%20Hub",
-      title: "Engram Hub",
-      linkText: "Discover all Engram Hubs",
+      href: "/guides/Wind%20Barrier",
+      title: "Wind Barrier",
+      linkText: "Discover all Wind Barriers",
       iconName: "BookOpen",
-    },
-    {
-      href: "/activities-tracker",
-      title: "Activities Tracker",
-      linkText: "Track Daily & Weekly Activities",
-      iconName: "SquareCheckBig",
     },
   ],
   promoLinks: [],
