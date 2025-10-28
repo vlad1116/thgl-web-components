@@ -1,3 +1,7 @@
+# 2.18.1
+
+- Fix: Overlay interaction issues after using the hotkey to show the app controls
+
 # 2.18.0
 
 ## Blue Protocol: Star Resonance
