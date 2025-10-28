@@ -1,3 +1,8 @@
+# 2.18.2
+
+- Fix: **Once Human** Scenario detection of Chinese servers
+- Perf: **Once Human** Improve actors detection performance
+
 # 2.18.1
 
 - Fix: Overlay interaction issues after using the hotkey to show the app controls
