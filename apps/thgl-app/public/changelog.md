@@ -1,3 +1,7 @@
+# 2.18.3
+
+- Fix: **Blue Protocol: Star Resonance** Some collectibles were not shown on the map
+
 # 2.18.2
 
 - Fix: **Once Human** Scenario detection of Chinese servers
