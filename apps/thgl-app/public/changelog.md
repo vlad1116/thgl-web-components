@@ -1,3 +1,7 @@
+# 2.18.4
+
+- Fix: **Blue Protocol: Star Resonance** Position detection in all game clients
+
 # 2.18.3
 
 - Fix: **Blue Protocol: Star Resonance** Some collectibles were not shown on the map
