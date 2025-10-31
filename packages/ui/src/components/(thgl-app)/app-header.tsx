@@ -1,16 +1,26 @@
 "use client";
 import { cn, useAccountStore } from "@repo/lib";
 import { useState } from "react";
+import { requestFromMain } from "@repo/lib/thgl-app";
 import {
   Button,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../(controls)";
-import { Info, Settings, User } from "lucide-react";
+import { Bug, Info, Settings, User } from "lucide-react";
 import { ExternalAnchor } from "../(header)";
 import { AccountDialog } from "./account-dialog";
-import { Dialog, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Textarea } from "../ui/textarea";
 
 export function AppHeader({
   children,
@@ -23,6 +33,35 @@ export function AppHeader({
 }) {
   const account = useAccountStore();
   const [isStartDragging, setIsStartDragging] = useState(false);
+  const [debugContext, setDebugContext] = useState("");
+  const [isSendingDebug, setIsSendingDebug] = useState(false);
+  const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
+  const [debugStatus, setDebugStatus] = useState<"idle" | "success" | "error">("idle");
+
+  const handleSendDebugSnapshot = async () => {
+    setIsSendingDebug(true);
+    setDebugStatus("idle");
+    try {
+      await requestFromMain({
+        action: "sendDebugSnapshot",
+        payload: {
+          userContext: debugContext || "No additional context provided",
+        },
+      });
+      setDebugContext("");
+      setDebugStatus("success");
+      // Auto-close dialog after 2 seconds on success
+      setTimeout(() => {
+        setIsDebugDialogOpen(false);
+        setDebugStatus("idle");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to send debug snapshot:", error);
+      setDebugStatus("error");
+    } finally {
+      setIsSendingDebug(false);
+    }
+  };
 
   return (
     <>
@@ -158,6 +197,61 @@ export function AppHeader({
               />
             </Button>
             <AccountDialog />
+            <Dialog open={isDebugDialogOpen} onOpenChange={setIsDebugDialogOpen}>
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="h-full w-[32px]"
+              >
+                <DialogTrigger>
+                  <Bug className="h-full w-full p-1.5" />
+                </DialogTrigger>
+              </Button>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Send Debug Snapshot</DialogTitle>
+                  <DialogDescription>
+                    Send logs and current game state to support for debugging.
+                    Please describe what issue you're experiencing.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <Textarea
+                    placeholder="Describe the issue (e.g., 'Standing next to ore that is not detected')"
+                    value={debugContext}
+                    onChange={(e) => setDebugContext(e.target.value)}
+                    rows={5}
+                    disabled={isSendingDebug}
+                  />
+                  {debugStatus === "success" && (
+                    <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                      ✓ Debug snapshot sent successfully!
+                    </div>
+                  )}
+                  {debugStatus === "error" && (
+                    <div className="text-sm text-red-600 dark:text-red-400 font-medium">
+                      ✗ Failed to send debug snapshot. Check console for details.
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDebugDialogOpen(false);
+                      setDebugStatus("idle");
+                    }}
+                    disabled={isSendingDebug}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSendDebugSnapshot} disabled={isSendingDebug}>
+                    {isSendingDebug ? "Sending..." : "Send"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <HoverCard openDelay={50} closeDelay={50}>
               <HoverCardTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-full w-[32px]">

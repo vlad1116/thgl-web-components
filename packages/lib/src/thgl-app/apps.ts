@@ -55,6 +55,15 @@ export function updateActorTypeFilters(types: string[], processName?: string) {
   });
 }
 
+export function sendDebugSnapshot(userContext: string) {
+  return postWebviewMessage({
+    action: "sendDebugSnapshot",
+    payload: {
+      userContext,
+    },
+  });
+}
+
 export function openDesktopWebView(url: string, title: string) {
   let fullUrl = url;
   if (!fullUrl.startsWith("http")) {

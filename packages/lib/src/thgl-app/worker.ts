@@ -35,6 +35,9 @@ type ActionRequestMap = {
     types: string[];
     processName?: string;
   };
+  sendDebugSnapshot: {
+    userContext: string;
+  };
 };
 
 type WebviewActionResponseMap = {
@@ -44,6 +47,7 @@ type WebviewActionResponseMap = {
   openDesktopWebView: WEBVIEW_RESPONSE_MESSAGE;
   updateHotkeys: WEBVIEW_RESPONSE_MESSAGE;
   setActorTypeFilter: WEBVIEW_RESPONSE_MESSAGE;
+  sendDebugSnapshot: WEBVIEW_RESPONSE_MESSAGE;
 };
 
 type ActionResponseMap = {

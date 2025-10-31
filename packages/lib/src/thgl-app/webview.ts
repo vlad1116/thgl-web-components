@@ -165,6 +165,12 @@ export type WEBVIEW_SEND_MESSAGE =
         types: string[];
         processName?: string;
       };
+    }
+  | {
+      action: "sendDebugSnapshot";
+      payload: {
+        userContext: string;
+      };
     };
 
 export function onWebviewMessage(

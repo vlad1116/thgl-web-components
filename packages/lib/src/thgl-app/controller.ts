@@ -6,6 +6,7 @@ import {
   openDesktopWebView,
   openDevTools,
   openOverlayWebView,
+  sendDebugSnapshot,
   updateActorTypeFilters,
   updateHotkeys,
 } from "./apps";
@@ -390,6 +391,13 @@ export async function initController(currentVersion: CurrentVersion) {
               msg.from,
               msg.data,
               updateActorTypeFilters(msg.data.payload.types, msg.data.payload.processName),
+            );
+            break;
+          case "sendDebugSnapshot":
+            answerWebViewRequest(
+              msg.from,
+              msg.data,
+              sendDebugSnapshot(msg.data.payload.userContext),
             );
             break;
         }
