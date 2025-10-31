@@ -1,3 +1,7 @@
+# 2.18.7
+
+- Fix: **Blue Protocol: Star Resonance** Position detection in Steam client (they released another update breaking it again...)
+
 # 2.18.6
 
 - Feat: Add debug snapshot feature to help with issue reporting
