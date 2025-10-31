@@ -71,16 +71,34 @@ If you'd like to see this feature return, feel free to contact the game studio a
     headline: "Get Companion App log files",
     question: "How do I get the log files of the TH.GL Companion App?",
     answer: `
-  The logs are stored locally on your system:
+## Easiest Method: Use the Debug Snapshot Feature
 
-  \`C:\\Users\\<user>\\AppData\\Local\\The Hidden Gaming Lair\`
-  You can also type \`%appdata%\\..\\Local\\The Hidden Gaming Lair\` into File Explorer.
+The app includes a built-in debug snapshot feature that automatically gathers all relevant information:
 
-  - \`log.txt\` is the current session
-  - \`log.1.txt\` to \`log.5.txt\` are older logs from previous sessions
-  - \`crash.txt\` contains crash reports (if any)
+1. **Open the Dashboard** (double-click system tray icon)
+2. **Click the Bug icon** in the header (next to Discord/User/Info icons)
+3. **Describe your issue** in the text box (e.g., "Ore not showing up on map")
+4. **Click Send** - The app automatically captures and sends:
+   - Last 500 log entries (including debug logs)
+   - Current game state (player position, actors, character data)
+   - App version and system info
 
-  Please send these files when reporting bugs or issues.
+This method is **faster** and provides **more context** than manually sending log files.
+
+## Manual Method: Access Log Files Directly
+
+If needed, logs are stored locally at:
+
+\`C:\\Users\\<user>\\AppData\\Local\\The Hidden Gaming Lair\`
+
+You can also type \`%appdata%\\..\\Local\\The Hidden Gaming Lair\` into File Explorer.
+
+**Files:**
+- \`log.txt\` - Current session
+- \`log.1.txt\` to \`log.5.txt\` - Previous sessions (rotated on app restart)
+- \`crash.txt\` - Crash reports (if any)
+
+**Note:** The debug snapshot feature captures more information than these files alone, so prefer using that method when reporting issues.
     `.trim(),
     labels: ["Companion App", "Technical"],
   },
