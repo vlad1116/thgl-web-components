@@ -1,3 +1,9 @@
+# 2.18.6
+
+- Feat: Add debug snapshot feature to help with issue reporting
+- Fix: **Blue Protocol: Star Resonance** Position detection in Steam client
+- Fix: **Once Human** Scenario detection of Chinese servers
+
 # 2.18.4
 
 - Fix: **Blue Protocol: Star Resonance** Position detection in all game clients
