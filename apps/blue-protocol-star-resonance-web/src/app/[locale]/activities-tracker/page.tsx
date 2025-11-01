@@ -205,6 +205,12 @@ const activities: Activity[] = [
     max: 1,
     frequently: "daily",
   },
+  {
+    title: "Friendship Activity",
+    category: "Leisure",
+    max: 1,
+    frequently: "weekly",
+  },
 
   // Optional
   {
@@ -226,6 +232,12 @@ const activities: Activity[] = [
     category: "Guild",
     max: 1,
     frequently: "daily",
+  },
+  {
+    title: "Guild Activity",
+    category: "Guild",
+    max: 1,
+    frequently: "weekly",
   },
 
   // === WEEKLY ACTIVITIES ===
@@ -258,6 +270,12 @@ const activities: Activity[] = [
     title: "Dungeon Clears (Reforge Cap)",
     category: "Dungeons",
     max: 1,
+    frequently: "weekly",
+  },
+  {
+    title: "Bane Lord",
+    category: "Dungeons",
+    max: 5,
     frequently: "weekly",
   },
 
@@ -294,6 +312,12 @@ const activities: Activity[] = [
   },
   {
     title: "Season Shop",
+    category: "Shops",
+    max: 1,
+    frequently: "weekly",
+  },
+  {
+    title: "Orb Shop",
     category: "Shops",
     max: 1,
     frequently: "weekly",
