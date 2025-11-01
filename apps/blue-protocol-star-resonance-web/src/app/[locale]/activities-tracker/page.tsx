@@ -176,7 +176,7 @@ const activities: Activity[] = [
     frequently: "daily",
   },
   {
-    title: "Bigando Camp Control",
+    title: "Brigand Camp Control",
     category: "Leisure",
     max: 1,
     frequently: "daily",
@@ -268,6 +268,12 @@ const activities: Activity[] = [
   },
   {
     title: "Dungeon Clears (Reforge Cap)",
+    category: "Dungeons",
+    max: 1,
+    frequently: "weekly",
+  },
+  {
+    title: "Friendship Support",
     category: "Dungeons",
     max: 1,
     frequently: "weekly",
