@@ -126,7 +126,7 @@ const activities: Activity[] = [
     frequently: "daily",
   },
   {
-    title: "Expedition (1200 points goal)",
+    title: "World Boss Crusade",
     category: "Main Activities",
     max: 1,
     frequently: "daily",
@@ -249,7 +249,7 @@ const activities: Activity[] = [
     frequently: "weekly",
   },
   {
-    title: "World Boss Crusade",
+    title: "World Boss Crusade Path (1200 Points)",
     category: "Dungeons",
     max: 1,
     frequently: "weekly",
