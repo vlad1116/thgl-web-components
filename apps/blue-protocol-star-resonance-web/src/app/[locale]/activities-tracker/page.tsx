@@ -149,6 +149,12 @@ const activities: Activity[] = [
     max: 1,
     frequently: "daily",
   },
+  {
+    title: "World Boss Drops",
+    category: "Main Activities",
+    max: 50,
+    frequently: "daily",
+  },
 
   // Leisure Activities
   {
@@ -169,6 +175,36 @@ const activities: Activity[] = [
     max: 1,
     frequently: "daily",
   },
+  {
+    title: "Bigando Camp Control",
+    category: "Leisure",
+    max: 1,
+    frequently: "daily",
+  },
+  {
+    title: "Muku Camp Control",
+    category: "Leisure",
+    max: 1,
+    frequently: "daily",
+  },
+  {
+    title: "Starlight Fireworks",
+    category: "Leisure",
+    max: 1,
+    frequently: "daily",
+  },
+  {
+    title: "City Rally",
+    category: "Leisure",
+    max: 1,
+    frequently: "daily",
+  },
+  {
+    title: "Wasteland Race",
+    category: "Leisure",
+    max: 1,
+    frequently: "daily",
+  },
 
   // Optional
   {
@@ -183,7 +219,7 @@ const activities: Activity[] = [
     title: "Guild Dance (Friday)",
     category: "Guild",
     max: 1,
-    frequently: "daily",
+    frequently: "weekly",
   },
   {
     title: "Guild Hunt (Weekend)",
@@ -220,12 +256,6 @@ const activities: Activity[] = [
   },
   {
     title: "Dungeon Clears (Reforge Cap)",
-    category: "Dungeons",
-    max: 1,
-    frequently: "weekly",
-  },
-  {
-    title: "SDM",
     category: "Dungeons",
     max: 1,
     frequently: "weekly",
@@ -287,5 +317,14 @@ const activities: Activity[] = [
     category: "NPC Exchanges",
     max: 9,
     frequently: "weekly",
+  },
+
+  // Events
+
+  {
+    title: "Halloween Quest",
+    category: "Events",
+    max: 1,
+    frequently: "daily",
   },
 ];
