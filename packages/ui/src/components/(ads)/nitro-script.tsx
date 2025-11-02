@@ -8,7 +8,13 @@ import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
 import { NITROPAY_SITE_ID } from "./constants";
 
-type NitroState = "loading" | "validation" | "ready" | "error";
+type NitroState = 0 | 1 | 2 | 3;
+
+// Numeric state constants to prevent adblocker scriptlet targeting
+const STATE_LOADING = 0;
+const STATE_VALIDATION = 1;
+const STATE_READY = 2;
+const STATE_ERROR = 3;
 
 function isNitroAdsValid(): boolean {
   if (!("nitroAds" in window)) {
@@ -74,7 +80,7 @@ const useNitroState = create<{
   state: NitroState;
   setState: (state: NitroState) => void;
 }>((set) => ({
-  state: "loading",
+  state: STATE_LOADING,
   setState: (state) => set({ state }),
 }));
 
@@ -93,22 +99,22 @@ export function NitroScript({
   const { state, setState } = useNitroState();
 
   useEffect(() => {
-    if (state !== "validation" || adRemoval || isOverwolf) {
+    if (state !== STATE_VALIDATION || adRemoval || isOverwolf) {
       return;
     }
     const now = Date.now();
     const intervalId = setInterval(() => {
       if (isNitroAdsManipulated()) {
-        setState("error");
+        setState(STATE_ERROR);
         clearInterval(intervalId);
         return;
       } else if (isNitroAdsValid()) {
-        setState("ready");
+        setState(STATE_READY);
         clearInterval(intervalId);
         return;
       }
       if (Date.now() - now > 2500) {
-        setState("error");
+        setState(STATE_ERROR);
         clearInterval(intervalId);
       }
     }, 100);
@@ -119,7 +125,7 @@ export function NitroScript({
   }, [state, adRemoval]);
 
   useEffect(() => {
-    if (adRemoval || state !== "ready") {
+    if (adRemoval || state !== STATE_READY) {
       return;
     }
     try {
@@ -139,7 +145,7 @@ export function NitroScript({
       }
     } catch (error) {
       console.error("[NitroPay] Error managing user tokens:", error);
-      setState("error");
+      setState(STATE_ERROR);
     }
   }, [state, email, adRemoval]);
 
@@ -154,23 +160,23 @@ export function NitroScript({
     <>
       <Script
         onError={() => {
-          setState("error");
+          setState(STATE_ERROR);
         }}
         strategy="lazyOnload"
         onReady={() => {
           if (isNitroAdsManipulated()) {
-            setState("error");
+            setState(STATE_ERROR);
           } else if (isNitroAdsValid()) {
-            setState("ready");
+            setState(STATE_READY);
           } else {
-            setState("validation");
+            setState(STATE_VALIDATION);
           }
         }}
         src={`https://s.nitropay.com/ads-${NITROPAY_SITE_ID}.js`}
       />
-      {state === "loading" && loading}
-      {state === "ready" && children}
-      {state === "error" && fallback}
+      {state === STATE_LOADING && loading}
+      {state === STATE_READY && children}
+      {state === STATE_ERROR && fallback}
     </>
   );
 }
