@@ -104,6 +104,30 @@ export function NitroScript({
   const { state, setState } = useNitroState();
 
   useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeName === "LINK") {
+            const link = node as HTMLLinkElement;
+            if (link.href.includes("nitropay.com/nitro-")) {
+              link.addEventListener(
+                "error",
+                () => {
+                  setState(STATE_ERROR);
+                },
+                { once: true },
+              );
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.head, { childList: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     // Skip validation if user has ad removal or is on Overwolf
     if (adRemoval || isOverwolf) {
       return;
