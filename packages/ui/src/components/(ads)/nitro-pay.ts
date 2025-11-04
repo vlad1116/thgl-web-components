@@ -57,6 +57,7 @@ export interface NitroAds {
   clearUserTokens: () => void;
   queue: ([string, any, (value: unknown) => void] | [string, any])[];
   loaded: boolean;
+  geo: string;
   version: string;
   siteId: number;
 }

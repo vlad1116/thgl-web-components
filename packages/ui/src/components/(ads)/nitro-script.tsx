@@ -32,6 +32,7 @@ function isNitroAdsValid(): boolean {
   // AdGuard strips these while leaving siteId intact
   if (
     typeof nitroAds.createAd !== "function" ||
+    nitroAds.createAd.toString().length < 1000 ||
     typeof nitroAds.addUserToken !== "function" ||
     typeof nitroAds.clearUserTokens !== "function"
   ) {
@@ -48,7 +49,11 @@ function isNitroAdsValid(): boolean {
     return false;
   }
 
-  if (typeof nitroAds.version !== "string" || nitroAds.version.length === 0) {
+  if (
+    typeof nitroAds.version !== "string" ||
+    typeof nitroAds.geo !== "string" ||
+    nitroAds.version.length === 0
+  ) {
     return false;
   }
 
@@ -130,7 +135,7 @@ export function NitroScript({
 
       // If valid and not ready yet, transition to ready
       // STATE_READY = 2, so !(state & 2) means not ready
-      if (isNitroAdsValid() && !(stateFlags[1])) {
+      if (isNitroAdsValid() && !stateFlags[1]) {
         setState(STATE_READY);
         return;
       }
