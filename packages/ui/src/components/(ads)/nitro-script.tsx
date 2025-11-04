@@ -114,27 +114,30 @@ export function NitroScript({
       return;
     }
 
-    // Use counter instead of Date.now() to avoid adblocker targeting
+    // Use bit flags instead of direct state comparisons to avoid pattern matching
     let ticks = 0;
+    const maxTicks = 18; // 18 * 150ms = 2700ms timeout
+    const stateFlags = [state & 1, state & 2]; // Obfuscate state checks
+
     const intervalId = setInterval(() => {
       ticks++;
 
       // Always check for manipulation, even after reaching STATE_READY
-      // This handles delayed adblocker injection
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
         return;
       }
 
       // If valid and not ready yet, transition to ready
-      if (isNitroAdsValid() && state !== STATE_READY) {
+      // STATE_READY = 2, so !(state & 2) means not ready
+      if (isNitroAdsValid() && !(stateFlags[1])) {
         setState(STATE_READY);
         return;
       }
 
-      // Only timeout during initial validation phase
-      // 18 ticks * 150ms = 2700ms
-      if (state === STATE_VALIDATION && ticks > 18) {
+      // Timeout during initial validation phase
+      // STATE_VALIDATION = 1, so (state & 1) means validating
+      if (stateFlags[0] && ticks > maxTicks) {
         setState(STATE_ERROR);
       }
     }, 150);
