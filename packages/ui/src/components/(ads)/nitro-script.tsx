@@ -99,27 +99,39 @@ export function NitroScript({
   const { state, setState } = useNitroState();
 
   useEffect(() => {
-    if (state !== STATE_VALIDATION || adRemoval || isOverwolf) {
+    // Skip validation if user has ad removal or is on Overwolf
+    if (adRemoval || isOverwolf) {
       return;
     }
+
+    // Skip if still loading (waiting for script to load)
+    if (state === STATE_LOADING) {
+      return;
+    }
+
+    // Skip if already in error state
+    if (state === STATE_ERROR) {
+      return;
+    }
+
     const now = Date.now();
     const intervalId = setInterval(() => {
+      // Always check for manipulation, even after reaching STATE_READY
+      // This handles delayed adblocker injection
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
-        clearInterval(intervalId);
-        return;
-      } else if (isNitroAdsValid()) {
-        if (isNitroAdsManipulated()) {
-          setState(STATE_ERROR);
-        } else {
-          setState(STATE_READY);
-        }
-        clearInterval(intervalId);
         return;
       }
-      if (Date.now() - now > 2650) {
+
+      // If valid and not ready yet, transition to ready
+      if (isNitroAdsValid() && state !== STATE_READY) {
+        setState(STATE_READY);
+        return;
+      }
+
+      // Only timeout during initial validation phase
+      if (state === STATE_VALIDATION && Date.now() - now > 2650) {
         setState(STATE_ERROR);
-        clearInterval(intervalId);
       }
     }, 150);
 
