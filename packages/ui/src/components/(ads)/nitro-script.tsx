@@ -109,15 +109,19 @@ export function NitroScript({
         clearInterval(intervalId);
         return;
       } else if (isNitroAdsValid()) {
-        setState(STATE_READY);
+        if (isNitroAdsManipulated()) {
+          setState(STATE_ERROR);
+        } else {
+          setState(STATE_READY);
+        }
         clearInterval(intervalId);
         return;
       }
-      if (Date.now() - now > 2500) {
+      if (Date.now() - now > 2650) {
         setState(STATE_ERROR);
         clearInterval(intervalId);
       }
-    }, 100);
+    }, 150);
 
     return () => {
       clearInterval(intervalId);
@@ -167,7 +171,11 @@ export function NitroScript({
           if (isNitroAdsManipulated()) {
             setState(STATE_ERROR);
           } else if (isNitroAdsValid()) {
-            setState(STATE_READY);
+            if (isNitroAdsManipulated()) {
+              setState(STATE_ERROR);
+            } else {
+              setState(STATE_READY);
+            }
           } else {
             setState(STATE_VALIDATION);
           }
