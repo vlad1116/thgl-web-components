@@ -133,13 +133,8 @@ export function NitroScript({
       return;
     }
 
-    // Skip if still loading (waiting for script to load)
-    if (state === STATE_LOADING) {
-      return;
-    }
-
     // Skip if already in error state
-    if (state === STATE_ERROR) {
+    if (state === STATE_ERROR || state === STATE_READY) {
       return;
     }
 
@@ -163,10 +158,9 @@ export function NitroScript({
         setState(STATE_READY);
         return;
       }
-
       // Timeout during initial validation phase
       // STATE_VALIDATION = 1, so (state & 1) means validating
-      if (stateFlags[0] && ticks > maxTicks) {
+      if (ticks > maxTicks) {
         setState(STATE_ERROR);
       }
     }, 150);
