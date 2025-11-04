@@ -114,8 +114,11 @@ export function NitroScript({
       return;
     }
 
-    const now = Date.now();
+    // Use counter instead of Date.now() to avoid adblocker targeting
+    let ticks = 0;
     const intervalId = setInterval(() => {
+      ticks++;
+
       // Always check for manipulation, even after reaching STATE_READY
       // This handles delayed adblocker injection
       if (isNitroAdsManipulated()) {
@@ -130,7 +133,8 @@ export function NitroScript({
       }
 
       // Only timeout during initial validation phase
-      if (state === STATE_VALIDATION && Date.now() - now > 2650) {
+      // 18 ticks * 150ms = 2700ms
+      if (state === STATE_VALIDATION && ticks > 18) {
         setState(STATE_ERROR);
       }
     }, 150);
