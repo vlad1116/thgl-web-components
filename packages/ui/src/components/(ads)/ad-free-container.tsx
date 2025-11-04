@@ -1,10 +1,10 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { cn, useAccountStore } from "@repo/lib";
-import { ExternalAnchor } from "../(header)/external-anchor";
 import { X } from "lucide-react";
 import { useT } from "../(providers)";
+import { STATE_ERROR, useNitroState } from "./nitro-script";
 
 export function AdFreeContainer({
   children,
@@ -18,6 +18,31 @@ export function AdFreeContainer({
   const t = useT();
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
   const [closed, setClosed] = useState(false);
+  const el = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      try {
+        if (!el.current || !document.body.contains(el.current)) {
+          useNitroState.getState().setState(STATE_ERROR);
+          return;
+        }
+
+        // Check if element is hidden by CSS
+        const computedStyle = window.getComputedStyle(el.current);
+        if (
+          computedStyle.display === "none" ||
+          computedStyle.visibility === "hidden" ||
+          computedStyle.opacity === "0"
+        ) {
+          useNitroState.getState().setState(STATE_ERROR);
+        }
+      } catch {
+        useNitroState.getState().setState(STATE_ERROR);
+      }
+    }, 1000);
+
+    return () => clearInterval(checkInterval);
+  }, []);
 
   return (
     <div
@@ -25,6 +50,7 @@ export function AdFreeContainer({
         "relative pointer-events-auto shrink-0 border overflow-hidden bg-card text-card-foreground shadow rounded-none md:rounded-md",
         className,
       )}
+      ref={el}
     >
       <div
         // href="https://www.th.gl/support-me"

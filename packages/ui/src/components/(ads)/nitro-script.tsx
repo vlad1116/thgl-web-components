@@ -11,10 +11,10 @@ import { NITROPAY_SITE_ID } from "./constants";
 type NitroState = 0 | 1 | 2 | 3;
 
 // Numeric state constants to prevent adblocker scriptlet targeting
-const STATE_LOADING = 0;
-const STATE_VALIDATION = 1;
-const STATE_READY = 2;
-const STATE_ERROR = 3;
+export const STATE_LOADING = 0;
+export const STATE_VALIDATION = 1;
+export const STATE_READY = 2;
+export const STATE_ERROR = 3;
 
 function isNitroAdsValid(): boolean {
   if (!("nitroAds" in window)) {
@@ -81,7 +81,7 @@ function isNitroAdsManipulated(): boolean {
   return false;
 }
 
-const useNitroState = create<{
+export const useNitroState = create<{
   state: NitroState;
   setState: (state: NitroState) => void;
 }>((set) => ({
