@@ -142,28 +142,23 @@ export function NitroScript({
     let ticks = 0;
     const maxTicks = 18; // 18 * 150ms = 2700ms timeout
     const stateFlags = [state & 1, state & 2]; // Obfuscate state checks
-
+    const ms = 150;
     const intervalId = setInterval(() => {
       ticks++;
 
       // Always check for manipulation, even after reaching STATE_READY
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
-        return;
-      }
-
-      // If valid and not ready yet, transition to ready
-      // STATE_READY = 2, so !(state & 2) means not ready
-      if (isNitroAdsValid() && !stateFlags[1]) {
+      } else if (isNitroAdsValid() && !stateFlags[1]) {
+        // If valid and not ready yet, transition to ready
+        // STATE_READY = 2, so !(state & 2) means not ready
         setState(STATE_READY);
-        return;
-      }
-      // Timeout during initial validation phase
-      // STATE_VALIDATION = 1, so (state & 1) means validating
-      if (ticks > maxTicks) {
+      } else if (ticks > maxTicks) {
+        // Timeout during initial validation phase
+        // STATE_VALIDATION = 1, so (state & 1) means validating
         setState(STATE_ERROR);
       }
-    }, 150);
+    }, ms);
 
     return () => {
       clearInterval(intervalId);
