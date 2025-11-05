@@ -140,28 +140,36 @@ export function NitroScript({
 
     // Use bit flags instead of direct state comparisons to avoid pattern matching
     let ticks = 0;
-    const maxTicks = 18; // 18 * 150ms = 2700ms timeout
+    const maxTicks = 25;
     const stateFlags = [state & 1, state & 2]; // Obfuscate state checks
-    const ms = 150;
-    const intervalId = setInterval(() => {
-      ticks++;
+    const ms = 100;
+    let timeoutId: NodeJS.Timeout | null = null;
 
-      // Always check for manipulation, even after reaching STATE_READY
+    const validate = () => {
+      ticks++;
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
-      } else if (isNitroAdsValid() && !stateFlags[1]) {
-        // If valid and not ready yet, transition to ready
-        // STATE_READY = 2, so !(state & 2) means not ready
-        setState(STATE_READY);
+      } else if (isNitroAdsValid()) {
+        if (!stateFlags[1]) {
+          // STATE_READY = 2, so !(state & 2) means not ready
+          setState(STATE_READY);
+        }
       } else if (ticks > maxTicks) {
         // Timeout during initial validation phase
-        // STATE_VALIDATION = 1, so (state & 1) means validating
         setState(STATE_ERROR);
+      } else {
+        // Continue validation
+        timeoutId = setTimeout(validate, ms);
       }
-    }, ms);
+    };
+
+    // Start validation
+    timeoutId = setTimeout(validate, ms);
 
     return () => {
-      clearInterval(intervalId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [state, adRemoval]);
 
