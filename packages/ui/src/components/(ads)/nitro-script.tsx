@@ -78,15 +78,32 @@ function isNitroAdsManipulated(): boolean {
   if (isNoop(nitroAds.createAd) || Object.keys(nitroAds).length === 0) {
     return true;
   }
+
+  const createAd = nitroAds.createAd;
+
+  try {
+    const directStr = Function.prototype.toString.call(createAd);
+    const proxyStr = createAd.toString();
+    if (directStr !== proxyStr) {
+      return true;
+    }
+  } catch {
+    return true;
+  }
+
   return false;
 }
 
 export const useNitroState = create<{
   state: NitroState;
   setState: (state: NitroState) => void;
+  validationActive: boolean;
+  markValidationActive: () => void;
 }>((set) => ({
   state: STATE_LOADING,
   setState: (state) => set({ state }),
+  validationActive: false,
+  markValidationActive: () => set({ validationActive: true }),
 }));
 
 export function NitroScript({
@@ -101,7 +118,7 @@ export function NitroScript({
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
   const adRemoval = useAccountStore((state) => state.perks.adRemoval);
   const email = useAccountStore((state) => state.email);
-  const { state, setState } = useNitroState();
+  const { state, setState, markValidationActive } = useNitroState();
 
   // Randomly choose validation method on component mount (0, 1, or 2)
   const validationMethod = useMemo(() => Math.floor(Math.random() * 3), []);
@@ -130,6 +147,22 @@ export function NitroScript({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (adRemoval || isOverwolf) return;
+    if (state === STATE_ERROR || state === STATE_READY) return;
+
+    const watchdogTimeout = setTimeout(() => {
+      const isActive = useNitroState.getState().validationActive;
+
+      // If validation flag is not set, validation is blocked
+      if (!isActive) {
+        setState(STATE_ERROR);
+      }
+    }, 1200);
+
+    return () => clearTimeout(watchdogTimeout);
+  }, [state, adRemoval]);
+
   // Validation using setTimeout with tick counter (Method 0)
   useEffect(() => {
     if (validationMethod !== 0) return;
@@ -144,6 +177,8 @@ export function NitroScript({
 
     const validate = () => {
       ticks = ticks - 1;
+      markValidationActive();
+
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
       } else if (isNitroAdsValid()) {
@@ -161,7 +196,7 @@ export function NitroScript({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [state, adRemoval, validationMethod]);
+  }, [state, adRemoval, validationMethod, markValidationActive]);
 
   // Validation using setTimeout with Date.now (Method 1)
   useEffect(() => {
@@ -175,6 +210,7 @@ export function NitroScript({
     let timeoutId: NodeJS.Timeout | null = null;
 
     const validate = () => {
+      markValidationActive();
       const elapsed = Date.now() - startTime;
 
       if (isNitroAdsManipulated()) {
@@ -194,7 +230,7 @@ export function NitroScript({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [state, adRemoval, validationMethod]);
+  }, [state, adRemoval, validationMethod, markValidationActive]);
 
   // Validation using requestAnimationFrame (Method 2)
   useEffect(() => {
@@ -208,6 +244,7 @@ export function NitroScript({
 
     const validate = (startTime?: number) => {
       if (!startTime) startTime = performance.now();
+      markValidationActive();
       const elapsed = performance.now() - startTime;
 
       if (isNitroAdsManipulated()) {
@@ -227,7 +264,7 @@ export function NitroScript({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [state, adRemoval, validationMethod]);
+  }, [state, adRemoval, validationMethod, markValidationActive]);
 
   useEffect(() => {
     if (adRemoval || state !== STATE_READY) {

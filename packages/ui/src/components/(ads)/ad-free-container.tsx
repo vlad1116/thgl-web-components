@@ -32,7 +32,9 @@ export function AdFreeContainer({
         if (
           computedStyle.display === "none" ||
           computedStyle.visibility === "hidden" ||
-          computedStyle.opacity === "0"
+          computedStyle.opacity === "0" ||
+          computedStyle.width === "0px" ||
+          computedStyle.height === "0px"
         ) {
           useNitroState.getState().setState(STATE_ERROR);
         }
