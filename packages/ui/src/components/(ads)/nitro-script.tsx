@@ -136,11 +136,15 @@ export const useNitroState = create<{
   setState: (state: NitroState) => void;
   validationActive: boolean;
   markValidationActive: () => void;
+  scriptLoadingActive: boolean;
+  markScriptLoadingActive: () => void;
 }>((set) => ({
   state: STATE_LOADING,
   setState: (state) => set({ state }),
   validationActive: false,
   markValidationActive: () => set({ validationActive: true }),
+  scriptLoadingActive: false,
+  markScriptLoadingActive: () => set({ scriptLoadingActive: true }),
 }));
 
 export function NitroScript({
@@ -155,7 +159,8 @@ export function NitroScript({
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
   const adRemoval = useAccountStore((state) => state.perks.adRemoval);
   const email = useAccountStore((state) => state.email);
-  const { state, setState, markValidationActive } = useNitroState();
+  const { state, setState, markValidationActive, markScriptLoadingActive } =
+    useNitroState();
 
   // Randomly choose validation method on component mount (0, 1, or 2)
   const validationMethod = useMemo(() => Math.floor(Math.random() * 3), []);
@@ -167,6 +172,9 @@ export function NitroScript({
           if (node.nodeName === "LINK") {
             const link = node as HTMLLinkElement;
             if (link.href.includes("nitropay.com/nitro-")) {
+              link.addEventListener("load", () => {
+                markScriptLoadingActive();
+              });
               link.addEventListener(
                 "error",
                 () => {
@@ -189,13 +197,14 @@ export function NitroScript({
     if (state === STATE_ERROR || state === STATE_READY) return;
 
     const watchdogTimeout = setTimeout(() => {
-      const isActive = useNitroState.getState().validationActive;
+      const state = useNitroState.getState();
+      const isActive = state.validationActive && state.scriptLoadingActive;
 
       // If validation flag is not set, validation is blocked
       if (!isActive) {
         setState(STATE_ERROR);
       }
-    }, 1200);
+    }, 2000);
 
     return () => clearTimeout(watchdogTimeout);
   }, [state, adRemoval]);

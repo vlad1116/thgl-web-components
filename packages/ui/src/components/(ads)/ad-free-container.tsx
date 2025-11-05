@@ -29,12 +29,15 @@ export function AdFreeContainer({
 
         // Check if element is hidden by CSS
         const computedStyle = window.getComputedStyle(el.current);
+        const width = parseFloat(computedStyle.width);
+        const height = parseFloat(computedStyle.height);
+
         if (
           computedStyle.display === "none" ||
           computedStyle.visibility === "hidden" ||
           computedStyle.opacity === "0" ||
-          computedStyle.width === "0px" ||
-          computedStyle.height === "0px"
+          width < 10 ||
+          height < 10
         ) {
           useNitroState.getState().setState(STATE_ERROR);
         }
