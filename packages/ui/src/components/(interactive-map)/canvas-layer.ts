@@ -30,6 +30,7 @@ const CanvasLayer = leaflet.TileLayer.extend({
           canvas.height = height;
           const context = canvas.getContext("2d")!;
           context.drawImage(img, 0, 0);
+
           const imageData = context.getImageData(
             0,
             0,
@@ -134,6 +135,11 @@ export const createCanvasLayer = function (
     threshold?: number;
     colorBlindMode?: ColorBlindMode;
     colorBlindSeverity?: number;
+    rotation?: {
+      angle: number;
+      center: [number, number];
+    };
+    bounds?: [[number, number], [number, number]];
   },
 ) {
   return new CanvasLayer(url, options);

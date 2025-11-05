@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
 import leaflet from "leaflet";
+import { rotateCoordinate } from "./rotation";
 import type { ActorPlayer } from "@repo/lib/overwolf";
 import {
   getIconsUrl,
@@ -140,10 +141,23 @@ export function Player({
         colorBlindSeverity,
       );
 
+      const tile = tilesConfig[map.mapName];
+      const rotationOffset = tile?.rotation?.angle;
+
+      // Apply rotation to player position if configured
+      let playerPosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        playerPosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter
+        );
+      }
+
       if (!marker.current) {
-        const tile = tilesConfig[map.mapName];
-        const rotationOffset = tile?.rotation?.angle;
-        marker.current = new PlayerMarker([player.x, player.y], {
+        marker.current = new PlayerMarker(playerPosition, {
           icon,
           interactive: false,
           rotation: player.r,
@@ -152,12 +166,17 @@ export function Player({
         });
       } else {
         marker.current.setIcon(icon);
-        marker.current.updatePosition(player);
+        // Create a modified player object with rotated coordinates
+        marker.current.updatePosition({
+          ...player,
+          x: playerPosition[0],
+          y: playerPosition[1],
+        });
       }
 
       try {
         marker.current.addTo(map);
-        map.panTo([player.x, player.y], {
+        map.panTo(playerPosition, {
           animate: false,
           duration: 0,
           easeLinearity: 1,
@@ -198,7 +217,24 @@ export function Player({
       if (!map?.mapName || !player || !marker.current) {
         return;
       }
-      marker.current.updatePosition(player);
+
+      // Apply rotation to player position if configured
+      let playerPosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        playerPosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter
+        );
+      }
+
+      marker.current.updatePosition({
+        ...player,
+        x: playerPosition[0],
+        y: playerPosition[1],
+      });
 
       const isOnMap = !player.mapName || player.mapName === map.mapName;
       if (!isOnMap) {
@@ -209,7 +245,7 @@ export function Player({
         // Use Leaflet's built-in smooth panning
         // panTo() internally stops previous animations with proper canvas clearing
         // Duration of 0.5s provides smooth movement while allowing overlapping animations
-        map.panTo([player.x, player.y], {
+        map.panTo(playerPosition, {
           animate: true,
           duration: 0.5,
           easeLinearity: 1,

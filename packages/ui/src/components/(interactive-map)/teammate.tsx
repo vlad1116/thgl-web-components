@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
 import leaflet from "leaflet";
-import { getIconsUrl, MarkerOptions, TilesConfig } from "@repo/lib";
+import { rotateCoordinate } from "./rotation";
+import {
+  getIconsUrl,
+  MarkerOptions,
+  TilesConfig,
+} from "@repo/lib";
 import { useSettingsStore } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
 import type { ColorBlindMode } from "@repo/lib";
@@ -131,10 +136,23 @@ export function Teammate({
         colorBlindSeverity,
       );
 
+      const tile = tilesConfig[map.mapName];
+      const rotationOffset = tile?.rotation?.angle;
+
+      // Apply rotation to teammate position if configured
+      let teammatePosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        teammatePosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter
+        );
+      }
+
       if (!marker.current) {
-        const tile = tilesConfig[map.mapName];
-        const rotationOffset = tile?.rotation?.angle;
-        marker.current = new PlayerMarker([player.x, player.y], {
+        marker.current = new PlayerMarker(teammatePosition, {
           icon,
           interactive: true, // Enable interaction for tooltip
           rotation: player.r,
@@ -152,7 +170,11 @@ export function Teammate({
         }
       } else {
         marker.current.setIcon(icon);
-        marker.current.updatePosition(player);
+        marker.current.updatePosition({
+          ...player,
+          x: teammatePosition[0],
+          y: teammatePosition[1],
+        });
         // Update tooltip if name changed
         if (player.name) {
           marker.current.unbindTooltip();
@@ -214,7 +236,24 @@ export function Teammate({
       if (!map?.mapName || !player || !marker.current) {
         return;
       }
-      marker.current.updatePosition(player);
+
+      // Apply rotation to teammate position if configured
+      let teammatePosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        teammatePosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter
+        );
+      }
+
+      marker.current.updatePosition({
+        ...player,
+        x: teammatePosition[0],
+        y: teammatePosition[1],
+      });
     },
     [map?.mapName, player],
     50,

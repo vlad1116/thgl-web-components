@@ -1,0 +1,51 @@
+/**
+ * Map rotation utilities for rotating marker coordinates
+ *
+ * Tiles are displayed without rotation.
+ * Only marker positions (spawns, player, teammates) are rotated.
+ */
+
+import type { Map } from "leaflet";
+
+/**
+ * Rotate a coordinate around a center point
+ * @param coord - [lat, lng] coordinate to rotate
+ * @param angleDegrees - Rotation angle in degrees
+ * @param center - [lat, lng] center point to rotate around
+ * @returns Rotated [lat, lng] coordinate
+ */
+export function rotateCoordinate(
+  coord: [number, number],
+  angleDegrees: number,
+  center: [number, number],
+): [number, number] {
+  const angleRadians = (angleDegrees * Math.PI) / 180;
+  const cos = Math.cos(angleRadians);
+  const sin = Math.sin(angleRadians);
+
+  // Translate to origin
+  const x = coord[1] - center[1]; // lng
+  const y = coord[0] - center[0]; // lat
+
+  // Rotate
+  const rotatedX = x * cos - y * sin;
+  const rotatedY = x * sin + y * cos;
+
+  // Translate back
+  return [
+    rotatedY + center[0], // lat
+    rotatedX + center[1], // lng
+  ];
+}
+
+/**
+ * Store rotation info on map instance for easy access
+ */
+export function setupMapRotation(
+  map: Map,
+  rotation: { angle: number; center: [number, number] }
+) {
+  (map as any)._rotationDegrees = rotation.angle;
+  (map as any)._rotationRadians = (rotation.angle * Math.PI) / 180;
+  (map as any)._rotationCenter = rotation.center;
+}

@@ -104,5 +104,6 @@ export function createWorld(
   if (options.options?.bounds) {
     leafletWorld.bounds = options.options?.bounds;
   }
+
   return leafletWorld;
 }

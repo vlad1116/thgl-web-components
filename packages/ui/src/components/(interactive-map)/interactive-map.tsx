@@ -9,6 +9,7 @@ import { createCanvasLayer } from "./canvas-layer";
 import { createWorld } from "./world";
 import { useMapStore } from "./store";
 import { ContextMenu } from "./context-menu";
+import { setupMapRotation } from "./rotation";
 // import { createCoordinatesControl } from "./coordinates-control";
 import leaflet from "leaflet";
 import { useT } from "../(providers)";
@@ -80,6 +81,11 @@ export function InteractiveMap({
         );
     });
 
+    // Apply rotation if specified
+    if (mapTileOptions.rotation) {
+      setupMapRotation(world, mapTileOptions.rotation);
+    }
+
     world.on("contextmenu", (event) => {
       if (location.href.includes("embed")) {
         return;
@@ -135,6 +141,8 @@ export function InteractiveMap({
         filter: isOverlay ? mapFilter : "none",
         colorBlindMode,
         colorBlindSeverity,
+        rotation: mapTileOptions.rotation,
+        bounds: mapTileOptions.options?.bounds,
         ...mapTileOptions.options,
       });
       canvasLayer.addTo(map);
