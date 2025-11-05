@@ -3,7 +3,7 @@
 import { isOverwolf, useAccountStore } from "@repo/lib";
 import Script from "next/script";
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
 import { NITROPAY_SITE_ID } from "./constants";
@@ -103,6 +103,9 @@ export function NitroScript({
   const email = useAccountStore((state) => state.email);
   const { state, setState } = useNitroState();
 
+  // Randomly choose validation method on component mount (0, 1, or 2)
+  const validationMethod = useMemo(() => Math.floor(Math.random() * 3), []);
+
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -127,51 +130,104 @@ export function NitroScript({
     return () => observer.disconnect();
   }, []);
 
+  // Validation using setTimeout with tick counter (Method 0)
   useEffect(() => {
-    // Skip validation if user has ad removal or is on Overwolf
-    if (adRemoval || isOverwolf) {
-      return;
-    }
+    if (validationMethod !== 0) return;
+    if (adRemoval || isOverwolf) return;
+    if (state === STATE_ERROR || state === STATE_READY) return;
 
-    // Skip if already in error state
-    if (state === STATE_ERROR || state === STATE_READY) {
-      return;
-    }
-
-    // Use bit flags instead of direct state comparisons to avoid pattern matching
-    let ticks = 0;
-    const maxTicks = 25;
-    const stateFlags = [state & 1, state & 2]; // Obfuscate state checks
+    let ticks = 25;
+    const minTicks = 0;
+    const stateFlags = [state & 1, state & 2];
     const ms = 100;
     let timeoutId: NodeJS.Timeout | null = null;
 
     const validate = () => {
-      ticks++;
+      ticks = ticks - 1;
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
       } else if (isNitroAdsValid()) {
         if (!stateFlags[1]) {
-          // STATE_READY = 2, so !(state & 2) means not ready
           setState(STATE_READY);
         }
-      } else if (ticks > maxTicks) {
-        // Timeout during initial validation phase
+      } else if (ticks <= minTicks) {
         setState(STATE_ERROR);
       } else {
-        // Continue validation
         timeoutId = setTimeout(validate, ms);
       }
     };
 
-    // Start validation
     timeoutId = setTimeout(validate, ms);
-
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [state, adRemoval, validationMethod]);
+
+  // Validation using setTimeout with Date.now (Method 1)
+  useEffect(() => {
+    if (validationMethod !== 1) return;
+    if (adRemoval || isOverwolf) return;
+    if (state === STATE_ERROR || state === STATE_READY) return;
+
+    const stateFlags = [state & 1, state & 2];
+    const maxDuration = 2500;
+    const startTime = Date.now();
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const validate = () => {
+      const elapsed = Date.now() - startTime;
+
+      if (isNitroAdsManipulated()) {
+        setState(STATE_ERROR);
+      } else if (isNitroAdsValid()) {
+        if (!stateFlags[1]) {
+          setState(STATE_READY);
+        }
+      } else if (elapsed > maxDuration) {
+        setState(STATE_ERROR);
+      } else {
+        timeoutId = setTimeout(validate, 100);
       }
     };
-  }, [state, adRemoval]);
+
+    timeoutId = setTimeout(validate, 100);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [state, adRemoval, validationMethod]);
+
+  // Validation using requestAnimationFrame (Method 2)
+  useEffect(() => {
+    if (validationMethod !== 2) return;
+    if (adRemoval || isOverwolf) return;
+    if (state === STATE_ERROR || state === STATE_READY) return;
+
+    const stateFlags = [state & 1, state & 2];
+    const maxDuration = 2500;
+    let frameId: number | null = null;
+
+    const validate = (startTime?: number) => {
+      if (!startTime) startTime = performance.now();
+      const elapsed = performance.now() - startTime;
+
+      if (isNitroAdsManipulated()) {
+        setState(STATE_ERROR);
+      } else if (isNitroAdsValid()) {
+        if (!stateFlags[1]) {
+          setState(STATE_READY);
+        }
+      } else if (elapsed > maxDuration) {
+        setState(STATE_ERROR);
+      } else {
+        frameId = requestAnimationFrame(() => validate(startTime));
+      }
+    };
+
+    frameId = requestAnimationFrame(() => validate());
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [state, adRemoval, validationMethod]);
 
   useEffect(() => {
     if (adRemoval || state !== STATE_READY) {
