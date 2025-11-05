@@ -70,12 +70,49 @@ function isNoop(fn: Function): boolean {
   );
 }
 
+function isFunctionCallTampered() {
+  let trapFired = false;
+
+  try {
+    const f = function createAd() {};
+    const p = new Proxy(f, {
+      get(target, prop, receiver) {
+        trapFired = true;
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+    // Trigger potential interception
+    const result = Function.prototype.toString.call(p);
+
+    // Check that Function.prototype.call wasn't replaced
+    const callSrc = Function.prototype.call.toString();
+
+    // Tampering is detected if:
+    // - Function.prototype.call source looks patched
+    // - or our Proxy trap fired in suspicious context
+    // - or the result isn't what we'd expect
+    return (
+      callSrc.includes("Proxy") ||
+      callSrc.includes("apply:") ||
+      (trapFired && typeof result === "string")
+    );
+  } catch {
+    // Any runtime error is suspicious (tampering can break internal invariants)
+    return true;
+  }
+}
+
 function isNitroAdsManipulated(): boolean {
   if (!("nitroAds" in window)) {
     return false;
   }
   const nitroAds = window.nitroAds as NitroAds;
   if (isNoop(nitroAds.createAd) || Object.keys(nitroAds).length === 0) {
+    return true;
+  }
+
+  if (isFunctionCallTampered()) {
     return true;
   }
 
