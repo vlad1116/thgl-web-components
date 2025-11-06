@@ -35,6 +35,7 @@ import {
 import { FilterSelect } from "../(controls)/filter-select";
 import { AddSharedFilter } from "./add-shared-filter";
 import { UploadFilter } from "./upload-filter";
+import { inverseRotateCoordinate, rotateCoordinate } from "./rotation";
 
 export function PrivateNode({
   appName,
@@ -78,7 +79,18 @@ export function PrivateNode({
       });
       latLng = [mapCenter.lat, mapCenter.lng] as [number, number];
     } else {
-      latLng = tempPrivateNode.p;
+      // Apply rotation to display stored coordinates correctly
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        latLng = rotateCoordinate(
+          tempPrivateNode.p,
+          rotationDegrees,
+          rotationCenter,
+        );
+      } else {
+        latLng = tempPrivateNode.p;
+      }
     }
     const radius = tempPrivateNode.radius ?? 10;
     const privateNodeMarker = new CanvasMarker(latLng, {
@@ -103,14 +115,30 @@ export function PrivateNode({
       }
       const { lat, lng } = event.latlng;
       privateNodeMarker.setLatLng([lat, lng]);
-      setTempPrivateNode({ p: [lat, lng] });
+
+      // Store in original (unrotated) coordinates
+      const rotationDegrees = (map as any)?._rotationDegrees;
+      const rotationCenter = (map as any)?._rotationCenter;
+      let storageCoord: [number, number] = [lat, lng];
+      if (rotationDegrees && rotationCenter) {
+        storageCoord = inverseRotateCoordinate([lat, lng], rotationDegrees, rotationCenter);
+      }
+      setTempPrivateNode({ p: storageCoord });
     };
     map.on("mousemove", handleMouseMove);
     const handleClick = (event: LeafletMouseEvent) => {
       isDragging = false;
       const { lat, lng } = event.latlng;
       privateNodeMarker.setLatLng([lat, lng]);
-      setTempPrivateNode({ p: [lat, lng] });
+
+      // Store in original (unrotated) coordinates
+      const rotationDegrees = (map as any)?._rotationDegrees;
+      const rotationCenter = (map as any)?._rotationCenter;
+      let storageCoord: [number, number] = [lat, lng];
+      if (rotationDegrees && rotationCenter) {
+        storageCoord = inverseRotateCoordinate([lat, lng], rotationDegrees, rotationCenter);
+      }
+      setTempPrivateNode({ p: storageCoord });
     };
     map.on("click", handleClick);
     privateNodeMarker.on("mouseup", (event) => {
@@ -149,14 +177,24 @@ export function PrivateNode({
       canvasMarker.current.setRadius(newRadius);
     }
     const latLng = canvasMarker.current.getLatLng();
-    if (
-      tempPrivateNode.p &&
-      (latLng.lat !== tempPrivateNode.p[0] ||
-        latLng.lng !== tempPrivateNode.p[1])
-    ) {
-      canvasMarker.current.setLatLng(tempPrivateNode.p);
+    if (tempPrivateNode.p) {
+      // Apply rotation to stored coordinates for comparison and display
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      let displayCoord: [number, number] = tempPrivateNode.p;
+      if (rotationDegrees && rotationCenter) {
+        displayCoord = rotateCoordinate(
+          tempPrivateNode.p,
+          rotationDegrees,
+          rotationCenter,
+        );
+      }
+
+      if (latLng.lat !== displayCoord[0] || latLng.lng !== displayCoord[1]) {
+        canvasMarker.current.setLatLng(displayCoord);
+      }
     }
-  }, [color, radius, baseIconSize, tempPrivateNode?.icon, tempPrivateNode?.p]);
+  }, [color, radius, baseIconSize, tempPrivateNode?.icon, tempPrivateNode?.p, map]);
 
   // Re-render preview marker when color blind mode changes
   useEffect(() => {
@@ -180,8 +218,21 @@ export function PrivateNode({
     if (!latLng) {
       return;
     }
+
+    // Apply rotation to display shared node correctly
+    let displayLatLng: [number, number] = latLng;
+    const rotationDegrees = (map as any)._rotationDegrees;
+    const rotationCenter = (map as any)._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      displayLatLng = rotateCoordinate(
+        latLng,
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+
     const radius = sharedTempPrivateNode.radius ?? 10;
-    const privateNodeMarker = new CanvasMarker(latLng, {
+    const privateNodeMarker = new CanvasMarker(displayLatLng, {
       id: "shared-private-node",
       icon: sharedTempPrivateNode.icon,
       baseRadius: 10,
@@ -224,6 +275,19 @@ export function PrivateNode({
     }
 
     const latLng = canvasMarker.current.getLatLng();
+
+    // Store coordinates in original (unrotated) system
+    let storageCoord: [number, number] = [latLng.lat, latLng.lng];
+    const rotationDegrees = (map as any)._rotationDegrees;
+    const rotationCenter = (map as any)._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      storageCoord = inverseRotateCoordinate(
+        [latLng.lat, latLng.lng],
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+
     const id = `${tempPrivateNode.filter}_${Date.now()}`;
     const marker: PrivateNode = {
       id,
@@ -232,7 +296,7 @@ export function PrivateNode({
       color: color,
       icon: tempPrivateNode.icon || null,
       radius,
-      p: [latLng.lat, latLng.lng] as [number, number],
+      p: storageCoord,
       mapName,
     };
 
@@ -400,17 +464,20 @@ export function PrivateNode({
                     type="number"
                     value={tempPrivateNode?.p?.[1] ?? 0}
                     onChange={(e) => {
-                      setTempPrivateNode({
-                        p: [tempPrivateNode?.p?.[0] ?? 0, +e.target.value],
-                      });
+                      const newP: [number, number] = [tempPrivateNode?.p?.[0] ?? 0, +e.target.value];
+                      setTempPrivateNode({ p: newP });
                       if (
-                        !Number.isNaN(tempPrivateNode?.p?.[0] ?? 0) &&
-                        !Number.isNaN(+e.target.value)
+                        !Number.isNaN(newP[0]) &&
+                        !Number.isNaN(newP[1])
                       ) {
-                        canvasMarker.current?.setLatLng([
-                          tempPrivateNode?.p?.[0] ?? 0,
-                          +e.target.value,
-                        ]);
+                        // Apply rotation before setting marker position
+                        const rotationDegrees = (map as any)?._rotationDegrees;
+                        const rotationCenter = (map as any)?._rotationCenter;
+                        let displayCoord = newP;
+                        if (rotationDegrees && rotationCenter) {
+                          displayCoord = rotateCoordinate(newP, rotationDegrees, rotationCenter);
+                        }
+                        canvasMarker.current?.setLatLng(displayCoord);
                       }
                     }}
                   />
@@ -419,17 +486,20 @@ export function PrivateNode({
                     type="number"
                     value={tempPrivateNode?.p?.[0] ?? 0}
                     onChange={(e) => {
-                      setTempPrivateNode({
-                        p: [+e.target.value, tempPrivateNode?.p?.[1] ?? 0],
-                      });
+                      const newP: [number, number] = [+e.target.value, tempPrivateNode?.p?.[1] ?? 0];
+                      setTempPrivateNode({ p: newP });
                       if (
-                        !Number.isNaN(tempPrivateNode?.p?.[1] ?? 0) &&
-                        !Number.isNaN(+e.target.value)
+                        !Number.isNaN(newP[0]) &&
+                        !Number.isNaN(newP[1])
                       ) {
-                        canvasMarker.current?.setLatLng([
-                          +e.target.value,
-                          tempPrivateNode?.p?.[1] ?? 0,
-                        ]);
+                        // Apply rotation before setting marker position
+                        const rotationDegrees = (map as any)?._rotationDegrees;
+                        const rotationCenter = (map as any)?._rotationCenter;
+                        let displayCoord = newP;
+                        if (rotationDegrees && rotationCenter) {
+                          displayCoord = rotateCoordinate(newP, rotationDegrees, rotationCenter);
+                        }
+                        canvasMarker.current?.setLatLng(displayCoord);
                       }
                     }}
                   />

@@ -39,6 +39,23 @@ export function rotateCoordinate(
 }
 
 /**
+ * Inverse rotate a coordinate (from rotated back to original)
+ * Used when saving user-placed coordinates that need to be stored in original coordinate system
+ * @param coord - [lat, lng] rotated coordinate to inverse rotate
+ * @param angleDegrees - Original rotation angle in degrees
+ * @param center - [lat, lng] center point to rotate around
+ * @returns Original (unrotated) [lat, lng] coordinate
+ */
+export function inverseRotateCoordinate(
+  coord: [number, number],
+  angleDegrees: number,
+  center: [number, number],
+): [number, number] {
+  // Inverse rotation is just rotating by negative angle
+  return rotateCoordinate(coord, -angleDegrees, center);
+}
+
+/**
  * Store rotation info on map instance for easy access
  */
 export function setupMapRotation(
