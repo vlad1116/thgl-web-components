@@ -19,35 +19,40 @@ export function AdFreeContainer({
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
   const [closed, setClosed] = useState(false);
   const el = useRef<HTMLDivElement | null>(null);
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
-    const checkInterval = setInterval(() => {
-      try {
-        if (!el.current || !document.body.contains(el.current)) {
-          useNitroState.getState().setState(STATE_ERROR);
-          return;
-        }
+    try {
+      if (!el.current || !document.body.contains(el.current)) {
+        useNitroState.getState().setState(STATE_ERROR);
+        return;
+      }
 
-        // Check if element is hidden by CSS
-        const computedStyle = window.getComputedStyle(el.current);
-        const width = parseFloat(computedStyle.width);
-        const height = parseFloat(computedStyle.height);
+      // Check if element is hidden by CSS
+      const computedStyle = window.getComputedStyle(el.current);
+      const width = parseFloat(computedStyle.width);
+      const height = parseFloat(computedStyle.height);
 
-        if (
-          computedStyle.display === "none" ||
-          computedStyle.visibility === "hidden" ||
-          computedStyle.opacity === "0" ||
-          width < 10 ||
-          height < 10
-        ) {
-          useNitroState.getState().setState(STATE_ERROR);
-        }
-      } catch {
+      if (
+        computedStyle.display === "none" ||
+        computedStyle.visibility === "hidden" ||
+        computedStyle.opacity === "0" ||
+        width < 10 ||
+        height < 10
+      ) {
         useNitroState.getState().setState(STATE_ERROR);
       }
-    }, 1000);
+    } catch {
+      useNitroState.getState().setState(STATE_ERROR);
+    }
 
-    return () => clearInterval(checkInterval);
-  }, []);
+    const timeoutHandle = setTimeout(() => {
+      setTick((prev) => prev + 1);
+    }, 1001);
+    return () => {
+      clearTimeout(timeoutHandle);
+    };
+  }, [tick]);
 
   return (
     <div
