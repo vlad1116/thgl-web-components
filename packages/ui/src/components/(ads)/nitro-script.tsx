@@ -139,7 +139,10 @@ export const useNitroState = create<{
   scriptLoadingActive: boolean;
   markScriptLoadingActive: () => void;
 }>((set) => ({
-  state: "nitroAds" in window ? STATE_ERROR : STATE_LOADING,
+  state:
+    typeof window !== "undefined" && "nitroAds" in window
+      ? STATE_ERROR
+      : STATE_LOADING,
   setState: (state) => set({ state }),
   validationActive: false,
   markValidationActive: () => set({ validationActive: true }),
