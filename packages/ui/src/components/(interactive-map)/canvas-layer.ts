@@ -200,6 +200,7 @@ const CanvasLayer = leaflet.TileLayer.extend({
 
     // Double-check watermark after a short delay (catches race condition with cached images)
     setTimeout(() => {
+      // @ts-ignore
       if (isNitroError && tile.complete) {
         const ctx = tile.getContext("2d");
         if (!ctx) return;
