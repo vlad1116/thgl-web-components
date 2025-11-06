@@ -10,7 +10,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Purgatorio Island Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Purgatorio Island with our interactive maps.",
+        "Navigate Duet Night Abyss's Purgatorio Island with our interactive maps.",
       href: "/maps/Purgatorio%20Island",
       iconName: "Map",
       bgImage:
@@ -20,7 +20,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Lonza Fortress Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Lonza Fortress with our interactive maps.",
+        "Navigate Duet Night Abyss's Lonza Fortress with our interactive maps.",
       href: "/maps/Lonza%20Fortress",
       iconName: "Map",
       bgImage:
@@ -30,7 +30,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Eastern District, Icelake Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Eastern District, Icelake with our interactive maps.",
+        "Navigate Duet Night Abyss's Eastern District, Icelake with our interactive maps.",
       href: "/maps/Eastern%20District%2C%20Icelake",
       iconName: "Map",
       bgImage:
@@ -40,7 +40,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Glevum Pit Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Glevum Pit with our interactive maps.",
+        "Navigate Duet Night Abyss's Glevum Pit with our interactive maps.",
       href: "/maps/Glevum%20Pit",
       iconName: "Map",
       bgImage:
@@ -50,7 +50,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Icelake Sewers Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Icelake Sewers with our interactive maps.",
+        "Navigate Duet Night Abyss's Icelake Sewers with our interactive maps.",
       href: "/maps/Icelake%20Sewers",
       iconName: "Map",
       bgImage:
@@ -60,7 +60,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Galea Theatre Map",
       description:
-        "Navigate Blue Protocol: Star Resonance's Galea Theatre with our interactive maps.",
+        "Navigate Duet Night Abyss's Galea Theatre with our interactive maps.",
       href: "/maps/Galea%20Theatre",
       iconName: "Map",
       bgImage:
