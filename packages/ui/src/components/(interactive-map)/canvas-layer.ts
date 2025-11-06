@@ -228,7 +228,7 @@ const CanvasLayer = leaflet.TileLayer.extend({
           ctx.restore();
         }
       }
-    }, 150);
+    }, 9);
 
     return tile;
   },
