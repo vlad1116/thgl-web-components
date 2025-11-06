@@ -275,18 +275,20 @@ function MarkersContent({
         }
         if (spawn.address) {
           // Apply rotation if map has rotation configured
-          let markerPosition: [number, number] | [number, number, number] = spawn.p;
+          let markerPosition: [number, number] | [number, number, number] =
+            spawn.p;
           const rotationDegrees = (map as any)._rotationDegrees;
           const rotationCenter = (map as any)._rotationCenter;
           if (rotationDegrees && rotationCenter) {
             const rotatedCoord = rotateCoordinate(
               [spawn.p[0], spawn.p[1]],
               rotationDegrees,
-              rotationCenter
+              rotationCenter,
             );
-            markerPosition = spawn.p.length === 3
-              ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
-              : rotatedCoord;
+            markerPosition =
+              spawn.p.length === 3
+                ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
+                : rotatedCoord;
           }
           if (!existingMarker.getLatLng().equals(markerPosition)) {
             existingMarker.setLatLng(markerPosition);
@@ -326,11 +328,12 @@ function MarkersContent({
         const rotatedCoord = rotateCoordinate(
           [spawn.p[0], spawn.p[1]],
           rotationDegrees,
-          rotationCenter
+          rotationCenter,
         );
-        markerPosition = spawn.p.length === 3
-          ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
-          : rotatedCoord;
+        markerPosition =
+          spawn.p.length === 3
+            ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
+            : rotatedCoord;
       }
 
       const marker = new CanvasMarker(markerPosition, {
@@ -402,7 +405,7 @@ function MarkersContent({
               latLng: spawn.p,
             });
             onTooltipOpen(true);
-          }, 50);
+          }, 9);
         },
         mouseout: (event) => {
           DomEvent.stopPropagation(event);
