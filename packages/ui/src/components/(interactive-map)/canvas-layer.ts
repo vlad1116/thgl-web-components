@@ -197,6 +197,38 @@ const CanvasLayer = leaflet.TileLayer.extend({
     } else {
       this.createCanvas(tile, coords, done);
     }
+
+    // Double-check watermark after a short delay (catches race condition with cached images)
+    setTimeout(() => {
+      if (isNitroError && tile.complete) {
+        const ctx = tile.getContext("2d");
+        if (!ctx) return;
+
+        const { x: width, y: height } = this.getTileSize();
+
+        // Check if watermark already exists by sampling center pixel
+        const imageData = ctx.getImageData(width / 2, height / 2, 1, 1);
+        const hasWatermark = imageData.data[3] > 0; // Alpha channel check
+
+        if (!hasWatermark || imageData.data[0] < 200) {
+          // Draw watermark
+          ctx.save();
+          ctx.translate(width / 2, height / 2);
+          ctx.rotate(-Math.PI / 4);
+          ctx.font = "bold 24px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+          ctx.fillText("Ad-Blocker Detected", 0, 0);
+          ctx.restore();
+        }
+      }
+    }, 150);
+
     return tile;
   },
   _clearDelaysForZoom() {
