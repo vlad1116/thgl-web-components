@@ -139,7 +139,7 @@ export const useNitroState = create<{
   scriptLoadingActive: boolean;
   markScriptLoadingActive: () => void;
 }>((set) => ({
-  state: STATE_LOADING,
+  state: "nitroAds" in window ? STATE_ERROR : STATE_LOADING,
   setState: (state) => set({ state }),
   validationActive: false,
   markValidationActive: () => set({ validationActive: true }),
@@ -171,11 +171,24 @@ export function NitroScript({
         mutation.addedNodes.forEach((node) => {
           if (node.nodeName === "LINK") {
             const link = node as HTMLLinkElement;
-            if (link.href.includes("nitropay.com/nitro-")) {
+            if (link.href.includes("nitropay.com")) {
               link.addEventListener("load", () => {
-                markScriptLoadingActive();
+                if (link.href !== "https://s.nitropay.com/ads-1487.js") {
+                  markScriptLoadingActive();
+                }
               });
               link.addEventListener(
+                "error",
+                () => {
+                  setState(STATE_ERROR);
+                },
+                { once: true },
+              );
+            }
+          } else if (node.nodeName === "SCRIPT") {
+            const script = node as HTMLScriptElement;
+            if (script.src.includes("btloader.com")) {
+              script.addEventListener(
                 "error",
                 () => {
                   setState(STATE_ERROR);
