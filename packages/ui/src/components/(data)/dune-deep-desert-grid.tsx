@@ -67,7 +67,7 @@ export function DuneDeepDesertGrid() {
               ],
               {
                 icon: leaflet.divIcon({
-                  className: "zone-label",
+                  className: "zone-label text-black text-lg font-bold",
                   html: `${String.fromCharCode(97 + areas - 1 - j)}${i + 1}`.toUpperCase(),
                 }),
                 interactive: false,
