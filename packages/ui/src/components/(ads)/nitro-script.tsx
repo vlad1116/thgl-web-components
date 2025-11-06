@@ -3,7 +3,7 @@
 import { isOverwolf, useAccountStore } from "@repo/lib";
 import Script from "next/script";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect } from "react";
 import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
 import { NITROPAY_SITE_ID } from "./constants";
@@ -171,9 +171,6 @@ export function NitroScript({
     }
   }
 
-  // Randomly choose validation method on component mount (0, 1, or 2)
-  const validationMethod = useMemo(() => Math.floor(Math.random() * 3), []);
-
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -233,7 +230,6 @@ export function NitroScript({
 
   // Validation using setTimeout with tick counter (Method 0)
   useEffect(() => {
-    if (validationMethod !== 0) return;
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
@@ -264,11 +260,10 @@ export function NitroScript({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [state, adRemoval, validationMethod, markValidationActive]);
+  }, [state, adRemoval, markValidationActive]);
 
   // Validation using setTimeout with Date.now (Method 1)
   useEffect(() => {
-    if (validationMethod !== 1) return;
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
@@ -298,11 +293,10 @@ export function NitroScript({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [state, adRemoval, validationMethod, markValidationActive]);
+  }, [state, adRemoval, markValidationActive]);
 
   // Validation using requestAnimationFrame (Method 2)
   useEffect(() => {
-    if (validationMethod !== 2) return;
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
@@ -332,7 +326,7 @@ export function NitroScript({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [state, adRemoval, validationMethod, markValidationActive]);
+  }, [state, adRemoval, markValidationActive]);
 
   useEffect(() => {
     if (adRemoval || state !== STATE_READY) {
