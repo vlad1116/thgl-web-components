@@ -15,6 +15,7 @@ import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { DomEvent, LeafletMouseEvent } from "leaflet";
 import { HoverCard, HoverCardContent, HoverCardPortal } from "../ui/hover-card";
 import { AdditionalTooltipType } from "../(content)";
+import { rotateCoordinate } from "./rotation";
 
 export function SimpleMarkers({
   appName,
@@ -106,7 +107,23 @@ export function SimpleMarkers({
         isDiscovered = false;
       }
 
-      const marker = new CanvasMarker(spawn.p, {
+      // Apply rotation if map has rotation configured
+      let markerPosition: [number, number] | [number, number, number] = spawn.p;
+      const rotationDegrees = (map as any)._rotationDegrees;
+      const rotationCenter = (map as any)._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        const rotatedCoord = rotateCoordinate(
+          [spawn.p[0], spawn.p[1]],
+          rotationDegrees,
+          rotationCenter,
+        );
+        markerPosition =
+          spawn.p.length === 3
+            ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
+            : rotatedCoord;
+      }
+
+      const marker = new CanvasMarker(markerPosition, {
         id: spawn.id,
         icon: typeof spawn.icon === "string" ? { url: spawn.icon } : spawn.icon,
         color: spawn.color,
@@ -138,7 +155,7 @@ export function SimpleMarkers({
                   type: "",
                 },
               ],
-              latLng: spawn.p,
+              latLng: markerPosition,
             });
             setTooltipIsOpen(true);
           }, 50);

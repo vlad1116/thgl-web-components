@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { createWorld } from "./world";
 import { createCanvasLayer } from "./canvas-layer";
 import { useMapStore } from "./store";
+import { setupMapRotation } from "./rotation";
 import leaflet from "leaflet";
 
 export function SimpleMap({
@@ -40,6 +41,11 @@ export function SimpleMap({
     world.whenReady(() => {
       setMap(world);
     });
+
+    // Apply rotation if specified
+    if (mapTileOptions.rotation) {
+      setupMapRotation(world, mapTileOptions.rotation);
+    }
 
     world.on("mousedown", () => {
       document
