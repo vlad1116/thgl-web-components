@@ -3,14 +3,15 @@
 import { isOverwolf, useAccountStore } from "@repo/lib";
 import Script from "next/script";
 import type { ReactNode } from "react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
 import { NITROPAY_SITE_ID } from "./constants";
 
-type NitroState = 0 | 1 | 2 | 3;
+type NitroState = -1 | 0 | 1 | 2 | 3;
 
 // Numeric state constants to prevent adblocker scriptlet targeting
+export const STATE_INIT = -1;
 export const STATE_LOADING = 0;
 export const STATE_VALIDATION = 1;
 export const STATE_READY = 2;
@@ -139,10 +140,7 @@ export const useNitroState = create<{
   scriptLoadingActive: boolean;
   markScriptLoadingActive: () => void;
 }>((set) => ({
-  state:
-    typeof window !== "undefined" && "nitroAds" in window
-      ? STATE_ERROR
-      : STATE_LOADING,
+  state: STATE_INIT,
   setState: (state) => set({ state }),
   validationActive: false,
   markValidationActive: () => set({ validationActive: true }),
@@ -164,6 +162,14 @@ export function NitroScript({
   const email = useAccountStore((state) => state.email);
   const { state, setState, markValidationActive, markScriptLoadingActive } =
     useNitroState();
+
+  if (state === STATE_INIT) {
+    if (typeof window !== "undefined" && "nitroAds" in window) {
+      setState(STATE_ERROR);
+    } else {
+      setState(STATE_LOADING);
+    }
+  }
 
   // Randomly choose validation method on component mount (0, 1, or 2)
   const validationMethod = useMemo(() => Math.floor(Math.random() * 3), []);
@@ -382,7 +388,7 @@ export function NitroScript({
         }}
         src={`https://s.nitropay.com/ads-${NITROPAY_SITE_ID}.js`}
       />
-      {state === STATE_LOADING && loading}
+      {(state === STATE_LOADING || state === STATE_INIT) && loading}
       {state === STATE_READY && children}
       {state === STATE_ERROR && fallback}
     </>

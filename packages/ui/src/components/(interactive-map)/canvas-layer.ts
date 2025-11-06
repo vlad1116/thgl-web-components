@@ -2,10 +2,70 @@ import type { Coords, TileLayer, TileLayerOptions } from "leaflet";
 import leaflet from "leaflet";
 import type { ColorBlindMode } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
+import { STATE_ERROR, useNitroState } from "../(ads)";
 
 type Tile = HTMLCanvasElement & { complete: boolean };
 
+let isNitroError = false;
+
+// Track all active canvas layer instances
+const activeLayerInstances = new Set<TileLayer>();
+
+useNitroState.subscribe((store) => {
+  const wasError = isNitroError;
+  isNitroError = store.state === STATE_ERROR;
+
+  // If state changed to ERROR, add watermark to existing tiles
+  if (!wasError && isNitroError) {
+    activeLayerInstances.forEach((layer) => {
+      try {
+        // Find all canvas tiles in the layer
+        const container = (layer as any)._container;
+        if (!container) return;
+
+        const canvasTiles = container.querySelectorAll("canvas");
+        canvasTiles.forEach((canvas: HTMLCanvasElement) => {
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+
+          const width = canvas.width;
+          const height = canvas.height;
+
+          // Draw watermark on existing tile
+          ctx.save();
+          ctx.translate(width / 2, height / 2);
+          ctx.rotate(-Math.PI / 4);
+          ctx.font = "bold 24px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+          ctx.fillText("Ad-Blocker Detected", 0, 0);
+          ctx.restore();
+        });
+      } catch (e) {
+        //console.error("Failed to add watermark to tiles:", e);
+      }
+    });
+  }
+});
+
 const CanvasLayer = leaflet.TileLayer.extend({
+  onAdd(map: any) {
+    // Track this layer instance
+    activeLayerInstances.add(this);
+    // Call parent onAdd
+    return leaflet.TileLayer.prototype.onAdd.call(this, map);
+  },
+  onRemove(map: any) {
+    // Remove this layer instance from tracking
+    activeLayerInstances.delete(this);
+    // Call parent onRemove
+    return leaflet.TileLayer.prototype.onRemove.call(this, map);
+  },
   createCanvas(
     tile: Tile,
     coords: Coords,
@@ -79,6 +139,32 @@ const CanvasLayer = leaflet.TileLayer.extend({
             ctx?.putImageData(imageData, 0, 0);
           }
         }
+
+        // Draw watermark if ad-blocker detected
+        if (ctx && isNitroError) {
+          ctx.save();
+
+          // Move to center and rotate
+          ctx.translate(width / 2, height / 2);
+          ctx.rotate(-Math.PI / 4); // -45 degrees
+
+          // Configure text
+          ctx.font = "bold 24px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          // Draw text shadow for better visibility
+          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+
+          ctx.fillText("Ad-Blocker Detected", 0, 0);
+
+          ctx.restore();
+        }
+
         tile.complete = true;
       } catch (e) {
         err = e;
