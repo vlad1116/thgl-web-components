@@ -68,6 +68,13 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Galea Theatre Map",
     },
     {
+      href: "/activities-tracker",
+      title: "Activities Tracker",
+      linkText: "Track Daily & Weekly Activities",
+      bgImage: "https://www.th.gl/activity-tracker.webp",
+      iconName: "SquareCheckBig",
+    },
+    {
       href: "/guides",
       title: "config.internalLinks.guides.title",
       linkText: "config.internalLinks.guides.linkText",
