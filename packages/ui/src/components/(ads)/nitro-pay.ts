@@ -55,6 +55,7 @@ export interface NitroAds {
   stop: () => void;
   addUserToken: (email: string, encoding?: UserDataEncoding) => Promise<void>;
   clearUserTokens: () => void;
+  blocklist: string[];
   queue: ([string, any, (value: unknown) => void] | [string, any])[];
   loaded: boolean;
   geo: string;

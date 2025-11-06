@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Moveable from "react-moveable";
 import { ExternalAnchor } from "../(header)";
 import { Move } from "lucide-react";
+import { useT } from "../(providers)";
 
 export function AdsContainer({
   transformId,
@@ -24,6 +25,7 @@ export function AdsContainer({
   const moveableRef = useRef<Moveable>(null);
   const [isDragging, setIsDragging] = useState(false);
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
+  const t = useT();
 
   useEffect(() => {
     if (!transformId) {
@@ -80,10 +82,15 @@ export function AdsContainer({
             className="block text-center text-xs px-1.5 py-0.5 group"
             onClick={() => setShowUserDialog(true)}
           >
-            Get{" "}
-            <span className="text-primary group-hover:underline font-semibold">
-              AD-Free
-            </span>
+            {t.rich("adfree.linkText", {
+              components: {
+                "ad-free": (
+                  <span className="text-primary group-hover:underline">
+                    {t("adfree.linkTextAdFree")}
+                  </span>
+                ),
+              },
+            })}
           </ExternalAnchor>
           {transformId && (
             <div ref={targetRef} className="cursor-move flex items-center p-1">

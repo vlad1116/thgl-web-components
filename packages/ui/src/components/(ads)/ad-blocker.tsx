@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useSessionStorage } from "@uidotdev/usehooks";
 import { useT } from "../(providers)";
+import { useAccountStore } from "@repo/lib";
 
 // Obfuscated key generation to prevent easylist blocking
 function getStorageKey() {
@@ -30,6 +31,7 @@ export function AdBlocker() {
   const t = useT();
   const [timeLeft, setTimeLeft] = useState(10);
   const [open, setOpen] = useState(true);
+  const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
 
   const sessionKey = getStorageKey();
 
@@ -60,13 +62,16 @@ export function AdBlocker() {
           <li>
             <span className="font-bold">{t("adblocker.supportTitle")}</span>{" "}
             {t("adblocker.supportText")}
-            <ExternalAnchor
-              href="https://www.th.gl/support-me"
+            <div
+              onClick={() => {
+                setShowUserDialog(true);
+                window.open("https://www.th.gl/support-me", "_blank");
+              }}
               className="flex gap-1 text-primary hover:underline"
             >
               <span>{t("adblocker.supportLink")}</span>
               <ExternalLink className="w-3 h-3" />
-            </ExternalAnchor>
+            </div>
           </li>
 
           <li>

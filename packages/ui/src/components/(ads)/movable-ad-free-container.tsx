@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Moveable from "react-moveable";
 import { ExternalAnchor } from "../(header)";
 import { Move } from "lucide-react";
+import { useT } from "../(providers)";
 
 export function MovableAdsContainer({
   transformId,
@@ -21,6 +22,7 @@ export function MovableAdsContainer({
   const moveableRef = useRef<Moveable>(null);
   const [isDragging, setIsDragging] = useState(false);
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
+  const t = useT();
 
   useEffect(() => {
     if (!transformId) {
@@ -75,16 +77,23 @@ export function MovableAdsContainer({
             },
           )}
         >
-          <ExternalAnchor
-            href="https://www.th.gl/support-me"
+          <div
             className="block text-center text-xs px-1.5 py-0.5 group"
-            onClick={() => setShowUserDialog(true)}
+            onClick={() => {
+              setShowUserDialog(true);
+              window.open("https://www.th.gl/support-me", "_blank");
+            }}
           >
-            Get{" "}
-            <span className="text-primary group-hover:underline font-semibold">
-              AD-Free
-            </span>
-          </ExternalAnchor>
+            {t.rich("adfree.linkText", {
+              components: {
+                "ad-free": (
+                  <span className="text-primary group-hover:underline">
+                    {t("adfree.linkTextAdFree")}
+                  </span>
+                ),
+              },
+            })}
+          </div>
           {transformId && (
             <div ref={targetRef} className="cursor-move flex items-center p-1">
               <Move className="w-4 h-4" />
