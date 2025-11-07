@@ -12,6 +12,89 @@ export type BlogContentReference = string;
 
 export const blogEntries: BlogEntry[] = [
   {
+    id: "duet-night-abyss-launch",
+    headline: "Duet Night Abyss Interactive Maps Now Live",
+    title: "Duet Night Abyss Support: Interactive Maps & Activity Tracker",
+    description:
+      "Explore Duet Night Abyss with detailed interactive maps for all major regions, plus a new activity tracker to manage your daily and weekly goals. Companion app support coming soon!",
+    date: "2025-11-07",
+    content: `
+**Duet Night Abyss** has officially joined the TH.GL lineup! 🎮
+
+Whether you're a new player exploring the world or a veteran managing your daily routine, the new maps and activity tracker are here to help you get the most out of your journey.
+
+## 🗺️ Interactive Maps for All Major Regions
+
+Explore every corner of Duet Night Abyss with detailed, interactive maps at [**duetnightabyss.th.gl**](https://duetnightabyss.th.gl).
+
+**Available regions:**
+- 🏝️ **Purgatorio Island**
+- 🌆 **Eastern District, Icelake** (includes Glevum Pit, Icelake Sewers & Galea Theatre)
+- 🏰 **Lonza Fortress**
+
+Each map includes markers for:
+- 👹 **Geniemon**
+- 📦 **Chests & collectibles**
+- 🪨 **Materials**
+- 🧑‍🤝‍🧑 **NPCs**
+- 📍 **Other exploration points**
+
+Click any marker to track your progress, mark locations as discovered, and ensure you never miss important spots.
+
+## 🧭 Activity Tracker: Stay on Top of Your Goals
+
+Managing daily and weekly activities just got easier with the new **Activity Tracker**:
+
+👉 [**duetnightabyss.th.gl/activities-tracker**](https://duetnightabyss.th.gl/activities-tracker)
+
+This tool lets you:
+- ✅ Track daily and weekly activities
+- 🎯 Manage your in-game routine
+- 💾 Save progress directly in your browser
+- 🎨 Clean, customizable interface
+
+It's perfect for players who want to maximize their efficiency without losing track of what's left to do.
+
+## 📱 Coming Soon: THGL Companion App Support
+
+Next week, I'll be adding **Duet Night Abyss support to the THGL Companion App**.
+
+This means you'll be able to:
+- 🖥️ Use overlays and second-screen modes
+- 📍 Get real-time position tracking (once available)
+- 🎮 Access maps and tools without leaving the game
+
+Stay tuned for the update announcement!
+
+## 🙏 Thank You for the Support
+
+These updates are made possible by the amazing TH.GL community. If you'd like to support the project and unlock **Pro features** like ad removal and early access, check out the [**Support Me**](https://www.th.gl/support-me) page.
+
+—
+
+Enjoy exploring Duet Night Abyss — and feel free to [join the Discord](https://th.gl/discord) if you have feedback or suggestions! 🌙
+
+— DevLeon
+`.trim(),
+    contentReference: [
+      "Duet Night Abyss",
+      "TH.GL",
+      "interactive maps",
+      "activity tracker",
+      "Purgatorio Island",
+      "Eastern District",
+      "Icelake",
+      "Glevum Pit",
+      "Icelake Sewers",
+      "Galea Theatre",
+      "Lonza Fortress",
+      "Geniemon",
+      "THGL Companion App",
+      "Discord",
+      "Support Me",
+    ],
+  },
+  {
     id: "web-code-now-public",
     headline: "The Web Code Is Now Public",
     title: "The Code Is Now Public — Here's Why",
