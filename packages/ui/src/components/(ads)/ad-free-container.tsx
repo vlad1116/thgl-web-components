@@ -10,10 +10,12 @@ export function AdFreeContainer({
   children,
   className,
   closable,
+  displayCheck = true,
 }: {
   children: ReactNode;
   className?: string;
   closable?: ReactNode;
+  displayCheck?: boolean;
 }): JSX.Element {
   const t = useT();
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
@@ -22,6 +24,9 @@ export function AdFreeContainer({
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
+    if (!displayCheck) {
+      return;
+    }
     try {
       if (!el.current || !document.body.contains(el.current)) {
         useNitroState.getState().setState(STATE_ERROR);
@@ -52,7 +57,7 @@ export function AdFreeContainer({
     return () => {
       clearTimeout(timeoutHandle);
     };
-  }, [tick]);
+  }, [tick, displayCheck]);
 
   return (
     <div

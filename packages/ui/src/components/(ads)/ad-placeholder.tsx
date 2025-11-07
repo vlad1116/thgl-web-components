@@ -13,6 +13,7 @@ interface AdPlaceholderProps {
   height: string;
   className?: string;
   hideBlockedText?: boolean;
+  displayCheck?: boolean;
 }
 
 /**
@@ -30,9 +31,10 @@ export function AdPlaceholder({
   height,
   className,
   hideBlockedText = false,
+  displayCheck = true,
 }: AdPlaceholderProps): JSX.Element {
   return (
-    <AdFreeContainer className={className}>
+    <AdFreeContainer className={className} displayCheck={displayCheck}>
       <div
         className={cn(
           "rounded bg-zinc-800/30 text-gray-500 flex flex-col justify-center text-center",
