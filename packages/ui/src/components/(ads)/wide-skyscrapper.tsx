@@ -56,9 +56,17 @@ export function WideSkyscraper({
 
 export function WideSkyscraperLoading({
   className,
+  mediaQuery = "(min-width: 860px)",
 }: {
   className?: string;
+  mediaQuery?: string;
 }): JSX.Element {
+  const matched = useMediaQuery(mediaQuery);
+
+  if (!matched) {
+    return <></>;
+  }
+
   return (
     <AdPlaceholder
       type="loading"

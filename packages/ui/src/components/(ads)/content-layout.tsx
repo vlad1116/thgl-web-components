@@ -53,7 +53,7 @@ export function ContentLayout({
       {/* Left Ad */}
       <div>
         <NitroScript
-          loading={<WideSkyscraperLoading />}
+          loading={<WideSkyscraperLoading mediaQuery="(min-width: 1024px)" />}
           fallback={
             <>
               <AdBlocker />
