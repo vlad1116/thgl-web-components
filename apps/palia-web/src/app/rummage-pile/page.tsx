@@ -4,12 +4,7 @@ import { ContentLayout } from "@repo/ui/ads";
 import { Button } from "@repo/ui/controls";
 import Image from "next/image";
 import { Suspense } from "react";
-import {
-  DATA_FORGE_URL,
-  decodeFromBuffer,
-  fetchFilters,
-  fetchTiles,
-} from "@repo/lib";
+import { DATA_FORGE_URL, decodeFromBuffer, fetchVersion } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
 import Filter from "./filter.webp";
@@ -27,11 +22,9 @@ export const metadata: Metadata = {
 };
 
 export default async function RummagePile() {
-  const [tiles, filters] = await Promise.all([
-    fetchTiles(APP_CONFIG.name),
-    fetchFilters(APP_CONFIG.name),
-  ]);
-  const rummagePileIcon = filters
+  const version = await fetchVersion(APP_CONFIG.name);
+
+  const rummagePileIcon = version.data.filters
     .find((f) => f.group === "players")!
     .values.find((v) => v.id === "other_player")!.icon;
 
@@ -54,7 +47,7 @@ export default async function RummagePile() {
   });
   const buffer = await response.arrayBuffer();
   const stableNodes = decodeFromBuffer<Spawns>(new Uint8Array(buffer));
-  const stableNodeIcon = filters
+  const stableNodeIcon = version.data.filters
     .find((f) => f.group === "locations")!
     .values.find((v) => v.id === "stable")!.icon;
 
@@ -80,7 +73,8 @@ export default async function RummagePile() {
                 stableNodes={stableNodes}
                 stableNodeIcon={stableNodeIcon}
                 icon={rummagePileIcon}
-                tiles={tiles}
+                tiles={version.data.tiles}
+                icons={version.more.icons}
               />
               <PaliaGrid force />
             </Suspense>

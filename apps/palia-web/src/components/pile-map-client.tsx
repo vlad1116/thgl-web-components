@@ -21,12 +21,14 @@ export default function PileMapClient({
   icon,
   stableNodeIcon,
   tiles,
+  icons,
 }: {
   timedLootPiles: TimedLootPiles;
   stableNodes: Spawns;
   icon: FiltersConfig[number]["values"][number]["icon"];
   stableNodeIcon: FiltersConfig[number]["values"][number]["icon"];
   tiles: TilesConfig;
+  icons: string;
 }): JSX.Element {
   const t = useT();
   const searchParams = useSearchParams();
@@ -136,6 +138,7 @@ export default function PileMapClient({
         spawns={[...targetSpawns, ...stableSpawns]}
         mapName={mapName}
         tiles={tiles}
+        icons={icons}
       />
       <p className="text-zinc-200 text-sm">
         Updated at {formatDate(new Date(timestamp))}

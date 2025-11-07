@@ -8,10 +8,12 @@ export default function PileMapDynamic({
   mapName,
   spawns,
   tiles,
+  icons,
 }: {
   mapName: string;
   spawns: SimpleSpawn[];
   tiles: TilesConfig;
+  icons: string;
 }): JSX.Element {
   const pileSpawns = spawns.filter((spawn) => spawn.name.includes("Pile"));
   const center = pileSpawns.reduce(
@@ -38,7 +40,7 @@ export default function PileMapDynamic({
       <SimpleMarkers
         spawns={spawns}
         imageSprite
-        iconsPath="/icons/icons.webp"
+        iconsPath={icons}
         appName={APP_CONFIG.name}
         highlightedIds={spawns.length === 1 ? [spawns[0].id] : undefined}
         withoutDiscoveredNodes
