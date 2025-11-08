@@ -116,6 +116,7 @@ function refreshServerName(): Promise<void> {
 }
 
 let isSending = false;
+let lastBusMonsterPositions: Map<number, { x: number; y: number; z: number }> = new Map();
 async function sendActorsToAPI(actors: Actor[]): Promise<void> {
   if (isSending || !prevServerName || Date.now() - lastSend < 12000) {
     return;
@@ -130,12 +131,37 @@ async function sendActorsToAPI(actors: Actor[]): Promise<void> {
     );
   });
 
+  // Check for bus monsters with changed positions
+  const movedBusMonsters = busMonsterLocations.filter((busMonster) => {
+    const lastPos = lastBusMonsterPositions.get(busMonster.address);
+    if (!lastPos) {
+      return true; // New bus monster, send it
+    }
+    // Check if position changed
+    return lastPos.x !== busMonster.x || lastPos.y !== busMonster.y || lastPos.z !== busMonster.z;
+  });
+
+  // Update bus monster position tracking
+  for (const busMonster of busMonsterLocations) {
+    lastBusMonsterPositions.set(busMonster.address, {
+      x: busMonster.x,
+      y: busMonster.y,
+      z: busMonster.z,
+    });
+  }
+
   const newActors = actors.filter((actor) => {
     const id =
       typesIdMap[actor.type as keyof typeof typesIdMap] ||
       gatherableIdMap[actor.type as keyof typeof gatherableIdMap];
     if (!id) {
       return false;
+    }
+
+    // Skip address-based filtering for bus monsters (they're tracked separately)
+    const isBusMonster = actor.type === "bus_monster.gim" || actor.type === "bus_monster_arm.gim";
+    if (isBusMonster) {
+      return false; // Already handled in movedBusMonsters
     }
 
     if (lastActorAddresses.includes(actor.address)) {
@@ -157,12 +183,16 @@ async function sendActorsToAPI(actors: Actor[]): Promise<void> {
     return true;
   });
   lastActorAddresses = actors.map((actor) => actor.address);
-  if (newActors.length === 0) {
+
+  // Combine moved bus monsters with new actors
+  const actorsToSend = [...movedBusMonsters, ...newActors];
+
+  if (actorsToSend.length === 0) {
     isSending = false;
     return;
   }
   try {
-    await sendActorsToAPIHelper("once-human", newActors);
+    await sendActorsToAPIHelper("once-human", actorsToSend);
   } finally {
     isSending = false;
   }
