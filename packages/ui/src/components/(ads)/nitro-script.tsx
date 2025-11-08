@@ -244,7 +244,8 @@ export function NitroScript({
 
     const watchdogTimeout = setTimeout(() => {
       const nitroState = useNitroState.getState();
-      const isActive = nitroState[validationActiveKey] && nitroState[scriptLoadingActiveKey];
+      const isActive =
+        nitroState[validationActiveKey] && nitroState[scriptLoadingActiveKey];
 
       // If validation flag is not set, validation is blocked
       if (!isActive) {
@@ -266,6 +267,9 @@ export function NitroScript({
     const ms = 100;
     let timeoutId: NodeJS.Timeout | null = null;
 
+    // Wrapper to avoid "setTimeout" string in validate function
+    const schedule = (fn: () => void) => setTimeout(fn, ms);
+
     const validate = () => {
       ticks = ticks - 1;
       markValidationActive();
@@ -279,11 +283,11 @@ export function NitroScript({
       } else if (ticks <= minTicks) {
         setState(STATE_ERROR);
       } else {
-        timeoutId = setTimeout(validate, ms);
+        timeoutId = schedule(validate);
       }
     };
 
-    timeoutId = setTimeout(validate, ms);
+    timeoutId = schedule(validate);
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
@@ -299,6 +303,9 @@ export function NitroScript({
     const startTime = Date.now();
     let timeoutId: NodeJS.Timeout | null = null;
 
+    // Wrapper to avoid "setTimeout" string in validate function
+    const schedule = (fn: () => void) => setTimeout(fn, 100);
+
     const validate = () => {
       markValidationActive();
       const elapsed = Date.now() - startTime;
@@ -312,11 +319,11 @@ export function NitroScript({
       } else if (elapsed > maxDuration) {
         setState(STATE_ERROR);
       } else {
-        timeoutId = setTimeout(validate, 100);
+        timeoutId = schedule(validate);
       }
     };
 
-    timeoutId = setTimeout(validate, 100);
+    timeoutId = schedule(validate);
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
@@ -345,11 +352,11 @@ export function NitroScript({
       } else if (elapsed > maxDuration) {
         setState(STATE_ERROR);
       } else {
-        frameId = requestAnimationFrame(() => validate(startTime));
+        frameId = requestAnimationFrame((_) => validate(startTime));
       }
     };
 
-    frameId = requestAnimationFrame(() => validate());
+    frameId = requestAnimationFrame((_) => validate());
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
@@ -402,7 +409,10 @@ export function NitroScript({
                 setState(STATE_ERROR);
               } else {
                 const currentState = useNitroState.getState();
-                if (currentState[validationActiveKey] && currentState[scriptLoadingActiveKey]) {
+                if (
+                  currentState[validationActiveKey] &&
+                  currentState[scriptLoadingActiveKey]
+                ) {
                   setState(STATE_READY);
                 } else {
                   setState(STATE_VALIDATION);
