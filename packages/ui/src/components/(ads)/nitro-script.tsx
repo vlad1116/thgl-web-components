@@ -27,6 +27,8 @@ const randomProp = () => {
   return name;
 };
 
+const stateKey = randomProp();
+const setStateKey = randomProp();
 const validationActiveKey = randomProp();
 const markValidationActiveKey = randomProp();
 const scriptLoadingActiveKey = randomProp();
@@ -149,17 +151,24 @@ function isNitroAdsManipulated(): boolean {
 }
 
 export const useNitroState = create<{
-  state: NitroState;
-  setState: (state: NitroState) => void;
   [key: string]: any;
 }>((set) => ({
-  state: STATE_INIT,
-  setState: (state) => set({ state }),
+  [stateKey]: STATE_INIT,
+  [setStateKey]: (state: NitroState) => set({ [stateKey]: state }),
   [validationActiveKey]: false,
   [markValidationActiveKey]: () => set({ [validationActiveKey]: true }),
   [scriptLoadingActiveKey]: false,
   [markScriptLoadingActiveKey]: () => set({ [scriptLoadingActiveKey]: true }),
 }));
+
+// Helper functions to access randomized properties
+export const setNitroError = () => {
+  useNitroState.getState()[setStateKey](STATE_ERROR);
+};
+
+export const getNitroStateValue = (): NitroState => {
+  return useNitroState.getState()[stateKey];
+};
 
 export function NitroScript({
   children,
@@ -174,8 +183,8 @@ export function NitroScript({
   const adRemoval = useAccountStore((state) => state.perks.adRemoval);
   const email = useAccountStore((state) => state.email);
   const nitroStore = useNitroState();
-  const state = nitroStore.state;
-  const setState = nitroStore.setState;
+  const state = nitroStore[stateKey];
+  const setState = nitroStore[setStateKey];
   const markValidationActive = nitroStore[markValidationActiveKey];
   const markScriptLoadingActive = nitroStore[markScriptLoadingActiveKey];
 
