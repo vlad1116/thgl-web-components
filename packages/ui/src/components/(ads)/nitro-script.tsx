@@ -17,6 +17,21 @@ export const STATE_VALIDATION = 1;
 export const STATE_READY = 2;
 export const STATE_ERROR = 3;
 
+// Generate random property names to avoid AdGuard's Object.is proxy detection
+const randomProp = () => {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  let name = chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 8; i++) {
+    name += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return name;
+};
+
+const validationActiveKey = randomProp();
+const markValidationActiveKey = randomProp();
+const scriptLoadingActiveKey = randomProp();
+const markScriptLoadingActiveKey = randomProp();
+
 function isNitroAdsValid(): boolean {
   if (!("nitroAds" in window)) {
     return false;
@@ -136,17 +151,14 @@ function isNitroAdsManipulated(): boolean {
 export const useNitroState = create<{
   state: NitroState;
   setState: (state: NitroState) => void;
-  validationActive: boolean;
-  markValidationActive: () => void;
-  scriptLoadingActive: boolean;
-  markScriptLoadingActive: () => void;
+  [key: string]: any;
 }>((set) => ({
   state: STATE_INIT,
   setState: (state) => set({ state }),
-  validationActive: false,
-  markValidationActive: () => set({ validationActive: true }),
-  scriptLoadingActive: false,
-  markScriptLoadingActive: () => set({ scriptLoadingActive: true }),
+  [validationActiveKey]: false,
+  [markValidationActiveKey]: () => set({ [validationActiveKey]: true }),
+  [scriptLoadingActiveKey]: false,
+  [markScriptLoadingActiveKey]: () => set({ [scriptLoadingActiveKey]: true }),
 }));
 
 export function NitroScript({
@@ -161,14 +173,11 @@ export function NitroScript({
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
   const adRemoval = useAccountStore((state) => state.perks.adRemoval);
   const email = useAccountStore((state) => state.email);
-  const {
-    state,
-    setState,
-    validationActive,
-    scriptLoadingActive,
-    markValidationActive,
-    markScriptLoadingActive,
-  } = useNitroState();
+  const nitroStore = useNitroState();
+  const state = nitroStore.state;
+  const setState = nitroStore.setState;
+  const markValidationActive = nitroStore[markValidationActiveKey];
+  const markScriptLoadingActive = nitroStore[markScriptLoadingActiveKey];
 
   let nitroState = state;
   if (state === STATE_INIT) {
@@ -225,8 +234,8 @@ export function NitroScript({
     if (state === STATE_ERROR) return;
 
     const watchdogTimeout = setTimeout(() => {
-      const state = useNitroState.getState();
-      const isActive = state.validationActive && state.scriptLoadingActive;
+      const nitroState = useNitroState.getState();
+      const isActive = nitroState[validationActiveKey] && nitroState[scriptLoadingActiveKey];
 
       // If validation flag is not set, validation is blocked
       if (!isActive) {
@@ -382,10 +391,13 @@ export function NitroScript({
             } else if (isNitroAdsValid()) {
               if (isNitroAdsManipulated()) {
                 setState(STATE_ERROR);
-              } else if (validationActive && scriptLoadingActive) {
-                setState(STATE_READY);
               } else {
-                setState(STATE_VALIDATION);
+                const currentState = useNitroState.getState();
+                if (currentState[validationActiveKey] && currentState[scriptLoadingActiveKey]) {
+                  setState(STATE_READY);
+                } else {
+                  setState(STATE_VALIDATION);
+                }
               }
             } else {
               setState(STATE_VALIDATION);

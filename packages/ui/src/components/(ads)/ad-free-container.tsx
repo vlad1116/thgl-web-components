@@ -32,18 +32,25 @@ export function AdFreeContainer({
         useNitroState.getState().setState(STATE_ERROR);
         return;
       }
-
       // Check if element is hidden by CSS
       const computedStyle = window.getComputedStyle(el.current);
       const width = parseFloat(computedStyle.width);
       const height = parseFloat(computedStyle.height);
+
+      const rect = el.current.getBoundingClientRect();
+
+      // Allow small differences due to subpixel rendering
+      const widthDiff = Math.abs(rect.width - width);
+      const heightDiff = Math.abs(rect.height - height);
 
       if (
         computedStyle.display === "none" ||
         computedStyle.visibility === "hidden" ||
         computedStyle.opacity === "0" ||
         width < 10 ||
-        height < 10
+        height < 10 ||
+        widthDiff > 5 ||
+        heightDiff > 5
       ) {
         useNitroState.getState().setState(STATE_ERROR);
       }
