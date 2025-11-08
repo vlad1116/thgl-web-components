@@ -30,6 +30,7 @@ if (el) {
         filters={version.data.filters}
         regions={version.data.regions}
         tiles={version.data.tiles}
+        drawings={version.data.drawings}
         typesIdMap={version.data.typesIdMap}
         version={version}
         additionalFilters={<AdditionalContent items={["PlayerDetails"]} />}
