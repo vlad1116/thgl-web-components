@@ -120,7 +120,7 @@ export function createGuidePage(appConfig: AppConfig) {
     const maps = spawns
       .reduce((acc, n) => {
         const mapName = n.mapName || DEFAULT_MAP_NAME;
-        if (!acc.includes(mapName)) {
+        if (!acc.includes(mapName) && version.data.tiles[mapName]) {
           acc.push(mapName);
         }
         return acc;
@@ -130,6 +130,7 @@ export function createGuidePage(appConfig: AppConfig) {
           Object.keys(version.data.tiles).indexOf(a) -
           Object.keys(version.data.tiles).indexOf(b),
       );
+
     if (spawns.length === 0) {
       // Ensure at least one map for UI rendering
       maps.push(Object.keys(version.data.tiles)[0]);
