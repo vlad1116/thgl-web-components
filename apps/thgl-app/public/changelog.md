@@ -1,3 +1,9 @@
+# 2.19.0
+
+- Feat: Improved logging for better issue tracking
+- Fix: Place app in "C:\Program Files\The Hidden Gaming Lair" instead of "C:\Program Files (x86)\The Hidden Gaming Lair", because it's a 64-bit app
+- Chore: Update dependencies for better security and performance
+
 # 2.18.7
 
 - Fix: **Blue Protocol: Star Resonance** Position detection in Steam client (they released another update breaking it again...)
