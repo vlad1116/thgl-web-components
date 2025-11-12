@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import Link from "next/link";
 import { type Database } from "@repo/ui/providers";
-import { fetchDatabase, DEFAULT_LOCALE, getMetadataAlternates } from "@repo/lib";
+import {
+  fetchDatabase,
+  DEFAULT_LOCALE,
+  getMetadataAlternates,
+} from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 
 type PageProps = {
@@ -160,11 +164,13 @@ export default async function QuestsPage() {
           <div>
             <p className="font-semibold mb-2">Rewards:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
-              {item.props.rewards.split(", ").map((reward, index) => (
-                <li key={index} className="text-sm">
-                  {reward}
-                </li>
-              ))}
+              {item.props.rewards
+                .split(", ")
+                .map((reward: string, index: number) => (
+                  <li key={index} className="text-sm">
+                    {reward}
+                  </li>
+                ))}
             </ul>
           </div>
         )}
