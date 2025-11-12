@@ -43,7 +43,8 @@ export function AdBlocker() {
   useEffect(() => {
     if (timeLeft <= 0) return;
 
-    const timeoutId = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    // Use closure instead of functional update to avoid nano-stb filter pattern
+    const timeoutId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     return () => clearTimeout(timeoutId);
   }, [timeLeft]);
 
@@ -83,8 +84,12 @@ export function AdBlocker() {
             <span className="font-bold">{t("adblocker.helpTitle")}</span>{" "}
             {t("adblocker.helpText")}
             <ExternalAnchor
-              href="https://www.th.gl/discord"
+              href="#"
               className="flex gap-1 text-primary hover:underline"
+              onClick={(e) => {
+                window.open("https://www.th.gl/discord", "_blank");
+                e.preventDefault();
+              }}
             >
               <span>{t("adblocker.discordLink")}</span>
               <ExternalLink className="w-3 h-3" />
