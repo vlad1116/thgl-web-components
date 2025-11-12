@@ -289,7 +289,6 @@ export function NitroScript({
 
     let ticks = 25;
     const minTicks = 0;
-    const stateFlags = [state & 1, state & 2];
     const ms = 100;
     let timeoutId: NodeJS.Timeout | null = null;
 
@@ -303,7 +302,8 @@ export function NitroScript({
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
       } else if (isNitroAdsValid()) {
-        if (!stateFlags[1]) {
+        // Only transition to READY if we're still in VALIDATION state
+        if (state === STATE_VALIDATION) {
           setState(STATE_READY);
         }
       } else if (ticks <= minTicks) {
@@ -324,7 +324,6 @@ export function NitroScript({
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
-    const stateFlags = [state & 1, state & 2];
     const maxDuration = 2500;
     const startTime = Date.now();
     let timeoutId: NodeJS.Timeout | null = null;
@@ -339,7 +338,8 @@ export function NitroScript({
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
       } else if (isNitroAdsValid()) {
-        if (!stateFlags[1]) {
+        // Only transition to READY if we're still in VALIDATION state
+        if (state === STATE_VALIDATION) {
           setState(STATE_READY);
         }
       } else if (elapsed > maxDuration) {
@@ -360,7 +360,6 @@ export function NitroScript({
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
-    const stateFlags = [state & 1, state & 2];
     const maxDuration = 2500;
     let frameId: number | null = null;
 
@@ -372,7 +371,8 @@ export function NitroScript({
       if (isNitroAdsManipulated()) {
         setState(STATE_ERROR);
       } else if (isNitroAdsValid()) {
-        if (!stateFlags[1]) {
+        // Only transition to READY if we're still in VALIDATION state
+        if (state === STATE_VALIDATION) {
           setState(STATE_READY);
         }
       } else if (elapsed > maxDuration) {
