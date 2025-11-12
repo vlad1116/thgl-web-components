@@ -75,6 +75,12 @@ export const APP_CONFIG: AppConfig = {
       iconName: "SquareCheckBig",
     },
     {
+      href: "/db/quests",
+      title: "Quests Database",
+      linkText: "Browse All Quests",
+      iconName: "BookOpen",
+    },
+    {
       href: "/guides",
       title: "config.internalLinks.guides.title",
       linkText: "config.internalLinks.guides.linkText",
