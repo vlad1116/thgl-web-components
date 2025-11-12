@@ -8,14 +8,26 @@ import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
 import { NITROPAY_SITE_ID } from "./constants";
 
-type NitroState = -1 | 0 | 1 | 2 | 3;
+type NitroState = number;
 
-// Numeric state constants to prevent adblocker scriptlet targeting
-export const STATE_INIT = -1;
-export const STATE_LOADING = 0;
-export const STATE_VALIDATION = 1;
-export const STATE_READY = 2;
-export const STATE_ERROR = 3;
+const generateState = (() => {
+  const used = new Set<number>();
+  return (): number => {
+    let value: number;
+    do {
+      value = Math.floor(Math.random() * 1000) - 500;
+    } while (used.has(value));
+    used.add(value);
+    return value;
+  };
+})();
+
+// Generate each state independently via separate function calls
+export const STATE_INIT = generateState();
+export const STATE_LOADING = generateState();
+export const STATE_VALIDATION = generateState();
+export const STATE_READY = generateState();
+export const STATE_ERROR = generateState();
 
 // Generate random property names to avoid AdGuard's Object.is proxy detection
 const randomProp = () => {
