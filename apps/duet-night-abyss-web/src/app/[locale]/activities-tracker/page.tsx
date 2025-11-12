@@ -96,9 +96,21 @@ const activities: Activity[] = [
     frequently: "daily",
   },
   {
-    title: "Commission Geniemon",
+    title: "Overworld Geniemon Respawn",
     category: "Main Activities",
-    max: 15,
+    max: 5,
+    frequently: "daily",
+  },
+  {
+    title: "Expeditions",
+    category: "Main Activities",
+    max: 6,
+    frequently: "daily",
+  },
+  {
+    title: "Daily Inspiration (Battle Pass; 650 Stanza)",
+    category: "Main Activities",
+    max: 1,
     frequently: "daily",
   },
 
@@ -122,7 +134,7 @@ const activities: Activity[] = [
     frequently: "daily",
   },
   {
-    title: "Demon Wedge Extraction (3500 Carmine Globule cap)",
+    title: "Demon Wedge Carmine Extraction",
     category: "Hardcore",
     max: 1,
     frequently: "daily",
@@ -157,6 +169,18 @@ const activities: Activity[] = [
     title: "Fishing Bait",
     category: "Weekly Activities",
     max: 1,
+    frequently: "weekly",
+  },
+  {
+    title: "Geniemon Mission Cap",
+    category: "Weekly Activities",
+    max: 20,
+    frequently: "weekly",
+  },
+  {
+    title: "II Manuals buy-out in Shop",
+    category: "Weekly Activities",
+    max: 15,
     frequently: "weekly",
   },
 
