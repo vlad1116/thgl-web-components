@@ -205,11 +205,25 @@ export function NitroScript({
           if (node.nodeName === "LINK") {
             const link = node as HTMLLinkElement;
             if (link.href.includes("nitropay.com")) {
-              link.addEventListener("load", () => {
-                if (link.href !== "https://s.nitropay.com/ads-1487.js") {
-                  markScriptLoadingActive();
-                }
-              });
+              // Check if already loaded (race condition fix for Firefox)
+              const isAlreadyLoaded =
+                (link.sheet !== null && link.sheet !== undefined) || // For stylesheets
+                link.href.endsWith(".js"); // For preloaded scripts
+
+              if (
+                isAlreadyLoaded &&
+                link.href !== "https://s.nitropay.com/ads-1487.js"
+              ) {
+                markScriptLoadingActive();
+              } else {
+                // Resource not loaded yet, add event listeners
+                link.addEventListener("load", () => {
+                  if (link.href !== "https://s.nitropay.com/ads-1487.js") {
+                    markScriptLoadingActive();
+                  }
+                });
+              }
+
               link.addEventListener(
                 "error",
                 () => {
