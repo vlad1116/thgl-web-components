@@ -46,7 +46,7 @@ async function checkForUpdates(currentVersion: CurrentVersion) {
     console.log("Update already triggered, skipping check");
     return;
   }
-  
+
   // Don't check for updates if a game is running
   if (activeGames.length > 0) {
     console.log("Skipping update check - game is running:", activeGames);
@@ -59,7 +59,7 @@ async function checkForUpdates(currentVersion: CurrentVersion) {
       response.data.buildVersion ?? "0.0.0",
       currentVersion.version,
     );
-    
+
     if (comparedVersion === -1 && !updateTriggered) {
       console.log("Update available - triggering update");
       updateTriggered = true;
@@ -75,20 +75,26 @@ async function checkForUpdates(currentVersion: CurrentVersion) {
   }
 }
 
-function startPeriodicUpdateCheck(currentVersion: CurrentVersion, intervalMinutes: number = 30) {
+function startPeriodicUpdateCheck(
+  currentVersion: CurrentVersion,
+  intervalMinutes: number = 30,
+) {
   // Clear any existing interval
   if (updateCheckInterval) {
     clearInterval(updateCheckInterval);
   }
-  
+
   // Ensure minimum interval of 5 minutes to avoid too frequent checks
   const safeInterval = Math.max(5, intervalMinutes);
-  
+
   // Start periodic check
-  updateCheckInterval = setInterval(() => {
-    checkForUpdates(currentVersion);
-  }, safeInterval * 60 * 1000);
-  
+  updateCheckInterval = setInterval(
+    () => {
+      checkForUpdates(currentVersion);
+    },
+    safeInterval * 60 * 1000,
+  );
+
   console.log(`Started periodic update check every ${safeInterval} minutes`);
 }
 
@@ -127,13 +133,13 @@ export async function initController(currentVersion: CurrentVersion) {
     switch (message.action) {
       case "runningGames":
         sendBroadcast(message);
-        
+
         // Store previous game count to detect when games close
         const previousGameCount = activeGames.length;
-        
+
         // Update active games list
         activeGames = message.payload.map((game: any) => game.processName);
-        
+
         // Check for updates when all games have closed
         if (previousGameCount > 0 && activeGames.length === 0) {
           setTimeout(() => {
@@ -141,7 +147,7 @@ export async function initController(currentVersion: CurrentVersion) {
             checkForUpdates(currentVersion);
           }, 5000);
         }
-        
+
         handleRunningGames(
           message.payload,
           (runningGame) => {
@@ -220,7 +226,7 @@ export async function initController(currentVersion: CurrentVersion) {
         console.log("Version is newer than current version.");
       } else if (comparedVersion === -1) {
         console.log("Version is older than current version.");
-        
+
         // Only trigger update if no game is running and not already triggered
         if (activeGames.length === 0 && !updateTriggered) {
           updateTriggered = true;
@@ -234,14 +240,16 @@ export async function initController(currentVersion: CurrentVersion) {
               updateTriggered = false;
             });
         } else if (activeGames.length > 0) {
-          console.log("Update available but game is running, will check again later");
+          console.log(
+            "Update available but game is running, will check again later",
+          );
         } else {
           console.log("Update already triggered, skipping");
         }
       } else {
         console.log("Version is equal to current version.");
       }
-      
+
       // Start periodic update check (every 30 minutes by default)
       startPeriodicUpdateCheck(currentVersion, 30);
     })
@@ -275,7 +283,6 @@ export async function initController(currentVersion: CurrentVersion) {
         console.log("Worker initialized with ID: ", msg.data);
         break;
       case "clientList":
-        console.log("Client list received: ", msg.data);
         sendBroadcast({
           action: "connectedClients",
           payload: msg.data,
@@ -390,7 +397,10 @@ export async function initController(currentVersion: CurrentVersion) {
             answerWebViewRequest(
               msg.from,
               msg.data,
-              updateActorTypeFilters(msg.data.payload.types, msg.data.payload.processName),
+              updateActorTypeFilters(
+                msg.data.payload.types,
+                msg.data.payload.processName,
+              ),
             );
             break;
           case "sendDebugSnapshot":

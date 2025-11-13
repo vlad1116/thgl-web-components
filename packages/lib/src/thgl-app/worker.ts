@@ -156,13 +156,34 @@ type WORKER_MESSAGE =
     };
 
 let worker: SharedWorker;
+let workerInitialized: Promise<number>;
+let workerInitializedResolve: (clientId: number) => void;
+
 export function initMessageWorker(
   role: "controller" | "dashboard" | "client" = "client",
 ) {
   if (worker) {
-    return;
+    return workerInitialized;
   }
-  worker = new SharedWorker(location.origin + "/worker.js");
+
+  // Create promise that resolves when worker sends "init" message
+  workerInitialized = new Promise((resolve) => {
+    workerInitializedResolve = resolve;
+  });
+
+  // Add session-based version to force new worker per app session (important for WebView2)
+  // Controller generates session ID, dashboard reads it - ensures they use same worker
+  let sessionId = localStorage.getItem("thgl-worker-session");
+  if (!sessionId || role === "controller") {
+    // Controller always creates new session, others reuse existing
+    sessionId = Date.now().toString();
+    localStorage.setItem("thgl-worker-session", sessionId);
+  }
+
+  const workerUrl = location.origin + "/worker.js?session=" + sessionId;
+  console.log("Initializing SharedWorker for role:", role);
+
+  worker = new SharedWorker(workerUrl);
   worker.port.postMessage({ type: "identify", href: location.href, role });
 
   worker.onerror = (e) => {
@@ -172,6 +193,8 @@ export function initMessageWorker(
   window.addEventListener("beforeunload", () => {
     worker.port.postMessage({ type: "disconnect" });
   });
+
+  return workerInitialized;
 }
 
 export function listenToWorkerMessages(
@@ -191,6 +214,10 @@ export function listenToWorkerMessages(
 
     switch (msgType) {
       case "init":
+        // Resolve the initialization promise
+        if (workerInitializedResolve) {
+          workerInitializedResolve(msg.data);
+        }
         callback({ type: "init", data: msg.data });
         break;
       case "clientList":
@@ -325,7 +352,10 @@ export const requestOpenOverlayWebView = (url: string, title: string) =>
     payload: { url: url, title: title },
   });
 
-export const requestSetActorTypeFilter = (types: string[], processName?: string) =>
+export const requestSetActorTypeFilter = (
+  types: string[],
+  processName?: string,
+) =>
   requestFromMain({
     action: "setActorTypeFilter",
     payload: { types, processName },

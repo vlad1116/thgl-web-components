@@ -96,13 +96,13 @@ export function openControllerWebView(url: string) {
 }
 
 let initialized = false;
-export function initializeApp(role: "client" | "dashboard" = "client") {
+export async function initializeApp(role: "client" | "dashboard" = "client") {
   if (initialized) {
     return;
   }
   initialized = true;
 
-  initMessageWorker(role);
+  const workerReady = initMessageWorker(role);
 
   const gameState = useGameState.getState();
   const liveState = useLiveState.getState();
@@ -152,6 +152,9 @@ export function initializeApp(role: "client" | "dashboard" = "client") {
   });
 
   if (role === "dashboard") {
+    // Wait for worker to be initialized before sending requests
+    await workerReady;
+
     requestFromMain({ action: "isRunningAsAdmin", payload: null })
       .then((res) => {
         liveState.setIsRunningAsAdmin(res.data);
