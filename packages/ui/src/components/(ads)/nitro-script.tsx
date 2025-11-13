@@ -23,11 +23,12 @@ const generateState = (() => {
 })();
 
 // Generate each state independently via separate function calls
-export const STATE_INIT = generateState();
-export const STATE_LOADING = generateState();
-export const STATE_VALIDATION = generateState();
-export const STATE_READY = generateState();
-export const STATE_ERROR = generateState();
+// Keep internal only - do not export to prevent module capture attacks
+const STATE_INIT = generateState();
+const STATE_LOADING = generateState();
+const STATE_VALIDATION = generateState();
+const STATE_READY = generateState();
+const STATE_ERROR = generateState();
 
 // Generate random property names to avoid AdGuard's Object.is proxy detection
 const randomProp = () => {
@@ -180,6 +181,11 @@ export const setNitroError = () => {
 
 export const getNitroStateValue = (): NitroState => {
   return useNitroState.getState()[stateKey];
+};
+
+// Helper functions to check states without exposing values
+export const isStateError = (): boolean => {
+  return getNitroStateValue() === STATE_ERROR;
 };
 
 export function NitroScript({

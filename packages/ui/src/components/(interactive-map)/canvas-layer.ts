@@ -2,7 +2,7 @@ import type { Coords, TileLayer, TileLayerOptions } from "leaflet";
 import leaflet from "leaflet";
 import type { ColorBlindMode } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
-import { STATE_ERROR, getNitroStateValue, useNitroState } from "../(ads)";
+import { isStateError, useNitroState } from "../(ads)";
 
 type Tile = HTMLCanvasElement & { complete: boolean };
 
@@ -13,7 +13,7 @@ const activeLayerInstances = new Set<TileLayer>();
 
 useNitroState.subscribe(() => {
   const wasError = isNitroError;
-  isNitroError = getNitroStateValue() === STATE_ERROR;
+  isNitroError = isStateError();
 
   // If state changed to ERROR, add watermark to existing tiles
   if (!wasError && isNitroError) {
