@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { getNitroAds } from "./nitro-pay";
-import { NitroScript } from "./nitro-script";
+import { ScriptLoader } from "./nitro-script";
 import { THGLAppConfig } from "@repo/lib";
 import dynamic from "next/dynamic";
 import { IS_DEMO_MODE } from "./constants";
@@ -26,7 +26,7 @@ export function THGLMapAds({
   const id =
     "thgl-" + appConfig.name + "-" + (isOverlay ? "overlay" : "desktop");
   return (
-    <NitroScript
+    <ScriptLoader
       loading={
         <NitroPayAdLoading
           id={id}
@@ -36,7 +36,7 @@ export function THGLMapAds({
       }
     >
       <NitroPayAd id={id} isOverlay={isOverlay} appConfig={appConfig} />
-    </NitroScript>
+    </ScriptLoader>
   );
 }
 
