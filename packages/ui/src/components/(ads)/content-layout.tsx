@@ -1,6 +1,6 @@
 import { cn } from "@repo/lib";
 import { AdBlocker } from "./ad-blocker";
-import { NitroScript } from "./nitro-script";
+import { ScriptLoader } from "./nitro-script";
 import { getObfuscatedAdId, AD_TYPES } from "./obfuscated-ids";
 
 import {
@@ -52,7 +52,7 @@ export function ContentLayout({
     <div className="flex grow p-2">
       {/* Left Ad */}
       <div>
-        <NitroScript
+        <ScriptLoader
           loading={<WideSkyscraperLoading />}
           fallback={
             <>
@@ -66,7 +66,7 @@ export function ContentLayout({
             targeting={targeting}
             mediaQuery="(min-width: 1024px)"
           />
-        </NitroScript>
+        </ScriptLoader>
       </div>
 
       {/* Main Content */}
@@ -80,17 +80,17 @@ export function ContentLayout({
         {header}
 
         {/* Top Banner */}
-        <NitroScript
+        <ScriptLoader
           loading={<LargeMobileBannerLoading />}
           fallback={<LargeMobileBannerFallback />}
         >
           <LargeMobileBanner id={largeMobileBannerId} targeting={targeting} />
-        </NitroScript>
+        </ScriptLoader>
 
         {content}
 
         {/* Bottom Banner */}
-        <NitroScript
+        <ScriptLoader
           loading={<MobileBannerLoading />}
           fallback={<MobileBannerFallback />}
         >
@@ -100,19 +100,19 @@ export function ContentLayout({
             videoId={mobileVideoId}
             targeting={targeting}
           />
-        </NitroScript>
+        </ScriptLoader>
 
         {more}
       </div>
 
       {/* Right Ad */}
       <div>
-        <NitroScript
+        <ScriptLoader
           loading={<WideSkyscraperLoading className="min-[860px]:block" />}
           fallback={<WideSkyscraperFallback className="min-[860px]:block" />}
         >
           <WideSkyscraper id={wideSkyscraper2Id} targeting={targeting} />
-        </NitroScript>
+        </ScriptLoader>
       </div>
     </div>
   );

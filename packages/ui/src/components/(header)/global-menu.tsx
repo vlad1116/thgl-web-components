@@ -15,7 +15,7 @@ import {
 } from "../ui/hover-card";
 import { User } from "./user";
 import ConsentLink from "../(ads)/consent-link";
-import { NitroScript } from "../(ads)";
+import { ScriptLoader } from "../(ads)";
 import apps from "./global-menu.json";
 
 export function GlobalMenu({
@@ -290,9 +290,9 @@ export function GlobalMenu({
                   {t("privacy_policy")}
                 </ExternalAnchor>
               </Button>
-              <NitroScript>
+              <ScriptLoader>
                 <ConsentLink />
-              </NitroScript>
+              </ScriptLoader>
               {infoActions}
             </HoverCardContent>
           </HoverCard>

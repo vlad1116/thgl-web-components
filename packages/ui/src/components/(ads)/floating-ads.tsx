@@ -17,7 +17,7 @@ const NitroPayVideoPlayer = dynamic(
     import("./nitropay-video-player").then((mod) => mod.NitroPayVideoPlayer),
   { ssr: false },
 );
-import { NitroScript } from "./nitro-script";
+import { ScriptLoader } from "./nitro-script";
 
 export function FloatingAds({ id }: { id: string }): JSX.Element {
   // Generate generic obfuscated IDs (shared across all subdomains for better dynamic flooring)
@@ -31,7 +31,7 @@ export function FloatingAds({ id }: { id: string }): JSX.Element {
   const targeting = { platform: "web", game: id };
 
   return (
-    <NitroScript
+    <ScriptLoader
       fallback={
         <>
           <AdBlocker />
@@ -65,6 +65,6 @@ export function FloatingAds({ id }: { id: string }): JSX.Element {
         videoId={mobileVideoId}
         targeting={targeting}
       />
-    </NitroScript>
+    </ScriptLoader>
   );
 }
