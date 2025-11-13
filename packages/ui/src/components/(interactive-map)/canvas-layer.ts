@@ -172,6 +172,10 @@ const CanvasLayer = leaflet.TileLayer.extend({
         done(err, tile);
       }
     };
+    img.onerror = () => {
+      err = new Error("Failed to load tile image");
+      done(err, tile);
+    };
     const tileZoom = this._getZoomForUrl();
     img.src = isNaN(tileZoom) ? "" : this.getTileUrl(coords);
     img.crossOrigin = "anonymous";
