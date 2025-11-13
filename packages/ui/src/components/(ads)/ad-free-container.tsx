@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { cn, useAccountStore } from "@repo/lib";
 import { X } from "lucide-react";
 import { useT } from "../(providers)";
-import { setNitroError } from "./nitro-script";
+import { setContentError } from "./nitro-script";
 
 export function AdFreeContainer({
   children,
@@ -29,7 +29,7 @@ export function AdFreeContainer({
     }
     try {
       if (!el.current || !document.body.contains(el.current)) {
-        setNitroError();
+        setContentError();
         return;
       }
       // Check if element is hidden by CSS
@@ -52,10 +52,10 @@ export function AdFreeContainer({
         widthDiff > 5 ||
         heightDiff > 5
       ) {
-        setNitroError();
+        setContentError();
       }
     } catch {
-      setNitroError();
+      setContentError();
     }
 
     const timeoutHandle = setTimeout(() => {

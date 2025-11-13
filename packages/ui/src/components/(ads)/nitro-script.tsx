@@ -175,20 +175,44 @@ export const useNitroState = create<{
 }));
 
 // Helper functions to access randomized properties
-export const setNitroError = () => {
+export const setContentError = () => {
   useNitroState.getState()[setStateKey](STATE_ERROR);
 };
 
-export const getNitroStateValue = (): NitroState => {
-  return useNitroState.getState()[stateKey];
+// Obfuscated name to prevent filter targeting
+const getContentState = (): NitroState => {
+  const state = useNitroState.getState()[stateKey];
+
+  // Validate state hasn't been corrupted by proxy attacks
+  // If invalid state detected, force to ERROR
+  const validStates = [
+    STATE_INIT,
+    STATE_LOADING,
+    STATE_VALIDATION,
+    STATE_READY,
+    STATE_ERROR,
+  ];
+  if (!validStates.includes(state)) {
+    useNitroState.getState()[setStateKey](STATE_ERROR);
+    return STATE_ERROR;
+  }
+
+  return state;
 };
 
 // Helper functions to check states without exposing values
 export const isStateError = (): boolean => {
-  return getNitroStateValue() === STATE_ERROR;
+  return getContentState() === STATE_ERROR;
 };
 
-export function NitroScript({
+// Decoy exports to confuse module capture filters
+// These match common library patterns, creating false positives
+export const Provider = ScriptLoader;
+export const Consumer = ScriptLoader;
+export const useMediaQuery = getContentState;
+export const useLocalStorage = getContentState;
+
+export function ScriptLoader({
   children,
   fallback,
   loading,
