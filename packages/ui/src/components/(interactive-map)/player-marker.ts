@@ -33,6 +33,8 @@ export class PlayerMarker extends leaflet.Marker {
     rotationOffset?: number;
   };
   private _icon: HTMLElement | undefined = undefined;
+  private _lastRawRotation: number = 0;
+  private _accumulatedSpins: number = 0;
 
   constructor(
     latLng: leaflet.LatLngExpression,
@@ -42,6 +44,7 @@ export class PlayerMarker extends leaflet.Marker {
     },
   ) {
     super(latLng, options);
+    this._lastRawRotation = options.rotation;
   }
 
   _setPos(pos: leaflet.Point): void {
@@ -62,28 +65,33 @@ export class PlayerMarker extends leaflet.Marker {
   updatePosition({ x, y, r }: ActorPlayer) {
     const latLng = this.getLatLng();
     const newLatLng = [x, y] as leaflet.LatLngTuple;
-    if (!latLng.equals(newLatLng)) {
-      let playerRotation = r;
 
-      const oldRotation = this.options.rotation || playerRotation;
+    // Only recalculate rotation when r actually changes
+    if (r !== this._lastRawRotation) {
+      // Check if we crossed the 180/-180 boundary
+      const diff = r - this._lastRawRotation;
+      if (diff > 180) {
+        // Crossed from positive to negative (e.g., 170 -> -170)
+        this._accumulatedSpins -= 1;
+      } else if (diff < -180) {
+        // Crossed from negative to positive (e.g., -170 -> 170)
+        this._accumulatedSpins += 1;
+      }
 
-      let spins = 0;
-      if (oldRotation >= 180) {
-        spins += Math.floor(Math.abs(oldRotation + 180) / 360);
-      } else if (oldRotation <= -180) {
-        spins -= Math.floor(Math.abs(oldRotation - 180) / 360);
-      }
-      playerRotation += 360 * spins;
-      if (oldRotation - playerRotation >= 180) {
-        playerRotation += 360;
-      } else if (playerRotation - oldRotation >= 180) {
-        playerRotation -= 360;
-      }
+      // Calculate rotation with accumulated spins
+      let playerRotation = r + (360 * this._accumulatedSpins);
+
+      // Apply rotation offset if configured
       if (this.options.rotationOffset) {
         playerRotation -= this.options.rotationOffset;
       }
 
       this.options.rotation = playerRotation;
+      this._lastRawRotation = r;
+    }
+
+    // Update position if changed
+    if (!latLng.equals(newLatLng)) {
       this.setLatLng(newLatLng);
     }
   }
