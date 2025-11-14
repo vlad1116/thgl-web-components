@@ -82,8 +82,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       }
 
       const polylines: Drawing["polylines"] = [];
-      const rotationDegrees = (map as any)?._rotationDegrees;
-      const rotationCenter = (map as any)?._rotationCenter;
+      const rotationDegrees = map?._rotationDegrees;
+      const rotationCenter = map?._rotationCenter;
 
       polylineLayers.forEach((polylineLayer) => {
         const latLngs = polylineLayer.getLatLngs() as LatLng[];
@@ -94,7 +94,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           const coord: [number, number] = [latLng.lat, latLng.lng];
           // Store in original (unrotated) coordinates
           if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(coord, rotationDegrees, rotationCenter);
+            return inverseRotateCoordinate(
+              coord,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           return coord;
         });
@@ -167,8 +171,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       }
 
       const rectangles: Drawing["rectangles"] = [];
-      const rotationDegrees = (map as any)?._rotationDegrees;
-      const rotationCenter = (map as any)?._rotationCenter;
+      const rotationDegrees = map?._rotationDegrees;
+      const rotationCenter = map?._rotationCenter;
 
       rectangleLayers.forEach((rectangleLayer) => {
         const latLngs = rectangleLayer.getLatLngs() as LatLng[][];
@@ -179,7 +183,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           const coord: [number, number] = [latLng.lat, latLng.lng];
           // Store in original (unrotated) coordinates
           if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(coord, rotationDegrees, rotationCenter);
+            return inverseRotateCoordinate(
+              coord,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           return coord;
         });
@@ -209,8 +217,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       }
 
       const polygons: Drawing["polygons"] = [];
-      const rotationDegrees = (map as any)?._rotationDegrees;
-      const rotationCenter = (map as any)?._rotationCenter;
+      const rotationDegrees = map?._rotationDegrees;
+      const rotationCenter = map?._rotationCenter;
 
       polygonLayers.forEach((polygonLayer) => {
         const latLngs = polygonLayer.getLatLngs() as LatLng[][];
@@ -221,7 +229,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           const coord: [number, number] = [latLng.lat, latLng.lng];
           // Store in original (unrotated) coordinates
           if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(coord, rotationDegrees, rotationCenter);
+            return inverseRotateCoordinate(
+              coord,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           return coord;
         });
@@ -243,85 +255,91 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     [map],
   );
 
-  const setCircles = useCallback((circleLayers: Circle[], mapName: string) => {
-    const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-    if (!tempPrivateDrawing) {
-      return;
-    }
-
-    const circles: Drawing["circles"] = [];
-    const rotationDegrees = (map as any)?._rotationDegrees;
-    const rotationCenter = (map as any)?._rotationCenter;
-
-    circleLayers.forEach((circleLayer) => {
-      const center = circleLayer.getLatLng();
-      const radius = circleLayer.getRadius();
-
-      let storageCenter: [number, number] = [center.lat, center.lng];
-      // Store in original (unrotated) coordinates
-      if (rotationDegrees && rotationCenter) {
-        storageCenter = inverseRotateCoordinate(
-          [center.lat, center.lng],
-          rotationDegrees,
-          rotationCenter,
-        );
+  const setCircles = useCallback(
+    (circleLayers: Circle[], mapName: string) => {
+      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!tempPrivateDrawing) {
+        return;
       }
 
-      circles.push({
-        center: storageCenter,
-        radius: radius,
-        size: circleLayer.options.weight!,
-        color: circleLayer.options.color!,
-        mapName: mapName,
+      const circles: Drawing["circles"] = [];
+      const rotationDegrees = map?._rotationDegrees;
+      const rotationCenter = map?._rotationCenter;
+
+      circleLayers.forEach((circleLayer) => {
+        const center = circleLayer.getLatLng();
+        const radius = circleLayer.getRadius();
+
+        let storageCenter: [number, number] = [center.lat, center.lng];
+        // Store in original (unrotated) coordinates
+        if (rotationDegrees && rotationCenter) {
+          storageCenter = inverseRotateCoordinate(
+            [center.lat, center.lng],
+            rotationDegrees,
+            rotationCenter,
+          );
+        }
+
+        circles.push({
+          center: storageCenter,
+          radius: radius,
+          size: circleLayer.options.weight!,
+          color: circleLayer.options.color!,
+          mapName: mapName,
+        });
       });
-    });
-    const existingCircles =
-      tempPrivateDrawing.circles?.filter(
-        (drawing) => drawing.mapName !== mapName,
-      ) ?? [];
-    setTempPrivateDrawing({
-      circles: [...existingCircles, ...circles],
-    });
-  }, [map]);
+      const existingCircles =
+        tempPrivateDrawing.circles?.filter(
+          (drawing) => drawing.mapName !== mapName,
+        ) ?? [];
+      setTempPrivateDrawing({
+        circles: [...existingCircles, ...circles],
+      });
+    },
+    [map],
+  );
 
-  const setTexts = useCallback((textLayers: Marker[], mapName: string) => {
-    const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-    if (!tempPrivateDrawing) {
-      return;
-    }
-
-    const texts: Drawing["texts"] = [];
-    const rotationDegrees = (map as any)?._rotationDegrees;
-    const rotationCenter = (map as any)?._rotationCenter;
-
-    textLayers.forEach((textLayer) => {
-      const latLngs = textLayer.getLatLng();
-      let storagePosition: [number, number] = [latLngs.lat, latLngs.lng];
-      // Store in original (unrotated) coordinates
-      if (rotationDegrees && rotationCenter) {
-        storagePosition = inverseRotateCoordinate(
-          [latLngs.lat, latLngs.lng],
-          rotationDegrees,
-          rotationCenter,
-        );
+  const setTexts = useCallback(
+    (textLayers: Marker[], mapName: string) => {
+      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!tempPrivateDrawing) {
+        return;
       }
 
-      texts.push({
-        position: storagePosition,
-        text: textLayer.pm.getText(),
-        color: textLayer.pm.getElement().style.color,
-        size: parseInt(textLayer.pm.getElement().style.fontSize),
-        mapName: mapName,
+      const texts: Drawing["texts"] = [];
+      const rotationDegrees = map?._rotationDegrees;
+      const rotationCenter = map?._rotationCenter;
+
+      textLayers.forEach((textLayer) => {
+        const latLngs = textLayer.getLatLng();
+        let storagePosition: [number, number] = [latLngs.lat, latLngs.lng];
+        // Store in original (unrotated) coordinates
+        if (rotationDegrees && rotationCenter) {
+          storagePosition = inverseRotateCoordinate(
+            [latLngs.lat, latLngs.lng],
+            rotationDegrees,
+            rotationCenter,
+          );
+        }
+
+        texts.push({
+          position: storagePosition,
+          text: textLayer.pm.getText(),
+          color: textLayer.pm.getElement().style.color,
+          size: parseInt(textLayer.pm.getElement().style.fontSize),
+          mapName: mapName,
+        });
       });
-    });
-    const existingTexts =
-      tempPrivateDrawing.texts?.filter(
-        (drawing) => drawing.mapName !== mapName,
-      ) ?? [];
-    setTempPrivateDrawing({
-      texts: [...existingTexts, ...texts],
-    });
-  }, [map]);
+      const existingTexts =
+        tempPrivateDrawing.texts?.filter(
+          (drawing) => drawing.mapName !== mapName,
+        ) ?? [];
+      setTempPrivateDrawing({
+        texts: [...existingTexts, ...texts],
+      });
+    },
+    [map],
+  );
 
   useEffect(() => {
     if (!map) {
@@ -367,8 +385,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       ? [sharedTempPrivateDrawing, ...sharedPrivateDrawings]
       : sharedPrivateDrawings;
 
-    const rotationDegrees = (map as any)?._rotationDegrees;
-    const rotationCenter = (map as any)?._rotationCenter;
+    const rotationDegrees = map?._rotationDegrees;
+    const rotationCenter = map?._rotationCenter;
 
     drawings.forEach((drawing) => {
       const { polylines, rectangles, polygons, circles, texts } = drawing;
@@ -445,7 +463,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         // Apply rotation to display stored coordinates correctly
         let displayCenter = circleData.center;
         if (rotationDegrees && rotationCenter) {
-          displayCenter = rotateCoordinate(circleData.center, rotationDegrees, rotationCenter);
+          displayCenter = rotateCoordinate(
+            circleData.center,
+            rotationDegrees,
+            rotationCenter,
+          );
         }
         const circleLayer = circle(displayCenter, {
           pmIgnore: false,
@@ -466,7 +488,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         // Apply rotation to display stored coordinates correctly
         let displayPosition = textPositions.position;
         if (rotationDegrees && rotationCenter) {
-          displayPosition = rotateCoordinate(textPositions.position, rotationDegrees, rotationCenter);
+          displayPosition = rotateCoordinate(
+            textPositions.position,
+            rotationDegrees,
+            rotationCenter,
+          );
         }
         const textLayer = marker(displayPosition, {
           pmIgnore: false,
@@ -511,8 +537,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       layerGroup.setZIndex(1100);
     } catch (e) {}
 
-    const rotationDegrees = (map as any)?._rotationDegrees;
-    const rotationCenter = (map as any)?._rotationCenter;
+    const rotationDegrees = map?._rotationDegrees;
+    const rotationCenter = map?._rotationCenter;
 
     tempPrivateDrawing.polylines?.forEach((polylineData) => {
       if (polylineData.mapName !== mapName) {
@@ -593,7 +619,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       // Apply rotation to display stored coordinates correctly
       let displayCenter = circleData.center;
       if (rotationDegrees && rotationCenter) {
-        displayCenter = rotateCoordinate(circleData.center, rotationDegrees, rotationCenter);
+        displayCenter = rotateCoordinate(
+          circleData.center,
+          rotationDegrees,
+          rotationCenter,
+        );
       }
       const circleLayer = circle(displayCenter, {
         pmIgnore: false,
@@ -662,7 +692,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       // Apply rotation to display stored coordinates correctly
       let displayPosition = textPositions.position;
       if (rotationDegrees && rotationCenter) {
-        displayPosition = rotateCoordinate(textPositions.position, rotationDegrees, rotationCenter);
+        displayPosition = rotateCoordinate(
+          textPositions.position,
+          rotationDegrees,
+          rotationCenter,
+        );
       }
 
       const textLayer = marker(displayPosition, {
@@ -881,8 +915,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     } catch (e) {}
     const allFilters = [...myFilters, ...(staticDrawings || [])];
 
-    const rotationDegrees = (map as any)?._rotationDegrees;
-    const rotationCenter = (map as any)?._rotationCenter;
+    const rotationDegrees = map?._rotationDegrees;
+    const rotationCenter = map?._rotationCenter;
 
     allFilters.forEach((myFilter) => {
       if (
@@ -976,7 +1010,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           // Apply rotation to display stored coordinates correctly
           let displayCenter = circleData.center;
           if (rotationDegrees && rotationCenter) {
-            displayCenter = rotateCoordinate(circleData.center, rotationDegrees, rotationCenter);
+            displayCenter = rotateCoordinate(
+              circleData.center,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           const circleLayer = circle(displayCenter, {
             stroke: true,
@@ -996,7 +1034,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           // Apply rotation to display stored coordinates correctly
           let displayPosition = textPositions.position;
           if (rotationDegrees && rotationCenter) {
-            displayPosition = rotateCoordinate(textPositions.position, rotationDegrees, rotationCenter);
+            displayPosition = rotateCoordinate(
+              textPositions.position,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           const textLayer = marker(displayPosition, {
             pmIgnore: false,

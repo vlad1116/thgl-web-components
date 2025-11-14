@@ -3,13 +3,9 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
-import leaflet from "leaflet";
+import leaflet, { PointExpression } from "leaflet";
 import { rotateCoordinate } from "./rotation";
-import {
-  getIconsUrl,
-  MarkerOptions,
-  TilesConfig,
-} from "@repo/lib";
+import { getIconsUrl, MarkerOptions, TilesConfig } from "@repo/lib";
 import { useSettingsStore } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
 import type { ColorBlindMode } from "@repo/lib";
@@ -52,14 +48,14 @@ export function Teammate({
       return leaflet.icon({
         iconUrl: cached,
         className: "player",
-        iconSize: size as any,
+        iconSize: size as PointExpression,
       });
     }
     if (mode === "none" || severity <= 0) {
       return leaflet.icon({
         iconUrl,
         className: "player",
-        iconSize: size as any,
+        iconSize: size as PointExpression,
       });
     }
     try {
@@ -91,14 +87,14 @@ export function Teammate({
       return leaflet.icon({
         iconUrl: dataUrl,
         className: "player",
-        iconSize: size as any,
+        iconSize: size as PointExpression,
       });
     } catch (e) {
       // Fallback to unprocessed icon on error
       return leaflet.icon({
         iconUrl,
         className: "player",
-        iconSize: size as any,
+        iconSize: size as PointExpression,
       });
     }
   }
@@ -141,13 +137,13 @@ export function Teammate({
 
       // Apply rotation to teammate position if configured
       let teammatePosition: [number, number] = [player.x, player.y];
-      const rotationDegrees = (map as any)._rotationDegrees;
-      const rotationCenter = (map as any)._rotationCenter;
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
         teammatePosition = rotateCoordinate(
           [player.x, player.y],
           rotationDegrees,
-          rotationCenter
+          rotationCenter,
         );
       }
 
@@ -239,13 +235,13 @@ export function Teammate({
 
       // Apply rotation to teammate position if configured
       let teammatePosition: [number, number] = [player.x, player.y];
-      const rotationDegrees = (map as any)._rotationDegrees;
-      const rotationCenter = (map as any)._rotationCenter;
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
         teammatePosition = rotateCoordinate(
           [player.x, player.y],
           rotationDegrees,
-          rotationCenter
+          rotationCenter,
         );
       }
 

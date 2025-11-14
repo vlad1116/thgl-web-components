@@ -218,6 +218,30 @@ function MarkersContent({
   const throttledPlayer = useThrottle(player, 1000);
   const firstRender = useRef(true);
 
+  // Cache rotated coordinates to avoid recalculating on every render
+  const rotationCache = useMemo(() => {
+    const rotationDegrees = map?._rotationDegrees;
+    const rotationCenter = map?._rotationCenter;
+
+    if (!rotationDegrees || !rotationCenter) {
+      return null;
+    }
+
+    const cache = new Map<string, [number, number]>();
+
+    return {
+      getRotated: (x: number, y: number): [number, number] => {
+        const key = `${x}:${y}`;
+        let rotated = cache.get(key);
+        if (!rotated) {
+          rotated = rotateCoordinate([x, y], rotationDegrees, rotationCenter);
+          cache.set(key, rotated);
+        }
+        return rotated;
+      },
+    };
+  }, [map, map?._rotationDegrees, map?._rotationCenter]);
+
   useEffect(() => {
     if (!map || !map._mapPane) {
       return;
@@ -277,13 +301,10 @@ function MarkersContent({
           // Apply rotation if map has rotation configured
           let markerPosition: [number, number] | [number, number, number] =
             spawn.p;
-          const rotationDegrees = (map as any)._rotationDegrees;
-          const rotationCenter = (map as any)._rotationCenter;
-          if (rotationDegrees && rotationCenter) {
-            const rotatedCoord = rotateCoordinate(
-              [spawn.p[0], spawn.p[1]],
-              rotationDegrees,
-              rotationCenter,
+          if (rotationCache) {
+            const rotatedCoord = rotationCache.getRotated(
+              spawn.p[0],
+              spawn.p[1],
             );
             markerPosition =
               spawn.p.length === 3
@@ -322,14 +343,8 @@ function MarkersContent({
 
       // Apply rotation if map has rotation configured
       let markerPosition: [number, number] | [number, number, number] = spawn.p;
-      const rotationDegrees = (map as any)._rotationDegrees;
-      const rotationCenter = (map as any)._rotationCenter;
-      if (rotationDegrees && rotationCenter) {
-        const rotatedCoord = rotateCoordinate(
-          [spawn.p[0], spawn.p[1]],
-          rotationDegrees,
-          rotationCenter,
-        );
+      if (rotationCache) {
+        const rotatedCoord = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
         markerPosition =
           spawn.p.length === 3
             ? [rotatedCoord[0], rotatedCoord[1], spawn.p[2]]
@@ -498,6 +513,7 @@ function MarkersContent({
     tempPrivateNodeId,
     selectedNodeId,
     highlightSpawnIDs,
+    rotationCache,
   ]);
 
   useEffect(() => {
@@ -515,8 +531,18 @@ function MarkersContent({
     const maxDistSq =
       markerOptions.zPos.xyMaxDistance * markerOptions.zPos.xyMaxDistance;
     const zDistance = markerOptions.zPos.zDistance;
-    const playerX = throttledPlayer.x;
-    const playerY = throttledPlayer.y;
+
+    // Apply rotation to player position to match rotated spawn positions
+    let playerX = throttledPlayer.x;
+    let playerY = throttledPlayer.y;
+    if (rotationCache) {
+      const rotatedPlayer = rotationCache.getRotated(
+        throttledPlayer.x,
+        throttledPlayer.y,
+      );
+      playerX = rotatedPlayer[0];
+      playerY = rotatedPlayer[1];
+    }
     const playerZ = throttledPlayer.z;
 
     for (const marker of existingSpawnIds.current.values()) {
@@ -545,7 +571,7 @@ function MarkersContent({
         marker.setZPos(newZPos);
       }
     }
-  }, [throttledPlayer, markerOptions.zPos]);
+  }, [throttledPlayer, markerOptions.zPos, rotationCache]);
 
   useEffect(() => {
     if (!map) {
@@ -572,7 +598,7 @@ function MarkersContent({
   useEffect(() => {
     clearCanvasCache();
     existingSpawnIds.current?.forEach((marker) => {
-      const typeId = (marker.options as any).typeId as string | undefined;
+      const typeId = marker.options.typeId as string | undefined;
       const filterSize = typeId ? (iconSizeByFilter[typeId] ?? 1) : 1;
       const groupId = typeId ? typeToGroup.get(typeId) : undefined;
       const groupSize = groupId ? (iconSizeByGroup[groupId] ?? 1) : 1;

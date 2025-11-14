@@ -5,6 +5,9 @@ export type LeafletMap = Map & {
   _mapPane: HTMLElement;
   mapName: string;
   bounds: [[number, number], [number, number]];
+  _rotationRadians?: number;
+  _rotationDegrees?: number;
+  _rotationCenter?: [number, number];
 };
 export const useMapStore = create<{
   map: LeafletMap | null;

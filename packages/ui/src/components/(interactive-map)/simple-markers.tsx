@@ -109,8 +109,8 @@ export function SimpleMarkers({
 
       // Apply rotation if map has rotation configured
       let markerPosition: [number, number] | [number, number, number] = spawn.p;
-      const rotationDegrees = (map as any)._rotationDegrees;
-      const rotationCenter = (map as any)._rotationCenter;
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
         const rotatedCoord = rotateCoordinate(
           [spawn.p[0], spawn.p[1]],
