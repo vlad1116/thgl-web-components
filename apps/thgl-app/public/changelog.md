@@ -1,3 +1,8 @@
+# 2.21.0
+
+- Feat: **Duet Night Abyss** Add game support with player position tracking. Live mode is not fully supported yet.
+- Feat: **Blue Protocol: Star Resonance** More rebust position detection after game updates and support for Taiwanese client.
+
 # 2.19.0
 
 - Feat: Improved logging for better issue tracking
