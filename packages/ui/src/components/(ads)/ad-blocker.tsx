@@ -102,6 +102,7 @@ export function AdBlocker() {
         <AlertDialogCancel
           disabled={timeLeft > 0}
           onClick={() => {
+            if (timeLeft > 0) return;
             setDismissed(true);
             setOpen(false);
           }}
