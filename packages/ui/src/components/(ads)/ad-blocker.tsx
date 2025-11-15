@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSessionStorage } from "@uidotdev/usehooks";
 import { useT } from "../(providers)";
 import { useAccountStore } from "@repo/lib";
@@ -27,9 +27,11 @@ function getStorageKey() {
   return parts.join("");
 }
 
+const WAIT_TIME_SECONDS = 10;
 export function AdBlocker() {
   const t = useT();
-  const [timeLeft, setTimeLeft] = useState(10);
+  const mountTime = useRef(Date.now());
+  const [timeLeft, setTimeLeft] = useState(WAIT_TIME_SECONDS);
   const [open, setOpen] = useState(true);
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
 
@@ -39,6 +41,9 @@ export function AdBlocker() {
     sessionKey,
     undefined,
   );
+
+  const waitedFor10Seconds =
+    Date.now() - mountTime.current >= WAIT_TIME_SECONDS * 1000;
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -102,7 +107,7 @@ export function AdBlocker() {
         <AlertDialogCancel
           disabled={timeLeft > 0}
           onClick={() => {
-            if (timeLeft > 0) return;
+            if (!waitedFor10Seconds) return;
             setDismissed(true);
             setOpen(false);
           }}
