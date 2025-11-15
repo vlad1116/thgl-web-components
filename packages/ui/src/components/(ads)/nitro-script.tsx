@@ -307,7 +307,7 @@ export function ScriptLoader({
       if (!isActive) {
         setState(STATE_ERROR);
       }
-    }, 2000);
+    }, 4500);
 
     return () => clearTimeout(watchdogTimeout);
   }, [state, adRemoval]);
@@ -317,7 +317,7 @@ export function ScriptLoader({
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
-    let ticks = 25;
+    let ticks = 50;
     const minTicks = 0;
     const ms = 100;
     let timeoutId: NodeJS.Timeout | null = null;
@@ -354,7 +354,7 @@ export function ScriptLoader({
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
-    const maxDuration = 2500;
+    const maxDuration = 5000;
     const startTime = Date.now();
     let timeoutId: NodeJS.Timeout | null = null;
 
@@ -390,7 +390,7 @@ export function ScriptLoader({
     if (adRemoval || isOverwolf) return;
     if (state === STATE_ERROR || state === STATE_READY) return;
 
-    const maxDuration = 2500;
+    const maxDuration = 5000;
     let frameId: number | null = null;
 
     const validate = (startTime?: number) => {
