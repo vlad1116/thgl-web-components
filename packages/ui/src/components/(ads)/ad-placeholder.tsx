@@ -37,10 +37,13 @@ export function AdPlaceholder({
     <AdFreeContainer className={className} displayCheck={displayCheck}>
       <div
         className={cn(
-          "rounded bg-zinc-800/30 text-gray-500 flex flex-col justify-center text-center",
+          "rounded bg-zinc-800/30 text-gray-500 flex flex-col justify-center",
           width,
           height,
         )}
+        style={{
+          textAlign: "center",
+        }}
       >
         {type === "loading" && <AdLoadingMessage />}
         {type === "blocked" && <AdBlockMessage hideText={hideBlockedText} />}
