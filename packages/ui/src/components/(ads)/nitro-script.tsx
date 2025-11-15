@@ -481,7 +481,10 @@ export function ScriptLoader({
           src={`https://s.nitropay.com/ads-${NITROPAY_SITE_ID}.js`}
         />
       )}
-      {(state === STATE_LOADING || state === STATE_INIT) && loading}
+      {(state === STATE_LOADING ||
+        state === STATE_INIT ||
+        state === STATE_VALIDATION) &&
+        loading}
       {state === STATE_READY && children}
       {state === STATE_ERROR && fallback}
     </>
