@@ -9,6 +9,72 @@ You are not permitted to use or repurpose this code for your own projects.
 
 All rights reserved © The Hidden Gaming Lair.
 
+## 🎮 What is The Hidden Gaming Lair?
+
+The Hidden Gaming Lair (TH.GL) is a comprehensive gaming companion platform providing **interactive maps**, **in-game overlays**, and **real-time tracking tools** for 20+ popular games.
+
+### Core Features
+
+**📍 Interactive Maps**
+- Comprehensive location databases for collectibles, resources, NPCs, and more
+- Advanced filtering system with custom categories per game
+- Progress tracking: mark locations as discovered (unlimited, completely free)
+- Custom markers, routes, and drawings that can be shared with friends/guilds
+- Real-time actor tracking (monsters, animals, NPCs) when supported by the game
+
+**🖥️ Companion App (Windows)**
+- Standalone desktop application (~7MB) - no additional platform required
+- **In-game overlays**: DirectX injection for seamless map access without alt-tabbing
+- **Second screen mode**: Use a separate display for full map view with one hotkey
+- **Peer Link**: Sync your position with any device (phone, tablet) as a live minimap
+- **Live mode**: Real-time position tracking and nearby actor detection
+- Customizable hotkeys for all functions
+- Automatic updates and game detection
+- Privacy-focused: runs locally, no account required
+
+**🌐 Web-Based Tools**
+- Full interactive maps accessible from any device/browser
+- No download required - works on Windows, Mac, Linux, mobile
+- Progress syncs across devices (browser storage)
+- All map features available (except overlay and live tracking)
+
+**🎮 Overwolf Apps**
+- Alternative in-game overlay platform for supported games
+- Available on Overwolf app store
+- Both platforms supported and maintained
+
+### Supported Games
+
+Currently supporting 20+ games including:
+- **Companion App** (10+ games): Palworld, Dune Awakening, Once Human, Wuthering Waves, Palia, Blue Protocol: Star Resonance, Duet Night Abyss, RuneScape: Dragonwilds, and more
+- **Overwolf Apps**: Palia, Palworld, Once Human, Wuthering Waves, Diablo 4, New World, Avowed, Satisfactory, Hogwarts Legacy, Sons of the Forest, and more
+- **Web Maps**: All 20+ games with full interactive features
+
+### Why TH.GL?
+
+- ✅ **Free to use** - Ad-supported with optional Patreon subscription for ad-free experience
+- ✅ **Unlimited discoveries** - Mark locations with no limits or paywalls
+- ✅ **Privacy-focused** - Local execution, no account required, anonymous analytics
+- ✅ **Officially approved** - Confirmed safe by developers of Dune Awakening, Once Human, and Palia
+- ✅ **Multiple platforms** - Companion App, Overwolf, or browser-based
+- ✅ **Community-driven** - Open to contributions, feature requests via Discord
+
+### How It Works
+
+**For Players:**
+1. Visit game-specific website (e.g., palworld.th.gl) for browser-based maps
+2. OR download TH.GL Companion App for overlays and live tracking
+3. OR install Overwolf app for alternative overlay experience
+
+**Technical Implementation:**
+- Web apps serve interactive Leaflet-based maps with real-time data
+- Companion app reads game memory for position tracking (read-only, no modifications)
+- Memory addresses discovered through reverse engineering per game
+- APIs provide location data, filters, and real-time actor positions
+- WebView2 renders UI in both browser and desktop app
+
+Visit [www.th.gl/companion-app](https://www.th.gl/companion-app) for more details.
+
 ## 🧩 Related Repositories
 
 This repo is part of a larger ecosystem of tools and services powering The Hidden Gaming Lair. Some of these repositories are private and not open source:
