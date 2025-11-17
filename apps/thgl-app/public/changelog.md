@@ -1,3 +1,7 @@
+# 2.21.2
+
+- Fix: Overlay interaction issues in some games
+
 # 2.21.0
 
 - Feat: **Duet Night Abyss** Add game support with player position tracking. Live mode is not fully supported yet.
