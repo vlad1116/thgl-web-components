@@ -1,3 +1,7 @@
+# 2.21.3
+
+- Fix: **Blue Protocol: Star Resonance** Position detection if game is installed in a custom directory
+
 # 2.21.2
 
 - Fix: Overlay interaction issues in some games
