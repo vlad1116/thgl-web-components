@@ -1,5 +1,4 @@
 import { games } from "@repo/lib";
-import { Subtitle } from "@repo/ui/content";
 import {
   Button,
   Card,
@@ -12,22 +11,25 @@ import {
 } from "@repo/ui/controls";
 import {
   Download,
-  MonitorSmartphone,
-  Info,
   Gamepad2,
   Shield,
   Zap,
   Monitor,
   Eye,
   Lock,
-  CheckCircle2,
-  XCircle,
   Smartphone,
   MapPin,
   Share2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  PageHero,
+  FeatureCard,
+  FeatureGrid,
+  SectionHeader,
+  FAQItem,
+} from "@/components/sections";
 
 export const metadata = {
   title:
@@ -63,34 +65,31 @@ export default function CompanionAppPage() {
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto max-w-7xl">
       {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="inline-block px-4 py-1 bg-primary/10 rounded-full text-sm text-primary mb-2">
-          Standalone Windows App • No Platform Required
-        </div>
-        <h1 className="text-4xl md:text-6xl font-bold">
-          Interactive Maps & Overlays
-          <br />
-          <span className="text-primary">For {totalGamesCount}+ Games</span>
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          Get real-time in-game overlays, interactive maps, and position
-          tracking across {totalGamesCount}+ supported games. No Overwolf
-          required — just a simple, lightweight app.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Button size="lg" className="text-lg" asChild>
-            <a href="https://app.th.gl/THGL_Installer.exe" download>
-              <Download className="mr-2 h-5 w-5" /> Download for Windows
-            </a>
-          </Button>
-          <Button size="lg" variant="outline" className="text-lg" asChild>
-            <Link href="#how-it-works">See How It Works</Link>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground pt-2">
-          Windows 10/11 • Free Download • ~7MB • No Overwolf Required
-        </p>
-      </div>
+      <PageHero
+        badge="Standalone Windows App • No Platform Required"
+        title={
+          <>
+            Interactive Maps & Overlays
+            <br />
+            <span className="text-primary">For {totalGamesCount}+ Games</span>
+          </>
+        }
+        description={`Get real-time in-game overlays, interactive maps, and position tracking across ${totalGamesCount}+ supported games. No Overwolf required — just a simple, lightweight app.`}
+        ctaButtons={[
+          {
+            label: "Download for Windows",
+            href: "https://app.th.gl/THGL_Installer.exe",
+            icon: Download,
+            download: true,
+          },
+          {
+            label: "See How It Works",
+            href: "#how-it-works",
+            variant: "outline",
+          },
+        ]}
+        metaInfo="Windows 10/11 • Free Download • ~7MB • No Overwolf Required"
+      />
 
       {/* Screenshot Carousel */}
       <div>
@@ -177,176 +176,92 @@ export default function CompanionAppPage() {
 
       {/* Key Features Grid */}
       <div>
-        <div className="text-center mb-8">
-          <Subtitle title="Why Choose TH.GL Companion App?" />
-          <p className="text-muted-foreground mt-2">
-            Everything you need for an enhanced gaming experience
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Gamepad2 className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">In-Game Overlays</h3>
-              <p className="text-sm text-muted-foreground">
-                Interactive maps and minimaps that show your live player
-                position, nearby points of interest, and resources — all
-                directly within your game without alt-tabbing.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Monitor className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Second Screen Mode</h3>
-              <p className="text-sm text-muted-foreground">
-                Prefer a separate display? Switch to second-screen mode with one
-                hotkey. Perfect for dual-monitor setups, tracking, routing, or
-                managing multiple maps.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Eye className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Real-Time Tracking</h3>
-              <p className="text-sm text-muted-foreground">
-                See your exact position on the map in real-time as you move
-                in-game. Track nearby collectibles, NPCs, enemies, and resources
-                that are actually spawned right now.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Lightweight & Fast</h3>
-              <p className="text-sm text-muted-foreground">
-                Uses significantly less memory and CPU than Overwolf. No
-                background services eating your resources. Minimal performance
-                impact on your games.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Lock className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Privacy-Conscious</h3>
-              <p className="text-sm text-muted-foreground">
-                The app runs locally on your machine. Uses Plausible for
-                anonymous analytics only. No account required. Ads are served
-                through Nitro — subscribing removes them completely.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary/20">
-            <CardContent className="p-6 space-y-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Safe & Approved</h3>
-              <p className="text-sm text-muted-foreground">
-                Read-only memory access. No game modifications. Officially
-                approved by developers of Dune Awakening, Once Human, and Palia.
-                Thousands of daily users with zero bans reported.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <SectionHeader
+          title="Why Choose TH.GL Companion App?"
+          description="Everything you need for an enhanced gaming experience"
+        />
+        <FeatureGrid columns={3}>
+          <FeatureCard
+            icon={Gamepad2}
+            title="In-Game Overlays"
+            description="Interactive maps and minimaps that show your live player position, nearby points of interest, and resources — all directly within your game without alt-tabbing."
+            variant="bordered"
+          />
+          <FeatureCard
+            icon={Monitor}
+            title="Second Screen Mode"
+            description="Prefer a separate display? Switch to second-screen mode with one hotkey. Perfect for dual-monitor setups, tracking, routing, or managing multiple maps."
+            variant="bordered"
+          />
+          <FeatureCard
+            icon={Eye}
+            title="Real-Time Tracking"
+            description="See your exact position on the map in real-time as you move in-game. Track nearby collectibles, NPCs, enemies, and resources that are actually spawned right now."
+            variant="bordered"
+          />
+          <FeatureCard
+            icon={Zap}
+            title="Lightweight & Fast"
+            description="Uses significantly less memory and CPU than Overwolf. No background services eating your resources. Minimal performance impact on your games."
+            variant="bordered"
+          />
+          <FeatureCard
+            icon={Lock}
+            title="Privacy-Conscious"
+            description="The app runs locally on your machine. Uses Plausible for anonymous analytics only. No account required. Ads are served through Nitro — subscribing removes them completely."
+            variant="bordered"
+          />
+          <FeatureCard
+            icon={Shield}
+            title="Safe & Approved"
+            description="Read-only memory access. No game modifications. Officially approved by developers of Dune Awakening, Once Human, and Palia. Thousands of daily users with zero bans reported."
+            variant="bordered"
+          />
+        </FeatureGrid>
       </div>
 
       {/* Advanced Features Section */}
       <div className="bg-gradient-to-b from-primary/5 to-transparent -mx-4 px-4 py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <Subtitle title="More Than Just an Overlay" />
-            <p className="text-muted-foreground mt-2">
-              Powerful features that set TH.GL apart from competitors
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-primary/20">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Smartphone className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">Peer Link</h3>
-                <p className="text-sm text-muted-foreground">
-                  Connect your companion app with any device. Use your phone or
-                  tablet as a live minimap that syncs your position and live mode
-                  in real-time.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">Unlimited Discoveries</h3>
-                <p className="text-sm text-muted-foreground">
-                  Mark locations as discovered with no limits — completely free.
-                  Track your progress across all games without restrictions or
-                  paywalls.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Share2 className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">Custom Content</h3>
-                <p className="text-sm text-muted-foreground">
-                  Create custom markers, draw routes, and share them with friends
-                  or your guild. Perfect for planning strategies and coordinating
-                  group activities.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">Smart Live Mode</h3>
-                <p className="text-sm text-muted-foreground">
-                  When supported, shows monsters, animals, and NPCs in real-time
-                  while auto-hiding collected items. Some games only support
-                  player position tracking.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <SectionHeader
+            title="More Than Just an Overlay"
+            description="Powerful features that set TH.GL apart from competitors"
+          />
+          <FeatureGrid columns={4}>
+            <FeatureCard
+              icon={Smartphone}
+              title="Peer Link"
+              description="Connect your companion app with any device. Use your phone or tablet as a live minimap that syncs your position and live mode in real-time."
+              variant="bordered"
+            />
+            <FeatureCard
+              icon={MapPin}
+              title="Unlimited Discoveries"
+              description="Mark locations as discovered with no limits — completely free. Track your progress across all games without restrictions or paywalls."
+              variant="bordered"
+            />
+            <FeatureCard
+              icon={Share2}
+              title="Custom Content"
+              description="Create custom markers, draw routes, and share them with friends or your guild. Perfect for planning strategies and coordinating group activities."
+              variant="bordered"
+            />
+            <FeatureCard
+              icon={Eye}
+              title="Smart Live Mode"
+              description="When supported, shows monsters, animals, and NPCs in real-time while auto-hiding collected items. Some games only support player position tracking."
+              variant="bordered"
+            />
+          </FeatureGrid>
         </div>
       </div>
 
       {/* Supported Games Section */}
       <div id="supported-games">
-        <div className="text-center mb-8">
-          <Subtitle title={`${totalGamesCount} Supported Games`} />
-          <p className="text-muted-foreground mt-2">
-            Live position tracking, overlays, and interactive maps
-          </p>
-        </div>
+        <SectionHeader
+          title={`${totalGamesCount} Supported Games`}
+          description="Live position tracking, overlays, and interactive maps"
+        />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {supportedGames.map((game) => (
             <Link
@@ -381,12 +296,10 @@ export default function CompanionAppPage() {
       {/* How It Works Section */}
       <div id="how-it-works" className="bg-muted/30 -mx-4 px-4 py-16">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <Subtitle title="How It Works" />
-            <p className="text-muted-foreground mt-2">
-              Get started in 3 simple steps
-            </p>
-          </div>
+          <SectionHeader
+            title="How It Works"
+            description="Get started in 3 simple steps"
+          />
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center space-y-4">
               <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
@@ -425,9 +338,7 @@ export default function CompanionAppPage() {
 
       {/* FAQ Section */}
       <div>
-        <div className="text-center mb-8">
-          <Subtitle title="Frequently Asked Questions" />
-        </div>
+        <SectionHeader title="Frequently Asked Questions" />
         <div className="max-w-3xl mx-auto space-y-6">
           <Card>
             <CardContent className="p-6 space-y-2">
@@ -546,12 +457,10 @@ export default function CompanionAppPage() {
 
       {/* Blog Posts Section */}
       <div>
-        <div className="text-center mb-8">
-          <Subtitle title="Learn More" />
-          <p className="text-muted-foreground mt-2">
-            Read about the companion app development and updates
-          </p>
-        </div>
+        <SectionHeader
+          title="Learn More"
+          description="Read about the companion app development and updates"
+        />
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-6 space-y-3">

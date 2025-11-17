@@ -3,9 +3,16 @@ import { Button, Card } from "@repo/ui/controls";
 import { games, testimonials } from "@repo/lib";
 import { GameCard } from "@/components/game-card";
 import { blogEntries } from "@/lib/blog-entries";
-import { Subtitle } from "@repo/ui/content";
 import { Download, Monitor, Gamepad2, Shield } from "lucide-react";
-import Image from "next/image";
+import {
+  PageHero,
+  FeatureCard,
+  FeatureGrid,
+  ImageShowcase,
+  ComparisonCards,
+  SectionHeader,
+  CTASection,
+} from "@/components/sections";
 
 const featuredGames = games.slice(0, 6);
 const companionGames = games.filter((g) => g.companion);
@@ -37,33 +44,30 @@ export default function HomePage() {
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto">
       {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="inline-block px-4 py-1 bg-primary/10 rounded-full text-sm text-primary mb-2">
-          20+ Games Supported • 10,000+ Daily Users
-        </div>
-        <h1 className="text-4xl md:text-6xl font-bold">
-          Interactive Maps & Overlays
-          <br />
-          <span className="text-primary">For Your Favorite Games</span>
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          Get real-time in-game overlays, position tracking, and interactive
-          maps. Use our lightweight companion app or browser-based tools.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4 pt-2">
-          <Button size="lg" className="text-lg" asChild>
-            <Link href="/companion-app">
-              <Download className="mr-2 h-4 w-4" /> Get Companion App
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" className="text-lg" asChild>
-            <Link href="/apps">Browse All Games</Link>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground pt-2">
-          Windows 10/11 • Free Download • ~7MB • No Account Required
-        </p>
-      </div>
+      <PageHero
+        badge="20+ Games Supported • 10,000+ Daily Users"
+        title={
+          <>
+            Interactive Maps & Overlays
+            <br />
+            <span className="text-primary">For Your Favorite Games</span>
+          </>
+        }
+        description="Get real-time in-game overlays, position tracking, and interactive maps. Use our lightweight companion app or browser-based tools."
+        ctaButtons={[
+          {
+            label: "Get Companion App",
+            href: "/companion-app",
+            icon: Download,
+          },
+          {
+            label: "Browse All Games",
+            href: "/apps",
+            variant: "outline",
+          },
+        ]}
+        metaInfo="Windows 10/11 • Free Download • ~7MB • No Account Required"
+      />
 
       {/* Companion App Showcase */}
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 md:p-12">
@@ -127,62 +131,47 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="relative">
-            <Image
-              src="/images/overlay-palworld.webp"
-              alt="TH.GL Companion App showing in-game overlay"
-              width={600}
-              height={400}
-              className="rounded-lg shadow-2xl"
-              priority
-            />
-            <div className="absolute -bottom-4 -left-4 bg-black/90 p-3 rounded-lg border border-primary/20">
-              <p className="text-xs font-semibold text-primary">
-                {companionGames.length} Games Supported
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Palworld, Dune, Once Human & more
-              </p>
-            </div>
-          </div>
+          <ImageShowcase
+            src="/images/overlay-palworld.webp"
+            alt="TH.GL Companion App showing in-game overlay"
+            width={600}
+            height={400}
+            priority
+            badge={{
+              primary: `${companionGames.length} Games Supported`,
+              secondary: "Palworld, Dune, Once Human & more",
+            }}
+          />
         </div>
       </div>
 
       {/* Features */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-        <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-          <h3 className="font-semibold text-lg mb-2">🗺️ Interactive Maps</h3>
-          <p className="text-muted-foreground text-sm">
-            Track nodes, collectibles, NPCs, and resources with comprehensive
-            filters. Create custom markers and routes to share with friends.
-          </p>
-        </div>
-        <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-          <h3 className="font-semibold text-lg mb-2">📍 Live Tracking</h3>
-          <p className="text-muted-foreground text-sm">
-            See your exact position and nearby actors in real-time. Use Peer
-            Link to sync with your phone or tablet as a live minimap.
-          </p>
-        </div>
-        <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-          <h3 className="font-semibold text-lg mb-2">🔐 Privacy First</h3>
-          <p className="text-muted-foreground text-sm">
-            No account required. Local-first. Anonymous analytics. Mark
-            unlimited locations as discovered — completely free.
-          </p>
-        </div>
-        <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-          <h3 className="font-semibold text-lg mb-2">🎮 20+ Games</h3>
-          <p className="text-muted-foreground text-sm">
-            Supports popular titles like Palworld, Dune Awakening, Wuthering
-            Waves, and more. New games added regularly.
-          </p>
-        </div>
-      </div>
+      <FeatureGrid columns={4}>
+        <FeatureCard
+          icon="🗺️"
+          title="Interactive Maps"
+          description="Track nodes, collectibles, NPCs, and resources with comprehensive filters. Create custom markers and routes to share with friends."
+        />
+        <FeatureCard
+          icon="📍"
+          title="Live Tracking"
+          description="See your exact position and nearby actors in real-time. Use Peer Link to sync with your phone or tablet as a live minimap."
+        />
+        <FeatureCard
+          icon="🔐"
+          title="Privacy First"
+          description="No account required. Local-first. Anonymous analytics. Mark unlimited locations as discovered — completely free."
+        />
+        <FeatureCard
+          icon="🎮"
+          title="20+ Games"
+          description="Supports popular titles like Palworld, Dune Awakening, Wuthering Waves, and more. New games added regularly."
+        />
+      </FeatureGrid>
 
       {/* Featured Games */}
       <div className="space-y-6">
-        <Subtitle title="Featured Games" />
+        <SectionHeader title="Featured Games" />
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
           {featuredGames.map((game) => (
             <GameCard key={game.id} game={game} />
@@ -200,93 +189,54 @@ export default function HomePage() {
 
       {/* How It Works */}
       <div className="bg-muted/30 rounded-2xl p-8 md:p-12">
-        <div className="text-center mb-8">
-          <Subtitle title="Choose Your Experience" />
-          <p className="text-muted-foreground mt-2">
-            Use the companion app for overlays or access web tools from any
-            device
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card className="border-primary/20">
-            <div className="p-6 space-y-4">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Gamepad2 className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold">Companion App</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>In-game overlays with real-time tracking</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>Second screen mode for dual monitors</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>Auto-updates and hotkey controls</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>Windows 10/11 only</span>
-                </li>
-              </ul>
-              <Button className="w-full" asChild>
-                <Link href="/companion-app">Learn More</Link>
-              </Button>
-            </div>
-          </Card>
-          <Card className="border-border">
-            <div className="p-6 space-y-4">
-              <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
-                <Monitor className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold">Web-Based Tools</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>Works on any device and platform</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>Full interactive map features</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
-                  <span>No download required</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-muted-foreground/50 mr-2">✗</span>
-                  <span className="text-muted-foreground/70">
-                    No overlay or position tracking
-                  </span>
-                </li>
-              </ul>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/apps">Browse Games</Link>
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <SectionHeader
+          title="Choose Your Experience"
+          description="Use the companion app for overlays or access web tools from any device"
+        />
+        <ComparisonCards
+          cards={[
+            {
+              icon: Gamepad2,
+              title: "Companion App",
+              features: [
+                { text: "In-game overlays with real-time tracking", enabled: true },
+                { text: "Second screen mode for dual monitors", enabled: true },
+                { text: "Auto-updates and hotkey controls", enabled: true },
+                { text: "Windows 10/11 only", enabled: true },
+              ],
+              cta: { label: "Learn More", href: "/companion-app" },
+              highlighted: true,
+            },
+            {
+              icon: Monitor,
+              title: "Web-Based Tools",
+              features: [
+                { text: "Works on any device and platform", enabled: true },
+                { text: "Full interactive map features", enabled: true },
+                { text: "No download required", enabled: true },
+                { text: "No overlay or position tracking", enabled: false },
+              ],
+              cta: { label: "Browse Games", href: "/apps", variant: "outline" },
+            },
+          ]}
+        />
       </div>
 
       {/* Community & Support */}
-      <div className="p-6 rounded-lg text-center space-y-4">
-        <Subtitle title="Join the Community" />
-        <p className="text-sm text-muted-foreground">
-          Join <strong>tens of thousands</strong> of players using TH.GL every
-          day. Get help, share tips, or just hang out.
-        </p>
-        <Button asChild>
-          <Link href="https://th.gl/discord" target="_blank">
-            Join the Discord
-          </Link>
-        </Button>
-      </div>
+      <CTASection
+        title="Join the Community"
+        description={
+          <>
+            Join <strong>tens of thousands</strong> of players using TH.GL every
+            day. Get help, share tips, or just hang out.
+          </>
+        }
+        ctaLabel="Join the Discord"
+        ctaHref="https://th.gl/discord"
+      />
 
       <div className="space-y-4 text-center">
-        <Subtitle title="What Players Are Saying" />
+        <SectionHeader title="What Players Are Saying" />
         <div className="grid sm:grid-cols-2 gap-4">
           {testimonials.map((t, i) => (
             <Card key={i} className="p-4">
@@ -303,7 +253,7 @@ export default function HomePage() {
 
       {/* Blog Teaser */}
       <div className="space-y-4 text-center">
-        <Subtitle title="From the Blog" />
+        <SectionHeader title="From the Blog" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
           {blogEntries.slice(0, 3).map((entry) => (
             <Card key={entry.id} className="p-4 text-left">
@@ -332,31 +282,33 @@ export default function HomePage() {
       </div>
 
       {/* Support CTA */}
-      <div className="text-center space-y-3 pt-10">
-        <Subtitle title="Support Development" />
-        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-          TH.GL is free to use and ad-supported. You can unlock a better
-          experience by becoming a supporter on Patreon.
-        </p>
-        <Button asChild>
-          <Link href="/support-me">Support Me on Patreon</Link>
-        </Button>
-        <p className="text-xs text-muted-foreground pt-2 italic">
-          Built and maintained by a solo developer — thank you for your support!
-        </p>
-        <p className="text-xs text-muted-foreground pt-4">
-          Want to contribute?{" "}
-          <Link
-            href="https://github.com/The-Hidden-Gaming-Lair"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-white"
-          >
-            View the source code on GitHub
-          </Link>{" "}
-          and submit a pull request.
-        </p>
-      </div>
+      <CTASection
+        title="Support Development"
+        description="TH.GL is free to use and ad-supported. You can unlock a better experience by becoming a supporter on Patreon."
+        ctaLabel="Support Me on Patreon"
+        ctaHref="/support-me"
+        footer={
+          <>
+            <p className="italic">
+              Built and maintained by a solo developer — thank you for your
+              support!
+            </p>
+            <p className="pt-4">
+              Want to contribute?{" "}
+              <Link
+                href="https://github.com/The-Hidden-Gaming-Lair"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white"
+              >
+                View the source code on GitHub
+              </Link>{" "}
+              and submit a pull request.
+            </p>
+          </>
+        }
+        className="pt-10"
+      />
     </section>
   );
 }
