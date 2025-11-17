@@ -145,8 +145,7 @@
     "force_browser": "user",
     "externally_connectable": {
       "matches": [
-        "https://www.th.gl",
-        "https://palworld.th.gl",
+        "https://*.th.gl",
         "http://localhost:3000",
         "http://localhost:3004"
       ]

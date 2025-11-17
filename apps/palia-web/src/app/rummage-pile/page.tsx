@@ -4,7 +4,7 @@ import { ContentLayout } from "@repo/ui/ads";
 import { Button } from "@repo/ui/controls";
 import Image from "next/image";
 import { Suspense } from "react";
-import { DATA_FORGE_URL, decodeFromBuffer, fetchVersion } from "@repo/lib";
+import { getApiUrl, decodeFromBuffer, fetchVersion } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
 import Filter from "./filter.webp";
@@ -39,7 +39,7 @@ export default async function RummagePile() {
   );
   const data = (await timedLootPilesResponse.json()) as TimedLootPiles;
 
-  const url = `${DATA_FORGE_URL}/api/palia/search?q=stable`;
+  const url = getApiUrl("palia", "q=stable");
   const response = await fetch(url, {
     next: {
       revalidate: 300, // Auto-revalidate every 5 minutes

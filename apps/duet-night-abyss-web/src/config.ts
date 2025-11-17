@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "duet-night-abyss",
@@ -13,8 +13,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Purgatorio Island with our interactive maps.",
       href: "/maps/Purgatorio%20Island",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/Prologue/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Prologue"),
       linkText: "Explore the Purgatorio Island Map",
     },
     {
@@ -23,8 +22,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Lonza Fortress with our interactive maps.",
       href: "/maps/Lonza%20Fortress",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/EX01/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "EX01"),
       linkText: "Explore the Lonza Fortress Map",
     },
     {
@@ -33,8 +31,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Eastern District, Icelake with our interactive maps.",
       href: "/maps/Eastern%20District%2C%20Icelake",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/Chapter01/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Chapter01"),
       linkText: "Explore the Eastern District, Icelake Map",
     },
     {
@@ -43,8 +40,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Glevum Pit with our interactive maps.",
       href: "/maps/Glevum%20Pit",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/Chapter01_KK/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Chapter01_KK"),
       linkText: "Explore the Glevum Pit Map",
     },
     {
@@ -53,8 +49,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Icelake Sewers with our interactive maps.",
       href: "/maps/Icelake%20Sewers",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/Chapter01_Sew/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Chapter01_Sew"),
       linkText: "Explore the Icelake Sewers Map",
     },
     {
@@ -63,8 +58,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Duet Night Abyss's Galea Theatre with our interactive maps.",
       href: "/maps/Galea%20Theatre",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/duet-night-abyss/map-tiles/Chapter01_Thea/preview.webp",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Chapter01_Thea"),
       linkText: "Explore the Galea Theatre Map",
     },
     {

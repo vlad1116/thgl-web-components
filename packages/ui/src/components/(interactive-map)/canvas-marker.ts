@@ -1,7 +1,7 @@
 import leaflet, { CircleMarker } from "leaflet";
 import gameIcons from "../(controls)/icons.json";
 import { Spawns } from "../(providers)";
-import { DATA_FORGE_URL } from "@repo/lib";
+import { getImageUrl } from "@repo/lib";
 import type { ColorBlindMode } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
 
@@ -206,7 +206,12 @@ leaflet.Canvas.include({
         colorBlindMode !== "none" &&
         colorBlindSeverity > 0
       ) {
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const imageData = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
         const data = imageData.data;
         applyColorBlindTransform(data, colorBlindMode, colorBlindSeverity);
         context.putImageData(imageData, 0, 0);
@@ -270,7 +275,6 @@ export function clearCanvasCache() {
   canvasCache.clear();
 }
 
-
 let flatGameIcons:
   | {
       name: string;
@@ -305,13 +309,6 @@ function getZoomFactor(map: leaflet.Map): number {
   cachedZoomFactor = normalizedZoom * factor;
   lastZoomLevel = zoom;
   return cachedZoomFactor;
-}
-
-function getImageURL(url: string) {
-  if (url.startsWith("/global_icons/game-icons")) {
-    return `${DATA_FORGE_URL}${url.replace("/global_icons", "")}`;
-  }
-  return url;
 }
 
 class CanvasMarker extends CircleMarker {

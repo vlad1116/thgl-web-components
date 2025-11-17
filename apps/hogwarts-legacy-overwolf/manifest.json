@@ -145,7 +145,7 @@
     "force_browser": "user",
     "externally_connectable": {
       "matches": [
-        "https://www.th.gl",
+        "https://*.th.gl",
         "http://localhost:6000"
       ]
     },

@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "wuthering-waves",
@@ -22,8 +22,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Wuthering Waves expansive world with our interactive maps.",
       href: "/maps/Overworld",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/wuthering-waves/map-tiles/AkiWorld_WP/preview.webp",
+      bgImage: getPreviewImageUrl("wuthering-waves", "AkiWorld_WP"),
       linkText: "Explore the Overworld Map",
     },
     {
@@ -32,8 +31,7 @@ export const APP_CONFIG: AppConfig = {
         "Explore the Fabricatorium of the Deep with our interactive maps.",
       href: "/maps/Fabricatorium%20of%20the%20Deep",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/wuthering-waves/map-tiles/WP_HDSYC/preview.webp",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_HDSYC"),
       linkText: "View the Fabricatorium of the Deep Map",
     },
     {
@@ -41,8 +39,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Explore the Avinoleum with our interactive maps.",
       href: "/maps/Avinoleum",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/wuthering-waves/map-tiles/WP_DianDaoTa2/preview.webp",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_DianDaoTa2"),
       linkText: "View the Avinoleum Map",
     },
     {
@@ -50,8 +47,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Tethys' Deep with our interactive maps.",
       href: "/maps/Tethys'%20Deep",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/wuthering-waves/map-tiles/WP_HHA_Underground/preview.webp",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_HHA_Underground"),
       linkText: "View the Tethys' Deep Map",
     },
     {
@@ -59,8 +55,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Vault Underground with our interactive maps.",
       href: "/maps/Vault%20Underground",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/wuthering-waves/map-tiles/WP_JK_Underground/preview.webp",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_JK_Underground"),
       linkText: "Open the Vault Underground Map",
     },
     {

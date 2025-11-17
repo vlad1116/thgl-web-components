@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "dune-awakening",
@@ -28,8 +28,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.hagga.description",
       linkText: "config.internalLinks.hagga.linkText",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/dune-awakening/map-tiles/survival_1/preview.webp?v=3",
+      bgImage: getPreviewImageUrl("dune-awakening", "survival_1", "3"),
     },
     {
       href: "/maps/Arrakeen",
@@ -37,8 +36,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.arrakeen.description",
       linkText: "config.internalLinks.arrakeen.linkText",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/dune-awakening/map-tiles/sh_arrakeen/preview.webp?v=3",
+      bgImage: getPreviewImageUrl("dune-awakening", "sh_arrakeen", "3"),
     },
     {
       href: "/maps/Harko%20Village",
@@ -46,8 +44,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.harko.description",
       linkText: "config.internalLinks.harko.linkText",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/dune-awakening/map-tiles/sh_harkovillage/preview.webp?v=3",
+      bgImage: getPreviewImageUrl("dune-awakening", "sh_harkovillage", "3"),
     },
     {
       href: "/maps/The%20Deep%20Desert",
@@ -55,8 +52,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.deep.description",
       linkText: "config.internalLinks.deep.linkText",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/dune-awakening/map-tiles/deepdesert_1/preview.webp?v=3",
+      bgImage: getPreviewImageUrl("dune-awakening", "deepdesert_1", "3"),
     },
     {
       href: "/private-servers",

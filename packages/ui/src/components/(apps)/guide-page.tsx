@@ -1,6 +1,6 @@
 import {
   AppConfig,
-  DATA_FORGE_URL,
+  getApiUrl,
   decodeFromBuffer,
   DEFAULT_LOCALE,
   fetchVersion,
@@ -107,10 +107,10 @@ export function createGuidePage(appConfig: AppConfig) {
       if (!guideId) {
         return notFound();
       }
-      url = `${DATA_FORGE_URL}/api/${appConfig.name}/search?group=${guideId}`;
+      url = getApiUrl(appConfig.name, `group=${guideId}`);
       icon = null;
     } else {
-      url = `${DATA_FORGE_URL}/api/${appConfig.name}/search?type=${guideId}`;
+      url = getApiUrl(appConfig.name, `type=${guideId}`);
       icon = getIconFromFilters(version.data.filters, guideId);
     }
     const guideTitle = t(guideId);

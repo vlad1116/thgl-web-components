@@ -1,5 +1,9 @@
 import { APP_CONFIG } from "@/config";
-import { fetchVersion, getMapNameFromVersion } from "@repo/lib";
+import {
+  fetchVersion,
+  getMapNameFromVersion,
+  getOpenGraphImageUrl,
+} from "@repo/lib";
 import { ImageResponse } from "next/og";
 
 export const alt = `${APP_CONFIG.title} Interactive Map`;
@@ -18,7 +22,7 @@ export default async function Image({ params }: { params: { map: string } }) {
         }}
       >
         <img
-          src={`https://data.th.gl/${APP_CONFIG.name}/map-tiles/${mapName}/opengraph-image.jpg`}
+          src={getOpenGraphImageUrl(APP_CONFIG.name, mapName!)}
           height="630"
           width="1200"
         />

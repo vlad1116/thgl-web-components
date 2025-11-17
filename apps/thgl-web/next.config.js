@@ -24,9 +24,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "www.th.gl",
-        port: "",
-        pathname: "/**",
+        hostname: "*.th.gl",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
       },
       {
         protocol: "https",
@@ -54,5 +56,4 @@ const nextConfig = {
     ];
   },
 };
-
 module.exports = nextConfig;

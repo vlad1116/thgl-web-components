@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "grounded2",
@@ -13,8 +13,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Grounded 2's Brookhollow Park with our interactive maps.",
       href: "/maps/Brookhollow%20Park",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/grounded2/map-tiles/brookhollow-park/preview.webp",
+      bgImage: getPreviewImageUrl("grounded2", "brookhollow-park"),
       linkText: "Explore the Brookhollow Park Map",
     },
     {

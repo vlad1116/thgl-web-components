@@ -24,7 +24,7 @@ import {
   searchParamsToView,
   GlobalFiltersConfig,
   Spawn,
-  DATA_FORGE_URL,
+  getApiUrl,
 } from "@repo/lib";
 import { CaseSensitive, Hexagon } from "lucide-react";
 import useSWRImmutable from "swr/immutable";
@@ -236,7 +236,7 @@ export function CoordinatesProvider({
       ) {
         return { [search]: emptyArray as Spawns };
       }
-      const url = `${DATA_FORGE_URL}/api/${appName}/search?q=${search}&locale=${locale}`;
+      const url = getApiUrl(appName, `q=${search}&locale=${locale}`);
       const response = await fetch(url);
       if (useCbor) {
         const buffer = await response.arrayBuffer();

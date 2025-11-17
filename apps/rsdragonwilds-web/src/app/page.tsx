@@ -7,7 +7,11 @@ import {
   ReleaseNotes,
   Subtitle,
 } from "@repo/ui/content";
-import { fetchVersion, getUpdateMessages } from "@repo/lib";
+import {
+  fetchVersion,
+  getUpdateMessages,
+  getPreviewImageUrl,
+} from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 
 export const metadata: Metadata = {
@@ -31,7 +35,7 @@ export default async function Home() {
       description: `Navigate ${mapName} with our interactive maps.`,
       href: `/maps/${encodeURIComponent(mapName)}`,
       iconName: "Map" as NavCardProps["iconName"],
-      bgImage: `https://data.th.gl/${APP_CONFIG.name}/map-tiles/${map}/preview.webp`,
+      bgImage: getPreviewImageUrl(APP_CONFIG.name, map),
       linkText: `Explore the ${mapName}`,
     };
   });

@@ -1,4 +1,4 @@
-import { games, type AppConfig } from "@repo/lib";
+import { games, type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   game: games.find((g) => g.id === "palworld")!,
@@ -22,7 +22,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Palpagos Island Map",
       description: "Navigate Palpagos Island with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/palworld/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("palworld", "default"),
       linkText: "Explore the Palpagos Island Map",
     },
     {

@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "blue-protocol-star-resonance",
@@ -13,8 +13,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Asteria Plains with our interactive maps.",
       href: "/maps/Asteria%20Plains",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/asteria_plains/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "asteria_plains",
+      ),
       linkText: "Explore the Asteria Plains Map",
     },
     {
@@ -23,8 +25,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Asterleeds with our interactive maps.",
       href: "/maps/Asterleeds",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/asterleeds/preview.webp",
+      bgImage: getPreviewImageUrl("blue-protocol-star-resonance", "asterleeds"),
       linkText: "Explore the Asterleeds Map",
     },
     // {
@@ -43,8 +44,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Windhowl Canyon with our interactive maps.",
       href: "/maps/Windhowl%20Canyon",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/windhowl_canyon/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "windhowl_canyon",
+      ),
       linkText: "Explore the Windhowl Canyon Map",
     },
     {
@@ -53,8 +56,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Everfall Forest with our interactive maps.",
       href: "/maps/Everfall%20Forest",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/everfall_forest/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "everfall_forest",
+      ),
       linkText: "Explore the Everfall Forest Map",
     },
     {
@@ -63,8 +68,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Duskdye Woods with our interactive maps.",
       href: "/maps/Duskdye%20Woods",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/duskdye_woods/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "duskdye_woods",
+      ),
       linkText: "Explore the Duskdye Woods Map",
     },
     {
@@ -73,8 +80,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Underground District with our interactive maps.",
       href: "/maps/Underground%20District",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/underground_district/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "underground_district",
+      ),
       linkText: "Explore the Underground District Map",
     },
     {
@@ -83,8 +92,10 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Blue Protocol: Star Resonance's Skimmer's Lair with our interactive maps.",
       href: "/maps/Skimmer's%20Lair",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/blue-protocol-star-resonance/map-tiles/skimmer_s_lair/preview.webp",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "skimmer_s_lair",
+      ),
       linkText: "Explore the Skimmer's Lair Map",
     },
     {

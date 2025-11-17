@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "chrono-odyssey",
@@ -12,8 +12,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Setera Map",
       description: "Navigate Setera with our interactive maps.",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/chrono-odyssey/map-tiles/setera/preview.webp",
+      bgImage: getPreviewImageUrl("chrono-odyssey", "setera"),
       linkText: "Explore the Setera Map",
     },
   ],

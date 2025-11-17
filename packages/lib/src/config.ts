@@ -108,11 +108,41 @@ export type Version = {
 export const TH_GL_URL = "https://www.th.gl";
 export const API_FORGE_URL = "https://api-forge.th.gl";
 // export const TH_GL_URL = "http://localhost:3006";
-export const DATA_FORGE_URL = "https://data.th.gl";
-// export const DATA_FORGE_URL = "http://localhost:3000";
+
+// API endpoints (search)
+const DATA_FORGE_URL = "https://data.th.gl";
+// const DATA_FORGE_URL = "http://localhost:3000";
+
+// Static files (version.json, icons, tiles, config, dicts)
+const DATA_FORGE_CDN_URL = "https://cdn.th.gl";
+// const DATA_FORGE_CDN_URL = "http://localhost:3000";
+
+export function getImageURL(url: string) {
+  if (url.startsWith("/global_icons/game-icons")) {
+    return `${DATA_FORGE_CDN_URL}${url.replace("/global_icons", "")}`;
+  }
+  return url;
+}
 
 export function getAppUrl(appName: string, path: string): string {
-  return `${DATA_FORGE_URL}/${appName}${path}`;
+  return `${DATA_FORGE_CDN_URL}/${appName}${path}`;
+}
+
+export function getApiUrl(appName: string, searchParams: string): string {
+  return `${DATA_FORGE_URL}/api/${appName}/search?${searchParams}`;
+}
+
+export function getPreviewImageUrl(
+  appName: string,
+  mapName: string,
+  version?: string,
+): string {
+  const url = `${DATA_FORGE_CDN_URL}/${appName}/map-tiles/${mapName}/preview.webp`;
+  return version ? `${url}?v=${version}` : url;
+}
+
+export function getOpenGraphImageUrl(appName: string, mapName: string): string {
+  return `${DATA_FORGE_CDN_URL}/${appName}/map-tiles/${mapName}/opengraph-image.jpg`;
 }
 
 // Helper to conditionally apply unstable_cache if available (Next.js), otherwise return the function as-is
@@ -248,7 +278,7 @@ export function getIconsUrl(
   iconPath?: string,
 ): string {
   if (icon.startsWith("/global_icons/game-icons")) {
-    return `${DATA_FORGE_URL}${icon.replace("/global_icons", "")}`;
+    return `${DATA_FORGE_CDN_URL}${icon.replace("/global_icons", "")}`;
   }
   if (icon.includes("global_icons")) {
     return icon;
@@ -268,7 +298,7 @@ export const fetchDict = conditionalCache(
     locale: string = "en",
   ): Promise<Record<string, string>> => {
     const res = await fetch(
-      `${DATA_FORGE_URL}/${appName}/dicts/${locale}.json`,
+      `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
     );
     return res.json();
   },
@@ -281,7 +311,7 @@ export const fetchDict = conditionalCache(
 export const fetchDatabase = conditionalCache(
   async (appName: string): Promise<DatabaseConfig> => {
     const res = await fetch(
-      `${DATA_FORGE_URL}/${appName}/config/database.json`,
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
     );
     return res.json();
   },
@@ -293,7 +323,9 @@ export const fetchDatabase = conditionalCache(
 
 export const fetchFilters = conditionalCache(
   async (appName: string): Promise<FiltersConfig> => {
-    const res = await fetch(`${DATA_FORGE_URL}/${appName}/config/filters.json`);
+    const res = await fetch(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/filters.json`,
+    );
     return res.json();
   },
   ["filters"],
@@ -304,7 +336,9 @@ export const fetchFilters = conditionalCache(
 
 export const fetchTiles = conditionalCache(
   async (appName: string): Promise<TilesConfig> => {
-    const res = await fetch(`${DATA_FORGE_URL}/${appName}/config/tiles.json`);
+    const res = await fetch(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`,
+    );
     return res.json();
   },
   ["tiles"],

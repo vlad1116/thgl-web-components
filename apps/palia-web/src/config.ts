@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "palia",
@@ -12,7 +12,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Elderwood Map",
       description: "Navigate Elderwood with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/palia/map-tiles/AZ2_Root/preview.webp",
+      bgImage: getPreviewImageUrl("palia", "AZ2_Root"),
       linkText: "Explore the Elderwood Map",
     },
     {
@@ -20,7 +20,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Kilima Village Map",
       description: "Navigate Kilima Village with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/palia/map-tiles/VillageWorld/preview.webp",
+      bgImage: getPreviewImageUrl("palia", "VillageWorld"),
       linkText: "Explore the Kilima Village Map",
     },
     {
@@ -28,8 +28,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Bahari Bay Map",
       description: "Navigate Bahari Bay with our interactive maps.",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/palia/map-tiles/AdventureZoneWorld/preview.webp",
+      bgImage: getPreviewImageUrl("palia", "AdventureZoneWorld"),
       linkText: "Explore the Bahari Bay Map",
     },
     {
@@ -37,7 +36,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Fairgrounds Map",
       description: "Navigate Fairgrounds with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/palia/map-tiles/MajiMarket/preview.webp",
+      bgImage: getPreviewImageUrl("palia", "MajiMarket"),
       linkText: "Explore the Fairgrounds Map",
     },
     {

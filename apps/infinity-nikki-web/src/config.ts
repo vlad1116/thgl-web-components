@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "infinity-nikki",
@@ -14,7 +14,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Infinity Nikki's expansive world with our interactive maps.",
       href: "/maps/Miraland",
       iconName: "Map",
-      bgImage: "https://data.th.gl/infinity-nikki/map-tiles/1/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "1"),
       linkText: "Explore the Overworld Map",
     },
     {
@@ -22,8 +22,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Danqing Island with our interactive maps.",
       href: "/maps/Danqing%20Island",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/infinity-nikki/map-tiles/10000010/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "10000010"),
       linkText: "View the Danqing Island Map",
     },
     {
@@ -31,8 +30,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Danqing Realm with our interactive maps.",
       href: "/maps/Danqing%20Realm",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/infinity-nikki/map-tiles/10000027/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "10000027"),
       linkText: "View the Danqing Realm Map",
     },
     {
@@ -40,8 +38,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Firework Isles with our interactive maps.",
       href: "/maps/Firework%20Isles",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/infinity-nikki/map-tiles/10000001/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "10000001"),
       linkText: "View the Firework Isles Map",
     },
     {
@@ -49,8 +46,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Serenity Island with our interactive maps.",
       href: "/maps/Serenity%20Island",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/infinity-nikki/map-tiles/10000002/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "10000002"),
       linkText: "View the Serenity Island Map",
     },
     {
@@ -58,8 +54,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate the Sea of Stars with our interactive maps.",
       href: "/maps/Sea%20of%20Stars",
       iconName: "Map",
-      bgImage:
-        "https://data.th.gl/infinity-nikki/map-tiles/14000000/preview.webp",
+      bgImage: getPreviewImageUrl("infinity-nikki", "14000000"),
       linkText: "View the Sea of Stars Map",
     },
   ],

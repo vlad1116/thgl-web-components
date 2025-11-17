@@ -23,7 +23,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "data.th.gl",
+        hostname: "*.th.gl",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
       },
       {
         protocol: "https",

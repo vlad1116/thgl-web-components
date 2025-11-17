@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "soulframe",
@@ -12,7 +12,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate Soulframe's Midrath with our interactive maps.",
       href: "/maps/Midrath",
       iconName: "Map",
-      bgImage: "https://data.th.gl/soulframe/map-tiles/Midrath/preview.webp",
+      bgImage: getPreviewImageUrl("soulframe", "Midrath"),
       linkText: "Explore the Midrath Map",
     },
     {

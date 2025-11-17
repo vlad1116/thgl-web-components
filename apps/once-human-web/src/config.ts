@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "once-human",
@@ -12,7 +12,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Deviation Secure Map",
       description: "Navigate Deviation Secure with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/once-human/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("once-human", "default"),
       linkText: "Explore the Deviation Secure Map",
     },
     {
@@ -21,7 +21,7 @@ export const APP_CONFIG: AppConfig = {
       description:
         "Navigate Manibus Evolution's Call with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/once-human/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("once-human", "default"),
       linkText: "Explore the Manibus Evolution's Call Map",
     },
     {
@@ -29,7 +29,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Prismverse's Clash Map",
       description: "Navigate Prismverse's Clash with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/once-human/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("once-human", "default"),
       linkText: "Explore the Prismverse's Clash  Map",
     },
     {
@@ -37,7 +37,7 @@ export const APP_CONFIG: AppConfig = {
       title: "The Way of Winter Map",
       description: "Navigate The Way of Winter with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/once-human/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("once-human", "default"),
       linkText: "Explore the The Way of Winter Map",
     },
     {
@@ -45,7 +45,7 @@ export const APP_CONFIG: AppConfig = {
       title: "Endless Dream Map",
       description: "Navigate Endless Dream with our interactive maps.",
       iconName: "Map",
-      bgImage: "https://data.th.gl/once-human/map-tiles/default/preview.webp",
+      bgImage: getPreviewImageUrl("once-human", "default"),
       linkText: "Explore the Endless Dream Map",
     },
     {
