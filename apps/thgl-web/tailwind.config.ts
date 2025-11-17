@@ -46,12 +46,17 @@ const config: Config = {
             transform: "translateY(var(--tw-translate-y))",
           },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "fade-out-from-top": "fadeOutFromTop 1s ease-in-out",
         "fade-in-to-top": "fadeInToTop 1s ease-in-out",
         "fade-out-from-bottom": "fadeOutFromBottom 1s ease-in-out",
         "fade-in-to-bottom": "fadeInToBottom 1s ease-in-out",
+        float: "float 6s ease-in-out infinite",
       },
     },
   },

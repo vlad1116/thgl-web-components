@@ -132,7 +132,7 @@ export function localizePath(
     normalizedHref.startsWith(`/${locale}/`) ||
     normalizedHref === `/${locale}`
   ) {
-    return normalizedHref.replace(/\/+$/, ""); // remove trailing slash if any
+    return normalizedHref.replace(/\/+$/, "") || "/"; // remove trailing slash if any
   }
 
   // Construct the localized path without trailing slash

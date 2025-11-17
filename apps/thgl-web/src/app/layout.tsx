@@ -7,7 +7,7 @@ import { PlausibleTracker } from "@repo/ui/header";
 import { I18NProvider } from "@repo/ui/providers";
 import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
 import { Footer } from "@/components/footer";
-import { Hero } from "@/components/hero";
+import { HeroBackground } from "@/components/hero-background";
 import { cn } from "@/lib/utils";
 import { exo2 } from "@/styles/fonts";
 import { ErrorBoundary } from "@repo/ui/controls";
@@ -47,10 +47,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           <div className="flex flex-col container px-0 pt-[54px] min-h-dvh">
             <ErrorBoundary>
-              <Hero />
-              <main className="border-x border-[#1d1d1f] grow md:px-10">
-                {children}
-              </main>
+              <HeroBackground />
+              <main className="grow md:px-10">{children}</main>
               <Footer />
             </ErrorBoundary>
           </div>
