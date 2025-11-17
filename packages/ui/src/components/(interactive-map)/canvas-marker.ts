@@ -1,7 +1,7 @@
 import leaflet, { CircleMarker } from "leaflet";
 import gameIcons from "../(controls)/icons.json";
 import { Spawns } from "../(providers)";
-import { getImageUrl } from "@repo/lib";
+import { getImageURL } from "@repo/lib";
 import type { ColorBlindMode } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
 
