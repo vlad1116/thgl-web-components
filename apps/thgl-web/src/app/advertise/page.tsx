@@ -1,4 +1,4 @@
-import { Subtitle } from "@repo/ui/content";
+import { PageShell } from "@/components/page-shell";
 import Link from "next/link";
 
 export const metadata = {
@@ -12,72 +12,120 @@ export const metadata = {
 
 export default function AdvertisePage() {
   return (
-    <section className="space-y-12 px-4 pt-10 pb-20 mx-auto text-center">
-      <div className="flex flex-col items-center gap-2">
-        <Subtitle title="Sponsor TH.GL" />
+    <PageShell className="space-y-12 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="text-center space-y-4 max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold">Sponsor TH.GL</h1>
+        <p className="text-lg text-muted-foreground">
+          TH.GL reaches <strong className="text-foreground">tens of thousands of players daily</strong>{" "}
+          through interactive maps, in-game overlays, and second-screen tools.
+          From games like <em>Palworld</em>, <em>Once Human</em>, and{" "}
+          <em>Wuthering Waves</em> to niche communities, the Companion App and
+          web-based tools are used across platforms by engaged, genre-savvy
+          players.
+        </p>
       </div>
 
-      <p className="text-muted-foreground">
-        TH.GL reaches <strong>tens of thousands of players daily</strong>{" "}
-        through interactive maps, in-game overlays, and second-screen tools.
-        From games like <em>Palworld</em>, <em>Once Human</em>, and{" "}
-        <em>Wuthering Waves</em> to niche communities, the Companion App and
-        web-based tools are used across platforms by engaged, genre-savvy
-        players.
-      </p>
+      <hr className="border-border" />
 
-      <section className="space-y-6">
-        <Subtitle title="Why Sponsor?" order={3} />
-        <ul className="text-left space-y-2 text-muted-foreground">
-          <li>🚫 Reach gamers directly — without intrusive third-party ads</li>
-          <li>🎯 Target specific audiences based on the games they play</li>
-          <li>📈 Build brand trust by supporting a creator-driven project</li>
-          <li>📢 Appear in-app, on the web, or even on Discord</li>
-        </ul>
-      </section>
-
-      <section className="space-y-6">
-        <Subtitle title="Audience Snapshot" order={3} />
-        <ul className="text-left space-y-2 text-muted-foreground">
-          <li>
-            🌍 Tens of thousands of daily users across Companion App and tools
+      {/* Why Sponsor Section */}
+      <section className="space-y-6 max-w-3xl mx-auto">
+        <h2 className="text-3xl font-bold text-center">Why Sponsor?</h2>
+        <ul className="space-y-4 text-muted-foreground">
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🚫</span>
+            <div>Reach gamers directly — without intrusive third-party ads</div>
           </li>
-          <li>💬 21,000+ members in the Discord server</li>
-          <li>📊 High engagement in niche gaming communities</li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🎯</span>
+            <div>Target specific audiences based on the games they play</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">📈</span>
+            <div>Build brand trust by supporting a creator-driven project</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">📢</span>
+            <div>Appear in-app, on the web, or even on Discord</div>
+          </li>
         </ul>
       </section>
 
-      <section className="space-y-6">
-        <Subtitle title="What’s Possible?" order={3} />
-        <ul className="text-left space-y-2 text-muted-foreground">
-          <li>🖼️ Banner or logo placements in specific games or tools</li>
-          <li>🔗 Sponsored links or SEO-friendly mentions</li>
-          <li>📣 Feature shoutouts in release notes or Discord</li>
-          <li>🧪 Custom ideas? I'm open to creative partnerships</li>
+      <hr className="border-border" />
+
+      {/* Audience Snapshot Section */}
+      <section className="space-y-6 max-w-3xl mx-auto">
+        <h2 className="text-3xl font-bold text-center">Audience Snapshot</h2>
+        <ul className="space-y-4 text-muted-foreground">
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🌍</span>
+            <div>
+              Tens of thousands of daily users across Companion App and tools
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">💬</span>
+            <div>25,000+ members in the Discord server</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">📊</span>
+            <div>High engagement in niche gaming communities</div>
+          </li>
         </ul>
       </section>
 
-      <section className="space-y-6">
-        <Subtitle title="Interested?" order={3} />
-        <p className="text-muted-foreground">
-          I’m open to sponsorships that are relevant, respectful, and help grow
-          the tools I maintain for the gaming community.
-        </p>
-        <p className="text-muted-foreground">
-          Reach out via{" "}
-          <Link
-            href="https://th.gl/discord"
-            target="_blank"
-            className="text-brand underline"
-          >
-            Discord
-          </Link>{" "}
-          and DM me (<strong>devleon</strong>).
-        </p>
-        <p className="text-sm text-muted-foreground italic">
-          Let's see if it’s a good fit. No pressure, no formality.
-        </p>
+      <hr className="border-border" />
+
+      {/* What's Possible Section */}
+      <section className="space-y-6 max-w-3xl mx-auto">
+        <h2 className="text-3xl font-bold text-center">What's Possible?</h2>
+        <ul className="space-y-4 text-muted-foreground">
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🖼️</span>
+            <div>Banner or logo placements in specific games or tools</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🔗</span>
+            <div>Sponsored links or SEO-friendly mentions</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">📣</span>
+            <div>Feature shoutouts in release notes or Discord</div>
+          </li>
+          <li className="flex gap-3">
+            <span className="text-2xl flex-shrink-0">🧪</span>
+            <div>Custom ideas? I'm open to creative partnerships</div>
+          </li>
+        </ul>
       </section>
-    </section>
+
+      <hr className="border-border" />
+
+      {/* Interested Section */}
+      <section className="space-y-6 max-w-3xl mx-auto text-center">
+        <h2 className="text-3xl font-bold">Interested?</h2>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            I'm open to sponsorships that are relevant, respectful, and help grow
+            the tools I maintain for the gaming community.
+          </p>
+          <p className="text-muted-foreground">
+            Reach out via{" "}
+            <Link
+              href="https://th.gl/discord"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              Discord
+            </Link>{" "}
+            and DM me (<strong className="text-foreground">devleon</strong>).
+          </p>
+          <p className="text-sm text-muted-foreground italic pt-2">
+            Let's see if it's a good fit. No pressure, no formality.
+          </p>
+        </div>
+      </section>
+    </PageShell>
   );
 }
