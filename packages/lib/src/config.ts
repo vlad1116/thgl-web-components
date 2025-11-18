@@ -321,19 +321,6 @@ export const fetchDatabase = conditionalCache(
   },
 );
 
-export const fetchFilters = conditionalCache(
-  async (appName: string): Promise<FiltersConfig> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/config/filters.json`,
-    );
-    return res.json();
-  },
-  ["filters"],
-  {
-    revalidate: 60,
-  },
-);
-
 export const fetchTiles = conditionalCache(
   async (appName: string): Promise<TilesConfig> => {
     const res = await fetch(
