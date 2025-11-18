@@ -35,7 +35,7 @@ export function NavMenu({
       <Popover open={open1} onOpenChange={setOpen1} modal>
         <PopoverTrigger
           asChild
-          className={cn("ml-2 mr-auto", {
+          className={cn({
             "lg:hidden": breakpoint === "lg",
             "md:hidden": breakpoint === "md",
             "sm:hidden": breakpoint === "sm",
