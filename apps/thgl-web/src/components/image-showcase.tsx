@@ -15,6 +15,7 @@ interface ImageShowcaseProps {
   priority?: boolean;
   className?: string;
   children?: ReactNode; // For custom overlay content
+  sizes?: string;
 }
 
 export function ImageShowcase({
@@ -26,6 +27,7 @@ export function ImageShowcase({
   priority = false,
   className = "",
   children,
+  sizes = "(max-width: 768px) 100vw, 50vw",
 }: ImageShowcaseProps) {
   return (
     <div className="relative">
@@ -36,6 +38,7 @@ export function ImageShowcase({
         height={height}
         className={`rounded-lg shadow-2xl ${className}`}
         priority={priority}
+        sizes={sizes}
       />
       {badge && (
         <div className="absolute -bottom-4 -left-4 bg-black/90 p-3 rounded-lg border border-primary/20">

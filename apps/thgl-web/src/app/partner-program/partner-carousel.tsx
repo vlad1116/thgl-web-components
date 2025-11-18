@@ -37,6 +37,7 @@ export function PartnerCarousel({ partners }: { partners: Partner[] }) {
                 alt={partner.name}
                 fill
                 className="rounded-full object-cover border"
+                sizes="80px"
               />
             </div>
             <h3 className="text-lg font-semibold">{partner.name}</h3>

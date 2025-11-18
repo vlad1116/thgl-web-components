@@ -36,6 +36,7 @@ export default function PreviewImage({ src }: { src: string }) {
             alt=""
             className={cn("rounded-lg object-scale-down p-8 ")}
             fill
+            sizes="100vw"
           />
         ) : null}
       </div>

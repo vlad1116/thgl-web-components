@@ -106,6 +106,7 @@ export default function CompanionAppPage() {
                   height={675}
                   className="rounded-lg object-cover"
                   priority
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                 />
                 <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-2 rounded-lg">
                   <p className="text-sm font-semibold">
@@ -125,6 +126,7 @@ export default function CompanionAppPage() {
                   width={1200}
                   height={675}
                   className="rounded-lg object-cover"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                 />
                 <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-2 rounded-lg">
                   <p className="text-sm font-semibold">
@@ -144,6 +146,7 @@ export default function CompanionAppPage() {
                   width={1200}
                   height={675}
                   className="rounded-lg object-cover"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                 />
                 <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-2 rounded-lg">
                   <p className="text-sm font-semibold">Second Screen Mode</p>
@@ -161,6 +164,7 @@ export default function CompanionAppPage() {
                   width={1200}
                   height={675}
                   className="rounded-lg object-cover"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                 />
                 <div className="absolute bottom-4 left-4 bg-black/80 px-4 py-2 rounded-lg">
                   <p className="text-sm font-semibold">Game Launcher</p>
