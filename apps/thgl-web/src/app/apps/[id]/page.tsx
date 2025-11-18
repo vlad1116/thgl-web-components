@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
-import { Button, Card, CardContent } from "@repo/ui/controls";
 import { games, getUpdateMessages } from "@repo/lib";
 import Image from "next/image";
-import Link from "next/link";
 import { ReleaseNotes } from "./release-notes";
 import { PartnerCard } from "@/components/partner-card";
-import { Subtitle } from "@repo/ui/content";
+import { PlatformCard } from "@/components/platform-card";
 
 export async function generateMetadata({
   params,
@@ -44,77 +42,71 @@ export default async function GameDetailPage({
     redirect(`/apps`);
   }
   const updateMessages = await getUpdateMessages(game.discordId);
+
   return (
-    <section className="mx-auto px-4 py-12 space-y-10">
+    <section className="mx-auto px-4 py-12 space-y-10 max-w-6xl">
+      {/* Header */}
       <div className="text-center space-y-4">
-        <Image
-          src={game.logo}
-          alt={`${game.title} logo`}
-          width={80}
-          height={80}
-          className="mx-auto"
-        />
-        <Subtitle title={`${game.title} Apps & Overlays`} />
-        <p className="text-muted-foreground">
+        <div className="flex items-center justify-center gap-4">
+          <Image
+            src={game.logo}
+            alt={`${game.title} logo`}
+            width={64}
+            height={64}
+            className="rounded"
+          />
+          <h1 className="text-4xl font-bold">{game.title}</h1>
+        </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Explore overlays, interactive maps, and tracking tools available for
           this game.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {game.companion && (
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h2 className="text-xl font-semibold">Companion App</h2>
-              <p className="text-muted-foreground text-sm">
-                Run the map inside the TH.GL Companion App with live position
-                tracking, second-screen support, and hotkey toggles.
-              </p>
-              <Button asChild>
-                <Link href="/companion-app">Open Companion App Info</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      {/* Platform Options */}
+      <div>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Available Platforms
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {game.companion && (
+            <PlatformCard
+              type="companion"
+              title="Companion App"
+              description="Run the map inside the TH.GL Companion App with live position tracking, second-screen support, and hotkey toggles."
+              href="/companion-app"
+              buttonLabel="Learn More"
+            />
+          )}
 
-        {game.overwolf && (
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h2 className="text-xl font-semibold">Overwolf App</h2>
-              <p className="text-muted-foreground text-sm">
-                Available in the Overwolf store. Works in-game with hotkeys and
-                overlays.
-              </p>
-              <Button asChild>
-                <Link href={game.overwolf.url} target="_blank">
-                  View on Overwolf
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          {game.overwolf && (
+            <PlatformCard
+              type="overwolf"
+              title="Overwolf App"
+              description="Available in the Overwolf store. Works in-game with hotkeys and overlays."
+              href={game.overwolf.url}
+              buttonLabel="View on Overwolf"
+              external
+            />
+          )}
 
-        {game.web && (
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h2 className="text-xl font-semibold">Web Tool</h2>
-              <p className="text-muted-foreground text-sm">
-                Use the tool or tracker in your browser — no install required.
-              </p>
-              <Button asChild>
-                <Link href={game.web} target="_blank">
-                  Open Website
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          {game.web && (
+            <PlatformCard
+              type="web"
+              title="Web Tool"
+              description="Use the tool or tracker in your browser — no install required."
+              href={game.web}
+              buttonLabel="Open Website"
+              external
+            />
+          )}
+        </div>
       </div>
 
-      {game.partnerApps && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Partner Apps</h2>
-          <div className="grid gap-4 md:grid-cols-2">
+      {game.partnerApps && game.partnerApps.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-center">Partner Apps</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {game.partnerApps.map((app) => (
               <PartnerCard key={app.id} app={app} />
             ))}
@@ -122,8 +114,9 @@ export default async function GameDetailPage({
         </div>
       )}
 
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Release Notes</h2>
+      {/* Release Notes */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-center">Release Notes</h2>
         <ReleaseNotes updateMessages={updateMessages} />
       </div>
     </section>
