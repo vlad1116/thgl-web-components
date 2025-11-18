@@ -29,7 +29,8 @@ import {
   Regions,
   TraceLine,
 } from "../(interactive-map)";
-import { Actions, MarkersSearch, Toaster, Whiteboard } from "../(controls)";
+import { Actions, MarkersSearch, Toaster } from "../(controls)";
+import { Whiteboard } from "../(peer)";
 import { StreamingSender } from "./streaming-sender";
 import { MapHotkeys } from "./map-hotkeys";
 import { ResizeBorders } from "./resize-borders";

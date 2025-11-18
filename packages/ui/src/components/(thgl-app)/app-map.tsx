@@ -12,7 +12,7 @@ import {
   Regions,
   TraceLine,
 } from "../(interactive-map)";
-import { Whiteboard } from "../(controls)";
+import { Whiteboard } from "../(peer)";
 import { AdditionalTooltipType } from "../(content)";
 
 export type AppMapProps = {

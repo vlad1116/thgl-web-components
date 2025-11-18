@@ -10,7 +10,8 @@ import {
   PrivateNode,
   PrivateDrawing,
 } from "../(interactive-map)";
-import { Actions, StreamingReceiver, Whiteboard } from "../(controls)";
+import { Actions } from "../(controls)";
+import { StreamingReceiver, Whiteboard } from "../(peer)";
 import type { AppConfig, MarkerOptions, TilesConfig } from "@repo/lib";
 import { AdditionalTooltipType } from "../(content)";
 
