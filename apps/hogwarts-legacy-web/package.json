@@ -2,6 +2,15 @@
   "name": "hogwarts-legacy-web",
   "version": "0.0.0",
   "private": true,
+  "browserslist": [
+    "chrome >= 91",
+    "edge >= 91",
+    "firefox >= 90",
+    "safari >= 15",
+    "and_chr >= 91",
+    "and_ff >= 90",
+    "ios_saf >= 15"
+  ],
   "scripts": {
     "build": "next build",
     "clean": "rimraf .next node_modules",

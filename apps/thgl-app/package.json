@@ -2,6 +2,9 @@
   "name": "thgl-app",
   "version": "0.0.0",
   "private": true,
+  "browserslist": [
+    "chrome >= 91"
+  ],
   "scripts": {
     "build": "next build",
     "clean": "rimraf .next node_modules",
