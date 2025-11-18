@@ -524,7 +524,7 @@ The more information you provide, the better I can evaluate the feasibility!
     answer: `
 Yes, they are safe.
 
-Apps only read local memory and do not modify the game in any way.  
+Apps only read local memory and do not modify the game in any way.
 No bans have been reported across supported games.
 
 Several games have official confirmations:
@@ -533,6 +533,24 @@ Several games have official confirmations:
 - **Palia**: Confirmed allowed by S6 Chief Revenue Officer
     `.trim(),
     labels: ["General", "Companion App", "Overwolf"],
+  },
+  {
+    id: "companion-app-system-requirements",
+    headline: "Companion App system requirements",
+    question: "What are the system requirements for the TH.GL Companion App?",
+    answer: `
+Windows 10 or 11 (64-bit) with WebView2 Runtime (included with Windows 11 or installed automatically). ~7MB download size. Works on most gaming PCs without performance impact.
+    `.trim(),
+    labels: ["Companion App", "Technical"],
+  },
+  {
+    id: "companion-app-linux-macos",
+    headline: "Companion App on Linux or macOS",
+    question: "Can I use the TH.GL Companion App on Linux or macOS?",
+    answer: `
+The companion app is Windows-only. However, you can use our web versions (e.g., palworld.th.gl, duneawakening.th.gl) on any platform. They won't have overlay or position tracking, but all map features work.
+    `.trim(),
+    labels: ["Companion App", "Linux", "General"],
   },
   {
     id: "admin-rights-error",

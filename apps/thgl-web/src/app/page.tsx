@@ -13,6 +13,7 @@ import {
   SectionHeader,
   CTASection,
 } from "@/components/sections";
+import { BlogPostCard } from "@/components/blog-post-card";
 
 const featuredGames = games.slice(0, 6);
 const companionGames = games.filter((g) => g.companion);
@@ -245,21 +246,9 @@ export default function HomePage() {
       {/* Blog Teaser */}
       <div className="space-y-4 text-center">
         <SectionHeader title="From the Blog" />
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2 text-left">
           {blogEntries.slice(0, 3).map((entry) => (
-            <Card key={entry.id} className="p-4 text-left">
-              <Link href={`/blog/${entry.id}`} className="space-y-2 block">
-                <h3 className="text-lg font-semibold text-brand">
-                  {entry.title}
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  {entry.description}
-                </p>
-                <span className="text-sm underline text-brand">
-                  Read more →
-                </span>
-              </Link>
-            </Card>
+            <BlogPostCard key={entry.id} entry={entry} variant="compact" />
           ))}
         </div>
         <div className="pt-2">

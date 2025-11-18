@@ -13,6 +13,7 @@ import {
 } from "@/lib/blog-entries";
 import { normalizeTags } from "@/lib/blog-tag-mapping";
 import { LabelBadge } from "@/components/faq-label-badge";
+import { BlogPostCard } from "@/components/blog-post-card";
 
 // Popular/priority tags to show by default
 const PRIORITY_TAGS: BlogContentReference[] = [
@@ -203,56 +204,7 @@ export function BlogList() {
       ) : (
         <div className="space-y-4">
           {filteredEntries.map((entry) => (
-            <Link key={entry.id} href={`/blog/${entry.id}`}>
-              <Card className="hover:border-primary transition-colors">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {/* Header with date and tags */}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <time className="text-sm text-muted-foreground">
-                        {new Date(entry.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </time>
-                      {(() => {
-                        const normalizedTags = normalizeTags(entry.contentReference);
-                        return normalizedTags.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {normalizedTags.slice(0, 3).map((reference) => (
-                              <LabelBadge key={reference} text={reference} />
-                            ))}
-                            {normalizedTags.length > 3 && (
-                              <span className="text-xs text-muted-foreground">
-                                +{normalizedTags.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        ) : null;
-                      })()}
-                    </div>
-
-                    {/* Title and description */}
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                        {entry.title}
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {entry.description}
-                      </p>
-                    </div>
-
-                    {/* Headline */}
-                    {entry.headline && (
-                      <p className="text-sm text-muted-foreground italic">
-                        {entry.headline}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <BlogPostCard key={entry.id} entry={entry} />
           ))}
         </div>
       )}

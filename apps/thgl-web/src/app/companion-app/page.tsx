@@ -28,8 +28,10 @@ import {
   FeatureCard,
   FeatureGrid,
   SectionHeader,
-  FAQItem,
 } from "@/components/sections";
+import { BlogPostCard } from "@/components/blog-post-card";
+import { blogEntries } from "@/lib/blog-entries";
+import { faqEntries } from "@/lib/faq-entries";
 
 export const metadata = {
   title:
@@ -339,79 +341,20 @@ export default function CompanionAppPage() {
       {/* FAQ Section */}
       <div>
         <SectionHeader title="Frequently Asked Questions" />
-        <div className="max-w-3xl mx-auto space-y-6">
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h3 className="font-semibold text-lg">
-                Is the companion app safe to use?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Yes! The app only reads local memory and does not modify games.
-                It has been officially approved by developers of Dune Awakening,
-                Once Human, and Palia. Thousands of players use it daily with
-                zero bans reported.{" "}
-                <Link href="/faq/apps-bannable" className="underline">
-                  Learn more
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h3 className="font-semibold text-lg">
-                How do I update the companion app?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                The app updates automatically. When a new version is available,
-                it will download and install in the background.{" "}
-                <Link href="/faq/update-companion-app" className="underline">
-                  Manual update guide
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h3 className="font-semibold text-lg">
-                What are the system requirements?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Windows 10 or 11 (64-bit) with WebView2 Runtime (included with
-                Windows 11 or installed automatically). ~7MB download size. Works
-                on most gaming PCs without performance impact.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h3 className="font-semibold text-lg">
-                Can I use this on Linux or macOS?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                The companion app is Windows-only. However, you can use our web
-                versions (e.g., palworld.th.gl, duneawakening.th.gl) on any
-                platform. They won't have overlay or position tracking, but all
-                map features work.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 space-y-2">
-              <h3 className="font-semibold text-lg">
-                Why does my antivirus flag the app?
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Some antivirus tools may show false positives. The app is safe
-                and signed. You can verify on VirusTotal.{" "}
-                <Link
-                  href="/faq/antivirus-false-positive"
-                  className="underline"
-                >
-                  More details
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+        <div className="max-w-3xl mx-auto space-y-4">
+          {faqEntries
+            .filter((entry) => entry.labels.includes("Companion App"))
+            .map((entry) => (
+              <Card key={entry.id} className="hover:border-primary transition-colors">
+                <CardContent className="p-6">
+                  <Link href={`/faq/${entry.id}`} className="block">
+                    <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+                      {entry.question}
+                    </h3>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
         </div>
         <div className="text-center mt-8">
           <Link
@@ -462,51 +405,15 @@ export default function CompanionAppPage() {
           description="Read about the companion app development and updates"
         />
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="p-6 space-y-3">
-              <h3 className="text-lg font-semibold">
-                <Link
-                  href="/blog/why-i-built-companion-app"
-                  className="hover:text-primary transition-colors"
-                >
-                  Why I Created a Standalone Companion App After 10+ Overwolf
-                  Apps
-                </Link>
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                After years of developing Overwolf apps, I built the TH.GL
-                Companion App to be lighter, faster, and more flexible.
-              </p>
-              <Link
-                href="/blog/why-i-built-companion-app"
-                className="text-sm text-primary underline"
-              >
-                Read more →
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 space-y-3">
-              <h3 className="text-lg font-semibold">
-                <Link
-                  href="/blog/overlay-input-freeze-fix"
-                  className="hover:text-primary transition-colors"
-                >
-                  How We Fixed the Overlay Input Freeze
-                </Link>
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Technical deep-dive into solving overlay responsiveness issues
-                with dedicated input threading.
-              </p>
-              <Link
-                href="/blog/overlay-input-freeze-fix"
-                className="text-sm text-primary underline"
-              >
-                Read more →
-              </Link>
-            </CardContent>
-          </Card>
+          {blogEntries
+            .filter(
+              (entry) =>
+                entry.id === "why-i-built-companion-app" ||
+                entry.id === "overlay-input-freeze-fix",
+            )
+            .map((entry) => (
+              <BlogPostCard key={entry.id} entry={entry} variant="compact" />
+            ))}
         </div>
       </div>
     </section>
