@@ -629,6 +629,10 @@ Thanks for reading — and stay tuned for what's next!
   },
 ];
 
+import { normalizeTags } from "./blog-tag-mapping";
+
 export const allBlogContentReferences: BlogContentReference[] = Array.from(
-  new Set(blogEntries.flatMap((entry) => entry.contentReference)),
+  new Set(
+    blogEntries.flatMap((entry) => normalizeTags(entry.contentReference)),
+  ),
 ).sort((a, b) => a.localeCompare(b));
