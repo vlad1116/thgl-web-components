@@ -1,4 +1,3 @@
-import { Subtitle } from "@repo/ui/content";
 import { FAQList } from "@/components/faq-list";
 import { PageShell } from "@/components/page-shell";
 
@@ -14,12 +13,15 @@ export const metadata = {
 
 export default function FAQIndexPage() {
   return (
-    <PageShell>
-      <div className="text-center space-y-4">
-        <Subtitle title="Frequently Asked Questions" />
-        <p className="text-muted-foreground">
-          Frequently asked questions about TH.GL tools, subscriptions, and app
-          usage.
+    <PageShell className="space-y-12 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="text-center space-y-4 max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold">
+          Frequently Asked Questions
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Find answers to common questions about TH.GL tools, subscriptions, and
+          app usage.
         </p>
       </div>
 
