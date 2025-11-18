@@ -274,17 +274,17 @@ export function ScriptLoader({
                 { once: true },
               );
             }
-          } else if (node.nodeName === "SCRIPT") {
-            const script = node as HTMLScriptElement;
-            if (script.src.includes("btloader.com")) {
-              script.addEventListener(
-                "error",
-                () => {
-                  setState(STATE_ERROR);
-                },
-                { once: true },
-              );
-            }
+            // } else if (node.nodeName === "SCRIPT") {
+            //   const script = node as HTMLScriptElement;
+            //   if (script.src.includes("btloader.com")) {
+            //     script.addEventListener(
+            //       "error",
+            //       (e) => {
+            //         setState(STATE_ERROR);
+            //       },
+            //       { once: true },
+            //     );
+            //   }
           }
         });
       });
