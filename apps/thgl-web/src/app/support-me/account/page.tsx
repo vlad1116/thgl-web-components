@@ -14,7 +14,6 @@ import {
 } from "@/lib/patreon";
 import { tiers } from "@/lib/tiers";
 import { games } from "@repo/lib";
-import { Subtitle } from "@repo/ui/content";
 
 export const metadata = {
   title: "Account - The Hidden Gaming Lair",
@@ -55,65 +54,98 @@ export default async function SupportMeAccount() {
 
           content = (
             <>
-              <Subtitle title="Account Status" />
-              <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-                This page activates your perks for{" "}
-                <strong>Overwolf apps and *.th.gl websites</strong>.
-                <br />
-                If you're using the{" "}
-                <Link href="/companion-app" className="text-brand underline">
-                  Companion App
-                </Link>
-                , perks are unlocked directly inside the app — no action needed
-                here.
-              </p>
-              <p className="text-muted-foreground text-sm max-w-xl mx-auto mt-4">
-                <strong>Discord Role:</strong> To get your Discord supporter
-                role,{" "}
-                <Link
-                  href="/faq/discord-supporter-role"
-                  className="text-brand underline"
-                >
-                  link your Discord account to Patreon
-                </Link>
-                .
-              </p>
+              <div className="bg-muted/30 rounded-lg p-8 max-w-3xl mx-auto">
+                <h2 className="text-2xl font-bold mb-6 text-center">
+                  Account Status
+                </h2>
 
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold">User</h3>
-                <p className="text-brand">
-                  {currentUserResult.data.attributes.full_name} (
-                  {currentUserResult.data.id})
-                </p>
+                {/* User Info */}
+                <div className="space-y-4 mb-6">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Logged in as
+                    </p>
+                    <p className="text-lg font-semibold text-primary">
+                      {currentUserResult.data.attributes.full_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ID: {currentUserResult.data.id}
+                    </p>
+                  </div>
 
-                <h4 className="text-sm font-semibold">Current Tier(s):</h4>
-                {entitledTierIDs.length > 0 ? (
-                  <ul className="text-brand flex gap-2 justify-center flex-wrap text-sm">
-                    {entitledTierIDs.map((tierId) => (
-                      <li key={tierId}>
-                        {tiers.find((tier) => tier.id === tierId)?.title ??
-                          "Unknown"}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-warning font-medium">
-                    You are not subscribed to any tier.
+                  {/* Current Tiers */}
+                  <div className="border-t border-border pt-4">
+                    <p className="text-sm font-semibold text-center mb-3">
+                      Active Subscription Tier(s)
+                    </p>
+                    {entitledTierIDs.length > 0 ? (
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        {entitledTierIDs.map((tierId) => (
+                          <span
+                            key={tierId}
+                            className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium"
+                          >
+                            {tiers.find((tier) => tier.id === tierId)?.title ??
+                              "Unknown"}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-amber-500 font-medium text-center text-sm">
+                        You are not subscribed to any tier.
+                      </p>
+                    )}
+
+                    {entitledTierIDs.includes("21470801") && (
+                      <p className="text-sm text-amber-500 text-center mt-3">
+                        ⚠️ The Enthusiast tier does not include Ad Removal.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Section */}
+                <div className="space-y-3 text-sm text-muted-foreground border-t border-border pt-4">
+                  <p>
+                    This page activates your perks for{" "}
+                    <strong className="text-foreground">
+                      Overwolf apps and *.th.gl websites
+                    </strong>
+                    .
                   </p>
-                )}
-
-                {entitledTierIDs.includes("21470801") && (
-                  <p className="text-sm text-amber-500">
-                    The Enthusiast tier does not include Ad Removal.
+                  <p>
+                    If you're using the{" "}
+                    <Link
+                      href="/companion-app"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Companion App
+                    </Link>
+                    , perks are unlocked directly inside the app — no action
+                    needed here.
                   </p>
-                )}
-              </section>
+                  <p>
+                    <strong className="text-foreground">Discord Role:</strong> To
+                    get your Discord supporter role,{" "}
+                    <Link
+                      href="/faq/discord-supporter-role"
+                      className="text-primary hover:underline"
+                    >
+                      link your Discord account to Patreon
+                    </Link>
+                    .
+                  </p>
+                </div>
 
-              <div className="space-y-2">
-                <Link href="/support-me/patreon" prefetch={false}>
-                  <Button>Change Patreon Account</Button>
-                </Link>
-                <SignOut />
+                {/* Actions */}
+                <div className="flex gap-3 justify-center mt-6 pt-4 border-t border-border">
+                  <Button variant="secondary" asChild>
+                    <Link href="/support-me/patreon" prefetch={false}>
+                      Change Patreon Account
+                    </Link>
+                  </Button>
+                  <SignOut />
+                </div>
               </div>
             </>
           );
@@ -126,48 +158,53 @@ export default async function SupportMeAccount() {
 
   if (!content) {
     content = (
-      <>
-        <Subtitle title="Activate Subscriptions" />
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          You are not authenticated. Click below to connect your Patreon account
-          and activate your perks.
+      <div className="bg-muted/30 rounded-lg p-8 max-w-2xl mx-auto text-center">
+        <h2 className="text-2xl font-bold mb-6">Activate Your Perks</h2>
+        <p className="text-muted-foreground mb-6">
+          You are not authenticated. Connect your Patreon account to activate
+          your perks for Overwolf apps and web tools.
         </p>
-        <Link href="/support-me/patreon" className="block" prefetch={false}>
-          <Button>Authenticate with Patreon</Button>
-        </Link>
-        <p className="italic text-sm text-muted-foreground">
+        <Button size="lg" asChild>
+          <Link href="/support-me/patreon" prefetch={false}>
+            Authenticate with Patreon
+          </Link>
+        </Button>
+        <p className="italic text-sm text-muted-foreground mt-4">
           This will store a cookie in your browser to remember your Patreon
-          account. You can delete it at any time by signing out.
+          account. You can sign out at any time.
         </p>
-      </>
+      </div>
     );
   }
 
   return (
-    <section className="space-y-12 px-4 pt-10 pb-20 text-center max-w-5xl mx-auto">
+    <section className="space-y-16 px-4 pt-10 pb-20 max-w-7xl mx-auto">
       {content}
 
-      <div className="space-y-4">
-        <Subtitle title="Unlock Overwolf Apps" order={3} />
-        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-          Click the buttons below to unlock your perks in Overwolf apps. Some
-          apps also support manual unlock via a secret.
-        </p>
-      </div>
+      {/* Overwolf Apps Section */}
+      <div className="space-y-8">
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold">Unlock Overwolf Apps</h2>
+          <p className="text-sm text-muted-foreground">
+            Click the buttons below to unlock your perks in Overwolf apps. Some
+            apps also support manual unlock via a secret.
+          </p>
+        </div>
 
-      <div className="flex flex-wrap gap-8 justify-center">
-        {games
-          .filter((game) => "overwolf" in game)
-          .map((game) => (
-            <AppSubscriptionCard
-              key={game.title}
-              game={game}
-              userId={userId?.value}
-              hasTier={game.patreonTierIDs?.some((tierId) =>
-                entitledTierIDs.includes(tierId),
-              )}
-            />
-          ))}
+        <div className="flex flex-wrap gap-6 justify-center">
+          {games
+            .filter((game) => "overwolf" in game)
+            .map((game) => (
+              <AppSubscriptionCard
+                key={game.title}
+                game={game}
+                userId={userId?.value}
+                hasTier={game.patreonTierIDs?.some((tierId) =>
+                  entitledTierIDs.includes(tierId),
+                )}
+              />
+            ))}
+        </div>
       </div>
     </section>
   );
