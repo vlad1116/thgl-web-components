@@ -3,6 +3,7 @@ import { games } from "@repo/lib";
 import { PartnerCarousel } from "./partner-carousel";
 import { partners } from "./partners";
 import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
   title: "Partner With TH.GL – Streamers, Creators & Sharers",
@@ -16,15 +17,10 @@ export const metadata = {
 export default function PartnerProgramPage() {
   return (
     <PageShell className="space-y-12 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold">Partner With TH.GL</h1>
-        <p className="text-lg text-muted-foreground">
-          Are you a streamer, content creator, or someone who shares useful
-          tools with others? Partner with TH.GL and get rewarded for spreading
-          the word.
-        </p>
-      </div>
+      <PageHeader
+        title="Partner With TH.GL"
+        description="Are you a streamer, content creator, or someone who shares useful tools with others? Partner with TH.GL and get rewarded for spreading the word."
+      />
 
       {/* Partners Section */}
       <section className="space-y-8">

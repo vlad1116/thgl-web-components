@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
 import Link from "next/link";
 
 export const metadata = {
@@ -13,21 +14,22 @@ export const metadata = {
 export default function PrivacyPolicy(): JSX.Element {
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold">Privacy Policy</h1>
-        <p className="text-lg text-muted-foreground">
-          This Privacy Policy explains how I collect, use, and protect your
-          information when you use{" "}
-          <a
-            href="https://www.th.gl"
-            className="text-primary hover:underline font-medium"
-          >
-            The Hidden Gaming Lair
-          </a>{" "}
-          and its related tools.
-        </p>
-      </div>
+      <PageHeader
+        title="Privacy Policy"
+        description={
+          <>
+            This Privacy Policy explains how I collect, use, and protect your
+            information when you use{" "}
+            <a
+              href="https://www.th.gl"
+              className="text-primary hover:underline font-medium"
+            >
+              The Hidden Gaming Lair
+            </a>{" "}
+            and its related tools.
+          </>
+        }
+      />
 
       <hr className="border-border" />
 

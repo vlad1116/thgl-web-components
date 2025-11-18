@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@repo/ui/controls";
 import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
 
 export default function Error({
   error,
@@ -18,16 +19,10 @@ export default function Error({
 
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold">
-          Oops, something went wrong
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          We hit an unexpected error. Try reloading the page — or let us know
-          if it keeps happening.
-        </p>
-      </div>
+      <PageHeader
+        title="Oops, something went wrong"
+        description="We hit an unexpected error. Try reloading the page — or let us know if it keeps happening."
+      />
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

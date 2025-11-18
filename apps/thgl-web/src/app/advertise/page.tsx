@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
 import Link from "next/link";
 
 export const metadata = {
@@ -13,18 +14,22 @@ export const metadata = {
 export default function AdvertisePage() {
   return (
     <PageShell className="space-y-12 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold">Sponsor TH.GL</h1>
-        <p className="text-lg text-muted-foreground">
-          TH.GL reaches <strong className="text-foreground">tens of thousands of players daily</strong>{" "}
-          through interactive maps, in-game overlays, and second-screen tools.
-          From games like <em>Palworld</em>, <em>Once Human</em>, and{" "}
-          <em>Wuthering Waves</em> to niche communities, the Companion App and
-          web-based tools are used across platforms by engaged, genre-savvy
-          players.
-        </p>
-      </div>
+      <PageHeader
+        title="Sponsor TH.GL"
+        description={
+          <>
+            TH.GL reaches{" "}
+            <strong className="text-foreground">
+              tens of thousands of players daily
+            </strong>{" "}
+            through interactive maps, in-game overlays, and second-screen tools.
+            From games like <em>Palworld</em>, <em>Once Human</em>, and{" "}
+            <em>Wuthering Waves</em> to niche communities, the Companion App and
+            web-based tools are used across platforms by engaged, genre-savvy
+            players.
+          </>
+        }
+      />
 
       <hr className="border-border" />
 

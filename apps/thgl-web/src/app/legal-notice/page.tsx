@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
   title: "Legal Notice (Impressum) – The Hidden Gaming Lair",
@@ -12,16 +13,10 @@ export const metadata = {
 export default function LegalNotice(): JSX.Element {
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold">
-          Legal Notice / Impressum
-        </h1>
-        <p className="text-muted-foreground">
-          Angaben gemäß § 5 TMG / In accordance with Section 5 of the German
-          Telemedia Act.
-        </p>
-      </div>
+      <PageHeader
+        title="Legal Notice / Impressum"
+        description="Angaben gemäß § 5 TMG / In accordance with Section 5 of the German Telemedia Act."
+      />
 
       <hr className="border-border" />
 
