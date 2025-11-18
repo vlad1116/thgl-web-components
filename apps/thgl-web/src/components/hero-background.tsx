@@ -36,7 +36,7 @@ export function HeroBackground(): JSX.Element {
     <div className="absolute top-0 left-0 right-0 -z-10 h-[33vh] overflow-hidden mt-[54px]">
       {/* Grid Pattern Background */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage: `
             linear-gradient(to right, currentColor 1px, transparent 1px),
@@ -59,7 +59,7 @@ export function HeroBackground(): JSX.Element {
           {displayGames.map((game, idx) => (
             <div
               key={`${game.id}-${idx}`}
-              className="relative aspect-square opacity-[0.04] grayscale blur-[1px]"
+              className="relative aspect-square opacity-[0.05] grayscale blur-[1px]"
             >
               <Image
                 src={game.logo}
