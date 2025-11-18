@@ -3,6 +3,9 @@
  * This helps reduce tag clutter while maintaining discoverability
  */
 export const TAG_MAPPING: Record<string, string> = {
+  // Normalize variations of the same tag
+  "THGL Companion App": "TH.GL Companion App",
+  "TH.GL": "TH.GL Companion App",
   // Technical/Development tags - consolidate into broader categories
   "thgl-web-components": "Development",
   "monorepo": "Development",
