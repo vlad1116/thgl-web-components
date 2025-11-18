@@ -3,7 +3,7 @@
 export function SignOut() {
   return (
     <button
-      className="text-sm hover:underline block w-fit mx-auto"
+      className="text-sm hover:underline"
       onClick={() => {
         fetch("/api/patreon", { method: "DELETE" }).then(() => {
           location.reload();
