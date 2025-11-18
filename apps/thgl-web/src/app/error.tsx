@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@repo/ui/controls";
-import { Subtitle } from "@repo/ui/content";
+import { PageShell } from "@/components/page-shell";
 
 export default function Error({
   error,
@@ -17,29 +17,45 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="container mx-auto text-center p-8 space-y-8">
-      <Subtitle title="Oops, something went wrong" />
+    <PageShell className="space-y-12 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center space-y-4 max-w-3xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold">
+          Oops, something went wrong
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          We hit an unexpected error. Try reloading the page — or let us know
+          if it keeps happening.
+        </p>
+      </div>
 
-      <p className="text-muted-foreground text-sm">
-        We hit an unexpected error. Try reloading the page — or let us know if
-        it keeps happening.
-      </p>
-
+      {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <Button onClick={reset}>Try Again</Button>
         <Link
           href="https://th.gl/discord"
           rel="noopener noreferrer"
           target="_blank"
-          className="text-sm underline text-muted-foreground hover:text-white"
+          className="text-primary hover:underline font-medium"
         >
           Contact us on Discord
         </Link>
       </div>
 
-      <pre className="text-xs text-muted-foreground border-t pt-4 whitespace-pre-wrap break-words text-left">
-        {error.message}
-      </pre>
-    </div>
+      {/* Error Details */}
+      {error.message && (
+        <>
+          <hr className="border-border" />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-center">
+              Error Details
+            </h2>
+            <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words bg-muted/20 p-4 rounded-md border border-border">
+              {error.message}
+            </pre>
+          </div>
+        </>
+      )}
+    </PageShell>
   );
 }
