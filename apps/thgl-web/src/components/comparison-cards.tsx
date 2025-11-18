@@ -50,13 +50,13 @@ export function ComparisonCards({ cards, className = "" }: ComparisonCardsProps)
                 {card.features.map((feature, featureIdx) => (
                   <li key={featureIdx} className="flex items-start">
                     <span
-                      className={`${feature.enabled ? "text-primary" : "text-muted-foreground/50"} mr-2`}
+                      className={`${feature.enabled ? "text-primary" : "text-muted-foreground"} mr-2`}
                     >
                       {feature.enabled ? "✓" : "✗"}
                     </span>
                     <span
                       className={
-                        feature.enabled ? "" : "text-muted-foreground/70"
+                        feature.enabled ? "" : "text-muted-foreground"
                       }
                     >
                       {feature.text}

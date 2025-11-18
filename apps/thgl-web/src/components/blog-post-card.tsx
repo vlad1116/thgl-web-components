@@ -21,10 +21,16 @@ export function BlogPostCard({
     return (
       <Card className="hover:border-primary transition-colors">
         <CardContent className="p-4">
-          <Link href={`/blog/${entry.id}`} className="space-y-2 block">
+          <Link
+            href={`/blog/${entry.id}`}
+            className="space-y-2 block"
+            aria-label={`Read more about ${entry.title}`}
+          >
             <h3 className="text-lg font-semibold text-brand">{entry.title}</h3>
             <p className="text-muted-foreground text-sm">{entry.description}</p>
-            <span className="text-sm underline text-brand">Read more →</span>
+            <span className="text-sm underline text-brand" aria-hidden="true">
+              Read more →
+            </span>
           </Link>
         </CardContent>
       </Card>

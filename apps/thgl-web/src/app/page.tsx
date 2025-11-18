@@ -128,7 +128,7 @@ export default function HomePage() {
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/companion-app">Learn More</Link>
+                <Link href="/companion-app">Learn More About Companion App</Link>
               </Button>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function HomePage() {
                 { text: "Auto-updates and hotkey controls", enabled: true },
                 { text: "Windows 10/11 only", enabled: true },
               ],
-              cta: { label: "Learn More", href: "/companion-app" },
+              cta: { label: "Learn More About Companion App", href: "/companion-app" },
               highlighted: true,
             },
             {

@@ -361,7 +361,7 @@ export default function CompanionAppPage() {
             href="/faq"
             className="text-sm underline text-muted-foreground hover:text-white"
           >
-            View all FAQs →
+            View all frequently asked questions →
           </Link>
         </div>
       </div>

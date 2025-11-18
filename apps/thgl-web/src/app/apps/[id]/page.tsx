@@ -75,7 +75,7 @@ export default async function GameDetailPage({
               title="Companion App"
               description="Run the map inside the TH.GL Companion App with live position tracking, second-screen support, and hotkey toggles."
               href="/companion-app"
-              buttonLabel="Learn More"
+              buttonLabel="Learn More About Companion App"
             />
           )}
 
