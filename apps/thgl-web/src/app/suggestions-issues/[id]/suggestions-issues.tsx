@@ -180,74 +180,81 @@ export function SuggestionsIssuesList({
     selectedTagIds.length > 0 || searchQuery.trim().length > 0;
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
-        <div className="relative">
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Search by title or first message"
-            aria-label="Search suggestions and issues"
-            className="w-full rounded-md border border-muted-foreground/30 bg-background px-3 py-2 text-sm shadow-sm outline-none ring-brand/20 focus:border-brand focus:ring-2"
-          />
-        </div>
+    <div className="space-y-8">
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search suggestions and issues..."
+          aria-label="Search suggestions and issues"
+          className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm shadow-sm outline-none ring-primary/20 focus:border-primary focus:ring-2"
+        />
 
         {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {allTags.map((tag) => {
-              const isSelected = selectedTagIds.includes(tag.id);
-              return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Filter by Tag</h3>
+              {hasActiveFilters && (
                 <button
-                  key={tag.id}
                   type="button"
-                  onClick={() => toggleTag(tag.id)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                    isSelected
-                      ? "border-brand/60 bg-brand/10 text-brand"
-                      : "border-muted-foreground/20 text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
-                  }`}
+                  onClick={clearFilters}
+                  className="text-sm text-primary hover:underline"
                 >
-                  <TagBadgeContent tag={tag} />
+                  Clear filters
                 </button>
-              );
-            })}
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {allTags.map((tag) => {
+                const isSelected = selectedTagIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    }`}
+                  >
+                    <TagBadgeContent tag={tag} />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {hasActiveFilters && (
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span>
-              Showing {filteredPosts.length} of {posts.length} posts
-            </span>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="font-medium text-brand hover:underline"
-            >
-              Clear filters
-            </button>
+          <div className="text-sm text-muted-foreground text-center">
+            Showing {filteredPosts.length} of {posts.length} posts
           </div>
         )}
       </div>
 
       {visiblePosts.length === 0 && (
-        <div className="rounded-lg border border-dashed border-muted-foreground/30 py-12 text-center text-sm text-muted-foreground">
-          {hasActiveFilters ? (
-            <>
-              <p>No posts match the current filters yet.</p>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="mt-3 text-brand hover:underline"
-              >
-                Clear filters
-              </button>
-            </>
-          ) : (
-            <p>No suggestions or issues found.</p>
-          )}
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            {hasActiveFilters ? (
+              <>
+                <p className="text-muted-foreground mb-4">
+                  No posts match the current filters.
+                </p>
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                No suggestions or issues found.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {visiblePosts.map((post) => (
@@ -284,29 +291,49 @@ function SuggestionIssueCard({
   const contentId = `suggestion-${post.id}-content`;
 
   return (
-    <Card>
+    <Card className="hover:border-primary transition-colors">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <CardTitle className="text-lg text-left">
+          <div className="flex-1 space-y-2">
+            <CardTitle className="text-xl text-left">
               <Link
                 href={`/suggestions-issues/${post.id}`}
-                className="hover:underline focus-visible:underline"
+                className="hover:text-primary transition-colors"
               >
                 {post.name}
               </Link>
             </CardTitle>
-            <CardDescription className="mt-1">
-              <span className="flex items-center gap-2 text-xs">
-                <User className="h-3 w-3" />
-                {post.author.username}
-                <span className="text-muted-foreground">|</span>
-                {new Date(post.createdAt).toLocaleDateString()}
-                <span className="text-muted-foreground">|</span>
-                <MessageSquare className="h-3 w-3" />
-                {post.messageCount} replies
+            <CardDescription>
+              <span className="flex items-center gap-2 text-sm flex-wrap">
+                <span className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {post.author.username}
+                </span>
+                <span className="text-border">•</span>
+                <span>
+                  {new Date(post.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                <span className="text-border">•</span>
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" />
+                  {post.messageCount} {post.messageCount === 1 ? "reply" : "replies"}
+                </span>
               </span>
             </CardDescription>
+
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <Badge key={tag.id} variant="secondary">
+                    <TagBadgeContent tag={tag} />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -315,6 +342,7 @@ function SuggestionIssueCard({
             aria-expanded={isExpanded}
             aria-controls={contentId}
             type="button"
+            className="flex-shrink-0"
           >
             {isExpanded ? (
               <ChevronUp className="h-4 w-4" />
@@ -323,16 +351,6 @@ function SuggestionIssueCard({
             )}
           </Button>
         </div>
-
-        {post.tags.length > 0 && (
-          <div className="flex gap-2 mt-2">
-            {post.tags.map((tag) => (
-              <Badge key={tag.id} variant="secondary">
-                <TagBadgeContent tag={tag} />
-              </Badge>
-            ))}
-          </div>
-        )}
       </CardHeader>
 
       {isExpanded && (
