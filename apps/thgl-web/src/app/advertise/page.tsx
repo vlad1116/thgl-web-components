@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
+import { BenefitList } from "@/components/benefit-list";
 import Link from "next/link";
 
 export const metadata = {
@@ -36,24 +37,29 @@ export default function AdvertisePage() {
       {/* Why Sponsor Section */}
       <section className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center">Why Sponsor?</h2>
-        <ul className="space-y-4 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🚫</span>
-            <div>Reach gamers directly — without intrusive third-party ads</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🎯</span>
-            <div>Target specific audiences based on the games they play</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📈</span>
-            <div>Build brand trust by supporting a creator-driven project</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📢</span>
-            <div>Appear in-app, on the web, or even on Discord</div>
-          </li>
-        </ul>
+        <BenefitList
+          items={[
+            {
+              icon: "🚫",
+              description:
+                "Reach gamers directly — without intrusive third-party ads",
+            },
+            {
+              icon: "🎯",
+              description:
+                "Target specific audiences based on the games they play",
+            },
+            {
+              icon: "📈",
+              description:
+                "Build brand trust by supporting a creator-driven project",
+            },
+            {
+              icon: "📢",
+              description: "Appear in-app, on the web, or even on Discord",
+            },
+          ]}
+        />
       </section>
 
       <hr className="border-border" />
@@ -61,22 +67,23 @@ export default function AdvertisePage() {
       {/* Audience Snapshot Section */}
       <section className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center">Audience Snapshot</h2>
-        <ul className="space-y-4 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🌍</span>
-            <div>
-              Tens of thousands of daily users across Companion App and tools
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">💬</span>
-            <div>25,000+ members in the Discord server</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📊</span>
-            <div>High engagement in niche gaming communities</div>
-          </li>
-        </ul>
+        <BenefitList
+          items={[
+            {
+              icon: "🌍",
+              description:
+                "Tens of thousands of daily users across Companion App and tools",
+            },
+            {
+              icon: "💬",
+              description: "25,000+ members in the Discord server",
+            },
+            {
+              icon: "📊",
+              description: "High engagement in niche gaming communities",
+            },
+          ]}
+        />
       </section>
 
       <hr className="border-border" />
@@ -84,24 +91,27 @@ export default function AdvertisePage() {
       {/* What's Possible Section */}
       <section className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center">What's Possible?</h2>
-        <ul className="space-y-4 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🖼️</span>
-            <div>Banner or logo placements in specific games or tools</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🔗</span>
-            <div>Sponsored links or SEO-friendly mentions</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📣</span>
-            <div>Feature shoutouts in release notes or Discord</div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🧪</span>
-            <div>Custom ideas? I'm open to creative partnerships</div>
-          </li>
-        </ul>
+        <BenefitList
+          items={[
+            {
+              icon: "🖼️",
+              description:
+                "Banner or logo placements in specific games or tools",
+            },
+            {
+              icon: "🔗",
+              description: "Sponsored links or SEO-friendly mentions",
+            },
+            {
+              icon: "📣",
+              description: "Feature shoutouts in release notes or Discord",
+            },
+            {
+              icon: "🧪",
+              description: "Custom ideas? I'm open to creative partnerships",
+            },
+          ]}
+        />
       </section>
 
       <hr className="border-border" />

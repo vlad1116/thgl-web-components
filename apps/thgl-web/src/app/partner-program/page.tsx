@@ -4,6 +4,7 @@ import { PartnerCarousel } from "./partner-carousel";
 import { partners } from "./partners";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
+import { BenefitList } from "@/components/benefit-list";
 
 export const metadata = {
   title: "Partner With TH.GL – Streamers, Creators & Sharers",
@@ -42,38 +43,34 @@ export default function PartnerProgramPage() {
       {/* Why Partner Section */}
       <section className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center">Why Partner?</h2>
-        <ul className="space-y-4 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🎁</span>
-            <div>
-              <strong className="text-foreground">Free Perks:</strong> Get a
-              free or discounted premium subscription (up to 100% off).
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📢</span>
-            <div>
-              <strong className="text-foreground">Visibility:</strong> I can
-              promote you on my Discord or even inside the apps (as fallback
-              instead of ads).
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">🔗</span>
-            <div>
-              <strong className="text-foreground">SEO Backlinks:</strong> I'll
-              link to your website or channel — helpful for exposure and search
-              engines.
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-2xl flex-shrink-0">📣</span>
-            <div>
-              <strong className="text-foreground">Referral Codes:</strong> Get
-              your own discount code to share with your community.
-            </div>
-          </li>
-        </ul>
+        <BenefitList
+          items={[
+            {
+              icon: "🎁",
+              label: "Free Perks",
+              description:
+                "Get a free or discounted premium subscription (up to 100% off).",
+            },
+            {
+              icon: "📢",
+              label: "Visibility",
+              description:
+                "I can promote you on my Discord or even inside the apps (as fallback instead of ads).",
+            },
+            {
+              icon: "🔗",
+              label: "SEO Backlinks",
+              description:
+                "I'll link to your website or channel — helpful for exposure and search engines.",
+            },
+            {
+              icon: "📣",
+              label: "Referral Codes",
+              description:
+                "Get your own discount code to share with your community.",
+            },
+          ]}
+        />
       </section>
 
       <hr className="border-border" />
@@ -81,24 +78,31 @@ export default function PartnerProgramPage() {
       {/* Who It's For Section */}
       <section className="space-y-6 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center">Who It's For</h2>
-        <ul className="space-y-3 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-xl flex-shrink-0">🎬</span>
-            <span>Streamers using overlays or tools during gameplay</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-xl flex-shrink-0">📺</span>
-            <span>YouTubers including TH.GL in guides or descriptions</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-xl flex-shrink-0">🔗</span>
-            <span>Website/blog owners linking to TH.GL or partner apps</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-xl flex-shrink-0">📣</span>
-            <span>Anyone who shares useful tools and drives visibility</span>
-          </li>
-        </ul>
+        <BenefitList
+          spacing="normal"
+          iconSize="sm"
+          items={[
+            {
+              icon: "🎬",
+              description: "Streamers using overlays or tools during gameplay",
+            },
+            {
+              icon: "📺",
+              description:
+                "YouTubers including TH.GL in guides or descriptions",
+            },
+            {
+              icon: "🔗",
+              description:
+                "Website/blog owners linking to TH.GL or partner apps",
+            },
+            {
+              icon: "📣",
+              description:
+                "Anyone who shares useful tools and drives visibility",
+            },
+          ]}
+        />
       </section>
 
       <hr className="border-border" />
