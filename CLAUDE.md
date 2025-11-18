@@ -56,3 +56,26 @@ This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specifi
 - Use `.env.example` files for environment variable templates (never commit `.env` files)
 - Repository is source-available but NOT open source - code cannot be reused for other projects
 - Format code with Prettier, ensure ESLint passes before committing
+
+### Component Patterns
+
+The codebase uses reusable components to maintain consistency and reduce duplication:
+
+#### Page Structure Components
+- **PageShell**: Wrapper for page content with consistent spacing and max-width
+- **PageHeader**: Standardized page headers with title and description
+- **ViewMoreLink**: Consistent "view all" links with arrow icons
+
+#### Content Components
+- **InfoCard**: General-purpose card for links with optional badges, icons, and descriptions
+  - Used by: PartnerCard, PlatformCard
+  - Supports: external links, custom badge variants, h2/h3 title sizes
+- **BenefitList**: Icon + description lists with configurable styling
+  - Supports: emoji strings or Lucide icons, optional labels, size/spacing variants
+  - Used in: partner-program, advertise pages
+
+#### Best Practices
+- Check for existing reusable components before creating new ones
+- Look for repeated patterns (3+ occurrences) that could be extracted into components
+- Prefer composition over duplication
+- Keep components flexible with optional props and sensible defaults
