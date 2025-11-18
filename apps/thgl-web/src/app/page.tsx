@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button, Card } from "@repo/ui/controls";
 import { games, testimonials } from "@repo/lib";
-import { GameCard } from "@/components/game-card";
+import { GameGrid } from "@/components/game-grid";
 import { blogEntries } from "@/lib/blog-entries";
 import { Download, Monitor, Gamepad2, Shield } from "lucide-react";
 import {
@@ -170,22 +170,13 @@ export default function HomePage() {
       </FeatureGrid>
 
       {/* Featured Games */}
-      <div className="space-y-6">
-        <SectionHeader title="Featured Games" />
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {featuredGames.map((game) => (
-            <GameCard key={game.id} game={game} />
-          ))}
-        </div>
-        <div className="text-center pt-2">
-          <Link
-            href="/apps"
-            className="underline text-sm text-muted-foreground hover:text-white"
-          >
-            View all supported games →
-          </Link>
-        </div>
-      </div>
+      <GameGrid
+        games={featuredGames}
+        title="Featured Games"
+        showViewAll
+        viewAllHref="/apps"
+        viewAllLabel="View all supported games →"
+      />
 
       {/* How It Works */}
       <div className="bg-muted/30 rounded-2xl p-8 md:p-12">
