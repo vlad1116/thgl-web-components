@@ -3,7 +3,9 @@ import Link from "next/link";
 import { faqEntries } from "@/lib/faq-entries";
 import { FaqLabelBadge } from "@/components/faq-label-badge";
 import { PageShell } from "@/components/page-shell";
-import { DiscordMessage, Subtitle } from "@repo/ui/content";
+import { DiscordMessage } from "@repo/ui/content";
+import { Button } from "@repo/ui/controls";
+import { ArrowLeft } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -33,28 +35,49 @@ export default async function FAQDetailPage({
   if (!entry) return notFound();
 
   return (
-    <PageShell>
-      <div className="space-y-4">
-        <Subtitle title={entry.question} />
-
-        <div className="flex flex-wrap gap-2">
-          {entry.labels.map((label) => (
-            <FaqLabelBadge key={label} label={label} />
-          ))}
-        </div>
+    <PageShell className="space-y-12 max-w-4xl mx-auto">
+      {/* Back button */}
+      <div>
+        <Button variant="ghost" asChild>
+          <Link href="/faq">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to FAQ
+          </Link>
+        </Button>
       </div>
 
-      <div className="text-muted-foreground text-base space-y-4">
+      {/* Question Header */}
+      <header className="space-y-6">
+        <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+          {entry.question}
+        </h1>
+
+        {entry.labels.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {entry.labels.map((label) => (
+              <FaqLabelBadge key={label} label={label} />
+            ))}
+          </div>
+        )}
+      </header>
+
+      <hr className="border-border" />
+
+      {/* Answer Content */}
+      <article className="prose prose-invert prose-lg max-w-none">
         <DiscordMessage>{entry.answer}</DiscordMessage>
-      </div>
+      </article>
 
-      <div className="pt-6 border-t border-gray-800">
-        <Link
-          href="/faq"
-          className="text-sm text-brand underline hover:text-white"
-        >
-          ← Back to FAQ
-        </Link>
+      <hr className="border-border" />
+
+      {/* Footer with back button */}
+      <div className="flex justify-center">
+        <Button variant="outline" asChild>
+          <Link href="/faq">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to all questions
+          </Link>
+        </Button>
       </div>
     </PageShell>
   );
