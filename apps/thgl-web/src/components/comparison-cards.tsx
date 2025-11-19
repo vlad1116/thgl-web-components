@@ -25,7 +25,10 @@ interface ComparisonCardsProps {
   className?: string;
 }
 
-export function ComparisonCards({ cards, className = "" }: ComparisonCardsProps) {
+export function ComparisonCards({
+  cards,
+  className = "",
+}: ComparisonCardsProps) {
   return (
     <div className={`grid md:grid-cols-2 gap-8 max-w-4xl mx-auto ${className}`}>
       {cards.map((card, idx) => {
@@ -55,9 +58,7 @@ export function ComparisonCards({ cards, className = "" }: ComparisonCardsProps)
                       {feature.enabled ? "✓" : "✗"}
                     </span>
                     <span
-                      className={
-                        feature.enabled ? "" : "text-muted-foreground"
-                      }
+                      className={feature.enabled ? "" : "text-muted-foreground"}
                     >
                       {feature.text}
                     </span>

@@ -165,9 +165,7 @@ export function SuggestionsIssuesList({
     setExpandedPosts(new Set());
   };
 
-  const handleSearchChange = (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
     setDisplayLimit(initialLimit);
     setExpandedPosts(new Set());
@@ -320,7 +318,8 @@ function SuggestionIssueCard({
                 <span className="text-border">•</span>
                 <span className="flex items-center gap-1">
                   <MessageSquare className="h-3 w-3" />
-                  {post.messageCount} {post.messageCount === 1 ? "reply" : "replies"}
+                  {post.messageCount}{" "}
+                  {post.messageCount === 1 ? "reply" : "replies"}
                 </span>
               </span>
             </CardDescription>
@@ -493,9 +492,3 @@ export function SuggestionIssueDetail({ post }: { post: ForumPostDetail }) {
     </Card>
   );
 }
-
-
-
-
-
-

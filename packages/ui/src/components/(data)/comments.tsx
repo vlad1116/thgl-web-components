@@ -122,7 +122,6 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
             <a
               href="https://www.markdownguide.org/cheat-sheet/"
               target="_blank"
-              rel="noreferrer"
               className="text-primary"
             >
               Markdown

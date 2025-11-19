@@ -47,7 +47,6 @@ export default function PrivacyPolicy(): JSX.Element {
               href="https://plausible.io"
               className="text-primary hover:underline font-medium"
               target="_blank"
-              rel="noopener noreferrer"
             >
               Plausible Analytics
             </a>{" "}
@@ -119,7 +118,6 @@ export default function PrivacyPolicy(): JSX.Element {
               href="https://th.gl/discord"
               className="text-primary hover:underline font-medium"
               target="_blank"
-              rel="noopener noreferrer"
             >
               devleon
             </a>

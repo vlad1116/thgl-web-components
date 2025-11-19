@@ -79,7 +79,7 @@ export class PlayerMarker extends leaflet.Marker {
       }
 
       // Calculate rotation with accumulated spins
-      let playerRotation = r + (360 * this._accumulatedSpins);
+      let playerRotation = r + 360 * this._accumulatedSpins;
 
       // Apply rotation offset if configured
       if (this.options.rotationOffset) {

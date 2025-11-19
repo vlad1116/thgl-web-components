@@ -1,6 +1,9 @@
 // Named exports for better tree-shaking
 export { AdditionalContent } from "./additional-content";
-export { AdditionalTooltip, type AdditionalTooltipType } from "./additional-tooltip";
+export {
+  AdditionalTooltip,
+  type AdditionalTooltipType,
+} from "./additional-tooltip";
 export { DiscordMessage } from "./discord-message";
 export { Subtitle } from "./subtitle";
 export { NavCard, type NavCardProps } from "./nav-card";

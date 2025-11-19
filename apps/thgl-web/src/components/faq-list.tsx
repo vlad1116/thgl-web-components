@@ -36,9 +36,7 @@ export function FAQList() {
 
   const toggleLabel = (label: FAQLabel) => {
     setSelectedLabels((prev) =>
-      prev.includes(label)
-        ? prev.filter((l) => l !== label)
-        : [...prev, label],
+      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label],
     );
   };
 

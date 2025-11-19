@@ -32,11 +32,7 @@ export { Troops, type Troops as TroopsType } from "./troops";
 export { AuthAlert } from "./auth-alert";
 
 // Re-export UI components
-export {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "../ui/avatar";
+export { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 export {
   Breadcrumb,
   BreadcrumbList,

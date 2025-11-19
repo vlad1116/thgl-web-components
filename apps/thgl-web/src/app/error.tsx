@@ -29,7 +29,6 @@ export default function Error({
         <Button onClick={reset}>Try Again</Button>
         <Link
           href="https://th.gl/discord"
-          rel="noopener noreferrer"
           target="_blank"
           className="text-primary hover:underline font-medium"
         >
@@ -42,9 +41,7 @@ export default function Error({
         <>
           <hr className="border-border" />
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-center">
-              Error Details
-            </h2>
+            <h2 className="text-xl font-semibold text-center">Error Details</h2>
             <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words bg-muted/20 p-4 rounded-md border border-border">
               {error.message}
             </pre>

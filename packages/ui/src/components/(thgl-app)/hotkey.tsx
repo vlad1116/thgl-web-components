@@ -76,7 +76,8 @@ export function Hotkey({
         // Buttons: detect first newly pressed button
         for (let b = 0; b < pad.buttons.length; b++) {
           const btn = pad.buttons[b];
-          const wasPressed = (gamepadPrevPressedRef.current as any)[`${i}:${b}`] === true;
+          const wasPressed =
+            (gamepadPrevPressedRef.current as any)[`${i}:${b}`] === true;
           const nowPressed = !!btn.pressed || btn.value > 0.5;
           if (!wasPressed && nowPressed) {
             const btnName = mapGamepadButtonToName(b);

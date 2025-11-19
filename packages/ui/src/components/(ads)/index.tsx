@@ -1,10 +1,7 @@
 // Named exports for better tree-shaking
 export { AdBlocker } from "./ad-blocker";
 export { AdPlaceholder } from "./ad-placeholder";
-export {
-  NITROPAY_SITE_ID,
-  IS_DEMO_MODE,
-} from "./constants";
+export { NITROPAY_SITE_ID, IS_DEMO_MODE } from "./constants";
 export { ContentLayout } from "./content-layout";
 export { FloatingAds } from "./floating-ads";
 export { FloatingBanner } from "./floating-banner";

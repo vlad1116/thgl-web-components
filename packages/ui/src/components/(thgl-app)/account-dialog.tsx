@@ -28,18 +28,21 @@ export function AccountDialog() {
                 <TooltipTrigger asChild>
                   <span className="underline cursor-help">What is this?</span>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[360px] space-y-2">
+                <TooltipContent
+                  side="bottom"
+                  className="max-w-[360px] space-y-2"
+                >
                   <p>
-                    This app is free to use and supported by ads. To enjoy an ad-free
-                    experience, you can authenticate with Patreon as a <b>Pro Supporter</b>.
-                    If you upgrade to <b>Elite Supporter</b>, you'll not only remove ads but
-                    also unlock access to exclusive preview features.
+                    This app is free to use and supported by ads. To enjoy an
+                    ad-free experience, you can authenticate with Patreon as a{" "}
+                    <b>Pro Supporter</b>. If you upgrade to{" "}
+                    <b>Elite Supporter</b>, you'll not only remove ads but also
+                    unlock access to exclusive preview features.
                   </p>
                   <Link
                     className="block"
                     href="https://www.th.gl/support-me"
                     target="_blank"
-                    rel="noreferrer"
                     passHref
                     prefetch={false}
                   >

@@ -38,7 +38,6 @@ export function Header() {
           <Link
             href="https://th.gl/discord"
             target="_blank"
-            rel="noopener noreferrer"
             className="p-2 hover:bg-muted rounded-md transition"
             aria-label="Join the Discord Server"
           >
@@ -53,7 +52,6 @@ export function Header() {
           <Link
             href="https://github.com/The-Hidden-Gaming-Lair"
             target="_blank"
-            rel="noopener noreferrer"
             className="p-2 hover:bg-muted rounded-md transition"
             aria-label="View on GitHub"
           >
@@ -70,7 +68,6 @@ export function Header() {
           <Link
             href="https://www.reddit.com/r/TheHiddenGamingLair/"
             target="_blank"
-            rel="noopener noreferrer"
             className="p-2 hover:bg-muted rounded-md transition"
             aria-label="Visit our Reddit community"
           >

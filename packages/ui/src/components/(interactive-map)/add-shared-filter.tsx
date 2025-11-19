@@ -1,7 +1,13 @@
 import { Users } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { ReloadIcon } from "@radix-ui/react-icons";
@@ -69,9 +75,9 @@ export function AddSharedFilter() {
                 <span className="underline cursor-help">What is this?</span>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[360px]">
-                The code for the shared filters is available in the menu next to the
-                filter. Other users can import the filters including all nodes and
-                drawings by entering the code.
+                The code for the shared filters is available in the menu next to
+                the filter. Other users can import the filters including all
+                nodes and drawings by entering the code.
               </TooltipContent>
             </Tooltip>
           </div>

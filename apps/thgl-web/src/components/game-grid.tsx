@@ -25,7 +25,8 @@ export function GameGrid({
   viewAllLabel = "View all supported games →",
   className,
 }: GameGridProps) {
-  const gridClass = columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 md:grid-cols-3";
+  const gridClass =
+    columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 md:grid-cols-3";
 
   return (
     <div className={cn("space-y-6", className)}>

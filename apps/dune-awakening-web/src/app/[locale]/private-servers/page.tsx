@@ -69,7 +69,6 @@ export default async function PrivateServers({
             <Link
               href="https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=59"
               target="_blank"
-              rel="noopener noreferrer"
             >
               {t("privateServers.hosting.button")}
             </Link>
@@ -171,7 +170,6 @@ export default async function PrivateServers({
           <Link
             href="https://www.nitrado.net/"
             target="_blank"
-            rel="noopener noreferrer"
             className="underline hover:text-foreground"
           >
             Nitrado

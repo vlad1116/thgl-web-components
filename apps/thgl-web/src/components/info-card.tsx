@@ -37,7 +37,10 @@ export function InfoCard({
             <h3 className="text-lg font-semibold">{title}</h3>
           )}
           {badge && (
-            <Badge variant={badge.variant || "secondary"} className="flex-shrink-0">
+            <Badge
+              variant={badge.variant || "secondary"}
+              className="flex-shrink-0"
+            >
               {badge.label}
             </Badge>
           )}
@@ -50,7 +53,6 @@ export function InfoCard({
         <Link
           href={href}
           target={external ? "_blank" : undefined}
-          rel={external ? "noopener noreferrer" : undefined}
           className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
           {Icon && <Icon className="h-4 w-4" />}

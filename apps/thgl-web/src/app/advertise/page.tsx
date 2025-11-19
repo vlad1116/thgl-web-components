@@ -121,15 +121,14 @@ export default function AdvertisePage() {
         <h2 className="text-3xl font-bold">Interested?</h2>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            I'm open to sponsorships that are relevant, respectful, and help grow
-            the tools I maintain for the gaming community.
+            I'm open to sponsorships that are relevant, respectful, and help
+            grow the tools I maintain for the gaming community.
           </p>
           <p className="text-muted-foreground">
             Reach out via{" "}
             <Link
               href="https://th.gl/discord"
               target="_blank"
-              rel="noopener noreferrer"
               className="text-primary hover:underline font-medium"
             >
               Discord

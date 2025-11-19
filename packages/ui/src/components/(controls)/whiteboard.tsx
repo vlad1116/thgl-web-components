@@ -247,9 +247,10 @@ export function Whiteboard({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[360px]">
                 Share your nodes, drawings with your group in real-time! After
-                opening a group, share the group name with your friends to connect
-                to each other. Your selected filter (My Filters) will be shared, and
-                they will see current changes in real-time (Add Node/Add Drawing).
+                opening a group, share the group name with your friends to
+                connect to each other. Your selected filter (My Filters) will be
+                shared, and they will see current changes in real-time (Add
+                Node/Add Drawing).
               </TooltipContent>
             </Tooltip>
           </div>

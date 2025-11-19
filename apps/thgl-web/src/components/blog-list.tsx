@@ -98,10 +98,13 @@ export function BlogList() {
     if (showAllTags) {
       return allBlogContentReferences;
     }
-    return allBlogContentReferences.filter((tag) => PRIORITY_TAGS.includes(tag));
+    return allBlogContentReferences.filter((tag) =>
+      PRIORITY_TAGS.includes(tag),
+    );
   }, [showAllTags]);
 
-  const hiddenTagsCount = allBlogContentReferences.length - PRIORITY_TAGS.length;
+  const hiddenTagsCount =
+    allBlogContentReferences.length - PRIORITY_TAGS.length;
 
   return (
     <div className="space-y-4">

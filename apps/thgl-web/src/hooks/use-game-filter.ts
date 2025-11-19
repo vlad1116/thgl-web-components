@@ -13,7 +13,8 @@ export function useGameFilter({
   initialFilter = "all",
 }: UseGameFilterOptions) {
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<GameFilterType>(initialFilter);
+  const [activeFilter, setActiveFilter] =
+    useState<GameFilterType>(initialFilter);
 
   const filteredGames = useMemo(() => {
     return games.filter((game) => {

@@ -39,14 +39,7 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { toast } from "sonner";
-import {
-  Trash2,
-  Copy,
-  Download,
-  Upload,
-  Edit,
-  UserPlus,
-} from "lucide-react";
+import { Trash2, Copy, Download, Upload, Edit, UserPlus } from "lucide-react";
 
 export function ProfileManager({ activeApp }: { activeApp: string }) {
   const settingsStore = useSettingsStore();

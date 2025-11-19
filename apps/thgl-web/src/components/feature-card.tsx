@@ -31,7 +31,9 @@ export function FeatureCard({
       )}
       <h3
         className={
-          variant === "bordered" ? "text-xl font-semibold" : "font-semibold text-lg mb-2"
+          variant === "bordered"
+            ? "text-xl font-semibold"
+            : "font-semibold text-lg mb-2"
         }
       >
         {title}

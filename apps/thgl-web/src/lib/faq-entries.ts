@@ -22,7 +22,8 @@ export const faqEntries: FAQEntry[] = [
   {
     id: "ticley-watch-scam",
     headline: "Unexpected charges from THGL.APP (NOT The Hidden Gaming Lair)",
-    question: "I see charges like 'THGL.APP-4Y...' or 'THGL' on my bank statement. Is this from The Hidden Gaming Lair?",
+    question:
+      "I see charges like 'THGL.APP-4Y...' or 'THGL' on my bank statement. Is this from The Hidden Gaming Lair?",
     answer: `
 **NO. These charges are NOT from The Hidden Gaming Lair.**
 
@@ -612,7 +613,8 @@ Follow this guide: [How to get Overwolf logs](https://support.overwolf.com/en/su
   {
     id: "alt-hold-overlay-interaction",
     headline: "Can't interact with overlay while holding ALT",
-    question: "Why can't I click the overlay when holding ALT in games like BPSR or Wuthering Waves?",
+    question:
+      "Why can't I click the overlay when holding ALT in games like BPSR or Wuthering Waves?",
     answer: `
 This is intentional behavior to prevent the mouse cursor from disappearing.
 
@@ -645,7 +647,8 @@ This ensures smooth gameplay without cursor visibility issues.
   {
     id: "webview2-permission-error",
     headline: "WebView2 Runtime unavailable error",
-    question: "I get 'Microsoft Edge WebView2 Runtime is unavailable' error. How do I fix this?",
+    question:
+      "I get 'Microsoft Edge WebView2 Runtime is unavailable' error. How do I fix this?",
     answer: `
 This error occurs when the Companion App cannot access the WebView2 UserData folder due to incorrect permissions.
 

@@ -9,7 +9,8 @@ export function TierCard({ tier }: { tier: Tier }) {
     <Card
       className={cn(
         "flex flex-col w-full max-w-[320px] transition-all",
-        tier.highlight && "border-primary shadow-lg shadow-primary/20 scale-105",
+        tier.highlight &&
+          "border-primary shadow-lg shadow-primary/20 scale-105",
       )}
     >
       <CardContent className="p-6 flex flex-col gap-6 h-full">
@@ -27,7 +28,9 @@ export function TierCard({ tier }: { tier: Tier }) {
                 <span className="text-5xl font-bold text-primary">$0</span>
               </>
             ) : (
-              <span className="text-5xl font-bold text-primary">${tier.price}</span>
+              <span className="text-5xl font-bold text-primary">
+                ${tier.price}
+              </span>
             )}
             <span className="text-muted-foreground text-sm">
               {tier.gift ? "" : "/ month"}
@@ -78,7 +81,6 @@ export function TierCard({ tier }: { tier: Tier }) {
                 : `https://www.patreon.com/join/devleon/checkout?rid=${tier.id}`
             }
             target="_blank"
-            rel="noopener noreferrer"
           >
             {tier.gift ? "Join for Free" : "Get Started"}
           </Link>

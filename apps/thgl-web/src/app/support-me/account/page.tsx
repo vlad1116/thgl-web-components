@@ -125,8 +125,8 @@ export default async function SupportMeAccount() {
                     needed here.
                   </p>
                   <p>
-                    <strong className="text-foreground">Discord Role:</strong> To
-                    get your Discord supporter role,{" "}
+                    <strong className="text-foreground">Discord Role:</strong>{" "}
+                    To get your Discord supporter role,{" "}
                     <Link
                       href="/faq/discord-supporter-role"
                       className="text-primary hover:underline"

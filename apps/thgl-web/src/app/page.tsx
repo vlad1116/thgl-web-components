@@ -128,7 +128,9 @@ export default function HomePage() {
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/companion-app">Learn More About Companion App</Link>
+                <Link href="/companion-app">
+                  Learn More About Companion App
+                </Link>
               </Button>
             </div>
           </div>
@@ -192,12 +194,18 @@ export default function HomePage() {
               icon: Gamepad2,
               title: "Companion App",
               features: [
-                { text: "In-game overlays with real-time tracking", enabled: true },
+                {
+                  text: "In-game overlays with real-time tracking",
+                  enabled: true,
+                },
                 { text: "Second screen mode for dual monitors", enabled: true },
                 { text: "Auto-updates and hotkey controls", enabled: true },
                 { text: "Windows 10/11 only", enabled: true },
               ],
-              cta: { label: "Learn More About Companion App", href: "/companion-app" },
+              cta: {
+                label: "Learn More About Companion App",
+                href: "/companion-app",
+              },
               highlighted: true,
             },
             {
@@ -279,7 +287,6 @@ export default function HomePage() {
               <Link
                 href="https://github.com/The-Hidden-Gaming-Lair"
                 target="_blank"
-                rel="noopener noreferrer"
                 className="underline hover:text-white"
               >
                 View the source code on GitHub

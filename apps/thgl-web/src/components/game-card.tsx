@@ -4,9 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function GameCard({ game }: { game: Game }) {
-  const previewImageUrl = game.web
-    ? `${game.web}/opengraph-image.jpg`
-    : null;
+  const previewImageUrl = game.web ? `${game.web}/opengraph-image.jpg` : null;
 
   return (
     <Link
@@ -57,7 +55,10 @@ export function GameCard({ game }: { game: Game }) {
             {/* Platform Badges */}
             <div className="flex flex-wrap gap-1 text-xs">
               {game.companion && (
-                <Badge variant="default" className="hover:bg-primary pointer-events-none">
+                <Badge
+                  variant="default"
+                  className="hover:bg-primary pointer-events-none"
+                >
                   Companion App
                 </Badge>
               )}
@@ -70,7 +71,10 @@ export function GameCard({ game }: { game: Game }) {
                 </Badge>
               )}
               {game.web && (
-                <Badge variant="secondary" className="hover:bg-secondary pointer-events-none">
+                <Badge
+                  variant="secondary"
+                  className="hover:bg-secondary pointer-events-none"
+                >
                   Website
                 </Badge>
               )}

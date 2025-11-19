@@ -24,7 +24,8 @@ export default function SupportMe() {
         <p className="text-lg text-muted-foreground">
           I'm working full time on TH.GL as a solo developer — building
           companion apps, overlays, and websites to support a wide range of
-          games. Your support helps keep the project alive and enables continued development.
+          games. Your support helps keep the project alive and enables continued
+          development.
         </p>
       </div>
 

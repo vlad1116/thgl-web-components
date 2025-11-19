@@ -82,7 +82,3 @@ export default async function FAQDetailPage({
     </PageShell>
   );
 }
-
-
-
-

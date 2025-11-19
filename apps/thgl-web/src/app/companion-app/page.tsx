@@ -34,8 +34,7 @@ import { blogEntries } from "@/lib/blog-entries";
 import { faqEntries } from "@/lib/faq-entries";
 
 export const metadata = {
-  title:
-    "TH.GL Companion App – Gaming Overlays & Interactive Maps for Windows",
+  title: "TH.GL Companion App – Gaming Overlays & Interactive Maps for Windows",
   description:
     "Download the TH.GL Companion App (7MB): Lightweight app with in-game overlays, real-time position tracking, and second-screen maps for 10+ games including Palworld, Dune Awakening, and Once Human. No additional platform required.",
   keywords:
@@ -335,8 +334,8 @@ export default function CompanionAppPage() {
               <h3 className="text-xl font-semibold">Enable Overlay</h3>
               <p className="text-muted-foreground">
                 Press the hotkey (default: F6) to toggle the overlay. Use F9 to
-                lock/unlock, F7/F8 to zoom, and F5 for live tracking. All hotkeys
-                are fully customizable in settings.
+                lock/unlock, F7/F8 to zoom, and F5 for live tracking. All
+                hotkeys are fully customizable in settings.
               </p>
             </div>
           </div>
@@ -350,7 +349,10 @@ export default function CompanionAppPage() {
           {faqEntries
             .filter((entry) => entry.labels.includes("Companion App"))
             .map((entry) => (
-              <Card key={entry.id} className="hover:border-primary transition-colors">
+              <Card
+                key={entry.id}
+                className="hover:border-primary transition-colors"
+              >
                 <CardContent className="p-6">
                   <Link href={`/faq/${entry.id}`} className="block">
                     <h3 className="font-semibold text-lg hover:text-primary transition-colors">

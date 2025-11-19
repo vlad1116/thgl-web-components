@@ -120,7 +120,6 @@ export default function PartnerProgramPage() {
               <a
                 href="https://th.gl/discord"
                 target="_blank"
-                rel="noopener noreferrer"
                 className="text-primary hover:underline font-medium"
               >
                 Discord server

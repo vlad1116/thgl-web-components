@@ -38,7 +38,9 @@ export function CTASection({
       {footer && (
         <>
           {typeof footer === "string" ? (
-            <p className="text-xs text-muted-foreground pt-2 italic">{footer}</p>
+            <p className="text-xs text-muted-foreground pt-2 italic">
+              {footer}
+            </p>
           ) : (
             <div className="text-xs text-muted-foreground pt-2">{footer}</div>
           )}

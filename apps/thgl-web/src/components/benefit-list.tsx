@@ -47,7 +47,9 @@ export function BenefitList({
             ) : (
               (() => {
                 const Icon = item.icon as LucideIcon;
-                return <Icon className={`${ICON_SIZES[iconSize]} flex-shrink-0`} />;
+                return (
+                  <Icon className={`${ICON_SIZES[iconSize]} flex-shrink-0`} />
+                );
               })()
             )}
             <div>

@@ -67,7 +67,6 @@ export default async function SuggestionDetailPage({
           <a
             href="https://th.gl/discord"
             target="_blank"
-            rel="noopener noreferrer"
             className="text-brand hover:underline text-nowrap"
           >
             Discord server
@@ -76,7 +75,6 @@ export default async function SuggestionDetailPage({
           <a
             href="https://discord.com/channels/320539672663031818/1021543411293106217"
             target="_blank"
-            rel="noopener noreferrer"
             className="text-brand hover:underline"
           >
             #suggestions-issues

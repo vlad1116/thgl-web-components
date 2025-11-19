@@ -44,7 +44,6 @@ export default function LegalNotice(): JSX.Element {
               href="https://th.gl/discord"
               className="text-primary hover:underline font-medium"
               target="_blank"
-              rel="noopener noreferrer"
             >
               devleon
             </a>

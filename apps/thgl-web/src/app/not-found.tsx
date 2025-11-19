@@ -17,7 +17,6 @@ export default function NotFound() {
         </Button>
         <Link
           href="https://th.gl/discord"
-          rel="noopener noreferrer"
           target="_blank"
           className="text-sm underline text-muted-foreground hover:text-white"
         >

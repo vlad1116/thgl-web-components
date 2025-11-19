@@ -36,7 +36,9 @@ export function AppHeader({
   const [debugContext, setDebugContext] = useState("");
   const [isSendingDebug, setIsSendingDebug] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
-  const [debugStatus, setDebugStatus] = useState<"idle" | "success" | "error">("idle");
+  const [debugStatus, setDebugStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
 
   const handleSendDebugSnapshot = async () => {
     setIsSendingDebug(true);
@@ -197,7 +199,10 @@ export function AppHeader({
               />
             </Button>
             <AccountDialog />
-            <Dialog open={isDebugDialogOpen} onOpenChange={setIsDebugDialogOpen}>
+            <Dialog
+              open={isDebugDialogOpen}
+              onOpenChange={setIsDebugDialogOpen}
+            >
               <Button
                 asChild
                 size="icon"
@@ -231,7 +236,8 @@ export function AppHeader({
                   )}
                   {debugStatus === "error" && (
                     <div className="text-sm text-red-600 dark:text-red-400 font-medium">
-                      ✗ Failed to send debug snapshot. Check console for details.
+                      ✗ Failed to send debug snapshot. Check console for
+                      details.
                     </div>
                   )}
                 </div>
@@ -246,7 +252,10 @@ export function AppHeader({
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSendDebugSnapshot} disabled={isSendingDebug}>
+                  <Button
+                    onClick={handleSendDebugSnapshot}
+                    disabled={isSendingDebug}
+                  >
                     {isSendingDebug ? "Sending..." : "Send"}
                   </Button>
                 </DialogFooter>

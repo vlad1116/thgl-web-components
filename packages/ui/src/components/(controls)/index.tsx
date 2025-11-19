@@ -80,7 +80,12 @@ export {
   SelectScrollDownButton,
 } from "../ui/select";
 export { Switch } from "../ui/switch";
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../ui/tooltip";
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "../ui/tooltip";
 export { Label } from "../ui/label";
 
 // Icons

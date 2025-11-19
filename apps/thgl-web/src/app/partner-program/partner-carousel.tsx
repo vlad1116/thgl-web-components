@@ -50,7 +50,6 @@ export function PartnerCarousel({ partners }: { partners: Partner[] }) {
                   key={i}
                   href={link.url}
                   target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-block text-sm text-primary hover:underline font-medium"
                 >
                   {link.label}
