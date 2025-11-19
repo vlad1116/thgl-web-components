@@ -1,9 +1,9 @@
 import { blogEntries } from "@/lib/blog-entries";
 import { faqEntries } from "@/lib/faq-entries";
-import { games } from "@repo/lib";
+import { games, getSuggestionsAndIssues } from "@repo/lib";
 import { MetadataRoute } from "next";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const appRoutes: MetadataRoute.Sitemap = games.map((game) => ({
@@ -22,10 +22,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const blogRoutes: MetadataRoute.Sitemap = blogEntries.map((entry) => ({
     url: `https://www.th.gl/blog/${encodeURIComponent(entry.id)}`,
-    lastModified: now,
+    lastModified: new Date(entry.date),
     changeFrequency: "monthly",
     priority: 0.9,
   }));
+
+  const suggestionsIssues = await getSuggestionsAndIssues(100);
+  const suggestionsIssuesRoutes: MetadataRoute.Sitemap = suggestionsIssues.map(
+    (post) => ({
+      url: `https://www.th.gl/suggestions-issues/${encodeURIComponent(post.id)}`,
+      lastModified: new Date(post.createdAt),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    }),
+  );
 
   return [
     {
@@ -103,5 +113,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...appRoutes,
     ...faqRoutes,
     ...blogRoutes,
+    ...suggestionsIssuesRoutes,
   ];
 }
