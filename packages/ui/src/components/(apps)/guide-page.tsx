@@ -12,11 +12,11 @@ import {
   localizePath,
   SimpleSpawn,
 } from "@repo/lib";
-import { Spawns } from "@repo/ui/providers";
-import { HeaderOffset, PageTitle } from "@repo/ui/header";
-import { ContentLayout } from "@repo/ui/ads";
+import { Spawns } from "../(providers)";
+import { HeaderOffset, PageTitle } from "../(header)";
+import { ContentLayout } from "../(ads)";
 import { notFound } from "next/navigation";
-import { Subtitle } from "@repo/ui/content";
+import { Subtitle } from "../(content)";
 import MapGuides from "../(data)/map-guides";
 import { Metadata } from "next";
 import { getFullDictionary } from "../../dicts";

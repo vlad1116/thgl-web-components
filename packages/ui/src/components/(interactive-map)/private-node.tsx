@@ -19,12 +19,8 @@ import { ColorPicker } from "../(controls)/color-picker";
 import { Slider } from "../ui/slider";
 import { Info, MapPin } from "lucide-react";
 import { trackEvent } from "../(header)/plausible-tracker";
-import {
-  IconPicker,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../(controls)";
+import { IconPicker } from "../(controls)/icon-picker";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
 import {

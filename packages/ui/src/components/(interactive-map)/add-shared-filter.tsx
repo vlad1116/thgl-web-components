@@ -1,5 +1,6 @@
 import { Users } from "lucide-react";
-import { Button, Label } from "../(controls)";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useState } from "react";
 import { Input } from "../ui/input";
@@ -11,7 +12,7 @@ import {
   useUserStore,
 } from "@repo/lib";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../(controls)";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export function AddSharedFilter() {
   const [isLoading, setIsLoading] = useState(false);

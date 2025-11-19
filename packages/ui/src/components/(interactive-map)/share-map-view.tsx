@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Button, Label, Switch } from "../(controls)";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
 import {
   Dialog,
   DialogContent,

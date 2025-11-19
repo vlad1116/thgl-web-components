@@ -4,7 +4,7 @@ import {
   useSettingsStore,
   useUserStore,
 } from "@repo/lib";
-import { Button } from "../(controls)";
+import { Button } from "../ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 

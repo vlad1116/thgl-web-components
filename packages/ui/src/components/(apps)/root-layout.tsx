@@ -1,16 +1,16 @@
 import { AppConfig, cn, DEFAULT_LOCALE, fetchVersion } from "@repo/lib";
 import { Inter as FontSans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
-import { Account, Brand, Header, PlausibleTracker } from "@repo/ui/header";
-import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
+import { Account, Brand, Header, PlausibleTracker } from "../(header)";
+import { I18NProvider, TooltipProvider } from "../(providers)";
 import {
   SettingsDialogContent,
   Toaster,
   Links,
   LocaleSwitcher,
-} from "@repo/ui/controls";
+} from "../(controls)";
 import Link from "next/link";
-import { getFullDictionary, isValidLocale } from "@repo/ui/dicts";
+import { getFullDictionary, isValidLocale } from "../../dicts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 

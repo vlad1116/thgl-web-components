@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@repo/lib";
 import { ExternalLink as ExternalLinkIcon } from "lucide-react";
-import { trackOutboundLinkClick } from "@repo/ui/header";
+import { trackOutboundLinkClick } from "../(header)/plausible-tracker";
 import { useLocale } from "../(providers)";
 
 // Matches raw or escaped Discord timestamp tags like <t:1234567890:R>

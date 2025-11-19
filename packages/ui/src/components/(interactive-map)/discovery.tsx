@@ -1,13 +1,13 @@
 import { useSettingsStore } from "@repo/lib";
+import { Button } from "../ui/button";
 import {
-  Button,
   HoverCard,
   HoverCardContent,
   HoverCardPortal,
   HoverCardTrigger,
-  Label,
-  Switch,
-} from "../(controls)";
+} from "../ui/hover-card";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
 import { Info } from "lucide-react";
 
 export function Discovery({

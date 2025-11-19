@@ -10,9 +10,9 @@ import {
   IconSprite,
   localizePath,
 } from "@repo/lib";
-import { HeaderOffset, PageTitle } from "@repo/ui/header";
-import { ContentLayout } from "@repo/ui/ads";
-import { Subtitle } from "@repo/ui/content";
+import { HeaderOffset, PageTitle } from "../(header)";
+import { ContentLayout } from "../(ads)";
+import { Subtitle } from "../(content)";
 import { getFullDictionary, getStaticDictionary } from "../../dicts";
 import { JSONLDScript } from "./json-ld-script";
 

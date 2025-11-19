@@ -3,13 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useMap } from "./store";
 import { Info, Spline } from "lucide-react";
-import {
-  Button,
-  ColorPicker,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../(controls)";
+import { Button } from "../ui/button";
+import { ColorPicker } from "../(controls)/color-picker";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
   putSharedFilters,
   useConnectionStore,

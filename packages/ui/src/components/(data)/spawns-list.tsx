@@ -1,7 +1,8 @@
 "use client";
 import { type SimpleSpawn, useSettingsStore } from "@repo/lib";
-import { Button, Progress } from "@repo/ui/controls";
-import { useT } from "@repo/ui/providers";
+import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
+import { useT } from "../(providers)";
 import { Check, ImageUpscale, X } from "lucide-react";
 
 export function SpawnsList({

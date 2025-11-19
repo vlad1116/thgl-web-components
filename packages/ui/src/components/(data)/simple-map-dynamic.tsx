@@ -1,6 +1,7 @@
 "use client";
 
-import { SimpleMap, SimpleMarkers } from "@repo/ui/interactive-map";
+import { SimpleMap } from "../(interactive-map)/simple-map";
+import { SimpleMarkers } from "../(interactive-map)/simple-markers";
 import { type TilesConfig, type SimpleSpawn, AppConfig } from "@repo/lib";
 import { AdditionalTooltipType } from "../(content)";
 

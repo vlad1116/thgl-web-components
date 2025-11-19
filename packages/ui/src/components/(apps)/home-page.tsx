@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { HeaderOffset, PageTitle } from "@repo/ui/header";
-import { ContentLayout } from "@repo/ui/ads";
-import { NavGrid, ReleaseNotes, Subtitle } from "@repo/ui/content";
+import { HeaderOffset, PageTitle } from "../(header)";
+import { ContentLayout } from "../(ads)";
+import { NavGrid, ReleaseNotes, Subtitle } from "../(content)";
 import {
   AppConfig,
   DEFAULT_LOCALE,

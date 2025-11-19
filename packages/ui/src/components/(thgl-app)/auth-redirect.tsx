@@ -1,8 +1,8 @@
 "use client";
 import { cn, THGLAccount } from "@repo/lib";
-import { InitializeAccount } from "@repo/ui/thgl-app";
+import { InitializeAccount } from "./initialize-account";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { Button } from "@repo/ui/controls";
+import { Button } from "../ui/button";
 
 export function AuthRedirect({
   isSuccess,

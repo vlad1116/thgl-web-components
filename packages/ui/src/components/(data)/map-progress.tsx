@@ -1,13 +1,13 @@
 "use client";
 
-import { AdditionalTooltipType, Subtitle } from "@repo/ui/content";
+import { AdditionalTooltipType, Subtitle } from "../(content)";
 import { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@repo/ui/data";
+import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
-import { Button } from "@repo/ui/controls";
+import { Button } from "../ui/button";
 import { SpawnsList } from "./spawns-list";
-import { useLocale, useT } from "@repo/ui/providers";
+import { useLocale, useT } from "../(providers)";
 import { localizePath, TilesConfig, type SimpleSpawn } from "@repo/lib";
 
 const SimpleMapDynamic = dynamic(() => import("./simple-map-dynamic"), {

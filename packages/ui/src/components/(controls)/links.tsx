@@ -7,7 +7,7 @@ import {
   ExternalAnchor,
   NavMenu,
   HeaderLink,
-} from "@repo/ui/header";
+} from "../(header)";
 import { ExternalLink } from "lucide-react";
 import { AppConfig, localizePath } from "@repo/lib";
 import { NavIcon } from "../(content)";

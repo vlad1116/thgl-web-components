@@ -8,13 +8,13 @@ import {
   getT,
   localizePath,
 } from "@repo/lib";
-import { CoordinatesProvider } from "@repo/ui/providers";
-import { HeaderOffset, PageTitle } from "@repo/ui/header";
-import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
-import { MarkersSearch } from "@repo/ui/markers-search";
-import { FloatingAds } from "@repo/ui/ads";
+import { CoordinatesProvider } from "../(providers)";
+import { HeaderOffset, PageTitle } from "../(header)";
+import { FullMapDynamic } from "../(dynamic)/full-map-dynamic";
+import { MarkersSearch } from "../(controls)/markers-search";
+import { FloatingAds } from "../(ads)";
 import { notFound } from "next/navigation";
-import { getFullDictionary } from "@repo/ui/dicts";
+import { getFullDictionary } from "../../dicts";
 import { ReactNode } from "react";
 import { AdditionalTooltipType } from "../(content)";
 

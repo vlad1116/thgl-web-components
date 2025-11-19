@@ -4,9 +4,10 @@ import { SimpleSpawn, TilesConfig } from "@repo/lib";
 import MapProgress from "./map-progress";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
-import { Button, ScrollArea } from "@repo/ui/controls";
+import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
 import Link from "next/link";
-import { useT } from "@repo/ui/providers";
+import { useT } from "../(providers)";
 import { AdditionalTooltipType } from "../(content)";
 
 export default function MapGuides({
