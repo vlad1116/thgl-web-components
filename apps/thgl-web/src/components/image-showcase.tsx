@@ -27,7 +27,7 @@ export function ImageShowcase({
   priority = false,
   className = "",
   children,
-  sizes = "(max-width: 768px) 100vw, 50vw",
+  sizes = "(max-width: 768px) 90vw, (max-width: 1280px) 45vw, 500px",
 }: ImageShowcaseProps) {
   return (
     <div className="relative">

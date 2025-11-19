@@ -23,7 +23,7 @@ export function GameCard({ game }: { game: Game }) {
               alt={`${game.title} map preview`}
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 450px"
             />
           ) : (
             /* Fallback to logo-only when no preview */

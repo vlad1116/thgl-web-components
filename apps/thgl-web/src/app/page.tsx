@@ -138,6 +138,7 @@ export default function HomePage() {
             width={600}
             height={400}
             priority
+            sizes="(max-width: 768px) 90vw, (max-width: 1280px) 40vw, 400px"
             badge={{
               primary: `${companionGames.length} Games Supported`,
               secondary: "Palworld, Dune, Once Human & more",
