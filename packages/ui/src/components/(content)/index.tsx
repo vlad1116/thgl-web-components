@@ -1,9 +1,10 @@
-export * from "./additional-content";
-export * from "./additional-tooltip";
-export * from "./discord-message";
-export * from "./subtitle";
-export * from "./nav-card";
-export * from "./nav-grid";
-export * from "./nav-icon";
-export * from "./preview-image";
-export * from "./release-notes";
+// Named exports for better tree-shaking
+export { AdditionalContent } from "./additional-content";
+export { AdditionalTooltip, type AdditionalTooltipType } from "./additional-tooltip";
+export { DiscordMessage } from "./discord-message";
+export { Subtitle } from "./subtitle";
+export { NavCard, type NavCardProps } from "./nav-card";
+export { NavGrid } from "./nav-grid";
+export { NavIcon } from "./nav-icon";
+export { PreviewImage } from "./preview-image";
+export { ReleaseNotes } from "./release-notes";

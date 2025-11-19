@@ -1,27 +1,67 @@
-export * from "./activities";
-export * from "./activity-progress";
-export * from "./activity-reset";
-export * from "./comment";
-export * from "./comments";
-export * from "./custom-activities";
-export * from "./data-table";
-export * from "./diablo4-events";
-export * from "./diablo4-settings";
-export * from "./dune-altitude";
-export * from "./dune-deep-desert-grid";
-export * from "./dune-heatmaps";
-export * from "./node-details";
-export * from "./palia-grid-toggle";
-export * from "./palia-grid";
-export * from "./palia-time";
-export * from "./palia-weekly-wants";
-export * from "./palworld-coordinates";
-export * from "./ping";
-export * from "./premium-alert";
-export * from "./sidebar";
-export * from "./troops";
-export * from "../ui/avatar";
-export * from "../ui/breadcrumb";
-export * from "../ui/dropdown-menu";
-export * from "../ui/skeleton";
+// Named exports for better tree-shaking
+export { Activities } from "./activities";
+export { ActivityProgress } from "./activity-progress";
+export { ActivityReset } from "./activity-reset";
+export { SingleComment, type Comment } from "./comment";
+export { Comments } from "./comments";
+export { CustomActivities } from "./custom-activities";
+export { DataTable, type ColumnDef } from "./data-table";
+export { Diablo4Events, type RECENT_EVENTS } from "./diablo4-events";
+export { D4Settings, useD4SettingsStore } from "./diablo4-settings";
+export { DuneAltitude } from "./dune-altitude";
+export { DuneDeepDesertGrid } from "./dune-deep-desert-grid";
+export { DuneHeatmaps } from "./dune-heatmaps";
+export { NodeDetails } from "./node-details";
+export { PaliaGridToggle } from "./palia-grid-toggle";
+export { PaliaGrid } from "./palia-grid";
+export { PaliaTime } from "./palia-time";
+export {
+  PaliaWeeklyWants,
+  VillagersWeeklyWants,
+  villagers,
+  type WEEKLY_WANTS,
+  type API_WEEKLY_WANTS,
+  type REWARD_LEVEL,
+} from "./palia-weekly-wants";
+export { PalworldCoordinates } from "./palworld-coordinates";
+export { Ping } from "./ping";
+export { PremiumAlert } from "./premium-alert";
+export { Sidebar, CollapsibleTrigger } from "./sidebar";
+export { SpawnsList } from "./spawns-list";
+export { Troops, type Troops as TroopsType } from "./troops";
+export { AuthAlert } from "./auth-alert";
+
+// Re-export UI components
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "../ui/avatar";
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "../ui/breadcrumb";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from "../ui/dropdown-menu";
+export { Skeleton } from "../ui/skeleton";
 export { ChevronDownIcon } from "@radix-ui/react-icons";
