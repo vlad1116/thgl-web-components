@@ -1,4 +1,5 @@
 // Named exports for better tree-shaking
+// Overwolf-exclusive components only
 export { Ads160x600Desktop } from "./ads-160-600-desktop";
 export { Ads300x250Overlay } from "./ads-300-250-overlay";
 export { Ads400x300Overlay } from "./ads-400-300-overlay";
@@ -13,12 +14,9 @@ export { App } from "./app";
 export { Channels } from "./channels";
 export { useCurrentWindow } from "./hooks";
 export { Hotkey } from "./hotkey";
-export { MapContainer } from "./map-container";
 export { MapHotkeys } from "./map-hotkeys";
-export { QR } from "./qr";
 export { ResizeBorders } from "./resize-borders";
 export { OverwolfSettingsDialogContent } from "./settings-dialog-content";
 export { SendLogs } from "./send-logs";
 export { Status } from "./status";
-export { StreamingSender } from "./streaming-sender";
 export { UnlockButton } from "./unlock-button";

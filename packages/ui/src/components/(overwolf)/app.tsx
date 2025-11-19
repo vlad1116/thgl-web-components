@@ -18,7 +18,7 @@ import {
 import { useOverwolfState } from "@repo/lib/overwolf";
 import { AppHeader } from "./app-header";
 import { HeaderOffset, PlausibleTracker } from "../(header)";
-import { MapContainer } from "./map-container";
+import { MapContainer, StreamingSender } from "../(desktop)";
 import {
   InteractiveMap,
   LivePlayer,
@@ -32,7 +32,6 @@ import {
 import { Actions, Toaster } from "../(controls)";
 import { MarkersSearch } from "../(controls)/markers-search";
 import { Whiteboard } from "../(peer)";
-import { StreamingSender } from "./streaming-sender";
 import { MapHotkeys } from "./map-hotkeys";
 import { ResizeBorders } from "./resize-borders";
 import { AdsScript } from "./ads-script";

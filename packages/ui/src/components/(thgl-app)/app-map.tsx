@@ -1,7 +1,7 @@
 "use client";
 
 import { THGLAppConfig, TilesConfig, Version } from "@repo/lib";
-import { MapContainer, StreamingSender } from "../(overwolf)";
+import { MapContainer, StreamingSender } from "../(desktop)";
 import {
   InteractiveMap,
   LivePlayer,

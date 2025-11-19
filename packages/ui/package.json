@@ -43,6 +43,9 @@
     "./providers": {
       "import": "./src/components/(providers)/index.tsx"
     },
+    "./desktop": {
+      "import": "./src/components/(desktop)/index.tsx"
+    },
     "./overwolf": {
       "import": "./src/components/(overwolf)/index.tsx"
     },
