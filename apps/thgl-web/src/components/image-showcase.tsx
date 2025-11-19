@@ -36,7 +36,7 @@ export function ImageShowcase({
         alt={alt}
         width={width}
         height={height}
-        className={`rounded-lg shadow-2xl ${className}`}
+        className={`rounded-lg shadow-2xl max-w-full h-auto ${className}`}
         priority={priority}
         sizes={sizes}
       />

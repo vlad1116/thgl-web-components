@@ -121,7 +121,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button asChild>
                 <a href="https://app.th.gl/THGL_Installer.exe" download>
                   <Download className="mr-2 h-4 w-4" /> Download for Windows

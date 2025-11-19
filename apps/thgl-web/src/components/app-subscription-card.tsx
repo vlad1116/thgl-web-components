@@ -29,6 +29,7 @@ export function AppSubscriptionCard({
             width={64}
             height={64}
             className="mx-auto rounded"
+            sizes="64px"
           />
           <h3 className="text-lg font-semibold">{game.overwolf!.title}</h3>
         </div>

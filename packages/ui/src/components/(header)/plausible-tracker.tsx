@@ -95,5 +95,5 @@ export function PlausibleTracker({
     }
   }, []);
 
-  return <></>;
+  return <link rel="preconnect" href={apiHost} />;
 }

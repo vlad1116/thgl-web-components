@@ -281,6 +281,7 @@ export default function CompanionAppPage() {
                   alt={`${game.title} logo`}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform"
+                  sizes="80px"
                 />
               </div>
               <p className="text-sm font-medium text-center group-hover:text-primary transition-colors">

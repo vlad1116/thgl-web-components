@@ -54,6 +54,7 @@ export default async function GameDetailPage({
             width={64}
             height={64}
             className="rounded"
+            sizes="64px"
           />
           <h1 className="text-4xl font-bold">{game.title}</h1>
         </div>

@@ -34,6 +34,7 @@ export function GameCard({ game }: { game: Game }) {
                 width={80}
                 height={80}
                 className="rounded"
+                sizes="80px"
               />
             </div>
           )}
@@ -48,6 +49,7 @@ export function GameCard({ game }: { game: Game }) {
                 width={32}
                 height={32}
                 className="rounded flex-shrink-0"
+                sizes="32px"
               />
               <h2 className="text-lg font-semibold truncate">{game.title}</h2>
             </div>
