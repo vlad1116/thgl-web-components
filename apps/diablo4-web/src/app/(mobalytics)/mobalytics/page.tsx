@@ -1,4 +1,4 @@
-import { MarkersSearch } from "@repo/ui/controls";
+import { MarkersSearch } from "@repo/ui/markers-search";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import type { Metadata } from "next";
 import { fetchVersion } from "@repo/lib";

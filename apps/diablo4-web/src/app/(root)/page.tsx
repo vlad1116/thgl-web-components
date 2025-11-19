@@ -1,4 +1,4 @@
-import { MarkersSearch } from "@repo/ui/controls";
+import { MarkersSearch } from "@repo/ui/markers-search";
 import { FloatingAds } from "@repo/ui/ads";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import { HeaderOffset, PageTitle } from "@repo/ui/header";

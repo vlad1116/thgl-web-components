@@ -20,12 +20,12 @@ import {
 import {
   Button,
   ErrorBoundary,
-  MarkersSearch,
   Toaster,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "../(controls)";
+import { MarkersSearch } from "../(controls)/markers-search";
 import { AppHeader } from "./app-header";
 import { OverlayInputEvents } from "./overlay-input-events";
 import { AppMapDynamic } from "./app-map-dynamic";

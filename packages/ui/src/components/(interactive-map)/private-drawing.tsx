@@ -11,7 +11,6 @@ import {
   TooltipTrigger,
 } from "../(controls)";
 import {
-  cn,
   putSharedFilters,
   useConnectionStore,
   useSettingsStore,
