@@ -34,6 +34,7 @@ This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specifi
 - **Shared Packages** (`packages/`):
   - `@repo/lib`: Core logic, types, utilities, game configurations
   - `@repo/ui`: Shared React components using Radix UI + Tailwind
+    - Component folders organized by usage context (see UI Package Structure below)
   - Config packages: `config-eslint`, `config-typescript`, `config-tailwind`
 
 ### Key Configuration Files
@@ -79,3 +80,44 @@ The codebase uses reusable components to maintain consistency and reduce duplica
 - Look for repeated patterns (3+ occurrences) that could be extracted into components
 - Prefer composition over duplication
 - Keep components flexible with optional props and sensible defaults
+
+### UI Package Structure
+
+The `@repo/ui` package is organized into component folders by usage context to optimize tree-shaking and prevent circular dependencies:
+
+#### Component Folder Organization
+- **(overwolf)**: Overwolf-exclusive components (ads, app shell, hotkeys, resize borders)
+  - Only used by `{game-name}-overwolf` apps
+  - Import via `@repo/ui/overwolf`
+- **(desktop)**: Shared desktop components used by both Overwolf apps and thgl-app
+  - Components: StreamingSender, MapContainer, QR
+  - Import via `@repo/ui/desktop`
+- **(thgl-app)**: thgl-app-specific components (companion app for Windows)
+  - Import via `@repo/ui/thgl-app`
+- **(apps)**: Shared app-level components (RootLayout, MapPage, etc.)
+  - Used by web and desktop apps
+  - Import via `@repo/ui/apps`
+- **(controls)**: UI controls and dialogs (Actions, Toaster, Settings, etc.)
+  - Import via `@repo/ui/controls`
+  - Note: MarkersSearch exported separately via `@repo/ui/markers-search`
+- **(interactive-map)**: Map components (InteractiveMap, Markers, LivePlayer, etc.)
+  - Import via `@repo/ui/interactive-map`
+- **(header)**: Header components (Header, Brand, Account, PlausibleTracker)
+  - Import via `@repo/ui/header`
+- **(providers)**: Context providers (I18NProvider, TooltipProvider, CoordinatesProvider)
+  - Import via `@repo/ui/providers`
+- **(content)**: Content display components (markdown, discord messages, etc.)
+  - Import via `@repo/ui/content`
+- **(data)**: Data display components (spawns lists, map guides, progress tracking)
+  - Import via `@repo/ui/data`
+- **(peer)**: P2P collaboration components (Whiteboard)
+  - Import via `@repo/ui/peer`
+- **(ads)**: Ad components for web apps
+  - Import via `@repo/ui/ads`
+
+#### Tree-Shaking Best Practices
+- **Barrel files use named exports only** - No wildcard `export *` to enable proper tree-shaking
+- **Avoid circular dependencies** - Within `packages/ui`, use direct relative imports (e.g., `../ui/button`) instead of `@repo/ui/*` imports
+- **Break dependency chains** - Components should not import from unrelated feature folders
+- **Client components** - "use client" components in barrel files can prevent tree-shaking in Next.js; isolated exports help (e.g., `@repo/ui/markers-search`)
+- **Package.json exports** - All component folders are explicitly exported in package.json for controlled access
