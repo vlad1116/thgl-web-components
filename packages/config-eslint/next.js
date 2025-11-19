@@ -20,7 +20,7 @@ module.exports = {
     React: true,
     JSX: true,
   },
-  plugins: ["only-warn"],
+  plugins: ["only-warn", "@next/next"],
   settings: {
     "import/resolver": {
       typescript: {
@@ -35,5 +35,7 @@ module.exports = {
     "import/no-relative-packages": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    // Next.js specific rules
+    "@next/next/no-html-link-for-pages": "error",
   },
 };
