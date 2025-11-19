@@ -1,11 +1,12 @@
-export * from "./account-dialog";
-export * from "./app-card";
-export * from "./app";
-export * from "./auth-redirect";
-export * from "./app-header";
-export * from "./controller";
-export * from "./initialize-account";
-export * from "./initialize-controller";
-export * from "./initialize-app";
-export * from "./resize-borders";
-export * from "./status";
+// Named exports for better tree-shaking
+export { AccountDialog } from "./account-dialog";
+export { AppCard } from "./app-card";
+export { App } from "./app";
+export { AuthRedirect } from "./auth-redirect";
+export { AppHeader } from "./app-header";
+export { Controller } from "./controller";
+export { InitializeAccount } from "./initialize-account";
+export { InitializeController } from "./initialize-controller";
+export { InitializeApp } from "./initialize-app";
+export { ResizeBorders } from "./resize-borders";
+export { Status } from "./status";

@@ -1,5 +1,22 @@
-export * from "./guide-page";
-export * from "./guides-page";
-export * from "./home-page";
-export * from "./map-page";
-export * from "./root-layout";
+// Named exports for better tree-shaking
+export {
+  createGuidePageGenerateMetadata,
+  createGuidePage,
+} from "./guide-page";
+export {
+  createGuidesPageGenerateMetadata,
+  createGuidesPage,
+} from "./guides-page";
+export {
+  createHomePageGenerateMetadata,
+  createHomePage,
+} from "./home-page";
+export {
+  createMapPageGenerateMetadata,
+  createMapPage,
+} from "./map-page";
+export {
+  rootLayoutViewport,
+  createRootLayoutMetadata,
+  createRootLayout,
+} from "./root-layout";
