@@ -12,6 +12,240 @@ export type BlogContentReference = string;
 
 export const blogEntries: BlogEntry[] = [
   {
+    id: "ad-blockers-breaking-websites",
+    headline: "Ad Blockers Are Breaking More Than Just Ads",
+    title: "Why Ad Blockers Are Breaking TH.GL (And What You Should Know)",
+    description:
+      "Ad blockers like uBlock Origin and AdGuard aren't just blocking ads anymore — they're breaking core website features, destroying supporter accounts, and blocking privacy-friendly analytics. Here's what's actually happening behind the scenes.",
+    date: "2025-11-20",
+    content: `
+I don't have an issue with ad blockers in general.
+
+Seriously — I understand why people use them. The web is full of intrusive ads, tracking scripts, and privacy nightmares. Ad blockers serve a real purpose.
+
+But over the past few months, I've watched ad blockers evolve from "blocking ads" into something far more aggressive — and it's breaking TH.GL in ways that most users don't even realize.
+
+This post is about transparency. I want you to understand what's happening, why it matters, and what you can do about it.
+
+## 📖 A Bit of Context
+
+A few weeks ago, I [made the TH.GL frontend code public](https://www.th.gl/blog/web-code-now-public) for transparency and community contributions. It felt like the right move — opening up the code so anyone could see how things work, contribute fixes, and help improve the platform.
+
+But there's a downside to transparency: **ad blocker developers can now reverse-engineer every part of my site and write hyper-specific filters to break it**.
+
+And that's exactly what's been happening.
+
+## 🚨 The Real Problem
+
+When **over 50% of users started blocking ads**, I had to make a decision.
+
+As a solo developer who quit his job to work on TH.GL full-time, ads are a significant part of how I keep the lights on. But I also believe **everyone should have access to all features without paywalls** — that's why you can mark unlimited locations as discovered, use all map filters, and access everything for free.
+
+So I added a **closable ad-block detection dialog**. It doesn't stop you from using the site — it just lets you know that if you'd like to support the project, you can turn off your ad blocker or [subscribe to remove ads](https://www.th.gl/support-me).
+
+That seemed like a fair compromise.
+
+But then the ad blockers started blocking **the message itself**.
+
+Most users don't even know they're blocking ads anymore. They don't see the dialog. They don't know there's an alternative. The ad blocker just... hides it.
+
+## 🛑 What Ad Blockers Are Actually Blocking
+
+Here's what surprised me most: ad blockers aren't just blocking ads anymore.
+
+They're also blocking:
+
+### 1. **Privacy-Friendly Analytics**
+
+TH.GL uses **self-hosted Plausible Analytics** (\`metrics.th.gl\`) — a privacy-focused service that:
+- ✅ Doesn't use cookies
+- ✅ Doesn't track individual users
+- ✅ Doesn't sell data
+- ✅ Is fully GDPR-compliant
+
+I use it **only** to understand how many people visit the site and which features are most popular. That's it.
+
+But uBlock Origin and AdGuard block it anyway.
+
+I started questioning: **How do they decide what's "bad" and what's "good"?**
+
+If I'm blocking a self-hosted, cookie-free analytics tool that respects privacy... what's the criteria?
+
+### 2. **The Ad-Block Detection Message**
+
+As mentioned, the dialog that tells users "Hey, you're blocking ads — here's an alternative" is now hidden by filters.
+
+This means users who **would** consider supporting the project never even see the option.
+
+### 3. **Core Website Functionality**
+
+This is where it gets serious.
+
+In the past few months, ad blockers have broken:
+
+- **Peer Link** (collaborative map sharing) — completely destroyed by uBlock Origin filters
+- **Client-side crashes** — caused by AdGuard overriding JavaScript objects in ways that break on updates
+- **Supporter accounts** — more on this below
+
+Here's the kicker: **the ad blocker teams didn't notice**. They write aggressive filters targeting one subdomain (like \`palworld.th.gl\`) without testing if those same filters break other TH.GL sites like \`aeternum-map.th.gl\`, \`sotf.th.gl\`, \`duneawakening.th.gl\`, etc.
+
+It takes me **hours** to debug issues that turn out to be caused by ad blocker interference — time I'd much rather spend building features.
+
+## 💥 The Latest Issue: Overriding Supporter Accounts
+
+This is the most egregious example yet.
+
+uBlock Origin recently added this filter:
+
+\`\`\`
+th.gl##+js(trusted-set-local-storage-item, account-storage,
+  {
+    "state": {
+      "_hasHydrated": true,
+      "userId": null,
+      "decryptedUserId": null,
+      "email": null,
+      "perks": {
+        "adRemoval": true,
+        "comments": false,
+        "premiumFeatures": true,
+        "previewReleaseAccess": true
+      },
+      "showUserDialog": false
+    },
+    "version": 2
+  }
+)
+\`\`\`
+
+**What this does**: It overwrites your account data in localStorage with fake data that says "this user has ad removal."
+
+**The problem**: If you're an **actual paying supporter**, this filter **deletes your real account information** and replaces it with fake data.
+
+They only tested how it works for users without an account. They didn't consider that **real supporters exist** — and now those supporters' accounts aren't being recognized properly.
+
+This isn't just blocking ads. This is **actively breaking the experience for people who financially support the project**.
+
+## 📜 The W3C Argument
+
+When I raised these concerns with the uBlock Origin team, they responded with this quote from the [W3C Ethical Web Principles](https://www.w3.org/TR/ethical-web-principles/#render):
+
+> "People must be able to change web pages according to their needs. For example, people should be able to install style sheets, assistive browser extensions, and blockers of unwanted content or scripts."
+
+I don't disagree with that principle.
+
+But here's my issue: **people aren't aware of what they're blocking**.
+
+They think they're blocking ads and tracking cookies. They don't know they're also blocking:
+- Privacy-friendly analytics
+- Ad-block detection dialogs
+- Core website features
+- Their own supporter account data
+
+If the principle is "people should control what they see," then shouldn't they **actually know what's being blocked**?
+
+## 🔧 The Technical Reality
+
+Here are examples of the kind of aggressive filters being used:
+
+**uBlock Origin** added rules like:
+\`\`\`
+th.gl##+js(no-setInterval-if, /validate|verify/i)
+th.gl##+js(no-setTimeout-if, /validate|verify/i)
+\`\`\`
+
+This blocks **all \`setInterval\` and \`setTimeout\` calls** that match certain patterns — across **all TH.GL subdomains**.
+
+The result? Features that have nothing to do with ads break unexpectedly.
+
+**AdGuard** has been more careful, but they also aren't testing across all subdomains, leading to similar issues.
+
+You can see the TH.GL-specific filters yourself:
+- [uBlock Origin filters for TH.GL (GitHub)](https://github.com/uBlockOrigin/uAssets/blob/31f5d588c4073759ce5acc52594447d0ef6171ae/filters/quick-fixes.txt#L401-L403)
+- [AdGuard filters for TH.GL (GitHub)](https://github.com/AdguardTeam/AdguardFilters/blob/d6d9254d093e6bca0ea11b340c16ad939248387d/AnnoyancesFilter/Popups/sections/antiadblock.txt#L2140)
+
+These filters are also used by **Brave Browser** and other Chromium-based browsers with built-in ad blocking.
+
+## ⚖️ My Position
+
+I want to be clear about where I stand:
+
+1. **I'm fine with people blocking ads** — as long as they know they're doing it
+2. **I'm fine with ad blockers existing** — they serve a purpose in a world of bad actors
+3. **I'm NOT fine with**:
+   - Blocking privacy-friendly analytics without user awareness
+   - Hiding messages that give users informed choices
+   - Breaking website functionality in the name of "blocking ads"
+   - Overriding supporter account data
+
+If you want to block ads on TH.GL, that's your choice. But you should **know what else is being blocked** — and ideally, see my message so you can make an informed decision.
+
+## ✅ What You Can Do
+
+If you value TH.GL and want to ensure it works properly, here's what I recommend:
+
+### 1. **Whitelist TH.GL**
+
+Add \`th.gl\` and all its subdomains to your ad blocker's whitelist. This ensures:
+- ✅ All features work as intended
+- ✅ Analytics help me understand what features to prioritize
+- ✅ Ads load normally (which supports the project)
+- ✅ No ad-block detection message (because you're not blocking anything)
+
+### 2. **Customize Your Ad Blocker Filters**
+
+Instead of relying on aggressive pre-made filter lists, consider:
+- **Disabling the default filter lists** for TH.GL specifically
+- **Adding your own custom filters** for specific elements you want to block
+- Using browser-level content blockers that focus on **tracking and malware**, not blanket script blocking
+
+Both uBlock Origin and AdGuard are trying to block the ad-block detection dialog and break functionality — so the issue isn't which blocker you use, it's about the aggressive filter lists they maintain.
+
+### 3. **Support Directly**
+
+If you want an ad-free experience **and** want to support the project, consider [subscribing](https://www.th.gl/support-me). The pricing was discussed with the community to find a fair rate, and it directly helps me keep TH.GL running without paywalls.
+
+### 4. **Raise Awareness**
+
+If you think ad blockers should be more transparent about what they block, consider opening issues on their GitHub repos:
+- [uBlock Origin Issues](https://github.com/uBlockOrigin/uAssets/issues)
+- [AdGuard Issues](https://github.com/AdguardTeam/AdguardFilters/issues)
+
+Let them know that **blocking analytics and messages** goes beyond "blocking unwanted content."
+
+## 🙏 Final Thoughts
+
+I'm not writing this to guilt anyone or wage war against ad blockers.
+
+I'm writing this because I believe in **transparency**.
+
+You should know what's happening behind the scenes. You should know that ad blockers are breaking more than just ads. And you should be able to make an informed decision about what to block and what to allow.
+
+If you've made it this far — thank you for reading.
+
+If you have thoughts, feedback, or just want to chat, feel free to [join the Discord](https://th.gl/discord).
+
+— DevLeon
+`.trim(),
+    contentReference: [
+      "uBlock Origin",
+      "AdGuard",
+      "ad blockers",
+      "Plausible Analytics",
+      "privacy",
+      "localStorage",
+      "supporter accounts",
+      "W3C",
+      "Ethical Web Principles",
+      "Brave Browser",
+      "GitHub",
+      "Peer Link",
+      "transparency",
+      "open source",
+      "TH.GL",
+    ],
+  },
+  {
     id: "duet-night-abyss-launch",
     headline: "Duet Night Abyss Interactive Maps Now Live",
     title: "Duet Night Abyss Support: Interactive Maps & Activity Tracker",

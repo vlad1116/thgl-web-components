@@ -64,6 +64,21 @@ export function AdBlocker() {
 
         <p>{t("adblocker.intro")}</p>
 
+        <ExternalAnchor
+          href="https://www.th.gl/blog/ad-blockers-breaking-websites"
+          className="flex gap-1 text-sm text-primary hover:underline items-center"
+          onClick={(e) => {
+            window.open(
+              "https://www.th.gl/blog/ad-blockers-breaking-websites",
+              "_blank",
+            );
+            e.preventDefault();
+          }}
+        >
+          <span>Learn more about why ad blockers can break TH.GL features</span>
+          <ExternalLink className="w-3 h-3" />
+        </ExternalAnchor>
+
         <ul className="mb-4 list-disc list-inside space-y-2">
           <li>
             <span className="font-bold">{t("adblocker.supportTitle")}</span>{" "}
