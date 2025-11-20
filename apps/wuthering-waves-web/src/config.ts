@@ -26,6 +26,15 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Overworld Map",
     },
     {
+      title: "Chronorift Metropolis",
+      description:
+        "Navigate Wuthering Waves expansive world with our interactive maps.",
+      href: "/maps/Chronorift%20Metropolis",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_CAFE"),
+      linkText: "Explore the Chronorift Metropolis",
+    },
+    {
       title: "Fabricatorium of the Deep Map",
       description:
         "Explore the Fabricatorium of the Deep with our interactive maps.",
