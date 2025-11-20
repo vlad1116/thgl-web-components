@@ -31,7 +31,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Wuthering Waves expansive world with our interactive maps.",
       href: "/maps/Chronorift%20Metropolis",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("wuthering-waves", "WP_CAFE"),
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_2_8_Cafe"),
       linkText: "Explore the Chronorift Metropolis",
     },
     {
