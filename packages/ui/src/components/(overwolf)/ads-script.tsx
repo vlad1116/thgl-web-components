@@ -18,7 +18,9 @@ export function AdsScript({
   children: ReactNode;
   fallback?: ReactNode;
 }): JSX.Element {
-  const adRemoval = useAccountStore((state) => state.perks.adRemoval);
+  const adRemoval = useAccountStore(
+    (state) => state.perks.adRemoval && state.userId !== null,
+  );
   const [state, setState] = useState<"loading" | "error" | "ready">("loading");
 
   useEffect(() => {

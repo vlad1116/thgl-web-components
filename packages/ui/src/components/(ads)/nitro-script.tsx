@@ -222,7 +222,9 @@ export function ScriptLoader({
   loading?: ReactNode;
 }): JSX.Element {
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
-  const adRemoval = useAccountStore((state) => state.perks.adRemoval);
+  const adRemoval = useAccountStore(
+    (state) => state.perks.adRemoval && state.userId !== null,
+  );
   const email = useAccountStore((state) => state.email);
   const nitroStore = useNitroState();
   const state = nitroStore[stateKey];

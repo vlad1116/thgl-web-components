@@ -11,7 +11,12 @@ import {
 } from "@repo/lib";
 
 export function Account() {
+  const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
+
   useEffect(() => {
+    if (!accountHasHydrated) {
+      return;
+    }
     let userId = Cookies.get("userId");
     const refreshState = async () => {
       const state = useAccountStore.getState();
@@ -115,7 +120,7 @@ export function Account() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [accountHasHydrated]);
 
   return <></>;
 }
