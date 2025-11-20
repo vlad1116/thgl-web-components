@@ -1,3 +1,7 @@
+# 2.21.4
+
+- Fix: **Duet Night Abyss** Fix map and live detection issues
+
 # 2.21.3
 
 - Fix: **Blue Protocol: Star Resonance** Position detection if game is installed in a custom directory
