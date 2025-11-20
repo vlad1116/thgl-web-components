@@ -3,6 +3,7 @@ import leaflet from "leaflet";
 import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { useGameState, useSettingsStore } from "@repo/lib";
+import { rotateCoordinate } from "./rotation";
 
 export function TraceLine() {
   const map = useMap();
@@ -50,7 +51,7 @@ export function TraceLine() {
 
   const traceLineRateRef = useRef(0);
   useEffect(() => {
-    if (!player) {
+    if (!player || !map) {
       return;
     }
     traceLineRateRef.current++;
@@ -62,9 +63,22 @@ export function TraceLine() {
     const targetLayerGroup = layerGroup.current!;
 
     const traceDotsGroup = traceDots.current!;
+
+    // Apply rotation to trace position if configured
+    let tracePosition: [number, number] = [player.x, player.y];
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      tracePosition = rotateCoordinate(
+        [player.x, player.y],
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+
     lastPosition.current = {
-      x: player.x,
-      y: player.y,
+      x: tracePosition[0],
+      y: tracePosition[1],
     };
     const circle = leaflet.circle(
       [lastPosition.current.x, lastPosition.current.y] as [number, number],
@@ -82,7 +96,7 @@ export function TraceLine() {
     if (layers.length > traceLineLength) {
       layers[layers.length - 1 - traceLineLength]?.remove();
     }
-  }, [player?.x, player?.y]);
+  }, [player?.x, player?.y, map]);
 
   useEffect(() => {
     if (!map) {
