@@ -83,7 +83,7 @@ export class PlayerMarker extends leaflet.Marker {
 
       // Apply rotation offset if configured
       if (this.options.rotationOffset) {
-        playerRotation -= this.options.rotationOffset;
+        playerRotation += this.options.rotationOffset;
       }
 
       this.options.rotation = playerRotation;
