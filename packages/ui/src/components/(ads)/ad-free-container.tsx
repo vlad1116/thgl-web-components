@@ -69,10 +69,10 @@ export function AdFreeContainer({
   return (
     <div
       className={cn(
-        "relative pointer-events-auto border bg-card text-card-foreground shadow rounded-none md:rounded-md",
+        "relative border bg-card text-card-foreground shadow rounded-none md:rounded-md",
         className,
       )}
-      style={{ flexShrink: 0 }}
+      style={{ flexShrink: 0, pointerEvents: "auto" }}
       ref={el}
     >
       <div
