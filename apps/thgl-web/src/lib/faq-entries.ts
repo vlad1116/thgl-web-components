@@ -445,21 +445,55 @@ More info: [New World Compliance Guide](https://dev.overwolf.com/ow-native/guide
   },
   {
     id: "fps-drops",
-    headline: "FPS drop with Overwolf apps",
+    headline: "FPS drops, lag, or performance issues with THGL apps",
     question:
-      "I have low FPS or drops when using Overwolf apps. What can I do?",
+      "I have low FPS, lag, or performance drops when using the Overwolf or Companion App. What can I do?",
     answer: `
-Try the following:
+## General Solutions (All Apps)
 
-- Check mouse polling settings: [FPS Issues](https://support.overwolf.com/en/support/solutions/articles/9000184425-performance-issues-fps-cpu-memory-)
-- RivaTuner might conflict: [RivaTuner FAQ](https://support.overwolf.com/en/support/solutions/articles/9000177860-overwolf-and-conflicts-with-rivatuner)
-- Use hardware acceleration (Overwolf settings)
-- DLSS 3.5 Frame Generation may cause crashes
-- Match desktop + game resolution
-- Use 2nd screen or Peer Link instead of overlay
-- Avoid low polling rates in settings
+Try these solutions first, regardless of which app you're using:
+
+**1. Update GPU Drivers**
+Always make sure that your GPU drivers are up-to-date.
+
+**2. Check Antivirus Software**
+Some antivirus programs can slow down app requests. Windows Defender typically doesn't cause issues, but third-party antivirus software might interfere with performance.
+
+## Companion App Solutions
+
+If you're experiencing performance issues with the TH.GL Companion App, especially when using 2nd screen mode:
+
+### Common Cause
+This usually happens when your GPU driver or Windows decides to use all resources for the game itself.
+
+### Solutions to Try
+
+**1. Game Display Mode (Important)**
+Running the game in **exclusive fullscreen** can cause various issues with the Companion App. Use **borderless fullscreen** or **windowed mode** instead for better compatibility and performance.
+
+**2. Windows Graphics Settings**
+1. Go to: Settings → System → Display → Graphics
+2. Add the THGLApp executable
+3. Set to High Performance (or try other configurations)
+
+**3. Hardware-accelerated GPU scheduling**
+1. Go to: Settings → System → Display → Graphics
+2. Open Advanced graphics settings
+3. Toggle Hardware-accelerated GPU scheduling
+
+## Overwolf App Solutions
+
+If you're experiencing performance issues with Overwolf apps:
+
+- **Check mouse polling settings:** [FPS Issues](https://support.overwolf.com/en/support/solutions/articles/9000184425-performance-issues-fps-cpu-memory-)
+- **RivaTuner conflicts:** [RivaTuner FAQ](https://support.overwolf.com/en/support/solutions/articles/9000177860-overwolf-and-conflicts-with-rivatuner)
+- **Hardware acceleration:** Enable it in Overwolf settings (disabling makes the map slower, but the game faster)
+- **DLSS 3.5 Frame Generation:** May cause crashes or performance issues
+- **Resolution matching:** Use the same resolution in-game and on desktop
+- **Alternative display methods:** Use 2nd screen mode or Peer Link (phone/tablet as minimap) instead of overlay
+- **Polling rate:** Avoid setting polling rates too low in the app settings
     `.trim(),
-    labels: ["Overwolf", "Technical"],
+    labels: ["Overwolf", "Companion App", "Technical"],
   },
   {
     id: "once-human-bannable",
