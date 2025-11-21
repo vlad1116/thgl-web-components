@@ -35,6 +35,7 @@ interface TranslateOptions {
  * - fallback keys
  * - description variants (term_desc)
  * - string interpolation with variables
+ * - pointer resolution (@1, @2, etc.)
  *
  * @param dict - The dictionary object with term translations.
  * @param term - The key to translate.
@@ -63,6 +64,11 @@ export function translate(
     } else {
       value = term;
     }
+  }
+
+  // Resolve pointer if value starts with @
+  if (value && value[0] === "@") {
+    value = dict[value] ?? value;
   }
 
   return options?.vars ? interpolate(value ?? "", options.vars) : (value ?? "");
@@ -100,6 +106,11 @@ export function getT(dict: Record<string, string>) {
           } else {
             template = term;
           }
+        }
+
+        // Resolve pointer if template starts with @
+        if (template && template[0] === "@") {
+          template = dict[template] ?? template;
         }
 
         return template.split(/({{.*?}})/g).map((part, index) => {
