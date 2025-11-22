@@ -52,8 +52,8 @@ export function FilterDetectionWarning() {
           zIndex: 1000120,
           maxWidth: "42rem",
           width: "calc(100% - 2rem)",
-          backgroundColor: "hsl(var(--destructive))",
-          color: "hsl(var(--destructive-foreground))",
+          backgroundColor: "#dc2626",
+          color: "#fef2f2",
           padding: "1rem",
           borderRadius: "0.5rem",
           boxShadow:

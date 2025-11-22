@@ -69,10 +69,18 @@ export function AdFreeContainer({
   return (
     <div
       className={cn(
-        "relative border bg-card text-card-foreground shadow rounded-none md:rounded-md",
+        "border bg-card text-card-foreground shadow rounded-none md:rounded-md",
         className,
       )}
-      style={{ flexShrink: 0, pointerEvents: "auto" }}
+      style={{
+        // Use inline position to avoid .relative class (targeted by filters)
+        // Only set if className doesn't override position
+        position: className?.match(/\b(fixed|absolute|sticky)\b/)
+          ? undefined
+          : "relative",
+        flexShrink: 0,
+        pointerEvents: "auto",
+      }}
       ref={el}
     >
       <div

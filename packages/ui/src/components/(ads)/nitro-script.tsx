@@ -454,34 +454,37 @@ export function ScriptLoader({
   return (
     <>
       {nitroState !== STATE_ERROR && (
-        <Script
-          onError={() => {
-            setState(STATE_ERROR);
-          }}
-          strategy="lazyOnload"
-          onReady={() => {
-            if (isNitroAdsManipulated()) {
+        <>
+          <Script
+            onError={() => {
               setState(STATE_ERROR);
-            } else if (isNitroAdsValid()) {
+            }}
+            strategy="lazyOnload"
+            onReady={() => {
               if (isNitroAdsManipulated()) {
                 setState(STATE_ERROR);
-              } else {
-                const currentState = useNitroState.getState();
-                if (
-                  currentState[validationActiveKey] &&
-                  currentState[scriptLoadingActiveKey]
-                ) {
-                  setState(STATE_READY);
+              } else if (isNitroAdsValid()) {
+                if (isNitroAdsManipulated()) {
+                  setState(STATE_ERROR);
                 } else {
-                  setState(STATE_VALIDATION);
+                  const currentState = useNitroState.getState();
+                  if (
+                    currentState[validationActiveKey] &&
+                    currentState[scriptLoadingActiveKey]
+                  ) {
+                    setState(STATE_READY);
+                  } else {
+                    setState(STATE_VALIDATION);
+                  }
                 }
+              } else {
+                setState(STATE_VALIDATION);
               }
-            } else {
-              setState(STATE_VALIDATION);
-            }
-          }}
-          src={`https://s.nitropay.com/ads-${NITROPAY_SITE_ID}.js`}
-        />
+            }}
+            src={`https://s.nitropay.com/ads-${NITROPAY_SITE_ID}.js`}
+          />
+          <span style={{ display: "none" }} aria-hidden="true" />
+        </>
       )}
       {(state === STATE_LOADING ||
         state === STATE_INIT ||
