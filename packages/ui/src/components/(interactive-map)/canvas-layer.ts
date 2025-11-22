@@ -35,15 +35,15 @@ useNitroState.subscribe(() => {
           ctx.save();
           ctx.translate(width / 2, height / 2);
           ctx.rotate(-Math.PI / 4);
-          ctx.font = "bold 24px sans-serif";
-          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.font = "bold 26px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.35)";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-          ctx.shadowBlur = 4;
+          ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+          ctx.shadowBlur = 6;
           ctx.shadowOffsetX = 2;
           ctx.shadowOffsetY = 2;
-          ctx.fillText("Ad-Blocker Detected", 0, 0);
+          ctx.fillText("Ad Blocker detected", 0, -15);
           ctx.restore();
         });
       } catch (e) {
@@ -149,18 +149,18 @@ const CanvasLayer = leaflet.TileLayer.extend({
           ctx.rotate(-Math.PI / 4); // -45 degrees
 
           // Configure text
-          ctx.font = "bold 24px sans-serif";
-          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.font = "bold 26px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.35)";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
 
           // Draw text shadow for better visibility
-          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-          ctx.shadowBlur = 4;
+          ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+          ctx.shadowBlur = 6;
           ctx.shadowOffsetX = 2;
           ctx.shadowOffsetY = 2;
 
-          ctx.fillText("Ad-Blocker Detected", 0, 0);
+          ctx.fillText("Ad Blocker detected", 0, -15);
 
           ctx.restore();
         }
@@ -220,15 +220,15 @@ const CanvasLayer = leaflet.TileLayer.extend({
           ctx.save();
           ctx.translate(width / 2, height / 2);
           ctx.rotate(-Math.PI / 4);
-          ctx.font = "bold 24px sans-serif";
-          ctx.fillStyle = "rgba(255, 0, 0, 0.15)";
+          ctx.font = "bold 26px sans-serif";
+          ctx.fillStyle = "rgba(255, 0, 0, 0.35)";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-          ctx.shadowBlur = 4;
+          ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+          ctx.shadowBlur = 6;
           ctx.shadowOffsetX = 2;
           ctx.shadowOffsetY = 2;
-          ctx.fillText("Ad-Blocker Detected", 0, 0);
+          ctx.fillText("Ad Blocker detected", 0, -15);
           ctx.restore();
         }
       }

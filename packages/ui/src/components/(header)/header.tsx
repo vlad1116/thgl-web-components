@@ -1,6 +1,7 @@
 import { cn } from "@repo/lib";
 import { GlobalMenu } from "./global-menu";
 import { HTMLAttributes } from "react";
+import { FilterDetectionWarning } from "../(ads)";
 
 export function Header({
   children,
@@ -32,6 +33,7 @@ export function Header({
       >
         {children}
       </nav>
+      <FilterDetectionWarning />
     </header>
   );
 }

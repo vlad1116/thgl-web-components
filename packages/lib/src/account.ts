@@ -36,28 +36,38 @@ export const useAccountStore = create(
       showUserDialog: boolean;
       setShowUserDialog: (showUserDialog: boolean) => void;
     }>(
-      (set) => ({
-        _hasHydrated: false,
-        setHasHydrated: (state) => {
-          set({ _hasHydrated: state });
-        },
-        userId: null,
-        decryptedUserId: null,
-        email: null,
-        perks: defaultPerks,
-        setAccount: (account) => {
-          set({
-            userId: account.userId,
-            decryptedUserId: account.decryptedUserId,
-            email: account.email,
-            perks: account.perks,
-          });
-        },
-        showUserDialog: false,
-        setShowUserDialog: (showUserDialog) => {
-          set({ showUserDialog });
-        },
-      }),
+      (set) => {
+        if (typeof window !== "undefined") {
+          try {
+            JSON.parse(localStorage.getItem("account-storage") || "");
+          } catch (e) {
+            localStorage.removeItem("account-storage");
+          }
+        }
+
+        return {
+          _hasHydrated: false,
+          setHasHydrated: (state) => {
+            set({ _hasHydrated: state });
+          },
+          userId: null,
+          decryptedUserId: null,
+          email: null,
+          perks: defaultPerks,
+          setAccount: (account) => {
+            set({
+              userId: account.userId,
+              decryptedUserId: account.decryptedUserId,
+              email: account.email,
+              perks: account.perks,
+            });
+          },
+          showUserDialog: false,
+          setShowUserDialog: (showUserDialog) => {
+            set({ showUserDialog });
+          },
+        };
+      },
       {
         name: "account-storage",
         onRehydrateStorage: () => (state) => {

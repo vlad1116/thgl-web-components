@@ -95,36 +95,36 @@ It takes me **hours** to debug issues that turn out to be caused by ad blocker i
 
 This is the most egregious example yet.
 
-uBlock Origin recently added this filter:
+uBlock Origin added a filter that directly overwrites localStorage data ([see commit](https://github.com/uBlockOrigin/uAssets/commit/6a58c441edc0bb8b41367b7e2323e4c4eca943f7)):
 
 \`\`\`
-th.gl##+js(trusted-set-local-storage-item, account-storage,
-  {
-    "state": {
-      "_hasHydrated": true,
-      "userId": null,
-      "decryptedUserId": null,
-      "email": null,
-      "perks": {
-        "adRemoval": true,
-        "comments": false,
-        "premiumFeatures": true,
-        "previewReleaseAccess": true
-      },
-      "showUserDialog": false
-    },
-    "version": 2
-  }
-)
+th.gl##+js(trusted-set-local-storage-item, account-storage, {...})
 \`\`\`
 
-**What this does**: It overwrites your account data in localStorage with fake data that says "this user has ad removal."
+**What this does**: It overwrites your account data in localStorage with fake data that sets \`"adRemoval": true\` and \`"userId": null\`.
 
 **The problem**: If you're an **actual paying supporter**, this filter **deletes your real account information** and replaces it with fake data.
 
 They only tested how it works for users without an account. They didn't consider that **real supporters exist** — and now those supporters' accounts aren't being recognized properly.
 
 This isn't just blocking ads. This is **actively breaking the experience for people who financially support the project**.
+
+**Update:** After I added validation to check that \`userId\` exists alongside \`adRemoval\`, they pivoted to hiding UI elements. Their latest filters now use overly broad selectors like:
+
+\`\`\`css
+th.gl##.fixed.border
+th.gl##.hidden.relative
+\`\`\`
+
+These hide **ALL fixed positioned elements with borders** and **ALL hidden relative elements** across the entire site — breaking legitimate dialogs and features that have nothing to do with ads:
+
+- **Settings dialog** - users can't access map settings, hotkey configuration, or preferences
+- **User account dialog** - supporters can't manage their accounts or sign out
+- **Peer Link dialog** - collaborative map sharing is completely broken
+- **Whiteboard dialog** - drawing and collaboration tools don't appear
+- **Any confirmation modals** - delete confirmations, warnings, etc. are all hidden
+
+In their attempt to hide one message, they're now breaking core functionality that users actually need and want to use.
 
 ## 📜 The W3C Argument
 

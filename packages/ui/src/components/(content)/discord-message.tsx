@@ -82,6 +82,13 @@ export function DiscordMessage({
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
+          pre({ children }) {
+            return (
+              <pre className="overflow-x-auto bg-muted rounded-md p-4 my-4">
+                {children}
+              </pre>
+            );
+          },
           code({ node, ...props }) {
             return (
               <code
