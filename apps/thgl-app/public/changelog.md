@@ -1,3 +1,7 @@
+# 2.21.5
+
+- Fix: **Duet Night Abyss** Fix chest detection issues (live mode is fully supported now)
+
 # 2.21.4
 
 - Fix: **Duet Night Abyss** Fix map and live detection issues
