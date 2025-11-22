@@ -221,10 +221,18 @@ export function getMapNameFromVersion(
 
   const possibleKeys = reverseDictMap.get(decodedMap);
   if (!possibleKeys) return null;
-
   // Find first key that exists in tiles
   for (const key of possibleKeys) {
-    if (tileKeys.has(key)) {
+    if (key[0] === "@") {
+      const resolvedKeys = reverseDictMap.get(key);
+      if (!resolvedKeys) continue;
+
+      for (const resolvedKey of resolvedKeys) {
+        if (tileKeys.has(resolvedKey)) {
+          return resolvedKey;
+        }
+      }
+    } else if (tileKeys.has(key)) {
       return key;
     }
   }
