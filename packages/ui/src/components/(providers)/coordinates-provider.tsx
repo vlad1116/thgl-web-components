@@ -88,6 +88,19 @@ export const REGION_FILTERS = [
 const emptyArray: any[] = [];
 const emptyObject: any = {};
 
+// Proximity threshold for matching actors to static spawns (in game units)
+const PROXIMITY_THRESHOLD = 1;
+
+// Helper: construct node ID for discovery/tracking
+const getNodeId = (
+  spawnId: string | undefined,
+  typeId: string,
+  x: number,
+  y: number,
+): string => {
+  return spawnId?.includes("@") ? spawnId : `${spawnId || typeId}@${x}:${y}`;
+};
+
 export function CoordinatesProvider({
   children,
   staticNodes: initialStaticNodes,
@@ -272,8 +285,9 @@ export function CoordinatesProvider({
   const myFilters = useSettingsStore((state) => state.myFilters);
   const actors = useGameState((state) => state.actors);
 
-  const privateGroups = useMemo<NodesCoordinates>(() => {
-    if (!isHydrated || !mapName) {
+  // User-created custom markers (from myFilters)
+  const customNodes = useMemo<NodesCoordinates>(() => {
+    if (!isHydrated) {
       return [] as NodesCoordinates;
     }
     return myFilters.reduce<NodesCoordinates>((acc, myFilter) => {
@@ -329,6 +343,8 @@ export function CoordinatesProvider({
     ];
   }, [isHydrated, filters, myFilters]);
 
+  // Filter for permanent nodes (static: true) that always appear on the map
+  // vs dynamic nodes (static: false) that appear based on actor state
   const realStaticNodes = useMemo(
     () => staticNodes.filter((node) => "static" in node && !!node.static),
     [staticNodes],
@@ -339,12 +355,19 @@ export function CoordinatesProvider({
       return emptyArray as NodesCoordinates;
     }
     if (!liveMode || !typesIdMap || Object.keys(typesIdMap).length === 0) {
-      return privateGroups.concat(staticNodes);
+      return customNodes.concat(staticNodes);
     }
     const debug = isDebug();
 
+    // Create lookup map for staticNodes to avoid repeated find() calls
+    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
+    for (const node of staticNodes) {
+      const key = `${node.type}::${node.mapName ?? ""}`;
+      staticNodesMap.set(key, node);
+    }
+
     const actorNodes: NodesCoordinates = [];
-    const actorMap = new Map<string, NodesCoordinates[number]>();
+    const actorCategoriesByType = new Map<string, NodesCoordinates[number]>();
     actorLoop: for (const actor of actors) {
       let id = typesIdMap[actor.type];
       if (!id || actor.hidden) {
@@ -353,21 +376,49 @@ export function CoordinatesProvider({
       }
 
       const mapName = actor.mapName;
-      const staticNode = realStaticNodes.find(
-        (n) => n.type === id && (!n.mapName || n.mapName === mapName),
-      );
+      // Use map lookup instead of find() for O(1) access
+      const staticNode = staticNodesMap.get(`${id}::${mapName ?? ""}`);
 
+      let spawnToAdd: Spawn | null = null;
+
+      // Check if actor matches a known spawn location
       if (staticNode && staticNode.spawns.length && !debug) {
         for (let i = 0; i < staticNode.spawns.length; i++) {
           const spawn = staticNode.spawns[i];
           const dx = spawn.p[0] - actor.x;
           const dy = spawn.p[1] - actor.y;
-          if (dx > -1 && dx < 1 && dy > -1 && dy < 1) continue actorLoop;
+          if (
+            dx > -PROXIMITY_THRESHOLD &&
+            dx < PROXIMITY_THRESHOLD &&
+            dy > -PROXIMITY_THRESHOLD &&
+            dy < PROXIMITY_THRESHOLD
+          ) {
+            if (staticNode.static) {
+              // Permanent node: skip actor entirely (already in realStaticNodes)
+              continue actorLoop;
+            }
+            // Dynamic node: replace actor with spawn data (for metadata like id, description)
+            spawnToAdd = {
+              ...spawn,
+              id: getNodeId(spawn.id, id, spawn.p[0], spawn.p[1]),
+              address: actor.address, // Keep actor address for live tracking
+            } as Spawn;
+            break;
+          }
         }
       }
 
+      // If we didn't find a matching spawn, create one from the actor
+      if (!spawnToAdd) {
+        spawnToAdd = {
+          id: `${id}@${actor.x}:${actor.y}`,
+          address: actor.address,
+          p: actor.z != null ? [actor.x, actor.y, actor.z] : [actor.x, actor.y],
+        } as Spawn;
+      }
+
       const key = `${id}::${mapName ?? ""}`;
-      let category = actorMap.get(key);
+      let category = actorCategoriesByType.get(key);
 
       if (!category) {
         category = {
@@ -375,25 +426,19 @@ export function CoordinatesProvider({
           mapName: mapName,
           spawns: [],
         };
-        actorMap.set(key, category);
+        actorCategoriesByType.set(key, category);
         actorNodes.push(category);
       }
 
-      const spawn = {
-        id: `${id}@${actor.x}:${actor.y}`,
-        address: actor.address,
-        p: actor.z != null ? [actor.x, actor.y, actor.z] : [actor.x, actor.y],
-      } as Spawn;
-
-      category.spawns.push(spawn);
+      category.spawns.push(spawnToAdd);
     }
 
     if (debug) {
-      return privateGroups.concat(actorNodes);
+      return customNodes.concat(actorNodes);
     }
 
-    return privateGroups.concat(realStaticNodes, actorNodes);
-  }, [isHydrated, liveMode, actors, privateGroups, staticNodes]);
+    return customNodes.concat(realStaticNodes, actorNodes);
+  }, [isHydrated, liveMode, actors, customNodes, staticNodes]);
 
   useEffect(() => {
     if (!typesIdMap) {
@@ -401,47 +446,60 @@ export function CoordinatesProvider({
     }
     const { setDiscoverNode, isDiscoveredNode } = useSettingsStore.getState();
 
+    // Create lookup structures for O(1) access
     const filterValues = filters.flatMap((filter) => filter.values);
+    const autoDiscoverSet = new Set(
+      filterValues.filter((f) => f.autoDiscover).map((f) => f.id),
+    );
+    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
+    for (const node of staticNodes) {
+      const key = `${node.type}::${node.mapName ?? ""}`;
+      staticNodesMap.set(key, node);
+    }
+
     actors.forEach((actor) => {
       if (typeof actor.hidden === "undefined") {
         return;
       }
       const id = typesIdMap[actor.type];
-      if (!id) {
-        return;
-      }
-      const filterValue = filterValues.find((f) => f.id === id);
-      if (!filterValue || !filterValue.autoDiscover) {
+      if (!id || !autoDiscoverSet.has(id)) {
         return;
       }
 
-      const staticNode = realStaticNodes.find(
-        (n) => n.type === id && (!n.mapName || n.mapName === actor.mapName),
-      );
+      // Use map lookup instead of find() for O(1) access
+      const staticNode = staticNodesMap.get(`${id}::${actor.mapName ?? ""}`);
       if (staticNode) {
-        const spawn = staticNode.spawns.find(
-          (spawn) =>
-            Math.abs(spawn.p[0] - actor.x) < 1 &&
-            Math.abs(spawn.p[1] - actor.y) < 1,
-        );
+        const spawn = staticNode.spawns.find((spawn) => {
+          const dx = spawn.p[0] - actor.x;
+          const dy = spawn.p[1] - actor.y;
+          return (
+            dx > -PROXIMITY_THRESHOLD &&
+            dx < PROXIMITY_THRESHOLD &&
+            dy > -PROXIMITY_THRESHOLD &&
+            dy < PROXIMITY_THRESHOLD
+          );
+        });
         if (spawn) {
-          const nodeId = spawn.id?.includes("@")
-            ? spawn.id
-            : `${spawn.id || staticNode.type}@${spawn.p[0]}:${spawn.p[1]}`;
+          const nodeId = getNodeId(
+            spawn.id,
+            staticNode.type,
+            spawn.p[0],
+            spawn.p[1],
+          );
           if (isDiscoveredNode(nodeId) !== actor.hidden) {
             setDiscoverNode(nodeId, actor.hidden);
           }
           return;
         }
       }
-      const nodeId = `${id}@${actor.x}:${actor.y}`;
+      const nodeId = getNodeId(undefined, id, actor.x, actor.y);
       if (isDiscoveredNode(nodeId) !== actor.hidden) {
         setDiscoverNode(nodeId, actor.hidden);
       }
     });
   }, [typesIdMap, actors]);
 
-  const privateFuse = useMemo(() => {
+  const searchIndex = useMemo(() => {
     const nodeSpawns = nodes.flatMap((node) =>
       node.spawns.map((spawn) => ({
         id: spawn.id ?? node.type,
@@ -451,10 +509,10 @@ export function CoordinatesProvider({
         ...spawn,
       })),
     );
-    let spreadedSpawns;
+    let allSearchableSpawns;
 
     if (initialStaticNodes) {
-      const initialSpawns = initialStaticNodes
+      const otherMapSpawns = initialStaticNodes
         .filter((n) => n.mapName && n.mapName !== mapName)
         .flatMap((node) =>
           node.spawns.map((spawn) => ({
@@ -465,11 +523,11 @@ export function CoordinatesProvider({
             ...spawn,
           })),
         );
-      spreadedSpawns = [...nodeSpawns, ...initialSpawns];
+      allSearchableSpawns = [...nodeSpawns, ...otherMapSpawns];
     } else {
-      spreadedSpawns = nodeSpawns;
+      allSearchableSpawns = nodeSpawns;
     }
-    return new Fuse(spreadedSpawns, {
+    return new Fuse(allSearchableSpawns, {
       keys: [
         {
           name: "type",
@@ -499,7 +557,7 @@ export function CoordinatesProvider({
       includeScore: true,
       threshold: 0.3,
     });
-  }, [nodes, initialStaticNodes]);
+  }, [nodes, initialStaticNodes, mapName, t]);
 
   const icons = useMemo(
     () =>
@@ -516,13 +574,14 @@ export function CoordinatesProvider({
   const refreshSpawns = useCallback(
     (state: UserStoreState) => {
       let newSpawns: (Spawns[number] & { score?: number })[] = [];
-      const newSpawnsMap = new Map<string, Spawn>();
+      // Deduplication map: key = "x:y" coordinates
+      const spawnsByCoordinate = new Map<string, Spawn>();
       if (state.search) {
         if (state.search.length < 3) {
           setSpawns(newSpawns);
           return;
         }
-        newSpawns = privateFuse
+        newSpawns = searchIndex
           .search(state.search)
           .map((result) => ({ ...result.item, score: result.score }));
         const privateMapName = newSpawns[0]?.mapName;
@@ -540,10 +599,10 @@ export function CoordinatesProvider({
         }
         newSpawns.forEach((spawn) => {
           const key = `${spawn.p[0]}:${spawn.p[1]}`;
-          if (!newSpawnsMap.has(key)) {
-            newSpawnsMap.set(key, { ...spawn, cluster: [] });
+          if (!spawnsByCoordinate.has(key)) {
+            spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
           } else {
-            newSpawnsMap.get(key)!.cluster!.push(spawn);
+            spawnsByCoordinate.get(key)!.cluster!.push(spawn);
           }
         });
       } else {
@@ -574,22 +633,26 @@ export function CoordinatesProvider({
               }
             }
             const key = `${spawn.p[0]}:${spawn.p[1]}`;
-            if (!newSpawnsMap.has(key)) {
-              newSpawnsMap.set(key, { ...spawn, cluster: [] });
+            if (!spawnsByCoordinate.has(key)) {
+              spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
             } else {
-              newSpawnsMap.get(key)!.cluster!.push(spawn);
+              spawnsByCoordinate.get(key)!.cluster!.push(spawn);
             }
             newSpawns.push(spawn);
           });
         });
       }
 
-      newSpawns = Array.from(newSpawnsMap.values());
+      newSpawns = Array.from(spawnsByCoordinate.values());
       newSpawns.sort((a, b) => {
-        const res = a.score! - b.score!;
-        if (res !== 0) {
-          return res;
+        // Sort by score if both have scores (search mode)
+        if (a.score !== undefined && b.score !== undefined) {
+          const scoreDiff = a.score - b.score;
+          if (scoreDiff !== 0) {
+            return scoreDiff;
+          }
         }
+        // Sort by mapName as secondary sort
         if (a.mapName && b.mapName) {
           return b.mapName.localeCompare(a.mapName);
         }
@@ -598,7 +661,7 @@ export function CoordinatesProvider({
 
       setSpawns(newSpawns);
     },
-    [nodes, privateFuse, publicSearchSpawns],
+    [nodes, searchIndex, publicSearchSpawns],
   );
 
   useEffect(() => {
