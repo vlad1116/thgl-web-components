@@ -1,3 +1,7 @@
+# 2.21.7
+
+- Fix: **Duet Night Abyss** Geniemon (Pet) detection in live mode
+
 # 2.21.6
 
 - Fix: **Duet Night Abyss** Several live mode detection issues
