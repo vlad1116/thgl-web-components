@@ -208,6 +208,14 @@ export const games: Array<Game> = [
     ],
   },
   {
+    id: "grounded2",
+    discordId: "grounded2",
+    title: "Grounded 2",
+    logo: "https://www.th.gl/global_icons/grounded2.webp",
+    web: "https://grounded2.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "palworld",
     discordId: "palworld",
     title: "Palworld",
