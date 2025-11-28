@@ -9,6 +9,14 @@ export const DEFAULT_PATREON_TIER_IDS = [
 
 export const games: Array<Game> = [
   {
+    id: "soulframe",
+    discordId: "soulframe",
+    title: "Soulframe",
+    logo: "https://www.th.gl/global_icons/soulframe.webp",
+    web: "https://soulframe.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "duet-night-abyss",
     discordId: "duet-night-abyss",
     title: "Duet Night Abyss",
