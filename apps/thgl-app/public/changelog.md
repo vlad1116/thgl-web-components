@@ -1,6 +1,7 @@
 # 2.21.9
 
 - Fix: Start Menu entry missing after installation
+- Perf: Improve installation speed by skipping unchanged files
 
 # 2.21.7
 
