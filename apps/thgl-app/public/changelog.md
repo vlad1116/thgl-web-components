@@ -1,3 +1,7 @@
+# 2.21.10
+
+- Fix: Detection issues after app updates
+
 # 2.21.9
 
 - Fix: Start Menu entry missing after installation
