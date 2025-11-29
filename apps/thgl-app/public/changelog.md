@@ -1,3 +1,7 @@
+# 2.21.9
+
+- Fix: Start Menu entry missing after installation
+
 # 2.21.7
 
 - Fix: **Duet Night Abyss** Geniemon (Pet) detection in live mode
