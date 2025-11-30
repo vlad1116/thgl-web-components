@@ -14,7 +14,7 @@ export const APP_CONFIG: AppConfig = {
         "Navigate Infinity Nikki's expansive world with our interactive maps.",
       href: "/maps/Miraland",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("infinity-nikki", "1"),
+      bgImage: getPreviewImageUrl("infinity-nikki", "1", "2"),
       linkText: "Explore the Overworld Map",
     },
     {
