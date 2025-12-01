@@ -12,7 +12,7 @@ export const APP_CONFIG: AppConfig = {
       description: "Navigate Soulframe's Midrath with our interactive maps.",
       href: "/maps/Midrath",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("soulframe", "Midrath"),
+      bgImage: getPreviewImageUrl("soulframe", "Midrath", "2"),
       linkText: "Explore the Midrath Map",
     },
     {
