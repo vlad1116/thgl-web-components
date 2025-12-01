@@ -1,3 +1,8 @@
+# 2.22.0
+
+- Perf: Reduce installer size by downloading Webview2 runtime on demand if not installed already
+- Fix: Cursor detection in Unreal Engine games (improves overlay interaction reliability)
+
 # 2.21.10
 
 - Fix: Detection issues after app updates
