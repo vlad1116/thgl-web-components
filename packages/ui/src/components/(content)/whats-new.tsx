@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangelogEntry, UpdateItem } from "@repo/lib";
-import { Sparkles, Newspaper } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader, CardContent } from "../(controls)";
@@ -16,14 +16,22 @@ function ChangelogContent({ content }: { content: string }) {
         const trimmed = line.trim();
         if (trimmed.startsWith("- ")) {
           return (
-            <p key={i} className="my-1">
+            <p key={i} className="my-1 flex gap-2">
+              <span className="text-muted-foreground/60">•</span>
+              <span>{trimmed.slice(2)}</span>
+            </p>
+          );
+        }
+        if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
+          return (
+            <p key={i} className="font-semibold text-foreground text-base mt-3 mb-1">
               {trimmed.slice(2)}
             </p>
           );
         }
         if (trimmed.startsWith("## ")) {
           return (
-            <p key={i} className="font-medium mt-2">
+            <p key={i} className="font-medium text-foreground mt-3 mb-1">
               {trimmed.slice(3)}
             </p>
           );
@@ -133,7 +141,13 @@ export function WhatsNew({
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                    <Image
+                      src="https://www.th.gl/global_icons/thgl.png"
+                      alt="THGL"
+                      width={16}
+                      height={16}
+                      className="rounded"
+                    />
                     <span className="font-medium">App v{update.version}</span>
                   </div>
                   {update.date && (
@@ -180,7 +194,13 @@ export function ChangelogList({
     <div className={className}>
       {showHeader && (
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <Image
+            src="https://www.th.gl/global_icons/thgl.png"
+            alt="THGL"
+            width={20}
+            height={20}
+            className="rounded"
+          />
           <h2 className="text-lg font-semibold">Recent Updates</h2>
         </div>
       )}
@@ -190,7 +210,13 @@ export function ChangelogList({
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
+                  <Image
+                    src="https://www.th.gl/global_icons/thgl.png"
+                    alt="THGL"
+                    width={16}
+                    height={16}
+                    className="rounded"
+                  />
                   <span className="font-medium">v{entry.version}</span>
                 </div>
                 {entry.date && (

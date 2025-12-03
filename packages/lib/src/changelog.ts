@@ -55,7 +55,8 @@ export function parseChangelog(
   limit: number = 5,
 ): ChangelogEntry[] {
   const entries: ChangelogEntry[] = [];
-  const sections = content.split(/^#+ /m).filter(Boolean);
+  // Only split on top-level headings (# ), not sub-headings (## )
+  const sections = content.split(/^# /m).filter(Boolean);
 
   for (const section of sections) {
     const lines = section.trim().split("\n");

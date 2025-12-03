@@ -7,13 +7,12 @@ import {
   mergeUpdates,
   Game,
   DiscordMessageData,
+  ChangelogEntry,
 } from "@repo/lib";
-import { getChangelogEntries } from "@repo/lib/server";
 import { WhatsNew } from "@repo/ui/content";
 import { GameGrid } from "@/components/game-grid";
 import { blogEntries } from "@/lib/blog-entries";
 import { Download, Monitor, Gamepad2, Shield } from "lucide-react";
-import path from "path";
 import {
   PageHero,
   FeatureCard,
@@ -31,19 +30,32 @@ const companionGames = games.filter((g) => g.companion);
 async function getWhatsNewUpdates() {
   const gameUpdates: Array<{ game: Game; message: DiscordMessageData }> = [];
 
-  // Fetch updates for featured companion games
-  await Promise.all(
-    companionGames.slice(0, 6).map(async (game) => {
-      const messages = await getUpdateMessages(game.discordId);
-      if (messages.length > 0) {
-        gameUpdates.push({ game, message: messages[0] });
-      }
-    }),
-  );
+  // Fetch updates for featured companion games and app changelog in parallel
+  const [, appUpdates] = await Promise.all([
+    Promise.all(
+      companionGames.slice(0, 6).map(async (game) => {
+        const messages = await getUpdateMessages(game.discordId);
+        if (messages.length > 0) {
+          gameUpdates.push({ game, message: messages[0] });
+        }
+      }),
+    ),
+    // Get app changelog from Discord API
+    getUpdateMessages("thgl-companion-app"),
+  ]);
 
-  // Get changelog entries
-  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
-  const changelogEntries = await getChangelogEntries(changelogPath, 3);
+  // Convert app updates to changelog entries
+  const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 3).map((msg) => {
+    const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
+    const version = versionMatch?.[1] || versionMatch?.[2] || "Unknown";
+
+    return {
+      version,
+      date: new Date(msg.timestamp).toISOString().split("T")[0],
+      content: msg.text,
+      timestamp: msg.timestamp,
+    };
+  });
 
   return mergeUpdates(gameUpdates, changelogEntries, 5);
 }

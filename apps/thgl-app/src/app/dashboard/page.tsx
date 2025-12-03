@@ -5,10 +5,9 @@ import {
   mergeUpdates,
   Game,
   DiscordMessageData,
+  ChangelogEntry,
 } from "@repo/lib";
-import { getChangelogEntries } from "@repo/lib/server";
 import { HomePageClient } from "./home-client";
-import path from "path";
 
 export default async function DashboardHome() {
   // Get recent updates from all companion games
@@ -19,10 +18,8 @@ export default async function DashboardHome() {
     message: DiscordMessageData;
   }> = [];
 
-  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
-
-  // Fetch updates, suggestions, and changelog in parallel
-  const [, suggestions, changelogEntries] = await Promise.all([
+  // Fetch updates, suggestions, and app changelog in parallel
+  const [, suggestions, appUpdates] = await Promise.all([
     // Fetch updates for each game
     Promise.all(
       companionGames.slice(0, 6).map(async (game) => {
@@ -34,9 +31,23 @@ export default async function DashboardHome() {
     ),
     // Fetch community suggestions
     getSuggestionsAndIssues(5),
-    // Get changelog entries
-    getChangelogEntries(changelogPath, 5),
+    // Get app changelog from Discord API
+    getUpdateMessages("thgl-companion-app"),
   ]);
+
+  // Convert app updates to changelog entries
+  const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 5).map((msg) => {
+    // Extract version from message (e.g., "**3.0.0**" or "# 3.0.0")
+    const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
+    const version = versionMatch?.[1] || versionMatch?.[2] || "Unknown";
+
+    return {
+      version,
+      date: new Date(msg.timestamp).toISOString().split("T")[0],
+      content: msg.text,
+      timestamp: msg.timestamp,
+    };
+  });
 
   // Merge game updates and changelog into a single list
   const updates = mergeUpdates(gameUpdates, changelogEntries, 8);

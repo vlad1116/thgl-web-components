@@ -1,7 +1,5 @@
-import { games } from "@repo/lib";
-import { getChangelogEntries } from "@repo/lib/server";
+import { games, getUpdateMessages, ChangelogEntry } from "@repo/lib";
 import { ChangelogList } from "@repo/ui/content";
-import path from "path";
 import {
   Button,
   Card,
@@ -66,8 +64,22 @@ const supportedGames = games.filter((game) => game.companion);
 const totalGamesCount = supportedGames.length;
 
 export default async function CompanionAppPage() {
-  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
-  const changelogEntries = await getChangelogEntries(changelogPath, 5);
+  // Get app changelog from Discord API
+  const appUpdates = await getUpdateMessages("thgl-companion-app");
+
+  // Convert app updates to changelog entries
+  const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 5).map((msg) => {
+    const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
+    const version = versionMatch?.[1] || versionMatch?.[2] || "Unknown";
+
+    return {
+      version,
+      date: new Date(msg.timestamp).toISOString().split("T")[0],
+      content: msg.text,
+      timestamp: msg.timestamp,
+    };
+  });
+
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto max-w-7xl">
       {/* Hero Section */}

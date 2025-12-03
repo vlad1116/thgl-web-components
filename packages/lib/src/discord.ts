@@ -52,16 +52,28 @@ export async function getUpdateMessages(appId: string) {
     let data = (await response.json()) as DiscordMessageData[];
 
     data = data.map((message) => {
-      const match = [...message.text.matchAll(/(?<!_)\*\*(?!_)/g)];
-      const firstValid = match?.[0]?.index;
+      let text = message.text;
 
-      if (typeof firstValid !== "number") {
-        return message;
+      // Skip leading italic lines (role ping instructions like "_To get pinged..._")
+      // These lines start with _ and end with _ followed by newline
+      text = text.replace(/^_[^_]+_\s*\n+/gm, "").trimStart();
+
+      // Find first content marker: either ** (bold) or # (heading)
+      // to skip any remaining role pings like "<@&123>"
+      const boldMatch = text.match(/(?<!_)\*\*(?!_)/);
+      const headingMatch = text.match(/^#+ /m);
+
+      const boldIndex = boldMatch?.index ?? Infinity;
+      const headingIndex = headingMatch?.index ?? Infinity;
+      const firstValid = Math.min(boldIndex, headingIndex);
+
+      if (firstValid === Infinity) {
+        return { ...message, text };
       }
 
       return {
         ...message,
-        text: message.text.slice(firstValid),
+        text: text.slice(firstValid),
       };
     });
 
