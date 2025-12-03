@@ -573,7 +573,7 @@ export type Game = {
     baseURL: string;
     controllerURL: string;
     desktopURL: string;
-    overlayURL?: string;
+    overlayURL: string;
     markerOptions: {
       radius: number;
       playerIcon?: string;

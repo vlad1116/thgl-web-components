@@ -2,23 +2,23 @@ import { generateUniqueId } from "./utils";
 import { AppVersion } from "./version";
 import { WEBVIEW_RECEIVE_MESSAGE, WEBVIEW_RESPONSE_MESSAGE } from "./webview";
 
+export type WindowMode = "overlay" | "desktop" | "both";
+
 type ActionRequestMap = {
   isRunningAsAdmin: null;
   isTaskInstalled: null;
   addScheduledTask: null;
   removeScheduledTask: null;
   getVersion: null;
-  openDevTools: {
-    url: string;
+  getWindowMode: null;
+  setWindowMode: {
+    mode: WindowMode;
   };
-  openController: {
+  openDevTools: {
     url: string;
   };
   closeWebViews: {
     urls: string[];
-  };
-  injectOverlay: {
-    processName: string;
   };
   openOverlayWebView: {
     url: string;
@@ -29,7 +29,7 @@ type ActionRequestMap = {
     title: string;
   };
   updateHotkeys: {
-    hotkeys: string[];
+    hotkeys: Record<string, string>; // { "toggle_app": "F6", ... }
   };
   setActorTypeFilter: {
     types: string[];
@@ -38,16 +38,20 @@ type ActionRequestMap = {
   sendDebugSnapshot: {
     userContext: string;
   };
+  openInBrowser: {
+    url: string;
+  };
 };
 
 type WebviewActionResponseMap = {
-  openController: WEBVIEW_RESPONSE_MESSAGE;
-  injectOverlay: WEBVIEW_RESPONSE_MESSAGE;
   openOverlayWebView: WEBVIEW_RESPONSE_MESSAGE;
   openDesktopWebView: WEBVIEW_RESPONSE_MESSAGE;
   updateHotkeys: WEBVIEW_RESPONSE_MESSAGE;
   setActorTypeFilter: WEBVIEW_RESPONSE_MESSAGE;
   sendDebugSnapshot: WEBVIEW_RESPONSE_MESSAGE;
+  openInBrowser: WEBVIEW_RESPONSE_MESSAGE;
+  getWindowMode: WEBVIEW_RESPONSE_MESSAGE<WindowMode>;
+  setWindowMode: WEBVIEW_RESPONSE_MESSAGE;
 };
 
 type ActionResponseMap = {
@@ -56,6 +60,8 @@ type ActionResponseMap = {
   addScheduledTask: boolean;
   removeScheduledTask: boolean;
   getVersion: AppVersion;
+  getWindowMode: WindowMode;
+  setWindowMode: boolean;
   openDevTools: boolean;
   closeWebViews: boolean;
 } & WebviewActionResponseMap;
@@ -119,12 +125,6 @@ type MAIN_BROADCAST_MESSAGE =
     }
   | {
       action: "openDevTools";
-      payload: {
-        url: string;
-      };
-    }
-  | {
-      action: "openController";
       payload: {
         url: string;
       };
@@ -269,11 +269,11 @@ export async function answerWebViewRequest<
   webviewPromise: Promise<WEBVIEW_RESPONSE_MESSAGE<any>>,
 ) {
   const data = await webviewPromise;
-  const response: WEBVIEW_ACTION_RESPONSE_MESSAGE<K> = {
+  const response = {
     action: request.action,
     responseId: request.requestId,
     data,
-  };
+  } as WEBVIEW_ACTION_RESPONSE_MESSAGE<K>;
 
   worker.port.postMessage({
     type: "toClient",
@@ -323,12 +323,6 @@ export function requestFromMain<K extends keyof ActionRequestMap>(
   });
 }
 
-export const requestInjectOverlay = (processName: string) =>
-  requestFromMain({
-    action: "injectOverlay",
-    payload: { processName: processName },
-  });
-
 export const openWebView = (url: string, title: string) =>
   requestFromMain({
     action: "openDesktopWebView",
@@ -342,7 +336,7 @@ export const requestUpdateHotkeys = (hotkeys: Record<string, string>) =>
   requestFromMain({
     action: "updateHotkeys",
     payload: {
-      hotkeys: Object.values(hotkeys),
+      hotkeys, // Pass full mapping { "toggle_app": "F6", ... }
     },
   });
 
@@ -359,4 +353,22 @@ export const requestSetActorTypeFilter = (
   requestFromMain({
     action: "setActorTypeFilter",
     payload: { types, processName },
+  });
+
+export const requestOpenInBrowser = (url: string) =>
+  requestFromMain({
+    action: "openInBrowser",
+    payload: { url },
+  });
+
+export const requestGetWindowMode = () =>
+  requestFromMain({
+    action: "getWindowMode",
+    payload: null,
+  });
+
+export const requestSetWindowMode = (mode: WindowMode) =>
+  requestFromMain({
+    action: "setWindowMode",
+    payload: { mode },
   });

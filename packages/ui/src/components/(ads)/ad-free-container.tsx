@@ -11,11 +11,13 @@ export function AdFreeContainer({
   className,
   closable,
   displayCheck = true,
+  noBorder = false,
 }: {
   children: ReactNode;
   className?: string;
   closable?: ReactNode;
   displayCheck?: boolean;
+  noBorder?: boolean;
 }): JSX.Element {
   const t = useT();
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
@@ -69,14 +71,15 @@ export function AdFreeContainer({
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground shadow rounded-none md:rounded-md",
+        "bg-card text-card-foreground shadow",
+        !noBorder && "rounded-none md:rounded-md",
         className,
       )}
       style={{
         position: className?.match(/\b(fixed|absolute|sticky)\b/)
           ? undefined
           : "relative",
-        border: "1px solid hsl(var(--border))",
+        border: noBorder ? undefined : "1px solid hsl(var(--border))",
         flexShrink: 0,
         pointerEvents: "auto",
       }}

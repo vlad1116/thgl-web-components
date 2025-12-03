@@ -3,7 +3,18 @@ import { persist, subscribeWithSelector } from "zustand/middleware";
 
 import { RunningGame } from "./games";
 import { AppVersion } from "./version";
-import { ConnectedClient } from "./worker";
+import { ConnectedClient, WindowMode } from "./worker";
+
+export type GameSessionInfo = {
+  gameId: string;
+  processName: string;
+  pid: number;
+  status: "connecting" | "connected" | "error" | "closed";
+  detectorInitialized: boolean;
+  lastError?: string;
+  startedAt: number;
+  endedAt?: number;
+};
 
 export const useLiveState = create<{
   isRunningAsAdmin: boolean | null;
@@ -12,6 +23,8 @@ export const useLiveState = create<{
   setIsTaskInstalled: (isTaskInstalled: boolean) => void;
   version: AppVersion | null;
   setVersion: (version: AppVersion) => void;
+  windowMode: WindowMode;
+  setWindowMode: (mode: WindowMode) => void;
   runningGames: Array<RunningGame> | null;
   setRunningGames: (games: Array<RunningGame>) => void;
   connectedClients: Array<ConnectedClient> | null;
@@ -23,6 +36,8 @@ export const useLiveState = create<{
   setIsTaskInstalled: (isTaskInstalled) => set({ isTaskInstalled }),
   version: null,
   setVersion: (version) => set({ version }),
+  windowMode: "overlay",
+  setWindowMode: (mode) => set({ windowMode: mode }),
   runningGames: null,
   setRunningGames: (games) => set({ runningGames: games }),
   connectedClients: null,
@@ -36,6 +51,13 @@ export const usePersistentState = create(
       setOpenDashboardOnStart: (open: boolean) => void;
       disabledApps: Array<string>;
       toggleDisabledApp: (app: string) => void;
+      autoRunGames: Record<string, boolean>;
+      setAutoRunGame: (gameId: string, enabled: boolean) => void;
+      sidebarExpanded: boolean;
+      setSidebarExpanded: (expanded: boolean) => void;
+      gameSessions: Array<GameSessionInfo>;
+      updateGameSession: (session: GameSessionInfo) => void;
+      clearClosedSessions: () => void;
     }>(
       (set) => ({
         openDashboardOnStart: true,
@@ -47,10 +69,36 @@ export const usePersistentState = create(
               ? state.disabledApps.filter((a) => a !== app)
               : [...state.disabledApps, app],
           })),
+        autoRunGames: {},
+        setAutoRunGame: (gameId, enabled) =>
+          set((state) => ({
+            autoRunGames: { ...state.autoRunGames, [gameId]: enabled },
+          })),
+        sidebarExpanded: true,
+        setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
+        gameSessions: [],
+        updateGameSession: (session) =>
+          set((state) => {
+            const existing = state.gameSessions.findIndex(
+              (s) => s.pid === session.pid,
+            );
+            if (existing >= 0) {
+              const updated = [...state.gameSessions];
+              updated[existing] = session;
+              return { gameSessions: updated };
+            }
+            // Keep only last 20 sessions
+            const sessions = [session, ...state.gameSessions].slice(0, 20);
+            return { gameSessions: sessions };
+          }),
+        clearClosedSessions: () =>
+          set((state) => ({
+            gameSessions: state.gameSessions.filter((s) => s.status !== "closed"),
+          })),
       }),
       {
         name: "thgl-app",
-        version: 1,
+        version: 2,
       },
     ),
   ),

@@ -1,4 +1,7 @@
 import { games } from "@repo/lib";
+import { getChangelogEntries } from "@repo/lib/server";
+import { ChangelogList } from "@repo/ui/content";
+import path from "path";
 import {
   Button,
   Card,
@@ -62,7 +65,9 @@ export const metadata = {
 const supportedGames = games.filter((game) => game.companion);
 const totalGamesCount = supportedGames.length;
 
-export default function CompanionAppPage() {
+export default async function CompanionAppPage() {
+  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
+  const changelogEntries = await getChangelogEntries(changelogPath, 5);
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto max-w-7xl">
       {/* Hero Section */}
@@ -341,6 +346,19 @@ export default function CompanionAppPage() {
           </div>
         </div>
       </div>
+
+      {/* Recent Updates Section */}
+      {changelogEntries.length > 0 && (
+        <div id="updates">
+          <SectionHeader
+            title="Recent Updates"
+            description="Latest changes and improvements to the companion app"
+          />
+          <div className="max-w-3xl mx-auto">
+            <ChangelogList entries={changelogEntries} showHeader={false} />
+          </div>
+        </div>
+      )}
 
       {/* FAQ Section */}
       <div>

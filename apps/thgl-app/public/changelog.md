@@ -1,80 +1,102 @@
-# 2.22.0
+# 3.0.0 (2025-12-03)
+
+This is a major update with a complete dashboard redesign.
+
+## Dashboard Redesign
+
+- Feat: New collapsible sidebar with navigation to Home, Games, and Settings
+- Feat: Per-game settings pages with auto-run toggle, window mode selection, and session log
+- Feat: Dedicated global settings page for hotkeys and startup behavior
+- Feat: Show running game status indicator in sidebar
+- Feat: "What's New" section on home page showing recent changelog
+- Feat: Quick access to external links (Discord, Website, Guides, Feature Requests)
+
+## Window Mode
+
+- Feat: New "Both" window mode option - run overlay and desktop window simultaneously
+- Feat: Window mode selector in per-game settings and global settings
+
+## Improvements
+
+- Perf: Improved app stability and performance by reworking internal communication
+
+# 2.22.0 (2025-12-01)
 
 - Perf: Reduce installer size by downloading Webview2 runtime on demand if not installed already
 - Fix: Cursor detection in Unreal Engine games (improves overlay interaction reliability)
 
-# 2.21.10
+# 2.21.10 (2025-11-29)
 
 - Fix: Detection issues after app updates
 
-# 2.21.9
+# 2.21.9 (2025-11-29)
 
 - Fix: Start Menu entry missing after installation
 - Perf: Improve installation speed by skipping unchanged files
 
-# 2.21.7
+# 2.21.7 (2025-11-25)
 
 - Fix: **Duet Night Abyss** Geniemon (Pet) detection in live mode
 
-# 2.21.6
+# 2.21.6 (2025-11-24)
 
 - Fix: **Duet Night Abyss** Several live mode detection issues
 
-# 2.21.5
+# 2.21.5 (2025-11-22)
 
 - Fix: **Duet Night Abyss** Fix chest detection issues (live mode is fully supported now)
 
-# 2.21.4
+# 2.21.4 (2025-11-20)
 
 - Fix: **Duet Night Abyss** Fix map and live detection issues
 
-# 2.21.3
+# 2.21.3 (2025-11-17)
 
 - Fix: **Blue Protocol: Star Resonance** Position detection if game is installed in a custom directory
 
-# 2.21.2
+# 2.21.2 (2025-11-17)
 
 - Fix: Overlay interaction issues in some games
 
-# 2.21.0
+# 2.21.0 (2025-11-14)
 
 - Feat: **Duet Night Abyss** Add game support with player position tracking. Live mode is not fully supported yet.
 - Feat: **Blue Protocol: Star Resonance** More rebust position detection after game updates and support for Taiwanese client.
 
-# 2.19.0
+# 2.19.0 (2025-11-11)
 
 - Feat: Improved logging for better issue tracking
 - Fix: Place app in "C:\Program Files\The Hidden Gaming Lair" instead of "C:\Program Files (x86)\The Hidden Gaming Lair", because it's a 64-bit app
 - Chore: Update dependencies for better security and performance
 
-# 2.18.7
+# 2.18.7 (2025-10-31)
 
 - Fix: **Blue Protocol: Star Resonance** Position detection in Steam client (they released another update breaking it again...)
 
-# 2.18.6
+# 2.18.6 (2025-10-31)
 
 - Feat: Add debug snapshot feature to help with issue reporting
 - Fix: **Blue Protocol: Star Resonance** Position detection in Steam client
 - Fix: **Once Human** Scenario detection of Chinese servers
 
-# 2.18.4
+# 2.18.4 (2025-10-30)
 
 - Fix: **Blue Protocol: Star Resonance** Position detection in all game clients
 
-# 2.18.3
+# 2.18.3 (2025-10-29)
 
 - Fix: **Blue Protocol: Star Resonance** Some collectibles were not shown on the map
 
-# 2.18.2
+# 2.18.2 (2025-10-28)
 
 - Fix: **Once Human** Scenario detection of Chinese servers
 - Perf: **Once Human** Improve actors detection performance
 
-# 2.18.1
+# 2.18.1 (2025-10-28)
 
 - Fix: Overlay interaction issues after using the hotkey to show the app controls
 
-# 2.18.0
+# 2.18.0 (2025-10-24)
 
 ## Blue Protocol: Star Resonance
 
@@ -83,36 +105,36 @@
 - Fix: Fix SHIFT key availability in-game when using the app
 - Fix: Holding ALT key doesn't interact with the overlay anymore to prevent game input issues.
 
-# 2.17.0
+# 2.17.0 (2025-10-23)
 
 - Feat: **Blue Protocol: Star Resonance** Add live tracking support for Documents (Books, Letters, etc.)
 - Fix: **Blue Protocol: Star Resonance** Live tracking didn't show all locations
 
-# 2.16.0
+# 2.16.0 (2025-10-21)
 
 - Feat: **Blue Protocol: Star Resonance** Add live tracking support for Resources
 
-# 2.15.2
+# 2.15.2 (2025-10-20)
 
 - Fix: **Blue Protocol: Star Resonance** Fix game detection for official launcher version (BPSR.exe). The position detection might break on future updates again.
 
-# 2.15.0
+# 2.15.0 (2025-10-17)
 
 - Feat: **Blue Protocol: Star Resonance** Add live tracking support for Chests (more coming soon)
 
-# 2.14.1
+# 2.14.1 (2025-10-16)
 
 - Fix: **Blue Protocol: Star Resonance** Player position detection after game update
 
-# 2.12.0
+# 2.12.0 (2025-10-13)
 
 - Feat: **Blue Protocol: Star Resonance** Add support for player position and live tracking of NPCs and Monsters (experimental, needs testing)
 
-# 2.11.0
+# 2.11.0 (2025-10-08)
 
 - Feat: Add support for Blue Protocol: Star Resonance (BPSR) - player position tracking is not supported yet
 
-# 2.10.0
+# 2.10.0 (2025-10-06)
 
 - Feat: **Palia** Add live tracking support for Elderwood Decor and Treasures
 

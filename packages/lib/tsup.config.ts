@@ -3,6 +3,7 @@ import { defineConfig, type Options } from "tsup";
 export default defineConfig((options: Options) => ({
   entryPoints: [
     "src/index.ts",
+    "src/server/index.ts",
     "src/overwolf/index.ts",
     "src/thgl-app/index.ts",
   ],

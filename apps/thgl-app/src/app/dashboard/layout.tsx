@@ -1,5 +1,13 @@
-import { AppHeader, InitializeApp, ResizeBorders } from "@repo/ui/thgl-app";
-import Link from "next/link";
+import {
+  AppHeader,
+  AppVersion,
+  InitializeApp,
+  ResizeBorders,
+  DashboardSidebar,
+  NavigationButtons,
+} from "@repo/ui/thgl-app";
+import { THGLDashboardAds } from "@repo/ui/ads";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -9,18 +17,27 @@ export default function DashboardLayout({
   return (
     <>
       <InitializeApp role="dashboard" />
-      <AppHeader>
-        <Link
-          className="text-lg font-extrabold tracking-tight"
-          href="/dashboard"
-        >
-          <h1 className="text-lg md:leading-6 font-extrabold tracking-tight whitespace-nowrap">
+      <div className="flex h-full flex-col w-full">
+        <AppHeader>
+          <div className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
+            <Image
+              src="/cave128.png"
+              alt="Logo"
+              width={28}
+              height={28}
+              className="shrink-0"
+            />
             TH.GL
-          </h1>
-        </Link>
-        <p className="text-muted-foreground">The Hidden Gaming Lair</p>
-      </AppHeader>
-      {children}
+            <AppVersion />
+          </div>
+          <NavigationButtons />
+        </AppHeader>
+        <div className="flex flex-1 overflow-hidden pt-[32px]">
+          <DashboardSidebar />
+          <div className="flex-1 min-w-0 overflow-auto">{children}</div>
+          <THGLDashboardAds className="w-[360px] flex-none border-l overflow-y-auto" />
+        </div>
+      </div>
       <ResizeBorders />
     </>
   );

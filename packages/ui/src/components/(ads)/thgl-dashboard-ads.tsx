@@ -6,15 +6,27 @@ import { AdFreeContainer } from "./ad-free-container";
 import { IS_DEMO_MODE } from "./constants";
 
 const id = "thgl-dashboard";
-export function THGLDashboardAds(): JSX.Element {
+export function THGLDashboardAds({
+  className,
+}: {
+  className?: string;
+}): JSX.Element {
   return (
-    <ScriptLoader loading={<NitroPayResponsiveLoading id={id} />}>
-      <NitroPayResponsive id={id} />
+    <ScriptLoader
+      loading={<NitroPayResponsiveLoading id={id} className={className} />}
+    >
+      <NitroPayResponsive id={id} className={className} />
     </ScriptLoader>
   );
 }
 
-function NitroPayResponsive({ id }: { id: string }): JSX.Element {
+function NitroPayResponsive({
+  id,
+  className,
+}: {
+  id: string;
+  className?: string;
+}): JSX.Element {
   useEffect(() => {
     try {
       getNitroAds().createAd(id, {
@@ -22,6 +34,7 @@ function NitroPayResponsive({ id }: { id: string }): JSX.Element {
         refreshTime: 30,
         renderVisibleOnly: false,
         sizes: [
+          ["300", "600"],
           ["300", "250"],
           ["320", "50"],
           ["320", "100"],
@@ -43,15 +56,21 @@ function NitroPayResponsive({ id }: { id: string }): JSX.Element {
   }, [id]);
 
   return (
-    <AdFreeContainer>
+    <AdFreeContainer noBorder className={`h-full ${className}`}>
       <div className="w-full shrink-0 min-h-[280px]" id={id} />
     </AdFreeContainer>
   );
 }
 
-function NitroPayResponsiveLoading({ id }: { id: string }) {
+function NitroPayResponsiveLoading({
+  id,
+  className,
+}: {
+  id: string;
+  className?: string;
+}) {
   return (
-    <AdFreeContainer>
+    <AdFreeContainer noBorder className={`h-full overflow-hidden ${className}`}>
       <div className="w-full shrink-0" id={id} />
     </AdFreeContainer>
   );

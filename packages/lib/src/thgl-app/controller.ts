@@ -1,12 +1,13 @@
 import semver from "semver";
 import {
-  injectOverlay,
-  openControllerWebView,
+  getWindowMode,
   openDashboadWebView,
   openDesktopWebView,
   openDevTools,
+  openInBrowser,
   openOverlayWebView,
   sendDebugSnapshot,
+  setWindowMode,
   updateActorTypeFilters,
   updateHotkeys,
 } from "./apps";
@@ -17,6 +18,7 @@ import {
   initMessageWorker,
   listenToWorkerMessages,
   sendBroadcast,
+  WindowMode,
 } from "./worker";
 import { useLiveState, usePersistentState } from "./states";
 import {
@@ -36,9 +38,14 @@ let firstPlayerReceived = false;
 let firstActorsReceived = false;
 let firstCharacterDataReceived = false;
 let firstGameSpecificReceived = false;
-let activeGames: string[] = [];
+let activeGames: string[] = []; // Track running games for update check logic
 let updateCheckInterval: NodeJS.Timeout | null = null;
 let updateTriggered = false;
+let currentWindowMode: WindowMode = "overlay";
+
+// Minimum required app version - force update if below this version
+// This is used when breaking changes are introduced that require a new app version
+const MINIMUM_REQUIRED_VERSION = "3.0.0";
 
 async function checkForUpdates(currentVersion: CurrentVersion) {
   // Don't check for updates if already triggered
@@ -139,6 +146,7 @@ export async function initController(currentVersion: CurrentVersion) {
 
         // Update active games list
         activeGames = message.payload.map((game: any) => game.processName);
+        console.log("runningGames updated, activeGames:", activeGames);
 
         // Check for updates when all games have closed
         if (previousGameCount > 0 && activeGames.length === 0) {
@@ -151,8 +159,9 @@ export async function initController(currentVersion: CurrentVersion) {
         handleRunningGames(
           message.payload,
           (runningGame) => {
-            const { disabledApps } = usePersistentState.getState();
+            const { disabledApps, autoRunGames } = usePersistentState.getState();
             console.log("Game started:", runningGame);
+
             games.forEach((game) => {
               const companion = game.companion;
               if (
@@ -160,11 +169,23 @@ export async function initController(currentVersion: CurrentVersion) {
                   g.processNames.includes(runningGame.processName),
                 )
               ) {
-                if (!disabledApps.includes(game.id)) {
-                  console.log("Opening controller for:", game.id);
-                  openControllerWebView(companion.controllerURL);
+                // Check if auto-run is enabled for this game (defaults to true)
+                const autoRunEnabled = autoRunGames[game.id] ?? true;
+
+                if (disabledApps.includes(game.id)) {
+                  console.log("App disabled:", game.id);
+                } else if (!autoRunEnabled) {
+                  console.log("Auto-run disabled for:", game.id);
                 } else {
-                  console.log("Controller disabled:", game.id);
+                  // Open windows based on window mode setting from C++
+                  console.log("Opening window(s) for:", game.id, "mode:", currentWindowMode);
+
+                  if (currentWindowMode === "overlay" || currentWindowMode === "both") {
+                    openOverlayWebView(companion.overlayURL, `${game.title}`);
+                  }
+                  if (currentWindowMode === "desktop" || currentWindowMode === "both") {
+                    openDesktopWebView(companion.desktopURL, `${game.title}`);
+                  }
                 }
               }
             });
@@ -209,6 +230,10 @@ export async function initController(currentVersion: CurrentVersion) {
         sendBroadcast(message);
         console.log("Hotkey received:", message.payload.key);
         break;
+      case "gameSession":
+        sendBroadcast(message);
+        console.log("Game session update:", message.payload);
+        break;
     }
   });
 
@@ -218,10 +243,30 @@ export async function initController(currentVersion: CurrentVersion) {
       useLiveState.getState().setVersion(response.data);
       console.log("Version received:", response.data);
 
-      const comparedVersion = semver.compare(
-        response.data.buildVersion ?? "0.0.0",
-        currentVersion.version,
-      );
+      const appVersion = response.data.buildVersion ?? "0.0.0";
+
+      // Check if app version is below minimum required version
+      // This forces an update even if a game is running (breaking changes)
+      if (semver.lt(appVersion, MINIMUM_REQUIRED_VERSION)) {
+        console.log(
+          `App version ${appVersion} is below minimum required ${MINIMUM_REQUIRED_VERSION} - forcing update`,
+        );
+        if (!updateTriggered) {
+          updateTriggered = true;
+          triggerUpdate()
+            .then(() => {
+              console.log("Forced update triggered due to minimum version requirement.");
+            })
+            .catch((e) => {
+              console.error("Failed to trigger forced update", e);
+              updateTriggered = false;
+            });
+        }
+        // Don't start periodic checks - we're forcing an update
+        return;
+      }
+
+      const comparedVersion = semver.compare(appVersion, currentVersion.version);
       if (comparedVersion === 1) {
         console.log("Version is newer than current version.");
       } else if (comparedVersion === -1) {
@@ -277,6 +322,17 @@ export async function initController(currentVersion: CurrentVersion) {
       console.error("Failed to check if task is installed", e);
     });
 
+  // Load window mode from C++ config
+  getWindowMode()
+    .then((response) => {
+      currentWindowMode = response.data;
+      useLiveState.getState().setWindowMode(response.data);
+      console.log("Window mode:", response.data);
+    })
+    .catch((e) => {
+      console.error("Failed to get window mode", e);
+    });
+
   listenToWorkerMessages((msg) => {
     switch (msg.type) {
       case "init":
@@ -328,6 +384,27 @@ export async function initController(currentVersion: CurrentVersion) {
               answerRequest(msg.from, msg.data, version);
             }
             break;
+          case "getWindowMode":
+            answerWebViewRequest(
+              msg.from,
+              msg.data,
+              getWindowMode(),
+            );
+            break;
+          case "setWindowMode": {
+            // C++ handles window switching when mode changes
+            const modePayload = msg.data.payload as { mode: WindowMode };
+            setWindowMode(modePayload.mode)
+              .then((response) => {
+                currentWindowMode = modePayload.mode;
+                useLiveState.getState().setWindowMode(modePayload.mode);
+                answerRequest(msg.from, msg.data, true);
+              })
+              .catch((e) => {
+                console.error("Failed to set window mode", e);
+              });
+            break;
+          }
           case "openDevTools":
             if (msg.data.payload.url === location.href) {
               openDevTools();
@@ -345,32 +422,6 @@ export async function initController(currentVersion: CurrentVersion) {
               payload: msg.data.payload.urls,
             });
             answerRequest(msg.from, msg.data, true);
-            break;
-          case "openController":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              openControllerWebView(msg.data.payload.url),
-            );
-            sendBroadcast({
-              action: "openController",
-              payload: { url: msg.data.payload.url },
-            });
-            break;
-          case "injectOverlay":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              injectOverlay(msg.data.payload.processName),
-            );
-            // window.chrome.webview.postMessage({
-            //   requestId: "1",
-            //   action: "injectDumper",
-            //   payload: {
-            //     processName: "X6Game-Win64-Shipping.exe",
-            //     dllPath: String.raw`C:\dev\Dumper-7\x64\Release\Dumper-7.dll`,
-            //   },
-            // });
             break;
           case "openDesktopWebView":
             answerWebViewRequest(
@@ -408,6 +459,13 @@ export async function initController(currentVersion: CurrentVersion) {
               msg.from,
               msg.data,
               sendDebugSnapshot(msg.data.payload.userContext),
+            );
+            break;
+          case "openInBrowser":
+            answerWebViewRequest(
+              msg.from,
+              msg.data,
+              openInBrowser(msg.data.payload.url),
             );
             break;
         }

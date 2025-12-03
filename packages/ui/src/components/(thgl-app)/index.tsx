@@ -2,11 +2,14 @@
 export { AccountDialog } from "./account-dialog";
 export { AppCard } from "./app-card";
 export { App } from "./app";
+export { AppVersion } from "./app-version";
 export { AuthRedirect } from "./auth-redirect";
 export { AppHeader } from "./app-header";
-export { Controller } from "./controller";
 export { InitializeAccount } from "./initialize-account";
 export { InitializeController } from "./initialize-controller";
 export { InitializeApp } from "./initialize-app";
 export { ResizeBorders } from "./resize-borders";
+export { SidebarNav } from "./sidebar-nav";
+export { DashboardSidebar } from "./dashboard-sidebar";
+export { NavigationButtons } from "./navigation-buttons";
 export { Status } from "./status";

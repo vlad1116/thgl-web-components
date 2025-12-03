@@ -47,6 +47,17 @@ export type Actor = {
   mapName?: string;
 };
 
+export type GameSessionUpdate = {
+  gameId: string;
+  processName: string;
+  pid: number;
+  status: "connecting" | "connected" | "error" | "closed";
+  detectorInitialized: boolean;
+  lastError?: string;
+  startedAt: number;
+  endedAt?: number;
+};
+
 export type WEBVIEW_RECEIVE_MESSAGE =
   | {
       action: "runningGames";
@@ -74,7 +85,16 @@ export type WEBVIEW_RECEIVE_MESSAGE =
       action: "hotkey";
       payload: {
         key: string;
+        action: string; // e.g., "toggle_app", "toggle_lock_app", "toggle_live_mode"
       };
+    }
+  | {
+      action: "gameSession";
+      payload: GameSessionUpdate;
+    }
+  | {
+      action: "windowModeChanged";
+      payload: "overlay" | "desktop" | "both";
     };
 
 export type WEBVIEW_RESPONSE_MESSAGE<T = undefined> = {
@@ -114,18 +134,6 @@ export type WEBVIEW_SEND_MESSAGE =
       payload: {};
     }
   | {
-      action: "openControllerWebView";
-      payload: {
-        url: string;
-      };
-    }
-  | {
-      action: "injectOverlay";
-      payload: {
-        processName: string;
-      };
-    }
-  | {
       action: "openDashboardWebView";
       payload: {};
     }
@@ -145,7 +153,7 @@ export type WEBVIEW_SEND_MESSAGE =
     }
   | {
       action: "updateHotkeys";
-      payload: string[];
+      payload: Record<string, string>; // { "toggle_app": "F6", "toggle_lock_app": "F9", ... }
     }
   | {
       action: "clickthroughOverlayWebView";
@@ -170,6 +178,22 @@ export type WEBVIEW_SEND_MESSAGE =
       action: "sendDebugSnapshot";
       payload: {
         userContext: string;
+      };
+    }
+  | {
+      action: "openInBrowser";
+      payload: {
+        url: string;
+      };
+    }
+  | {
+      action: "getWindowMode";
+      payload: {};
+    }
+  | {
+      action: "setWindowMode";
+      payload: {
+        mode: "overlay" | "desktop" | "both";
       };
     };
 

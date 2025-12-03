@@ -1,23 +1,14 @@
 import { useGameState } from "../game";
-import { useLiveState } from "./states";
+import { useSettingsStore } from "../settings";
+import { useLiveState, usePersistentState } from "./states";
 import { postWebviewMessage } from "./webview";
 import {
   initMessageWorker,
   listenToWorkerMessages,
   requestFromMain,
+  sendBroadcast,
+  WindowMode,
 } from "./worker";
-
-export function injectOverlay(processName: string) {
-  return postWebviewMessage(
-    {
-      action: "injectOverlay",
-      payload: {
-        processName,
-      },
-    },
-    10000,
-  );
-}
 
 export function openDashboadWebView() {
   return postWebviewMessage({
@@ -38,11 +29,27 @@ export function openOverlayWebView(url: string, title: string) {
     },
   });
 }
-export function updateHotkeys(hotkeys: string[]) {
+export function updateHotkeys(hotkeys: Record<string, string>) {
   return postWebviewMessage({
     action: "updateHotkeys",
     payload: hotkeys,
   });
+}
+
+// Sync current hotkeys from settings store to C++
+function syncHotkeysToNative() {
+  const hotkeys = useSettingsStore.getState().hotkeys;
+  // Filter out empty values but keep the action->combo mapping
+  const filteredHotkeys: Record<string, string> = {};
+  for (const [action, combo] of Object.entries(hotkeys)) {
+    if (combo) {
+      filteredHotkeys[action] = combo;
+    }
+  }
+  if (Object.keys(filteredHotkeys).length > 0) {
+    console.log("Syncing hotkeys to native:", filteredHotkeys);
+    updateHotkeys(filteredHotkeys).catch(console.error);
+  }
 }
 
 export function updateActorTypeFilters(types: string[], processName?: string) {
@@ -60,6 +67,15 @@ export function sendDebugSnapshot(userContext: string) {
     action: "sendDebugSnapshot",
     payload: {
       userContext,
+    },
+  });
+}
+
+export function openInBrowser(url: string) {
+  return postWebviewMessage({
+    action: "openInBrowser",
+    payload: {
+      url,
     },
   });
 }
@@ -82,15 +98,18 @@ export function openDevTools() {
   window.chrome.webview.postMessage("openDevTools");
 }
 
-export function openControllerWebView(url: string) {
-  let fullUrl = url;
-  if (!fullUrl.startsWith("http")) {
-    fullUrl = location.origin + fullUrl;
-  }
+export function getWindowMode() {
+  return postWebviewMessage<WindowMode>({
+    action: "getWindowMode",
+    payload: {},
+  });
+}
+
+export function setWindowMode(mode: WindowMode) {
   return postWebviewMessage({
-    action: "openControllerWebView",
+    action: "setWindowMode",
     payload: {
-      url: fullUrl,
+      mode,
     },
   });
 }
@@ -106,6 +125,43 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
 
   const gameState = useGameState.getState();
   const liveState = useLiveState.getState();
+
+  // For client role (Overlay/Desktop), also listen for direct WebView messages from C++
+  // This allows receiving game data directly without going through the SharedWorker
+  if (role === "client" && typeof window !== "undefined" && window.chrome?.webview) {
+    window.chrome.webview.addEventListener("message", (event: MessageEvent) => {
+      try {
+        const message = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (typeof message === "object" && typeof message.action === "string") {
+          if (message.action === "player") {
+            gameState.setPlayer({
+              ...message.payload,
+              address: 0,
+              type: "player",
+            });
+          } else if (message.action === "actors") {
+            gameState.setActors(message.payload);
+          } else if (message.action === "characterData") {
+            gameState.setCharacter(message.payload);
+          } else if (message.action === "windowModeChanged") {
+            // Update window mode state when C++ broadcasts change
+            liveState.setWindowMode(message.payload);
+          } else if (message.action === "hotkey") {
+            // Forward hotkey to SharedWorker so MapHotkeys can handle it
+            sendBroadcast(message);
+          } else if (message.action === "updateHotkeys") {
+            // Hotkey config update from C++, forward to SharedWorker
+            sendBroadcast(message);
+          }
+          // Other actions like runningGames, connectedClients, gameSession are
+          // only needed for dashboard/controller, not overlay/desktop
+        }
+      } catch (e) {
+        // Ignore parse errors for non-JSON messages
+      }
+    });
+    console.log("Direct WebView message listener registered for game data");
+  }
 
   listenToWorkerMessages((msg) => {
     switch (msg.type) {
@@ -145,6 +201,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               }).catch(() => {});
               window.chrome.webview.postMessage("close");
             }
+          } else if (msg.data.action === "gameSession") {
+            usePersistentState.getState().updateGameSession(msg.data.payload);
           }
         }
         break;
@@ -170,5 +228,29 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
         liveState.setVersion(res.data);
       })
       .catch(console.error);
+    requestFromMain({ action: "getWindowMode", payload: null })
+      .then((res) => {
+        liveState.setWindowMode(res.data);
+      })
+      .catch(console.error);
+  }
+
+  // For client role, fetch window mode directly from C++
+  if (role === "client") {
+    getWindowMode()
+      .then((res) => {
+        liveState.setWindowMode(res.data);
+      })
+      .catch(console.error);
+
+    // Sync initial hotkeys to C++ and subscribe to changes
+    syncHotkeysToNative();
+    let prevHotkeys = useSettingsStore.getState().hotkeys;
+    useSettingsStore.subscribe((state) => {
+      if (state.hotkeys !== prevHotkeys) {
+        prevHotkeys = state.hotkeys;
+        syncHotkeysToNative();
+      }
+    });
   }
 }

@@ -13,6 +13,11 @@ import {
   Version,
 } from "@repo/lib";
 import {
+  useLiveState,
+  requestSetWindowMode,
+  WindowMode,
+} from "@repo/lib/thgl-app";
+import {
   CoordinatesProvider,
   I18NProvider,
   TooltipProvider,
@@ -73,11 +78,11 @@ export function App({
   const liveMode = useSettingsStore((state) => state.liveMode);
   const toggleLiveMode = useSettingsStore((state) => state.toggleLiveMode);
   const lockedWindow = useSettingsStore((state) => state.lockedWindow);
-  const overlayMode = useSettingsStore((state) => state.overlayMode);
-  const setOverlayMode = useSettingsStore((state) => state.setOverlayMode);
   const toggleLockedWindow = useSettingsStore(
     (state) => state.toggleLockedWindow,
   );
+  const windowMode = useLiveState((state) => state.windowMode);
+  const setWindowMode = useLiveState((state) => state.setWindowMode);
   const hasPreviewAccess = useAccountStore(
     (state) => state.perks.previewReleaseAccess,
   );
@@ -148,25 +153,71 @@ export function App({
 
                 <Tooltip delayDuration={200} disableHoverableContent>
                   <TooltipTrigger asChild>
-                    <div>
-                      <HeaderSwitch
-                        checked={overlayMode === false}
-                        label="2nd Screen Mode"
-                        labelClassName="hidden md:inline-flex"
-                        onChange={(checked) => {
-                          setOverlayMode(!checked);
-                        }}
-                        disabled={appConfig.withoutOverlayMode}
-                      />
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-400 hidden md:inline">Mode:</span>
+                      <div className="flex rounded-md overflow-hidden border border-gray-600">
+                        <button
+                          className={cn(
+                            "px-2 py-0.5 text-xs transition-colors",
+                            windowMode === "overlay"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-gray-800 hover:bg-gray-700 text-gray-300",
+                          )}
+                          onClick={() => {
+                            setWindowMode("overlay");
+                            requestSetWindowMode("overlay").catch(console.error);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          disabled={appConfig.withoutOverlayMode}
+                        >
+                          Overlay
+                        </button>
+                        <button
+                          className={cn(
+                            "px-2 py-0.5 text-xs transition-colors border-x border-gray-600",
+                            windowMode === "desktop"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-gray-800 hover:bg-gray-700 text-gray-300",
+                          )}
+                          onClick={() => {
+                            setWindowMode("desktop");
+                            requestSetWindowMode("desktop").catch(console.error);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          Desktop
+                        </button>
+                        <button
+                          className={cn(
+                            "px-2 py-0.5 text-xs transition-colors",
+                            windowMode === "both"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-gray-800 hover:bg-gray-700 text-gray-300",
+                          )}
+                          onClick={() => {
+                            setWindowMode("both");
+                            requestSetWindowMode("both").catch(console.error);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          disabled={appConfig.withoutOverlayMode}
+                        >
+                          Both
+                        </button>
+                      </div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent className="w-64" side="bottom">
                     <p>
-                      Switch between 2nd screen mode and overlay mode. The
-                      overlay mode requires that the game is running.
+                      <strong>Overlay:</strong> Shows map overlay on top of the game.
+                    </p>
+                    <p className="mt-1">
+                      <strong>Desktop:</strong> Opens in a separate window (2nd screen).
+                    </p>
+                    <p className="mt-1">
+                      <strong>Both:</strong> Opens both overlay and desktop window.
                     </p>
                     {appConfig.withoutOverlayMode && (
-                      <p className="text-red-500">
+                      <p className="text-red-500 mt-1">
                         The overlay mode is not supported for this game.
                       </p>
                     )}

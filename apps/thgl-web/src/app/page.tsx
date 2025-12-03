@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { Button, Card } from "@repo/ui/controls";
-import { games, testimonials } from "@repo/lib";
+import {
+  games,
+  testimonials,
+  getUpdateMessages,
+  mergeUpdates,
+  Game,
+  DiscordMessageData,
+} from "@repo/lib";
+import { getChangelogEntries } from "@repo/lib/server";
+import { WhatsNew } from "@repo/ui/content";
 import { GameGrid } from "@/components/game-grid";
 import { blogEntries } from "@/lib/blog-entries";
 import { Download, Monitor, Gamepad2, Shield } from "lucide-react";
+import path from "path";
 import {
   PageHero,
   FeatureCard,
@@ -17,6 +27,26 @@ import { BlogPostCard } from "@/components/blog-post-card";
 
 const featuredGames = games.slice(0, 6);
 const companionGames = games.filter((g) => g.companion);
+
+async function getWhatsNewUpdates() {
+  const gameUpdates: Array<{ game: Game; message: DiscordMessageData }> = [];
+
+  // Fetch updates for featured companion games
+  await Promise.all(
+    companionGames.slice(0, 6).map(async (game) => {
+      const messages = await getUpdateMessages(game.discordId);
+      if (messages.length > 0) {
+        gameUpdates.push({ game, message: messages[0] });
+      }
+    }),
+  );
+
+  // Get changelog entries
+  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
+  const changelogEntries = await getChangelogEntries(changelogPath, 3);
+
+  return mergeUpdates(gameUpdates, changelogEntries, 5);
+}
 
 export const metadata = {
   title: "TH.GL – Interactive Maps, Overlays & Gaming Tools",
@@ -41,7 +71,9 @@ export const metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const updates = await getWhatsNewUpdates();
+
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto">
       {/* Hero Section */}
@@ -181,6 +213,26 @@ export default function HomePage() {
         viewAllHref="/apps"
         viewAllLabel="View all supported games →"
       />
+
+      {/* What's New */}
+      {updates.length > 0 && (
+        <div className="space-y-4 text-center">
+          <SectionHeader
+            title="What's New"
+            description="Latest game and app updates"
+          />
+          <div className="max-w-3xl mx-auto text-left">
+            <WhatsNew
+              updates={updates}
+              gameBasePath="/apps"
+              changelogPath="/companion-app#updates"
+              showGameLinks={true}
+              showChangelogLinks={true}
+              showHeader={false}
+            />
+          </div>
+        </div>
+      )}
 
       {/* How It Works */}
       <div className="bg-muted/30 rounded-2xl p-8 md:p-12">

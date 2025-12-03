@@ -9,7 +9,6 @@ export function MapHotkeys() {
   const map = useMap();
   const { nodes } = useCoordinates();
   const t = useT();
-  const hotkeys = useSettingsStore((state) => state.hotkeys);
 
   useEffect(() => {
     if (!map) {
@@ -19,17 +18,19 @@ export function MapHotkeys() {
     const cleanup = listenToWorkerMessages((message) => {
       if (message.type === "broadcast") {
         if (message.data.action === "hotkey") {
-          if (message.data.payload.key === hotkeys[HOTKEYS.ZOOM_IN_APP]) {
+          // Use action name from C++ if available, fallback to key matching
+          const hotkeyAction = message.data.payload.action;
+
+          if (hotkeyAction === HOTKEYS.ZOOM_IN_APP) {
             map.zoomIn();
-          } else if (
-            message.data.payload.key === hotkeys[HOTKEYS.ZOOM_OUT_APP]
-          ) {
+          } else if (hotkeyAction === HOTKEYS.ZOOM_OUT_APP) {
             map.zoomOut();
-          } else if (
-            message.data.payload.key ===
-            hotkeys[HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN]
-          ) {
+          } else if (hotkeyAction === HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN) {
             useSettingsStore.getState().toggleOverlayFullscreen();
+          } else if (hotkeyAction === HOTKEYS.TOGGLE_LOCK_APP) {
+            useSettingsStore.getState().toggleLockedWindow();
+          } else if (hotkeyAction === HOTKEYS.TOGGLE_LIVE_MODE) {
+            useSettingsStore.getState().toggleLiveMode();
           }
         }
       }
@@ -38,13 +39,14 @@ export function MapHotkeys() {
     return () => {
       cleanup();
     };
-  }, [map, hotkeys]);
+  }, [map]);
 
   useEffect(() => {
     const cleanup = listenToWorkerMessages((message) => {
       if (message.type === "broadcast") {
         if (message.data.action === "hotkey") {
-          if (message.data.payload.key === hotkeys[HOTKEYS.DISCOVER_NODE]) {
+          const hotkeyAction = message.data.payload.action;
+          if (hotkeyAction === HOTKEYS.DISCOVER_NODE) {
             const { filters } = useUserStore.getState();
             const { player } = useGameState.getState();
             if (!player) {
@@ -104,7 +106,7 @@ export function MapHotkeys() {
     return () => {
       cleanup();
     };
-  }, [nodes, hotkeys]);
+  }, [nodes]);
 
   return <></>;
 }

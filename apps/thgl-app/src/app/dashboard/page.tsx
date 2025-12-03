@@ -1,41 +1,45 @@
-import { DiscordMessage, Subtitle } from "@repo/ui/content";
-import { AppCard, Status } from "@repo/ui/thgl-app";
-import { ScrollArea } from "@repo/ui/controls";
-import { THGLDashboardAds } from "@repo/ui/ads";
-import { getCurrentVersion } from "@/version";
-import { games } from "@repo/lib";
+import {
+  games,
+  getUpdateMessages,
+  getSuggestionsAndIssues,
+  mergeUpdates,
+  Game,
+  DiscordMessageData,
+} from "@repo/lib";
+import { getChangelogEntries } from "@repo/lib/server";
+import { HomePageClient } from "./home-client";
+import path from "path";
 
-export default async function Dashboard() {
-  const currentVersion = await getCurrentVersion();
-
+export default async function DashboardHome() {
+  // Get recent updates from all companion games
   const companionGames = games.filter((game) => game.companion);
 
-  return (
-    <div className="flex mt-[32px] w-full">
-      <ScrollArea className="w-full">
-        <div className="p-4 space-y-4">
-          <Subtitle title="Status" />
-          <Status />
+  const gameUpdates: Array<{
+    game: Game;
+    message: DiscordMessageData;
+  }> = [];
 
-          <Subtitle title="Apps" />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-            {companionGames.map((game) => (
-              <AppCard key={game.id} game={game} />
-            ))}
-          </div>
+  const changelogPath = path.join(process.cwd(), "public", "changelog.md");
 
-          {/* <FloatingAds id="THGL_Dashboard" /> */}
-        </div>
-      </ScrollArea>
-      <div className="w-[400px] flex flex-col shrink-0">
-        <ScrollArea>
-          <div className="p-4 space-y-4">
-            <Subtitle title="Updates" />
-            <DiscordMessage>{currentVersion.changelog}</DiscordMessage>
-          </div>
-        </ScrollArea>
-        <THGLDashboardAds />
-      </div>
-    </div>
-  );
+  // Fetch updates, suggestions, and changelog in parallel
+  const [, suggestions, changelogEntries] = await Promise.all([
+    // Fetch updates for each game
+    Promise.all(
+      companionGames.slice(0, 6).map(async (game) => {
+        const messages = await getUpdateMessages(game.discordId);
+        if (messages.length > 0) {
+          gameUpdates.push({ game, message: messages[0] });
+        }
+      }),
+    ),
+    // Fetch community suggestions
+    getSuggestionsAndIssues(5),
+    // Get changelog entries
+    getChangelogEntries(changelogPath, 5),
+  ]);
+
+  // Merge game updates and changelog into a single list
+  const updates = mergeUpdates(gameUpdates, changelogEntries, 8);
+
+  return <HomePageClient updates={updates} suggestions={suggestions} />;
 }
