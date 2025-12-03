@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "the-hidden-gaming-lair",
@@ -8,7 +9,6 @@
         "tailwind-merge": "2.5.4",
       },
       "devDependencies": {
-        "@overwolf/types": "3.24.7",
         "prettier": "3.3.3",
         "rimraf": "6.0.1",
         "turbo": "2.5.4",
