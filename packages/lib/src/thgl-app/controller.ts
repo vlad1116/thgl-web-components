@@ -196,7 +196,8 @@ export async function initController(currentVersion: CurrentVersion) {
         );
         break;
       case "player":
-        sendBroadcast(message);
+        // Game data is now broadcast directly from C++ to Overlay/Desktop
+        // Controller only tracks for debug purposes (getClosestActors)
         if (!firstPlayerReceived) {
           firstPlayerReceived = true;
           console.log("Player received:", message.payload);
@@ -204,7 +205,6 @@ export async function initController(currentVersion: CurrentVersion) {
         prevPlayer = message.payload;
         break;
       case "actors":
-        sendBroadcast(message);
         if (!firstActorsReceived && message.payload.length > 0) {
           firstActorsReceived = true;
           console.log("Actors received:", message.payload);
@@ -212,14 +212,12 @@ export async function initController(currentVersion: CurrentVersion) {
         lastActors = message.payload;
         break;
       case "characterData":
-        sendBroadcast(message);
         if (!firstCharacterDataReceived) {
           firstCharacterDataReceived = true;
           console.log("Character data received:", message.payload);
         }
         break;
       case "gameSpecific":
-        sendBroadcast(message);
         if (!firstGameSpecificReceived) {
           firstGameSpecificReceived = true;
           console.log("Game Specific received:", message.payload);
