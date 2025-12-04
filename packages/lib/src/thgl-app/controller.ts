@@ -30,14 +30,10 @@ import {
   removeScheduledTaskFromWebview,
   triggerUpdate,
 } from "./version";
-import { Actor, onWebviewMessage, Player } from "./webview";
+import { onWebviewMessage } from "./webview";
 import { games } from "../games";
 
 let initialized = false;
-let firstPlayerReceived = false;
-let firstActorsReceived = false;
-let firstCharacterDataReceived = false;
-let firstGameSpecificReceived = false;
 let activeGames: string[] = []; // Track running games for update check logic
 let updateCheckInterval: NodeJS.Timeout | null = null;
 let updateTriggered = false;
@@ -112,30 +108,6 @@ export async function initController(currentVersion: CurrentVersion) {
   initialized = true;
   initMessageWorker("controller");
 
-  let prevPlayer: Player | null;
-  let lastActors: Array<Actor> = [];
-  let lastGameSpecific: any = null;
-
-  // @ts-ignore
-  window.getClosestActors = function () {
-    if (!prevPlayer) {
-      return null;
-    }
-    const closestActors = lastActors
-      .map((actor) => {
-        const dx = actor.x - prevPlayer!.x;
-        const dy = actor.y - prevPlayer!.y;
-        const dz = actor.z - prevPlayer!.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        return { ...actor, distance };
-      })
-      .sort((a, b) => a.distance - b.distance);
-    return {
-      player: prevPlayer,
-      actors: closestActors,
-      gameSpecific: lastGameSpecific,
-    };
-  };
   onWebviewMessage((message) => {
     switch (message.action) {
       case "runningGames":
@@ -194,35 +166,6 @@ export async function initController(currentVersion: CurrentVersion) {
             console.log("Game closed:", runningGame.processName);
           },
         );
-        break;
-      case "player":
-        // Game data is now broadcast directly from C++ to Overlay/Desktop
-        // Controller only tracks for debug purposes (getClosestActors)
-        if (!firstPlayerReceived) {
-          firstPlayerReceived = true;
-          console.log("Player received:", message.payload);
-        }
-        prevPlayer = message.payload;
-        break;
-      case "actors":
-        if (!firstActorsReceived && message.payload.length > 0) {
-          firstActorsReceived = true;
-          console.log("Actors received:", message.payload);
-        }
-        lastActors = message.payload;
-        break;
-      case "characterData":
-        if (!firstCharacterDataReceived) {
-          firstCharacterDataReceived = true;
-          console.log("Character data received:", message.payload);
-        }
-        break;
-      case "gameSpecific":
-        if (!firstGameSpecificReceived) {
-          firstGameSpecificReceived = true;
-          console.log("Game Specific received:", message.payload);
-        }
-        lastGameSpecific = message.payload;
         break;
       case "hotkey":
         sendBroadcast(message);
