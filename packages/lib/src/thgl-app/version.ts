@@ -2,7 +2,6 @@ import { postWebviewMessage } from "./webview";
 
 export type CurrentVersion = {
   version: string;
-  changelog: string;
 };
 
 export type AppVersion = {
