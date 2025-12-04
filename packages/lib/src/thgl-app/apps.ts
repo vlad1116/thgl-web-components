@@ -6,7 +6,6 @@ import {
   initMessageWorker,
   listenToWorkerMessages,
   requestFromMain,
-  sendBroadcast,
   WindowMode,
 } from "./worker";
 
@@ -144,17 +143,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           } else if (message.action === "characterData") {
             gameState.setCharacter(message.payload);
           } else if (message.action === "windowModeChanged") {
-            // Update window mode state when C++ broadcasts change
             liveState.setWindowMode(message.payload);
-          } else if (message.action === "hotkey") {
-            // Forward hotkey to SharedWorker so MapHotkeys can handle it
-            sendBroadcast(message);
-          } else if (message.action === "updateHotkeys") {
-            // Hotkey config update from C++, forward to SharedWorker
-            sendBroadcast(message);
           }
-          // Other actions like runningGames, connectedClients, gameSession are
-          // only needed for dashboard/controller, not overlay/desktop
         }
       } catch (e) {
         // Ignore parse errors for non-JSON messages

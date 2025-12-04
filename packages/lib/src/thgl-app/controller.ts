@@ -167,10 +167,6 @@ export async function initController(currentVersion: CurrentVersion) {
           },
         );
         break;
-      case "hotkey":
-        sendBroadcast(message);
-        console.log("Hotkey received:", message.payload.key);
-        break;
       case "gameSession":
         sendBroadcast(message);
         console.log("Game session update:", message.payload);

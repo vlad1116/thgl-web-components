@@ -199,9 +199,7 @@ export function AppHeader({
             <AppStatus gameClassId={gameClassId} />
           </div>
           <div className="grow" />
-          <ReleaseNotesLink
-            href={`https://www.th.gl/apps/${app}/release-notes`}
-          />
+          <ReleaseNotesLink href={`https://www.th.gl/apps/${app}`} />
           <div className="w-[80px]" />
           <div className={cn("absolute top-0 right-0 h-[32px]")}>
             <button

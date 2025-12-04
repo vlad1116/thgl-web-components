@@ -3,7 +3,7 @@ import { useMap } from "../(interactive-map)/store";
 import { useGameState, useSettingsStore, useUserStore } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { toast } from "sonner";
-import { HOTKEYS, listenToWorkerMessages } from "@repo/lib/thgl-app";
+import { HOTKEYS, onWebviewMessage } from "@repo/lib/thgl-app";
 
 export function MapHotkeys() {
   const map = useMap();
@@ -15,23 +15,20 @@ export function MapHotkeys() {
       return;
     }
 
-    const cleanup = listenToWorkerMessages((message) => {
-      if (message.type === "broadcast") {
-        if (message.data.action === "hotkey") {
-          // Use action name from C++ if available, fallback to key matching
-          const hotkeyAction = message.data.payload.action;
+    const cleanup = onWebviewMessage((message) => {
+      if (message.action === "hotkey") {
+        const hotkeyAction = message.payload.action;
 
-          if (hotkeyAction === HOTKEYS.ZOOM_IN_APP) {
-            map.zoomIn();
-          } else if (hotkeyAction === HOTKEYS.ZOOM_OUT_APP) {
-            map.zoomOut();
-          } else if (hotkeyAction === HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN) {
-            useSettingsStore.getState().toggleOverlayFullscreen();
-          } else if (hotkeyAction === HOTKEYS.TOGGLE_LOCK_APP) {
-            useSettingsStore.getState().toggleLockedWindow();
-          } else if (hotkeyAction === HOTKEYS.TOGGLE_LIVE_MODE) {
-            useSettingsStore.getState().toggleLiveMode();
-          }
+        if (hotkeyAction === HOTKEYS.ZOOM_IN_APP) {
+          map.zoomIn();
+        } else if (hotkeyAction === HOTKEYS.ZOOM_OUT_APP) {
+          map.zoomOut();
+        } else if (hotkeyAction === HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN) {
+          useSettingsStore.getState().toggleOverlayFullscreen();
+        } else if (hotkeyAction === HOTKEYS.TOGGLE_LOCK_APP) {
+          useSettingsStore.getState().toggleLockedWindow();
+        } else if (hotkeyAction === HOTKEYS.TOGGLE_LIVE_MODE) {
+          useSettingsStore.getState().toggleLiveMode();
         }
       }
     });
@@ -42,11 +39,10 @@ export function MapHotkeys() {
   }, [map]);
 
   useEffect(() => {
-    const cleanup = listenToWorkerMessages((message) => {
-      if (message.type === "broadcast") {
-        if (message.data.action === "hotkey") {
-          const hotkeyAction = message.data.payload.action;
-          if (hotkeyAction === HOTKEYS.DISCOVER_NODE) {
+    const cleanup = onWebviewMessage((message) => {
+      if (message.action === "hotkey") {
+        const hotkeyAction = message.payload.action;
+        if (hotkeyAction === HOTKEYS.DISCOVER_NODE) {
             const { filters } = useUserStore.getState();
             const { player } = useGameState.getState();
             if (!player) {
@@ -100,7 +96,6 @@ export function MapHotkeys() {
             });
           }
         }
-      }
     });
 
     return () => {
