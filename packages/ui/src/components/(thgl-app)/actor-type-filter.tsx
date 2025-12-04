@@ -1,6 +1,6 @@
 "use client";
 
-import { requestSetActorTypeFilter } from "@repo/lib/thgl-app";
+import { updateActorTypeFilters } from "@repo/lib/thgl-app";
 import { useEffect } from "react";
 
 export function ActorTypeFilter({
@@ -12,7 +12,7 @@ export function ActorTypeFilter({
     const types = Object.keys(typesIdMap);
     if (types.length > 0) {
       // Send actor types to filter - will apply to all games
-      requestSetActorTypeFilter(types)
+      updateActorTypeFilters(types)
         .then(() => {
           console.log("Actor type filter updated with", types.length, "types");
         })

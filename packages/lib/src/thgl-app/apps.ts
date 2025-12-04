@@ -2,12 +2,8 @@ import { useGameState } from "../game";
 import { useSettingsStore } from "../settings";
 import { useLiveState, usePersistentState } from "./states";
 import { postWebviewMessage } from "./webview";
-import {
-  initMessageWorker,
-  listenToWorkerMessages,
-  requestFromMain,
-  WindowMode,
-} from "./worker";
+
+export type WindowMode = "overlay" | "desktop" | "both";
 
 export function openDashboadWebView() {
   return postWebviewMessage({
@@ -173,8 +169,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
   }
   initialized = true;
 
-  const workerReady = initMessageWorker(role);
-
   const gameState = useGameState.getState();
   const liveState = useLiveState.getState();
 
@@ -243,14 +237,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
     });
     console.log("Direct WebView message listener registered for", role);
   }
-
-  listenToWorkerMessages((msg) => {
-    switch (msg.type) {
-      case "init":
-        console.log("Worker initialized with ID: ", msg.data);
-        break;
-    }
-  });
 
   if (role === "dashboard") {
     // Initial state is broadcast from C++ when Dashboard registers

@@ -14,7 +14,7 @@ import {
 } from "@repo/lib";
 import {
   useLiveState,
-  requestSetWindowMode,
+  setWindowMode as setWindowModeNative,
   WindowMode,
 } from "@repo/lib/thgl-app";
 import {
@@ -165,7 +165,7 @@ export function App({
                           )}
                           onClick={() => {
                             setWindowMode("overlay");
-                            requestSetWindowMode("overlay").catch(console.error);
+                            setWindowModeNative("overlay").catch(console.error);
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           disabled={appConfig.withoutOverlayMode}
@@ -181,7 +181,7 @@ export function App({
                           )}
                           onClick={() => {
                             setWindowMode("desktop");
-                            requestSetWindowMode("desktop").catch(console.error);
+                            setWindowModeNative("desktop").catch(console.error);
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                         >
@@ -196,7 +196,7 @@ export function App({
                           )}
                           onClick={() => {
                             setWindowMode("both");
-                            requestSetWindowMode("both").catch(console.error);
+                            setWindowModeNative("both").catch(console.error);
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           disabled={appConfig.withoutOverlayMode}

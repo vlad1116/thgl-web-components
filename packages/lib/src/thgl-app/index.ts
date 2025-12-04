@@ -5,4 +5,3 @@ export * from "./hotkeys";
 export * from "./states";
 export * from "./version";
 export * from "./webview";
-export * from "./worker";

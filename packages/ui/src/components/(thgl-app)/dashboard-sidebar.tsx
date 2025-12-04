@@ -2,7 +2,7 @@
 
 import { cn, games, useAccountStore } from "@repo/lib";
 import {
-  requestOpenInBrowser,
+  openInBrowser,
   useLiveState,
   usePersistentState,
 } from "@repo/lib/thgl-app";
@@ -306,7 +306,7 @@ function ExternalNavItem({
         "w-full transition-colors hover:bg-primary/10 hover:text-primary",
         isExpanded ? "justify-start" : "justify-center",
       )}
-      onClick={() => requestOpenInBrowser(url)}
+      onClick={() => openInBrowser(url)}
     >
       <span className={cn(isExpanded && "mr-2")}>{icon}</span>
       {isExpanded && (

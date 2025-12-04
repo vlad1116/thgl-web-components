@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 
+import { WindowMode } from "./apps";
 import { RunningGame } from "./games";
 import { AppVersion } from "./version";
-import { ConnectedClient, WindowMode } from "./worker";
+
+export type ConnectedClient = {
+  id: number;
+  href: string;
+  role: "controller" | "dashboard" | "client";
+};
 
 export type GameSessionInfo = {
   gameId: string;

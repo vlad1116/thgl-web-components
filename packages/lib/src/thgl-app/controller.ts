@@ -3,29 +3,14 @@ import {
   getWindowMode,
   openDashboadWebView,
   openDesktopWebView,
-  openInBrowser,
   openOverlayWebView,
-  sendDebugSnapshot,
-  setWindowMode,
-  updateActorTypeFilters,
-  updateHotkeys,
+  WindowMode,
 } from "./apps";
 import { handleRunningGames } from "./games";
-import {
-  answerRequest,
-  answerWebViewRequest,
-  initMessageWorker,
-  listenToWorkerMessages,
-  WindowMode,
-} from "./worker";
 import { useLiveState, usePersistentState } from "./states";
 import {
-  addScheduledTaskFromWebview,
   CurrentVersion,
   getVersionFromWebview,
-  isRunningAsAdminFromWebview,
-  isTaskInstalledFromWebview,
-  removeScheduledTaskFromWebview,
   triggerUpdate,
 } from "./version";
 import { onWebviewMessage } from "./webview";
@@ -104,8 +89,8 @@ export async function initController(currentVersion: CurrentVersion) {
     return;
   }
   initialized = true;
-  initMessageWorker("controller");
 
+  // Listen for messages from C++ (runningGames, windowModeChanged, etc.)
   onWebviewMessage((message) => {
     switch (message.action) {
       case "runningGames":
@@ -165,6 +150,11 @@ export async function initController(currentVersion: CurrentVersion) {
         break;
       case "gameSession":
         console.log("Game session update:", message.payload);
+        break;
+      case "windowModeChanged":
+        currentWindowMode = message.payload;
+        useLiveState.getState().setWindowMode(message.payload);
+        console.log("Window mode changed:", message.payload);
         break;
     }
   });
@@ -236,24 +226,6 @@ export async function initController(currentVersion: CurrentVersion) {
       startPeriodicUpdateCheck(currentVersion, 30);
     });
 
-  isRunningAsAdminFromWebview()
-    .then((response) => {
-      useLiveState.getState().setIsRunningAsAdmin(response.data);
-      console.log("Running as admin:", response.data);
-    })
-    .catch((e) => {
-      console.error("Failed to check running as admin", e);
-    });
-
-  isTaskInstalledFromWebview()
-    .then((response) => {
-      useLiveState.getState().setIsTaskInstalled(response.data);
-      console.log("Is task installed:", response.data);
-    })
-    .catch((e) => {
-      console.error("Failed to check if task is installed", e);
-    });
-
   // Load window mode from C++ config
   getWindowMode()
     .then((response) => {
@@ -264,122 +236,6 @@ export async function initController(currentVersion: CurrentVersion) {
     .catch((e) => {
       console.error("Failed to get window mode", e);
     });
-
-  listenToWorkerMessages((msg) => {
-    switch (msg.type) {
-      case "init":
-        console.log("Worker initialized with ID: ", msg.data);
-        break;
-      case "fromClient":
-        switch (msg.data.action) {
-          case "isRunningAsAdmin":
-            const isRunningAsAdmin = useLiveState.getState().isRunningAsAdmin;
-            if (isRunningAsAdmin !== null) {
-              answerRequest(msg.from, msg.data, isRunningAsAdmin);
-            }
-            break;
-          case "isTaskInstalled":
-            const isTaskInstalled = useLiveState.getState().isTaskInstalled;
-            if (isTaskInstalled !== null) {
-              answerRequest(msg.from, msg.data, isTaskInstalled);
-            }
-            break;
-          case "addScheduledTask":
-            addScheduledTaskFromWebview()
-              .then((response) => {
-                useLiveState.getState().setIsTaskInstalled(true);
-                answerRequest(msg.from, msg.data, response.data);
-              })
-              .catch((e) => {
-                console.error("Failed to add scheduled task", e);
-              });
-            break;
-          case "removeScheduledTask":
-            removeScheduledTaskFromWebview()
-              .then((response) => {
-                useLiveState.getState().setIsTaskInstalled(false);
-                answerRequest(msg.from, msg.data, response.data);
-              })
-              .catch((e) => {
-                console.error("Failed to remove scheduled task", e);
-              });
-            break;
-          case "getVersion":
-            const version = useLiveState.getState().version;
-            if (version) {
-              answerRequest(msg.from, msg.data, version);
-            }
-            break;
-          case "getWindowMode":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              getWindowMode(),
-            );
-            break;
-          case "setWindowMode": {
-            // C++ handles window switching when mode changes
-            const modePayload = msg.data.payload as { mode: WindowMode };
-            setWindowMode(modePayload.mode)
-              .then((response) => {
-                currentWindowMode = modePayload.mode;
-                useLiveState.getState().setWindowMode(modePayload.mode);
-                answerRequest(msg.from, msg.data, true);
-              })
-              .catch((e) => {
-                console.error("Failed to set window mode", e);
-              });
-            break;
-          }
-          case "openDesktopWebView":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              openDesktopWebView(msg.data.payload.url, msg.data.payload.title),
-            );
-            break;
-          case "openOverlayWebView":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              openOverlayWebView(msg.data.payload.url, msg.data.payload.title),
-            );
-            break;
-          case "updateHotkeys":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              updateHotkeys(msg.data.payload.hotkeys),
-            );
-            break;
-          case "setActorTypeFilter":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              updateActorTypeFilters(
-                msg.data.payload.types,
-                msg.data.payload.processName,
-              ),
-            );
-            break;
-          case "sendDebugSnapshot":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              sendDebugSnapshot(msg.data.payload.userContext),
-            );
-            break;
-          case "openInBrowser":
-            answerWebViewRequest(
-              msg.from,
-              msg.data,
-              openInBrowser(msg.data.payload.url),
-            );
-            break;
-        }
-        break;
-    }
-  });
 
   const { openDashboardOnStart } = usePersistentState.getState();
   if (openDashboardOnStart) {

@@ -12,7 +12,7 @@ import {
   closeWebViews,
   openDesktopWebView,
   openDevToolsForUrl,
-  requestSetWindowMode,
+  setWindowMode as setWindowModeNative,
   useLiveState,
   usePersistentState,
 } from "@repo/lib/thgl-app";
@@ -111,7 +111,7 @@ export function AppCard({ game }: { game: Game }) {
             // Update mode if desktop isn't already open
             if (!hasDesktopOpen) {
               setWindowMode(newMode);
-              await requestSetWindowMode(newMode).catch(console.error);
+              await setWindowModeNative(newMode).catch(console.error);
             }
 
             // Open desktop window
