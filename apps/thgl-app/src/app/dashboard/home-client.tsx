@@ -1,7 +1,7 @@
 "use client";
 
 import { games, ForumPost } from "@repo/lib";
-import { requestOpenInBrowser, useLiveState } from "@repo/lib/thgl-app";
+import { openInBrowser, useLiveState } from "@repo/lib/thgl-app";
 import { ScrollArea } from "@repo/ui/controls";
 import { WhatsNew, UpdateItem } from "@repo/ui/content";
 import {
@@ -166,7 +166,7 @@ export function HomePageClient({
                   key={post.id}
                   className="hover:border-primary transition-colors cursor-pointer"
                   onClick={() =>
-                    requestOpenInBrowser(
+                    openInBrowser(
                       `https://www.th.gl/suggestions-issues/${post.id}`,
                     )
                   }
@@ -210,7 +210,7 @@ export function HomePageClient({
             <p className="text-sm text-muted-foreground">
               Join the{" "}
               <button
-                onClick={() => requestOpenInBrowser("https://th.gl/discord")}
+                onClick={() => openInBrowser("https://th.gl/discord")}
                 className="text-primary hover:underline"
               >
                 Discord server
@@ -233,7 +233,7 @@ export function HomePageClient({
                 key={entry.id}
                 className="hover:border-primary transition-colors cursor-pointer"
                 onClick={() =>
-                  requestOpenInBrowser(`https://www.th.gl/blog/${entry.id}`)
+                  openInBrowser(`https://www.th.gl/blog/${entry.id}`)
                 }
               >
                 <CardContent className="p-4">

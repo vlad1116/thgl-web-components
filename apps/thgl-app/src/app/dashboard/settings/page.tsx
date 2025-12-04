@@ -11,7 +11,9 @@ import {
   TooltipTrigger,
 } from "@repo/ui/controls";
 import {
-  requestFromMain,
+  addScheduledTask,
+  removeScheduledTask,
+  openDevToolsForUrl,
   useLiveState,
   usePersistentState,
 } from "@repo/lib/thgl-app";
@@ -70,12 +72,11 @@ export default function SettingsPage() {
                 id="open-app-on-start"
                 checked={!!isTaskInstalled}
                 onCheckedChange={(checked) => {
-                  requestFromMain({
-                    action: checked
-                      ? "addScheduledTask"
-                      : "removeScheduledTask",
-                    payload: null,
-                  });
+                  if (checked) {
+                    addScheduledTask();
+                  } else {
+                    removeScheduledTask();
+                  }
                   setIsTaskInstalled(checked);
                 }}
               />
@@ -150,12 +151,9 @@ export default function SettingsPage() {
                       size="sm"
                       className="h-auto p-0"
                       onClick={() =>
-                        requestFromMain({
-                          action: "openDevTools",
-                          payload: {
-                            url: controllerClient?.href || "/controller",
-                          },
-                        })
+                        openDevToolsForUrl(
+                          controllerClient?.href || "/controller",
+                        )
                       }
                     >
                       controller
@@ -165,12 +163,9 @@ export default function SettingsPage() {
                       size="sm"
                       className="h-auto p-0"
                       onClick={() =>
-                        requestFromMain({
-                          action: "openDevTools",
-                          payload: {
-                            url: dashboardClient?.href || "/dashboard",
-                          },
-                        })
+                        openDevToolsForUrl(
+                          dashboardClient?.href || "/dashboard",
+                        )
                       }
                     >
                       dashboard
@@ -195,12 +190,7 @@ export default function SettingsPage() {
                               variant="link"
                               size="sm"
                               className="h-auto p-0"
-                              onClick={() =>
-                                requestFromMain({
-                                  action: "openDevTools",
-                                  payload: { url: client.href },
-                                })
-                              }
+                              onClick={() => openDevToolsForUrl(client.href)}
                             >
                               {name}
                             </Button>

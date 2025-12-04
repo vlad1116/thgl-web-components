@@ -111,6 +111,45 @@ export function closeWebViews(urls: string[]) {
   });
 }
 
+export function getVersion() {
+  return postWebviewMessage<{
+    buildDate: string;
+    buildTime: string;
+    buildVersion: string;
+  }>({
+    action: "getVersion",
+    payload: {},
+  });
+}
+
+export function getIsRunningAsAdmin() {
+  return postWebviewMessage<boolean>({
+    action: "isRunningAsAdmin",
+    payload: {},
+  });
+}
+
+export function getIsTaskInstalled() {
+  return postWebviewMessage<boolean>({
+    action: "isTaskInstalled",
+    payload: {},
+  });
+}
+
+export function addScheduledTask() {
+  return postWebviewMessage({
+    action: "addScheduledTask",
+    payload: {},
+  });
+}
+
+export function removeScheduledTask() {
+  return postWebviewMessage({
+    action: "removeScheduledTask",
+    payload: {},
+  });
+}
+
 export function getWindowMode() {
   return postWebviewMessage<WindowMode>({
     action: "getWindowMode",
@@ -169,6 +208,14 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               usePersistentState.getState().updateGameSession(message.payload);
             } else if (message.action === "connectedClients") {
               liveState.setConnectedClients(message.payload);
+            } else if (message.action === "version") {
+              liveState.setVersion(message.payload);
+            } else if (message.action === "isRunningAsAdmin") {
+              liveState.setIsRunningAsAdmin(message.payload);
+            } else if (message.action === "isTaskInstalled") {
+              liveState.setIsTaskInstalled(message.payload);
+            } else if (message.action === "windowModeChanged") {
+              liveState.setWindowMode(message.payload);
             }
           }
           // Client (Overlay/Desktop) handlers for DevTools and close requests
@@ -206,25 +253,30 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
   });
 
   if (role === "dashboard") {
-    // Wait for worker to be initialized before sending requests
-    await workerReady;
-
-    requestFromMain({ action: "isRunningAsAdmin", payload: null })
+    // Initial state is broadcast from C++ when Dashboard registers
+    // These are fallback requests in case broadcast doesn't arrive
+    getIsRunningAsAdmin()
       .then((res) => {
-        liveState.setIsRunningAsAdmin(res.data);
+        if (liveState.isRunningAsAdmin === null) {
+          liveState.setIsRunningAsAdmin(res.data);
+        }
       })
       .catch(console.error);
-    requestFromMain({ action: "isTaskInstalled", payload: null })
+    getIsTaskInstalled()
       .then((res) => {
-        liveState.setIsTaskInstalled(res.data);
+        if (liveState.isTaskInstalled === null) {
+          liveState.setIsTaskInstalled(res.data);
+        }
       })
       .catch(console.error);
-    requestFromMain({ action: "getVersion", payload: null })
+    getVersion()
       .then((res) => {
-        liveState.setVersion(res.data);
+        if (liveState.version === null) {
+          liveState.setVersion(res.data);
+        }
       })
       .catch(console.error);
-    requestFromMain({ action: "getWindowMode", payload: null })
+    getWindowMode()
       .then((res) => {
         liveState.setWindowMode(res.data);
       })

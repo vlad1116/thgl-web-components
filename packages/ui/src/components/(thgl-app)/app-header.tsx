@@ -1,7 +1,7 @@
 "use client";
 import { cn, useAccountStore } from "@repo/lib";
 import { useState } from "react";
-import { requestFromMain } from "@repo/lib/thgl-app";
+import { sendDebugSnapshot } from "@repo/lib/thgl-app";
 import {
   Button,
   HoverCard,
@@ -44,12 +44,7 @@ export function AppHeader({
     setIsSendingDebug(true);
     setDebugStatus("idle");
     try {
-      await requestFromMain({
-        action: "sendDebugSnapshot",
-        payload: {
-          userContext: debugContext || "No additional context provided",
-        },
-      });
+      await sendDebugSnapshot(debugContext || "No additional context provided");
       setDebugContext("");
       setDebugStatus("success");
       // Auto-close dialog after 2 seconds on success

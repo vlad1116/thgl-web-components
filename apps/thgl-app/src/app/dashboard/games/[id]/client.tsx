@@ -2,9 +2,10 @@
 
 import { games, Game, DiscordMessageData } from "@repo/lib";
 import {
-  requestFromMain,
-  requestOpenInBrowser,
-  requestSetWindowMode,
+  openDesktopWebView,
+  openInBrowser,
+  openOverlayWebView,
+  setWindowMode as setWindowModeNative,
   useLiveState,
   usePersistentState,
 } from "@repo/lib/thgl-app";
@@ -116,13 +117,10 @@ export function GamePageClient({
     // Update mode if it needs to change
     if (!hasOverlayOpen) {
       setWindowMode(newMode);
-      await requestSetWindowMode(newMode).catch(console.error);
+      await setWindowModeNative(newMode).catch(console.error);
     }
 
-    requestFromMain({
-      action: "openOverlayWebView",
-      payload: { url: game.companion.overlayURL, title: `${game.title} Overlay` },
-    });
+    openOverlayWebView(game.companion.overlayURL, `${game.title} Overlay`);
   };
 
   const handleOpenDesktop = async () => {
@@ -141,16 +139,10 @@ export function GamePageClient({
     // Update mode if it needs to change
     if (!hasDesktopOpen) {
       setWindowMode(newMode);
-      await requestSetWindowMode(newMode).catch(console.error);
+      await setWindowModeNative(newMode).catch(console.error);
     }
 
-    requestFromMain({
-      action: "openDesktopWebView",
-      payload: {
-        url: game.companion.desktopURL,
-        title: `${game.title} Desktop`,
-      },
-    });
+    openDesktopWebView(game.companion.desktopURL, `${game.title} Desktop`);
   };
 
   return (
@@ -219,7 +211,7 @@ export function GamePageClient({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => requestOpenInBrowser(game.web!)}
+              onClick={() => openInBrowser(game.web!)}
             >
               <ExternalLink className="h-4 w-4 mr-1" />
               Open in Browser
