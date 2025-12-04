@@ -125,32 +125,42 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
   const gameState = useGameState.getState();
   const liveState = useLiveState.getState();
 
-  // For client role (Overlay/Desktop), also listen for direct WebView messages from C++
-  // This allows receiving game data directly without going through the SharedWorker
-  if (role === "client" && typeof window !== "undefined" && window.chrome?.webview) {
+  // Listen for direct WebView messages from C++
+  if (typeof window !== "undefined" && window.chrome?.webview) {
     window.chrome.webview.addEventListener("message", (event: MessageEvent) => {
       try {
         const message = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
         if (typeof message === "object" && typeof message.action === "string") {
-          if (message.action === "player") {
-            gameState.setPlayer({
-              ...message.payload,
-              address: 0,
-              type: "player",
-            });
-          } else if (message.action === "actors") {
-            gameState.setActors(message.payload);
-          } else if (message.action === "characterData") {
-            gameState.setCharacter(message.payload);
-          } else if (message.action === "windowModeChanged") {
-            liveState.setWindowMode(message.payload);
+          // Client (Overlay/Desktop) specific handlers
+          if (role === "client") {
+            if (message.action === "player") {
+              gameState.setPlayer({
+                ...message.payload,
+                address: 0,
+                type: "player",
+              });
+            } else if (message.action === "actors") {
+              gameState.setActors(message.payload);
+            } else if (message.action === "characterData") {
+              gameState.setCharacter(message.payload);
+            } else if (message.action === "windowModeChanged") {
+              liveState.setWindowMode(message.payload);
+            }
+          }
+          // Dashboard specific handlers - receive directly from C++
+          if (role === "dashboard") {
+            if (message.action === "runningGames") {
+              liveState.setRunningGames(message.payload);
+            } else if (message.action === "gameSession") {
+              usePersistentState.getState().updateGameSession(message.payload);
+            }
           }
         }
       } catch (e) {
         // Ignore parse errors for non-JSON messages
       }
     });
-    console.log("Direct WebView message listener registered for game data");
+    console.log("Direct WebView message listener registered for", role);
   }
 
   listenToWorkerMessages((msg) => {
@@ -163,19 +173,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           typeof msg.data === "object" &&
           typeof msg.data.action === "string"
         ) {
-          if (msg.data.action === "player") {
-            gameState.setPlayer({
-              ...msg.data.payload,
-              address: 0,
-              type: "player",
-            });
-          } else if (msg.data.action === "actors") {
-            gameState.setActors(msg.data.payload);
-          } else if (msg.data.action === "characterData") {
-            gameState.setCharacter(msg.data.payload);
-          } else if (msg.data.action === "runningGames") {
-            liveState.setRunningGames(msg.data.payload);
-          } else if (msg.data.action === "connectedClients") {
+          // These actions are still routed via SharedWorker
+          if (msg.data.action === "connectedClients") {
             liveState.setConnectedClients(msg.data.payload);
           } else if (msg.data.action === "openDevTools") {
             if (msg.data.payload.url === location.href) {
@@ -191,8 +190,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               }).catch(() => {});
               window.chrome.webview.postMessage("close");
             }
-          } else if (msg.data.action === "gameSession") {
-            usePersistentState.getState().updateGameSession(msg.data.payload);
           }
         }
         break;
