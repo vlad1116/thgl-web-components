@@ -105,8 +105,9 @@ export default function SettingsPage() {
         {/* Info Note */}
         <div className="rounded-lg border bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
-            Game-specific settings like hotkeys and auto-run can be configured
-            on each game&apos;s page in the sidebar.
+            Game-specific auto-run settings can be configured on each
+            game&apos;s page in the sidebar. App settings like hotkeys can be
+            configured in the overlay or desktop windows.
           </p>
         </div>
 
