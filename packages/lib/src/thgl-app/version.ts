@@ -1,4 +1,5 @@
 import { postWebviewMessage } from "./webview";
+import { WindowMode } from "./apps";
 
 export type CurrentVersion = {
   version: string;
@@ -10,8 +11,22 @@ export type AppVersion = {
   buildVersion?: string;
 };
 
+export type InitialState = {
+  version: AppVersion;
+  isRunningAsAdmin: boolean;
+  isTaskInstalled: boolean;
+  windowMode: WindowMode;
+};
+
 export function getVersionFromWebview() {
   return postWebviewMessage<AppVersion>({ action: "getVersion", payload: {} });
+}
+
+export function getInitialStateFromWebview() {
+  return postWebviewMessage<InitialState>({
+    action: "getInitialState",
+    payload: {},
+  });
 }
 
 export function isRunningAsAdminFromWebview() {

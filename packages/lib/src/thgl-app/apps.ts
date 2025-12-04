@@ -1,6 +1,7 @@
 import { useGameState } from "../game";
 import { useSettingsStore } from "../settings";
 import { useLiveState, usePersistentState } from "./states";
+import { getInitialStateFromWebview } from "./version";
 import { postWebviewMessage } from "./webview";
 
 export type WindowMode = "overlay" | "desktop" | "both";
@@ -238,12 +239,21 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
     console.log("Direct WebView message listener registered for", role);
   }
 
-  // Dashboard receives initial state broadcast from C++ via SendInitialState() when it registers:
-  // - version (action: "version")
-  // - isRunningAsAdmin (action: "isRunningAsAdmin")
-  // - isTaskInstalled (action: "isTaskInstalled")
-  // - windowMode (action: "windowModeChanged")
-  // No explicit requests needed for dashboard role.
+  // For dashboard role, request initial state from C++ when ready
+  if (role === "dashboard") {
+    getInitialStateFromWebview()
+      .then((res) => {
+        const data = res.data;
+        liveState.setVersion(data.version);
+        liveState.setIsRunningAsAdmin(data.isRunningAsAdmin);
+        liveState.setIsTaskInstalled(data.isTaskInstalled);
+        liveState.setWindowMode(data.windowMode);
+        console.log("Dashboard received initial state:", data);
+      })
+      .catch((e) => {
+        console.error("Failed to get initial state:", e);
+      });
+  }
 
   // For client role, fetch window mode directly from C++
   if (role === "client") {

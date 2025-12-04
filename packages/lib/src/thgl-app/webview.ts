@@ -126,6 +126,10 @@ export type WEBVIEW_SEND_MESSAGE =
       payload: {};
     }
   | {
+      action: "getInitialState";
+      payload: {};
+    }
+  | {
       action: "triggerUpdate";
       payload: {};
     }

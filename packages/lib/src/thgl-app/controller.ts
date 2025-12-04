@@ -99,7 +99,6 @@ export async function initController(currentVersion: CurrentVersion) {
 
         // Update active games list
         activeGames = message.payload.map((game: any) => game.processName);
-        console.log("runningGames updated, activeGames:", activeGames);
 
         // Check for updates when all games have closed
         if (previousGameCount > 0 && activeGames.length === 0) {
@@ -112,7 +111,8 @@ export async function initController(currentVersion: CurrentVersion) {
         handleRunningGames(
           message.payload,
           (runningGame) => {
-            const { disabledApps, autoRunGames } = usePersistentState.getState();
+            const { disabledApps, autoRunGames } =
+              usePersistentState.getState();
             console.log("Game started:", runningGame);
 
             games.forEach((game) => {
@@ -131,12 +131,23 @@ export async function initController(currentVersion: CurrentVersion) {
                   console.log("Auto-run disabled for:", game.id);
                 } else {
                   // Open windows based on window mode setting from C++
-                  console.log("Opening window(s) for:", game.id, "mode:", currentWindowMode);
+                  console.log(
+                    "Opening window(s) for:",
+                    game.id,
+                    "mode:",
+                    currentWindowMode,
+                  );
 
-                  if (currentWindowMode === "overlay" || currentWindowMode === "both") {
+                  if (
+                    currentWindowMode === "overlay" ||
+                    currentWindowMode === "both"
+                  ) {
                     openOverlayWebView(companion.overlayURL, `${game.title}`);
                   }
-                  if (currentWindowMode === "desktop" || currentWindowMode === "both") {
+                  if (
+                    currentWindowMode === "desktop" ||
+                    currentWindowMode === "both"
+                  ) {
                     openDesktopWebView(companion.desktopURL, `${game.title}`);
                   }
                 }
@@ -177,7 +188,9 @@ export async function initController(currentVersion: CurrentVersion) {
           updateTriggered = true;
           triggerUpdate()
             .then(() => {
-              console.log("Forced update triggered due to minimum version requirement.");
+              console.log(
+                "Forced update triggered due to minimum version requirement.",
+              );
             })
             .catch((e) => {
               console.error("Failed to trigger forced update", e);
@@ -188,7 +201,10 @@ export async function initController(currentVersion: CurrentVersion) {
         return;
       }
 
-      const comparedVersion = semver.compare(appVersion, currentVersion.version);
+      const comparedVersion = semver.compare(
+        appVersion,
+        currentVersion.version,
+      );
       if (comparedVersion === 1) {
         console.log("Version is newer than current version.");
       } else if (comparedVersion === -1) {
