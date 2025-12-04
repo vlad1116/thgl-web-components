@@ -131,7 +131,15 @@ export type WEBVIEW_SEND_MESSAGE =
     }
   | {
       action: "openDevTools";
-      payload: {};
+      payload: {
+        url: string;
+      };
+    }
+  | {
+      action: "closeWebViews";
+      payload: {
+        urls: string[];
+      };
     }
   | {
       action: "openDashboardWebView";

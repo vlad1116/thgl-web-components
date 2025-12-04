@@ -97,6 +97,20 @@ export function openDevTools() {
   window.chrome.webview.postMessage("openDevTools");
 }
 
+export function openDevToolsForUrl(url: string) {
+  return postWebviewMessage({
+    action: "openDevTools",
+    payload: { url },
+  });
+}
+
+export function closeWebViews(urls: string[]) {
+  return postWebviewMessage({
+    action: "closeWebViews",
+    payload: { urls },
+  });
+}
+
 export function getWindowMode() {
   return postWebviewMessage<WindowMode>({
     action: "getWindowMode",
@@ -153,6 +167,26 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               liveState.setRunningGames(message.payload);
             } else if (message.action === "gameSession") {
               usePersistentState.getState().updateGameSession(message.payload);
+            } else if (message.action === "connectedClients") {
+              liveState.setConnectedClients(message.payload);
+            }
+          }
+          // Client (Overlay/Desktop) handlers for DevTools and close requests
+          if (role === "client") {
+            if (message.action === "openDevTools") {
+              if (message.payload.url === location.href) {
+                openDevTools();
+              }
+            } else if (message.action === "closeWebViews") {
+              if (message.payload.includes(location.href)) {
+                postWebviewMessage({
+                  action: "clickthroughOverlayWebView",
+                  payload: {
+                    clickthrough: true,
+                  },
+                }).catch(() => {});
+                window.chrome.webview.postMessage("close");
+              }
             }
           }
         }
@@ -167,31 +201,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
     switch (msg.type) {
       case "init":
         console.log("Worker initialized with ID: ", msg.data);
-        break;
-      case "broadcast":
-        if (
-          typeof msg.data === "object" &&
-          typeof msg.data.action === "string"
-        ) {
-          // These actions are still routed via SharedWorker
-          if (msg.data.action === "connectedClients") {
-            liveState.setConnectedClients(msg.data.payload);
-          } else if (msg.data.action === "openDevTools") {
-            if (msg.data.payload.url === location.href) {
-              openDevTools();
-            }
-          } else if (msg.data.action === "closeWebViews") {
-            if (msg.data.payload.includes(location.href)) {
-              postWebviewMessage({
-                action: "clickthroughOverlayWebView",
-                payload: {
-                  clickthrough: true,
-                },
-              }).catch(() => {});
-              window.chrome.webview.postMessage("close");
-            }
-          }
-        }
         break;
     }
   });

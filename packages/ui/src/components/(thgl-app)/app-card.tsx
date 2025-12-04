@@ -9,7 +9,9 @@ import {
 } from "../ui/card";
 import { Button, Switch } from "../(controls)";
 import {
-  requestFromMain,
+  closeWebViews,
+  openDesktopWebView,
+  openDevToolsForUrl,
   requestSetWindowMode,
   useLiveState,
   usePersistentState,
@@ -77,12 +79,7 @@ export function AppCard({ game }: { game: Game }) {
                   onCheckedChange={(checked) => {
                     toggleDisabledApp(game.id);
                     if (!checked && appsOpenURLs?.length) {
-                      requestFromMain({
-                        action: "closeWebViews",
-                        payload: {
-                          urls: appsOpenURLs,
-                        },
-                      });
+                      closeWebViews(appsOpenURLs);
                     }
                   }}
                 />
@@ -118,13 +115,7 @@ export function AppCard({ game }: { game: Game }) {
             }
 
             // Open desktop window
-            requestFromMain({
-              action: "openDesktopWebView",
-              payload: {
-                url: companion.desktopURL,
-                title: game.title,
-              },
-            });
+            openDesktopWebView(companion.desktopURL, game.title);
           }}
         >
           <Play className="h-4 w-4 mr-2" />
@@ -155,14 +146,7 @@ export function AppCard({ game }: { game: Game }) {
                 key={url}
                 className="h-auto p-0 text-xs"
                 variant="link"
-                onClick={() =>
-                  requestFromMain({
-                    action: "openDevTools",
-                    payload: {
-                      url: url,
-                    },
-                  })
-                }
+                onClick={() => openDevToolsForUrl(url)}
               >
                 {url.split("/").pop()?.toLowerCase()}
                 {index < appsOpenURLs.length - 1 && ", "}

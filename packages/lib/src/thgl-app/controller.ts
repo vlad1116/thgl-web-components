@@ -3,7 +3,6 @@ import {
   getWindowMode,
   openDashboadWebView,
   openDesktopWebView,
-  openDevTools,
   openInBrowser,
   openOverlayWebView,
   sendDebugSnapshot,
@@ -17,7 +16,6 @@ import {
   answerWebViewRequest,
   initMessageWorker,
   listenToWorkerMessages,
-  sendBroadcast,
   WindowMode,
 } from "./worker";
 import { useLiveState, usePersistentState } from "./states";
@@ -111,8 +109,6 @@ export async function initController(currentVersion: CurrentVersion) {
   onWebviewMessage((message) => {
     switch (message.action) {
       case "runningGames":
-        sendBroadcast(message);
-
         // Store previous game count to detect when games close
         const previousGameCount = activeGames.length;
 
@@ -168,7 +164,6 @@ export async function initController(currentVersion: CurrentVersion) {
         );
         break;
       case "gameSession":
-        sendBroadcast(message);
         console.log("Game session update:", message.payload);
         break;
     }
@@ -275,12 +270,6 @@ export async function initController(currentVersion: CurrentVersion) {
       case "init":
         console.log("Worker initialized with ID: ", msg.data);
         break;
-      case "clientList":
-        sendBroadcast({
-          action: "connectedClients",
-          payload: msg.data,
-        });
-        break;
       case "fromClient":
         switch (msg.data.action) {
           case "isRunningAsAdmin":
@@ -342,24 +331,6 @@ export async function initController(currentVersion: CurrentVersion) {
               });
             break;
           }
-          case "openDevTools":
-            if (msg.data.payload.url === location.href) {
-              openDevTools();
-            } else {
-              sendBroadcast({
-                action: "openDevTools",
-                payload: { url: msg.data.payload.url },
-              });
-            }
-            answerRequest(msg.from, msg.data, true);
-            break;
-          case "closeWebViews":
-            sendBroadcast({
-              action: "closeWebViews",
-              payload: msg.data.payload.urls,
-            });
-            answerRequest(msg.from, msg.data, true);
-            break;
           case "openDesktopWebView":
             answerWebViewRequest(
               msg.from,

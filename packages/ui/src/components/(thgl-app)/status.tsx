@@ -1,5 +1,5 @@
 "use client";
-import { requestFromMain, useLiveState } from "@repo/lib/thgl-app";
+import { openDevToolsForUrl, useLiveState } from "@repo/lib/thgl-app";
 import { Separator } from "../ui/separator";
 import {
   Button,
@@ -132,12 +132,7 @@ export function Status() {
                   className="h-auto p-0"
                   variant="link"
                   onClick={() =>
-                    requestFromMain({
-                      action: "openDevTools",
-                      payload: {
-                        url: controllerClient?.href || "/controller",
-                      },
-                    })
+                    openDevToolsForUrl(controllerClient?.href || "/controller")
                   }
                 >
                   controller
@@ -147,12 +142,7 @@ export function Status() {
                   className="h-auto p-0"
                   variant="link"
                   onClick={() =>
-                    requestFromMain({
-                      action: "openDevTools",
-                      payload: {
-                        url: dashboardClient?.href || "/dashboard",
-                      },
-                    })
+                    openDevToolsForUrl(dashboardClient?.href || "/dashboard")
                   }
                 >
                   dashboard

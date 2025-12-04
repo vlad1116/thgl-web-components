@@ -14,12 +14,6 @@ type ActionRequestMap = {
   setWindowMode: {
     mode: WindowMode;
   };
-  openDevTools: {
-    url: string;
-  };
-  closeWebViews: {
-    urls: string[];
-  };
   openOverlayWebView: {
     url: string;
     title: string;
@@ -62,8 +56,6 @@ type ActionResponseMap = {
   getVersion: AppVersion;
   getWindowMode: WindowMode;
   setWindowMode: boolean;
-  openDevTools: boolean;
-  closeWebViews: boolean;
 } & WebviewActionResponseMap;
 
 type WEBVIEW_REQUEST_MESSAGE = {
@@ -113,22 +105,7 @@ export type ConnectedClient = {
   role: "controller" | "dashboard" | "client";
 };
 
-type MAIN_BROADCAST_MESSAGE =
-  | WEBVIEW_RECEIVE_MESSAGE
-  | {
-      action: "connectedClients";
-      payload: ConnectedClient[];
-    }
-  | {
-      action: "closeWebViews";
-      payload: string[];
-    }
-  | {
-      action: "openDevTools";
-      payload: {
-        url: string;
-      };
-    };
+type MAIN_BROADCAST_MESSAGE = WEBVIEW_RECEIVE_MESSAGE;
 
 type WORKER_MESSAGE =
   | {
@@ -328,9 +305,6 @@ export const openWebView = (url: string, title: string) =>
     action: "openDesktopWebView",
     payload: { url, title },
   });
-
-export const closeWebViews = (urls: string[]) =>
-  requestFromMain({ action: "closeWebViews", payload: { urls } });
 
 export const requestUpdateHotkeys = (hotkeys: Record<string, string>) =>
   requestFromMain({
