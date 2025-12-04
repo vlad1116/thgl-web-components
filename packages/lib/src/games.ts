@@ -317,7 +317,7 @@ export const games: Array<Game> = [
   },
   {
     id: "rsdragonwilds",
-    discordId: "dragonwilds",
+    discordId: "rsdragonwilds",
     title: "RuneScape: Dragonwilds",
     logo: "https://www.th.gl/global_icons/rsdragonwilds.webp",
     companion: {
