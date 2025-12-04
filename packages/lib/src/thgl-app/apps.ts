@@ -238,36 +238,12 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
     console.log("Direct WebView message listener registered for", role);
   }
 
-  if (role === "dashboard") {
-    // Initial state is broadcast from C++ when Dashboard registers
-    // These are fallback requests in case broadcast doesn't arrive
-    getIsRunningAsAdmin()
-      .then((res) => {
-        if (liveState.isRunningAsAdmin === null) {
-          liveState.setIsRunningAsAdmin(res.data);
-        }
-      })
-      .catch(console.error);
-    getIsTaskInstalled()
-      .then((res) => {
-        if (liveState.isTaskInstalled === null) {
-          liveState.setIsTaskInstalled(res.data);
-        }
-      })
-      .catch(console.error);
-    getVersion()
-      .then((res) => {
-        if (liveState.version === null) {
-          liveState.setVersion(res.data);
-        }
-      })
-      .catch(console.error);
-    getWindowMode()
-      .then((res) => {
-        liveState.setWindowMode(res.data);
-      })
-      .catch(console.error);
-  }
+  // Dashboard receives initial state broadcast from C++ via SendInitialState() when it registers:
+  // - version (action: "version")
+  // - isRunningAsAdmin (action: "isRunningAsAdmin")
+  // - isTaskInstalled (action: "isTaskInstalled")
+  // - windowMode (action: "windowModeChanged")
+  // No explicit requests needed for dashboard role.
 
   // For client role, fetch window mode directly from C++
   if (role === "client") {
