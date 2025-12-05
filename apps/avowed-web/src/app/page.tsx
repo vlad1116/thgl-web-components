@@ -11,6 +11,7 @@ import {
   fetchVersion,
   getUpdateMessages,
   getPreviewImageUrl,
+  translate,
 } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 
@@ -29,7 +30,7 @@ export default async function Home() {
   const version = await fetchVersion(APP_CONFIG.name);
   const mapNames = Object.keys(version.data.tiles);
   const cards = mapNames.map((map) => {
-    const mapName = version.data.enDict[map];
+    const mapName = translate(version.data.enDict, map);
     return {
       title: `${mapName} Map`,
       description: `Navigate ${mapName} with our interactive maps.`,
