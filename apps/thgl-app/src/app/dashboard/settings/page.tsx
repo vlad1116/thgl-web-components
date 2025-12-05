@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { Settings, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import {
   ScrollArea,
   Label,
@@ -9,6 +9,11 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@repo/ui/controls";
 import {
   addScheduledTask,
@@ -16,11 +21,45 @@ import {
   openDevToolsForUrl,
   useLiveState,
   usePersistentState,
+  setGpuFlag,
+  GpuFlag,
 } from "@repo/lib/thgl-app";
 import { useState } from "react";
 
+// GPU flag options with descriptions
+const gpuFlagOptions: {
+  value: GpuFlag;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "none",
+    label: "Default (Hardware Acceleration)",
+    description: "Full GPU acceleration. Best performance for interactive maps.",
+  },
+  {
+    value: "disable-direct-composition-video",
+    label: "Disable Video Overlays",
+    description:
+      "Only disables DirectComposition for video content. Try this first if you experience screen flickering.",
+  },
+  {
+    value: "disable-gpu-compositing",
+    label: "Disable GPU Compositing",
+    description:
+      "Disables GPU-based compositing. May help with multi-monitor flickering issues.",
+  },
+  {
+    value: "disable-gpu",
+    label: "Software Rendering",
+    description:
+      "Completely disables GPU. Slowest option, use only as a last resort.",
+  },
+];
+
 export default function SettingsPage() {
   const [showDevTools, setShowDevTools] = useState(false);
+  const [initialGpuFlag, setInitialGpuFlag] = useState<GpuFlag | null>(null);
   const openDashboardOnStart = usePersistentState(
     (state) => state.openDashboardOnStart,
   );
@@ -31,6 +70,23 @@ export default function SettingsPage() {
   const setIsTaskInstalled = useLiveState((state) => state.setIsTaskInstalled);
   const version = useLiveState((state) => state.version);
   const connectedClients = useLiveState((state) => state.connectedClients);
+  const gpuFlag = useLiveState((state) => state.gpuFlag);
+  const setGpuFlagState = useLiveState((state) => state.setGpuFlag);
+
+  // Track the initial GPU flag value when component mounts
+  if (initialGpuFlag === null && gpuFlag) {
+    setInitialGpuFlag(gpuFlag);
+  }
+
+  const gpuFlagChanged = initialGpuFlag !== null && gpuFlag !== initialGpuFlag;
+
+  const handleGpuFlagChange = (value: GpuFlag) => {
+    setGpuFlag(value)
+      .then(() => {
+        setGpuFlagState(value);
+      })
+      .catch(console.error);
+  };
 
   const controllerClient = connectedClients?.find(
     (client) => client.role === "controller",
@@ -110,6 +166,63 @@ export default function SettingsPage() {
             game&apos;s page in the sidebar. App settings like hotkeys can be
             configured in the overlay or desktop windows.
           </p>
+        </div>
+
+        {/* GPU / Display Settings */}
+        <div className="rounded-lg border bg-card p-4 space-y-4">
+          <h3 className="text-sm font-semibold">Display</h3>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="gpu-flag" className="text-sm font-normal">
+                GPU Acceleration
+              </Label>
+              <Select
+                value={gpuFlag}
+                onValueChange={(value) => handleGpuFlagChange(value as GpuFlag)}
+              >
+                <SelectTrigger id="gpu-flag" className="w-full">
+                  <SelectValue placeholder="Select GPU mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {gpuFlagOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {gpuFlagOptions.find((o) => o.value === gpuFlag)?.description}
+              </p>
+            </div>
+            {gpuFlagChanged && (
+              <div className="flex items-center justify-between gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+                  <p className="text-xs text-amber-500">
+                    Restart required to apply changes.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-500"
+                  onClick={() => window.chrome.webview.postMessage("restartApp")}
+                >
+                  Restart
+                </Button>
+              </div>
+            )}
+            {gpuFlag !== "none" && (
+              <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-500">
+                  Non-default GPU settings may reduce map performance. Only use
+                  if experiencing display issues.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Developer Tools (Collapsible) */}

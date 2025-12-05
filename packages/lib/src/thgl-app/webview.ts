@@ -207,7 +207,25 @@ export type WEBVIEW_SEND_MESSAGE =
       payload: {
         mode: "overlay" | "desktop" | "both";
       };
+    }
+  | {
+      action: "getGpuFlag";
+      payload: {};
+    }
+  | {
+      action: "setGpuFlag";
+      payload: {
+        flag: GpuFlag;
+      };
     };
+
+// GPU acceleration flags for WebView2
+// These flags help troubleshoot display issues on multi-monitor setups
+export type GpuFlag =
+  | "none" // Default - full hardware acceleration
+  | "disable-gpu-compositing" // Disable GPU compositing (may help with flickering)
+  | "disable-direct-composition-video" // Only disable DirectComposition for video (least impact)
+  | "disable-gpu"; // Full software rendering (slowest, use as last resort)
 
 export function onWebviewMessage(
   callback: (data: WEBVIEW_RECEIVE_MESSAGE) => void,

@@ -4,6 +4,7 @@ import { persist, subscribeWithSelector } from "zustand/middleware";
 import { WindowMode } from "./apps";
 import { RunningGame } from "./games";
 import { AppVersion } from "./version";
+import { GpuFlag } from "./webview";
 
 export type ConnectedClient = {
   id: number;
@@ -31,6 +32,8 @@ export const useLiveState = create<{
   setVersion: (version: AppVersion) => void;
   windowMode: WindowMode;
   setWindowMode: (mode: WindowMode) => void;
+  gpuFlag: GpuFlag;
+  setGpuFlag: (flag: GpuFlag) => void;
   runningGames: Array<RunningGame> | null;
   setRunningGames: (games: Array<RunningGame>) => void;
   connectedClients: Array<ConnectedClient> | null;
@@ -44,6 +47,8 @@ export const useLiveState = create<{
   setVersion: (version) => set({ version }),
   windowMode: "overlay",
   setWindowMode: (mode) => set({ windowMode: mode }),
+  gpuFlag: "none",
+  setGpuFlag: (flag) => set({ gpuFlag: flag }),
   runningGames: null,
   setRunningGames: (games) => set({ runningGames: games }),
   connectedClients: null,

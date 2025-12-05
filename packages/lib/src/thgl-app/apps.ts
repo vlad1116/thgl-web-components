@@ -248,6 +248,7 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
         liveState.setIsRunningAsAdmin(data.isRunningAsAdmin);
         liveState.setIsTaskInstalled(data.isTaskInstalled);
         liveState.setWindowMode(data.windowMode);
+        liveState.setGpuFlag(data.gpuFlag);
         console.log("Dashboard received initial state:", data);
       })
       .catch((e) => {

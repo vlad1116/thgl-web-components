@@ -1,4 +1,4 @@
-import { postWebviewMessage } from "./webview";
+import { postWebviewMessage, GpuFlag } from "./webview";
 import { WindowMode } from "./apps";
 
 export type CurrentVersion = {
@@ -16,6 +16,7 @@ export type InitialState = {
   isRunningAsAdmin: boolean;
   isTaskInstalled: boolean;
   windowMode: WindowMode;
+  gpuFlag: GpuFlag;
 };
 
 export function getVersionFromWebview() {
@@ -59,4 +60,12 @@ export function removeScheduledTaskFromWebview() {
 
 export function triggerUpdate() {
   return postWebviewMessage({ action: "triggerUpdate", payload: {} });
+}
+
+export function getGpuFlag() {
+  return postWebviewMessage<GpuFlag>({ action: "getGpuFlag", payload: {} });
+}
+
+export function setGpuFlag(flag: GpuFlag) {
+  return postWebviewMessage({ action: "setGpuFlag", payload: { flag } });
 }
