@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "RuneScape: Dragonwilds",
   domain: "dragonwilds",
   supportedLocales: ["en"],
-  appUrl: null,
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [],
   externalLinks: [],
   keywords: ["Chests", "Lore", "Quests"],
