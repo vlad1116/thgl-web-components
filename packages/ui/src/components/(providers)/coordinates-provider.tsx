@@ -399,8 +399,8 @@ export function CoordinatesProvider({
             }
             // Dynamic node: replace actor with spawn data (for metadata like id, description)
             spawnToAdd = {
-              ...spawn,
               id: getNodeId(spawn.id, id, spawn.p[0], spawn.p[1]),
+              ...spawn,
               address: actor.address, // Keep actor address for live tracking
             } as Spawn;
             break;
