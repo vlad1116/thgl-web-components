@@ -78,6 +78,7 @@ export const games: Array<Game> = [
           title: "Blue Protocol: Star Resonance",
           processNames: [
             "Star.exe",
+            "StarSEA.exe",
             "BPSR_STEAM.exe",
             "BPSR.exe",
             "BPSR_EPIC.exe",
@@ -358,6 +359,36 @@ export const games: Array<Game> = [
     discordId: "avowed",
     title: "Avowed",
     logo: "https://www.th.gl/global_icons/avowed.webp",
+    companion: {
+      baseURL: "/apps/avowed",
+      controllerURL: "/apps/avowed/controller",
+      desktopURL: "/apps/avowed",
+      overlayURL: "/apps/avowed/overlay",
+      markerOptions: {
+        radius: 6,
+        playerIcon: "player.webp",
+        imageSprite: true,
+        zPos: {
+          xyMaxDistance: 10000,
+          zDistance: 400,
+        },
+      },
+      games: [
+        {
+          title: "Avowed",
+          processNames: ["Avowed-Win64-Shipping.exe"],
+        },
+      ],
+      defaultHotkeys: {
+        [HOTKEYS.TOGGLE_APP]: "F6",
+        [HOTKEYS.TOGGLE_LOCK_APP]: "F9",
+        [HOTKEYS.ZOOM_IN_APP]: "F7",
+        [HOTKEYS.ZOOM_OUT_APP]: "F8",
+        [HOTKEYS.DISCOVER_NODE]: "F10",
+        [HOTKEYS.TOGGLE_LIVE_MODE]: "F5",
+        [HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN]: "SHIFT+F9",
+      },
+    },
     web: "https://avowed.th.gl",
     overwolf: {
       id: "dfmnobmlhpkjnodhlabbmihmgocgpklofeklfmod",
