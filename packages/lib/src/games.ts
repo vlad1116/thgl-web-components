@@ -78,6 +78,7 @@ export const games: Array<Game> = [
           title: "Blue Protocol: Star Resonance",
           processNames: [
             "Star.exe",
+            "StarASIA.exe",
             "StarSEA.exe",
             "BPSR_STEAM.exe",
             "BPSR.exe",
