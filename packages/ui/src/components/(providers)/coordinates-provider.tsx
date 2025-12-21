@@ -346,8 +346,13 @@ export function CoordinatesProvider({
   // Filter for permanent nodes (static: true) that always appear on the map
   // vs dynamic nodes (static: false) that appear based on actor state
   const realStaticNodes = useMemo(
-    () => staticNodes.filter((node) => "static" in node && !!node.static),
-    [staticNodes],
+    () =>
+      staticNodes.filter(
+        (node) =>
+          ("static" in node && !!node.static) ||
+          (typesIdMap && !Object.values(typesIdMap).includes(node.type)),
+      ),
+    [staticNodes, typesIdMap],
   );
 
   const nodes = useMemo<NodesCoordinates>(() => {
