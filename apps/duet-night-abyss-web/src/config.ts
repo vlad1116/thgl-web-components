@@ -8,6 +8,24 @@ export const APP_CONFIG: AppConfig = {
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
+      title: "Mistwharf Map",
+      description:
+        "Navigate Duet Night Abyss's Mistwharf region with our interactive maps.",
+      href: "/maps/Mistwharf",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Huaxu_Yanjindu_Main"),
+      linkText: "Explore the Mistwharf Map",
+    },
+    {
+      title: "Zhuyin Altar Map",
+      description:
+        "Navigate Duet Night Abyss's Zhuyin Altar with our interactive maps.",
+      href: "/maps/Zhuyin%20Altar",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Huaxu_Yanjindu_Alt"),
+      linkText: "Explore the Zhuyin Altar Map",
+    },
+    {
       title: "Purgatorio Island Map",
       description:
         "Navigate Duet Night Abyss's Purgatorio Island with our interactive maps.",
