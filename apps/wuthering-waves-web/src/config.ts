@@ -22,7 +22,7 @@ export const APP_CONFIG: AppConfig = {
         "Explore the underground haven beneath the Roya Frostlands.",
       href: "/maps/Lahai-Roi",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("wuthering-waves", "WP_3_0_LHL"),
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_Xueyuan"),
       linkText: "Explore the Lahai-Roi Map",
     },
     {
