@@ -17,6 +17,15 @@ export const APP_CONFIG: AppConfig = {
   },
   internalLinks: [
     {
+      title: "Lahai-Roi Map",
+      description:
+        "Explore the underground haven beneath the Roya Frostlands.",
+      href: "/maps/Lahai-Roi",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_3_0_LHL"),
+      linkText: "Explore the Lahai-Roi Map",
+    },
+    {
       title: "Overworld Map",
       description:
         "Navigate Wuthering Waves expansive world with our interactive maps.",
