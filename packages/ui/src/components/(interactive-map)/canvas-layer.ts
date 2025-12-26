@@ -1,12 +1,31 @@
 import type { Coords, TileLayer, TileLayerOptions } from "leaflet";
 import leaflet from "leaflet";
 import type { ColorBlindMode } from "@repo/lib";
+import { isOverwolf, useAccountStore } from "@repo/lib";
 import { applyColorBlindTransform } from "./color-blind";
 import { isStateError, useNitroState } from "../(ads)";
 
 type Tile = HTMLCanvasElement & { complete: boolean };
 
 let isNitroError = false;
+let hasAdRemoval = false;
+
+// Track ad-removal status
+const accountState = useAccountStore.getState();
+hasAdRemoval =
+  (accountState.perks.adRemoval && accountState.userId !== null) || isOverwolf;
+
+useAccountStore.subscribe((state) => {
+  const wasAdRemoval = hasAdRemoval;
+  hasAdRemoval = (state.perks.adRemoval && state.userId !== null) || isOverwolf;
+
+  // If ad-removal was just enabled, redraw tiles to remove watermarks
+  if (!wasAdRemoval && hasAdRemoval) {
+    activeLayerInstances.forEach((layer) => {
+      layer.redraw();
+    });
+  }
+});
 
 // Track all active canvas layer instances
 const activeLayerInstances = new Set<TileLayer>();
@@ -15,8 +34,8 @@ useNitroState.subscribe(() => {
   const wasError = isNitroError;
   isNitroError = isStateError();
 
-  // If state changed to ERROR, add watermark to existing tiles
-  if (!wasError && isNitroError) {
+  // If state changed to ERROR, add watermark to existing tiles (skip if ad-removal)
+  if (!wasError && isNitroError && !hasAdRemoval) {
     activeLayerInstances.forEach((layer) => {
       try {
         // Find all canvas tiles in the layer
@@ -140,8 +159,8 @@ const CanvasLayer = leaflet.TileLayer.extend({
           }
         }
 
-        // Draw watermark if ad-blocker detected
-        if (ctx && isNitroError) {
+        // Draw watermark if ad-blocker detected (skip if ad-removal)
+        if (ctx && isNitroError && !hasAdRemoval) {
           ctx.save();
 
           // Move to center and rotate
@@ -205,7 +224,7 @@ const CanvasLayer = leaflet.TileLayer.extend({
     // Double-check watermark after a short delay (catches race condition with cached images)
     setTimeout(() => {
       // @ts-ignore
-      if (isNitroError && tile.complete) {
+      if (isNitroError && !hasAdRemoval && tile.complete) {
         const ctx = tile.getContext("2d");
         if (!ctx) return;
 
