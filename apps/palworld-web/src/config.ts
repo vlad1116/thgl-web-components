@@ -6,7 +6,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Palworld",
   domain: "palworld",
   supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/Leon_Machens-Palworld-Interactive-map",
+  appUrl: "https://www.th.gl/companion-app",
   markerOptions: {
     radius: 6,
     // playerIcon: "player.webp",

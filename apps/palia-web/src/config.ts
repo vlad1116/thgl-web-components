@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Palia",
   domain: "palia",
   supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/Leon_Machens-Palia_Map",
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
       href: "/maps/Elderwood",

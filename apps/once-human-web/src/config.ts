@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Once Human",
   domain: "oncehuman",
   supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/Leon_Machens-Once_Human_Map",
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
       href: "/maps/Deviation%20Secure",

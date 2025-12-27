@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Wuthering Waves",
   domain: "wuthering",
   supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/Leon_Machens-Wuthering_Waves_Map",
+  appUrl: "https://www.th.gl/companion-app",
   markerOptions: {
     radius: 6,
     playerIcon: "player.webp",

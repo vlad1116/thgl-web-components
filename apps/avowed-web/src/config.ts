@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Avowed",
   domain: "avowed",
   supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/leon_machens-avowed_interactive_maps",
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [],
   externalLinks: [],
   keywords: ["God Totems", "Unique Weapons"],
