@@ -14,7 +14,7 @@ import {
   openDevToolsForUrl,
   setWindowMode as setWindowModeNative,
   useLiveState,
-  usePersistentState,
+  useTHGLAppState,
 } from "@repo/lib/thgl-app";
 import { Game } from "@repo/lib";
 import { Play, ChevronDown, ChevronUp } from "lucide-react";
@@ -22,8 +22,8 @@ import { useState } from "react";
 
 export function AppCard({ game }: { game: Game }) {
   const [showDebug, setShowDebug] = useState(false);
-  const disabledApps = usePersistentState((state) => state.disabledApps);
-  const toggleDisabledApp = usePersistentState(
+  const disabledApps = useTHGLAppState((state) => state.disabledApps);
+  const toggleDisabledApp = useTHGLAppState(
     (state) => state.toggleDisabledApp,
   );
   const connectedClients = useLiveState((state) => state.connectedClients);

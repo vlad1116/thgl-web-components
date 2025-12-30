@@ -20,7 +20,7 @@ import {
   removeScheduledTask,
   openDevToolsForUrl,
   useLiveState,
-  usePersistentState,
+  useTHGLAppState,
   setGpuFlag,
   GpuFlag,
 } from "@repo/lib/thgl-app";
@@ -60,10 +60,10 @@ const gpuFlagOptions: {
 export default function SettingsPage() {
   const [showDevTools, setShowDevTools] = useState(false);
   const [initialGpuFlag, setInitialGpuFlag] = useState<GpuFlag | null>(null);
-  const openDashboardOnStart = usePersistentState(
+  const openDashboardOnStart = useTHGLAppState(
     (state) => state.openDashboardOnStart,
   );
-  const setOpenDashboardOnStart = usePersistentState(
+  const setOpenDashboardOnStart = useTHGLAppState(
     (state) => state.setOpenDashboardOnStart,
   );
   const isTaskInstalled = useLiveState((state) => state.isTaskInstalled);

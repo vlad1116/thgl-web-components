@@ -7,7 +7,7 @@ import {
   WindowMode,
 } from "./apps";
 import { handleRunningGames } from "./games";
-import { useLiveState, usePersistentState } from "./states";
+import { useLiveState, useTHGLAppState } from "./states";
 import {
   CurrentVersion,
   getVersionFromWebview,
@@ -21,6 +21,25 @@ let activeGames: string[] = []; // Track running games for update check logic
 let updateCheckInterval: NodeJS.Timeout | null = null;
 let updateTriggered = false;
 let currentWindowMode: WindowMode = "overlay";
+
+// Wait for persistent state to hydrate from storage
+function waitForHydration(): Promise<void> {
+  return new Promise((resolve) => {
+    if (useTHGLAppState.getState()._hasHydrated) {
+      resolve();
+      return;
+    }
+    const unsub = useTHGLAppState.subscribe(
+      (state) => state._hasHydrated,
+      (hasHydrated) => {
+        if (hasHydrated) {
+          unsub();
+          resolve();
+        }
+      },
+    );
+  });
+}
 
 // Minimum required app version - force update if below this version
 // This is used when breaking changes are introduced that require a new app version
@@ -110,9 +129,12 @@ export async function initController(currentVersion: CurrentVersion) {
 
         handleRunningGames(
           message.payload,
-          (runningGame) => {
+          async (runningGame) => {
+            // Wait for persistent state to hydrate before checking settings
+            await waitForHydration();
+
             const { disabledApps, autoRunGames } =
-              usePersistentState.getState();
+              useTHGLAppState.getState();
             console.log("Game started:", runningGame);
 
             games.forEach((game) => {
@@ -253,8 +275,11 @@ export async function initController(currentVersion: CurrentVersion) {
       console.error("Failed to get window mode", e);
     });
 
-  const { openDashboardOnStart } = usePersistentState.getState();
-  if (openDashboardOnStart) {
-    openDashboadWebView();
-  }
+  // Wait for hydration before checking dashboard preference
+  waitForHydration().then(() => {
+    const { openDashboardOnStart } = useTHGLAppState.getState();
+    if (openDashboardOnStart) {
+      openDashboadWebView();
+    }
+  });
 }

@@ -55,9 +55,11 @@ export const useLiveState = create<{
   setConnectedClients: (clients) => set({ connectedClients: clients }),
 }));
 
-export const usePersistentState = create(
+export const useTHGLAppState = create(
   subscribeWithSelector(
     persist<{
+      _hasHydrated: boolean;
+      setHasHydrated: (hydrated: boolean) => void;
       openDashboardOnStart: boolean;
       setOpenDashboardOnStart: (open: boolean) => void;
       disabledApps: Array<string>;
@@ -71,6 +73,8 @@ export const usePersistentState = create(
       clearClosedSessions: () => void;
     }>(
       (set) => ({
+        _hasHydrated: false,
+        setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
         openDashboardOnStart: true,
         setOpenDashboardOnStart: (open) => set({ openDashboardOnStart: open }),
         disabledApps: [],
@@ -110,6 +114,9 @@ export const usePersistentState = create(
       {
         name: "thgl-app",
         version: 2,
+        onRehydrateStorage: () => (state) => {
+          state?.setHasHydrated(true);
+        },
       },
     ),
   ),

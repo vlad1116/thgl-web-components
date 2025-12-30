@@ -7,7 +7,7 @@ import {
   openOverlayWebView,
   setWindowMode as setWindowModeNative,
   useLiveState,
-  usePersistentState,
+  useTHGLAppState,
 } from "@repo/lib/thgl-app";
 import { ScrollArea } from "@repo/ui/controls";
 import { DiscordMessage, PreviewImage, Subtitle } from "@repo/ui/content";
@@ -68,9 +68,9 @@ export function GamePageClient({
   updateMessages: DiscordMessageData[];
 }) {
   const runningGames = useLiveState((state) => state.runningGames);
-  const gameSessions = usePersistentState((state) => state.gameSessions);
-  const autoRunGames = usePersistentState((state) => state.autoRunGames);
-  const setAutoRunGame = usePersistentState((state) => state.setAutoRunGame);
+  const gameSessions = useTHGLAppState((state) => state.gameSessions);
+  const autoRunGames = useTHGLAppState((state) => state.autoRunGames);
+  const setAutoRunGame = useTHGLAppState((state) => state.setAutoRunGame);
   const autoRun = autoRunGames[game.id] ?? true;
 
   const processNames =

@@ -4,7 +4,7 @@ import { cn, games, useAccountStore } from "@repo/lib";
 import {
   openInBrowser,
   useLiveState,
-  usePersistentState,
+  useTHGLAppState,
 } from "@repo/lib/thgl-app";
 import { Button } from "../(controls)";
 import {
@@ -28,8 +28,8 @@ import Image from "next/image";
 import { ScrollArea } from "../ui/scroll-area";
 
 export function DashboardSidebar() {
-  const isExpanded = usePersistentState((state) => state.sidebarExpanded);
-  const setIsExpanded = usePersistentState((state) => state.setSidebarExpanded);
+  const isExpanded = useTHGLAppState((state) => state.sidebarExpanded);
+  const setIsExpanded = useTHGLAppState((state) => state.setSidebarExpanded);
   const account = useAccountStore();
   const pathname = usePathname();
   const runningGames = useLiveState((state) => state.runningGames);

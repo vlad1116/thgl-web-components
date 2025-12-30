@@ -1,6 +1,6 @@
 import { useGameState } from "../game";
 import { useSettingsStore } from "../settings";
-import { useLiveState, usePersistentState } from "./states";
+import { useLiveState, useTHGLAppState } from "./states";
 import { getInitialStateFromWebview } from "./version";
 import { postWebviewMessage } from "./webview";
 
@@ -200,7 +200,7 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
             if (message.action === "runningGames") {
               liveState.setRunningGames(message.payload);
             } else if (message.action === "gameSession") {
-              usePersistentState.getState().updateGameSession(message.payload);
+              useTHGLAppState.getState().updateGameSession(message.payload);
             } else if (message.action === "connectedClients") {
               liveState.setConnectedClients(message.payload);
             } else if (message.action === "version") {
