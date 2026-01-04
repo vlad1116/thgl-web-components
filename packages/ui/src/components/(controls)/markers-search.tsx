@@ -31,6 +31,7 @@ export function MarkersSearch({
   hideComments,
   iconsPath,
   className,
+  mapEnTitles,
 }: {
   lastMapUpdate?: number;
   appName: string;
@@ -42,6 +43,7 @@ export function MarkersSearch({
   hideComments?: boolean;
   iconsPath: string;
   className?: string;
+  mapEnTitles?: Record<string, string>;
 }): JSX.Element {
   const t = useT();
   const { _hasHydrated, search, setSearch, searchIsLoading, selectedNodeId } =
@@ -59,7 +61,7 @@ export function MarkersSearch({
 
   const mapNames = Object.entries(tileOptions).map(([k, v]) => ({
     name: k,
-    defaultTitle: v.defaultTitle || t(k),
+    defaultTitle: v.defaultTitle || mapEnTitles?.[k] || t(k),
   }));
 
   useEffect(() => {

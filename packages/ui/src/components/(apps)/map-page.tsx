@@ -130,6 +130,12 @@ export function createMapPage(
             iconsPath={version.more.icons}
             additionalFilters={additionalFilters}
             additionalTooltip={additionalTooltip}
+            mapEnTitles={Object.fromEntries(
+              Object.keys(version.data.tiles).map((k) => [
+                k,
+                version.data.enDict[k],
+              ]),
+            )}
           >
             <FloatingAds id={appConfig.name} />
           </MarkersSearch>

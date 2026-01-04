@@ -82,6 +82,12 @@ export default async function Map({ params }: PageProps) {
               <PaliaGridToggle />
             </>
           }
+          mapEnTitles={Object.fromEntries(
+            Object.keys(version.data.tiles).map((k) => [
+              k,
+              version.data.enDict[k],
+            ]),
+          )}
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>

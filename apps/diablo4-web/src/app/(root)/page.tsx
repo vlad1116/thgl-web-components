@@ -45,6 +45,12 @@ export default async function Home() {
           appName={APP_CONFIG.name}
           additionalFilters={<Diablo4Events />}
           iconsPath={version.more.icons}
+          mapEnTitles={Object.fromEntries(
+            Object.keys(version.data.tiles).map((k) => [
+              k,
+              version.data.enDict[k],
+            ]),
+          )}
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>

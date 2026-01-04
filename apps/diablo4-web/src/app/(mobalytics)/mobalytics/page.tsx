@@ -46,6 +46,12 @@ export default async function Home() {
           embed
           hideComments
           iconsPath={version.more.icons}
+          mapEnTitles={Object.fromEntries(
+            Object.keys(version.data.tiles).map((k) => [
+              k,
+              version.data.enDict[k],
+            ]),
+          )}
         />
       </div>
     </CoordinatesProvider>

@@ -275,6 +275,9 @@ export function App({
                     iconsPath={version?.more.icons}
                     className="top-[40px] md:ml-0"
                     additionalTooltip={additionalTooltip}
+                    mapEnTitles={Object.fromEntries(
+                      Object.keys(tiles).map((k) => [k, version.data.enDict[k]]),
+                    )}
                   />
                 )}
                 {lockedWindow ? lockedWindowComponents : null}

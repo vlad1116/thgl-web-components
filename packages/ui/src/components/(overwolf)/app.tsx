@@ -136,6 +136,9 @@ export function App({
                   additionalFilters={additionalFilters}
                   iconsPath={version?.more.icons}
                   additionalTooltip={additionalTooltip}
+                  mapEnTitles={Object.fromEntries(
+                    Object.keys(tiles).map((k) => [k, version.data.enDict[k]]),
+                  )}
                 />
               )}
               {lockedWindow ? lockedWindowComponents : null}

@@ -44,6 +44,12 @@ export default async function Home() {
           tileOptions={version.data.tiles}
           appName={APP_CONFIG.name}
           iconsPath={version.more.icons}
+          mapEnTitles={Object.fromEntries(
+            Object.keys(version.data.tiles).map((k) => [
+              k,
+              version.data.enDict[k],
+            ]),
+          )}
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>
