@@ -4,7 +4,7 @@ export const APP_CONFIG: AppConfig = {
   name: "blue-protocol-star-resonance",
   title: "Blue Protocol: Star Resonance",
   domain: "starresonance",
-  supportedLocales: ["en"],
+  supportedLocales: ["en", "ja", "zh-CN", "zh-TW", "th"],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
@@ -130,15 +130,15 @@ export const APP_CONFIG: AppConfig = {
       iconName: "BookOpen",
     },
     {
-      href: "/guides/Field%20Bosses",
-      title: "Field Bosses",
-      linkText: "Discover all Field Bosses",
+      href: "/guides/Boss",
+      title: "Bosses",
+      linkText: "Discover all Bosses",
       iconName: "BookOpen",
     },
     {
-      href: "/guides/Rare%20Spawns",
-      title: "Rare Spawns",
-      linkText: "Discover all Rare Spawns",
+      href: "/guides//Camera%20Point",
+      title: "Camera Points",
+      linkText: "Discover all Camera Points",
       iconName: "BookOpen",
     },
     {

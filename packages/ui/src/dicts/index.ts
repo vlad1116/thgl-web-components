@@ -14,6 +14,7 @@ const globalDictionaries = {
   pl: () => import("./pl.json").then((mod) => mod.default),
   "pt-BR": () => import("./pt-BR.json").then((mod) => mod.default),
   ru: () => import("./ru.json").then((mod) => mod.default),
+  th: () => import("./th.json").then((mod) => mod.default),
   tr: () => import("./tr.json").then((mod) => mod.default),
   uk: () => import("./uk.json").then((mod) => mod.default),
   "zh-CN": () => import("./zh-CN.json").then((mod) => mod.default),
