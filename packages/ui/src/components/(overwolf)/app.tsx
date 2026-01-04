@@ -7,6 +7,7 @@ import {
   OverwolfAppConfig,
   RegionsConfig,
   TilesConfig,
+  translate,
   useSettingsStore,
   Version,
 } from "@repo/lib";
@@ -137,7 +138,10 @@ export function App({
                   iconsPath={version?.more.icons}
                   additionalTooltip={additionalTooltip}
                   mapEnTitles={Object.fromEntries(
-                    Object.keys(tiles).map((k) => [k, version.data.enDict[k]]),
+                    Object.keys(tiles).map((k) => [
+                      k,
+                      translate(version.data.enDict, k),
+                    ]),
                   )}
                 />
               )}

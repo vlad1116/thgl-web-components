@@ -7,6 +7,7 @@ import {
   getMetadataAlternates,
   getT,
   localizePath,
+  translate,
 } from "@repo/lib";
 import { CoordinatesProvider } from "../(providers)";
 import { HeaderOffset, PageTitle } from "../(header)";
@@ -133,7 +134,7 @@ export function createMapPage(
             mapEnTitles={Object.fromEntries(
               Object.keys(version.data.tiles).map((k) => [
                 k,
-                version.data.enDict[k],
+                translate(version.data.enDict, k),
               ]),
             )}
           >

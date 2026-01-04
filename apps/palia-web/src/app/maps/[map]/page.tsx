@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { fetchVersion, getMapNameFromVersion } from "@repo/lib";
+import { fetchVersion, getMapNameFromVersion, translate } from "@repo/lib";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
@@ -85,7 +85,7 @@ export default async function Map({ params }: PageProps) {
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,
-              version.data.enDict[k],
+              translate(version.data.enDict, k),
             ]),
           )}
         >

@@ -1,7 +1,7 @@
 import { MarkersSearch } from "@repo/ui/markers-search";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import type { Metadata } from "next";
-import { fetchVersion } from "@repo/lib";
+import { fetchVersion, translate } from "@repo/lib";
 import { Diablo4Events } from "@repo/ui/data";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
 import { APP_CONFIG } from "@/config";
@@ -49,7 +49,7 @@ export default async function Home() {
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,
-              version.data.enDict[k],
+              translate(version.data.enDict, k),
             ]),
           )}
         />

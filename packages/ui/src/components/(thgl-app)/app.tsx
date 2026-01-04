@@ -8,6 +8,7 @@ import {
   RegionsConfig,
   THGLAppConfig,
   TilesConfig,
+  translate,
   useAccountStore,
   useSettingsStore,
   Version,
@@ -276,7 +277,10 @@ export function App({
                     className="top-[40px] md:ml-0"
                     additionalTooltip={additionalTooltip}
                     mapEnTitles={Object.fromEntries(
-                      Object.keys(tiles).map((k) => [k, version.data.enDict[k]]),
+                      Object.keys(tiles).map((k) => [
+                        k,
+                        translate(version.data.enDict, k),
+                      ]),
                     )}
                   />
                 )}
