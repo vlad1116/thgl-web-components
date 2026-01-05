@@ -8,15 +8,18 @@ import {
   listenToGameEvents,
   logVersion,
 } from "@repo/lib/overwolf";
-import { Dict, fetchVersion } from "@repo/lib";
+import { Dict, fetchDict, fetchVersion } from "@repo/lib";
 import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
 import { APP_CONFIG } from "./config";
 import { App } from "@repo/ui/overwolf";
 
 logVersion();
 
-const version = await fetchVersion(APP_CONFIG.name);
-const enDictMerged = { ...enDictGlobal, ...version.data.enDict } as Dict;
+const [version, enDict] = await Promise.all([
+  fetchVersion(APP_CONFIG.name),
+  fetchDict(APP_CONFIG.name),
+]);
+const enDictMerged = { ...enDictGlobal, ...enDict } as Dict;
 
 const el = document.getElementById("root");
 if (el) {

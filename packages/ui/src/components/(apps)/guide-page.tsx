@@ -38,7 +38,7 @@ export function createGuidePageGenerateMetadata(appConfig: AppConfig) {
     ]);
 
     const guideTitle =
-      getTypeFromVersion(version, type) || getGroupFromVersion(version, type);
+      getTypeFromVersion(version, type, dict) || getGroupFromVersion(version, type, dict);
 
     if (!guideTitle) {
       return {};
@@ -101,9 +101,9 @@ export function createGuidePage(appConfig: AppConfig) {
     const t = getT(dict);
 
     let url, icon;
-    let guideId = getTypeFromVersion(version, type);
+    let guideId = getTypeFromVersion(version, type, dict);
     if (!guideId) {
-      guideId = getGroupFromVersion(version, type);
+      guideId = getGroupFromVersion(version, type, dict);
       if (!guideId) {
         return notFound();
       }
@@ -141,7 +141,7 @@ export function createGuidePage(appConfig: AppConfig) {
       p: s.p,
       mapName: s.mapName || DEFAULT_MAP_NAME,
       type: s.type,
-      name: version.data.enDict[s.id ?? s.type] || s.id || s.type,
+      name: dict[s.id ?? s.type] || s.id || s.type,
       icon: s.icon || icon || getIconFromFilters(version.data.filters, s.type),
     }));
     return (

@@ -90,7 +90,6 @@ export type Version = {
   id: string;
   createdAt: number;
   data: {
-    enDict: Record<string, string>;
     filters: FiltersConfig;
     regions: Region[];
     tiles: TilesConfig;
@@ -173,25 +172,22 @@ export const fetchVersion = conditionalCache(
 const versionCacheMap = new WeakMap<
   Version,
   {
-    reverseDictMap: Map<string, string[]>;
     tileKeys: Set<string>;
     filterValueIds: Set<string>;
     filterGroupIds: Set<string>;
   }
 >();
 
+// Separate cache for dict reverse lookup (keyed by dict object reference)
+const dictCacheMap = new WeakMap<
+  Record<string, string>,
+  Map<string, string[]>
+>();
+
 function getVersionLookupCache(version: Version) {
   let cache = versionCacheMap.get(version);
 
   if (!cache) {
-    // Build reverse dictionary map (value -> keys[])
-    const reverseDictMap = new Map<string, string[]>();
-    for (const [key, value] of Object.entries(version.data.enDict)) {
-      const existing = reverseDictMap.get(value) || [];
-      existing.push(key);
-      reverseDictMap.set(value, existing);
-    }
-
     // Build set of valid tile keys
     const tileKeys = new Set(Object.keys(version.data.tiles));
 
@@ -205,19 +201,40 @@ function getVersionLookupCache(version: Version) {
       }
     }
 
-    cache = { reverseDictMap, tileKeys, filterValueIds, filterGroupIds };
+    cache = { tileKeys, filterValueIds, filterGroupIds };
     versionCacheMap.set(version, cache);
   }
 
   return cache;
 }
 
+function getReverseDictMap(
+  dict: Record<string, string>,
+): Map<string, string[]> {
+  let reverseDictMap = dictCacheMap.get(dict);
+
+  if (!reverseDictMap) {
+    // Build reverse dictionary map (value -> keys[])
+    reverseDictMap = new Map<string, string[]>();
+    for (const [key, value] of Object.entries(dict)) {
+      const existing = reverseDictMap.get(value) || [];
+      existing.push(key);
+      reverseDictMap.set(value, existing);
+    }
+    dictCacheMap.set(dict, reverseDictMap);
+  }
+
+  return reverseDictMap;
+}
+
 export function getMapNameFromVersion(
   version: Version,
   map: string,
+  dict: Record<string, string>,
 ): string | null {
   const decodedMap = decodeURIComponent(map);
-  const { reverseDictMap, tileKeys } = getVersionLookupCache(version);
+  const { tileKeys } = getVersionLookupCache(version);
+  const reverseDictMap = getReverseDictMap(dict);
 
   const possibleKeys = reverseDictMap.get(decodedMap);
   if (!possibleKeys) return null;
@@ -243,9 +260,11 @@ export function getMapNameFromVersion(
 export function getTypeFromVersion(
   version: Version,
   type: string,
+  dict: Record<string, string>,
 ): string | null {
   const decodedType = decodeURIComponent(type);
-  const { reverseDictMap, filterValueIds } = getVersionLookupCache(version);
+  const { filterValueIds } = getVersionLookupCache(version);
+  const reverseDictMap = getReverseDictMap(dict);
 
   const possibleKeys = reverseDictMap.get(decodedType);
   if (!possibleKeys) return null;
@@ -263,9 +282,11 @@ export function getTypeFromVersion(
 export function getGroupFromVersion(
   version: Version,
   group: string,
+  dict: Record<string, string>,
 ): string | null {
   const decodedGroup = decodeURIComponent(group);
-  const { reverseDictMap, filterGroupIds } = getVersionLookupCache(version);
+  const { filterGroupIds } = getVersionLookupCache(version);
+  const reverseDictMap = getReverseDictMap(dict);
 
   const possibleKeys = reverseDictMap.get(decodedGroup);
   if (!possibleKeys) return null;

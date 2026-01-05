@@ -35,7 +35,7 @@ export function createMapPageGenerateMetadata(appConfig: AppConfig) {
       fetchVersion(appConfig.name),
     ]);
 
-    const mapName = getMapNameFromVersion(version, map);
+    const mapName = getMapNameFromVersion(version, map, dict);
     if (!mapName) {
       return {};
     }
@@ -89,7 +89,7 @@ export function createMapPage(
 
     const t = getT(dict);
 
-    const mapName = getMapNameFromVersion(version, map);
+    const mapName = getMapNameFromVersion(version, map, dict);
     if (!mapName) {
       notFound();
     }
@@ -134,7 +134,7 @@ export function createMapPage(
             mapEnTitles={Object.fromEntries(
               Object.keys(version.data.tiles).map((k) => [
                 k,
-                translate(version.data.enDict, k),
+                translate(dict, k),
               ]),
             )}
           >

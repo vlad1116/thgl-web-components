@@ -8,6 +8,7 @@ import {
   Subtitle,
 } from "@repo/ui/content";
 import {
+  fetchDict,
   fetchVersion,
   getUpdateMessages,
   getPreviewImageUrl,
@@ -26,11 +27,14 @@ export const metadata: Metadata = {
   },
 };
 export default async function Home() {
-  const updateMessages = await getUpdateMessages(APP_CONFIG.name);
-  const version = await fetchVersion(APP_CONFIG.name);
+  const [updateMessages, version, dict] = await Promise.all([
+    getUpdateMessages(APP_CONFIG.name),
+    fetchVersion(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
   const mapNames = Object.keys(version.data.tiles);
   const cards = mapNames.map((map) => {
-    const mapName = translate(version.data.enDict, map);
+    const mapName = translate(dict, map);
     return {
       title: `${mapName} Map`,
       description: `Navigate ${mapName} with our interactive maps.`,

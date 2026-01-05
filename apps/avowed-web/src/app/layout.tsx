@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 import "@repo/ui/styles/globals.css";
 
-import { cn, Dict, fetchVersion } from "@repo/lib";
+import { cn, Dict, fetchDict, fetchVersion } from "@repo/lib";
 import { Inter as FontSans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { Account, Brand, Header, PlausibleTracker } from "@repo/ui/header";
@@ -30,10 +30,13 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const version = await fetchVersion(APP_CONFIG.name);
+  const [version, enDict] = await Promise.all([
+    fetchVersion(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
   const enDictMerged = {
     ...enDictGlobal,
-    ...version.data.enDict,
+    ...enDict,
   } as Dict;
   return (
     <html lang="en">

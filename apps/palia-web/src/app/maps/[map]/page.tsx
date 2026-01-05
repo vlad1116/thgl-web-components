@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { fetchVersion, getMapNameFromVersion, translate } from "@repo/lib";
+import { fetchDict, fetchVersion, getMapNameFromVersion, translate } from "@repo/lib";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
@@ -44,8 +44,11 @@ export async function generateMetadata({
 
 export default async function Map({ params }: PageProps) {
   const map = (await params).map;
-  const version = await fetchVersion(APP_CONFIG.name);
-  const mapName = getMapNameFromVersion(version, map);
+  const [version, dict] = await Promise.all([
+    fetchVersion(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
+  const mapName = getMapNameFromVersion(version, map, dict);
   if (!mapName) {
     notFound();
   }
@@ -85,7 +88,7 @@ export default async function Map({ params }: PageProps) {
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,
-              translate(version.data.enDict, k),
+              translate(dict, k),
             ]),
           )}
         >

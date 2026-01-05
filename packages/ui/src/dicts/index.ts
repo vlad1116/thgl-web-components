@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, Dict, fetchDict, fetchVersion } from "@repo/lib";
+import { Dict, fetchDict } from "@repo/lib";
 import "server-only";
 
 // Global dictionary files per locale
@@ -109,9 +109,7 @@ export async function getFullDictionary(
 ): Promise<Dict> {
   const [staticDict, dict] = await Promise.all([
     getStaticDictionary(appName, locale),
-    locale !== DEFAULT_LOCALE
-      ? fetchDict(appName, locale)
-      : fetchVersion(appName).then((res) => res.data.enDict),
+    fetchDict(appName, locale),
   ]);
   return {
     ...staticDict,

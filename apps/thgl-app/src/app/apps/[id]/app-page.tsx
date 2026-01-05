@@ -1,4 +1,4 @@
-import { fetchVersion, games, Dict } from "@repo/lib";
+import { fetchDict, fetchVersion, games, Dict } from "@repo/lib";
 import { AdditionalContent } from "@repo/ui/content";
 import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
 import { App } from "@repo/ui/thgl-app";
@@ -16,8 +16,11 @@ export function createAppPage(isOverlay: boolean) {
       notFound();
     }
 
-    const version = await fetchVersion(game.id);
-    const enDictMerged = { ...enDictGlobal, ...version.data.enDict } as Dict;
+    const [version, enDict] = await Promise.all([
+      fetchVersion(game.id),
+      fetchDict(game.id),
+    ]);
+    const enDictMerged = { ...enDictGlobal, ...enDict } as Dict;
     const domain = game.web ? new URL(game.web).host.split(".")[0] : "";
     return (
       <App

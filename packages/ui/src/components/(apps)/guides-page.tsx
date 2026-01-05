@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   AppConfig,
   DEFAULT_LOCALE,
+  fetchDict,
   fetchVersion,
   getIconsUrl,
   getMetadataAlternates,
@@ -66,9 +67,10 @@ export function createGuidesPageGenerateMetadata(appConfig: AppConfig) {
 export function createGuidesPage(appConfig: AppConfig) {
   return async function GuidesPage({ params }: PageProps) {
     const { locale = DEFAULT_LOCALE } = await params;
-    const [dict, version] = await Promise.all([
+    const [dict, version, enDict] = await Promise.all([
       getFullDictionary(appConfig.name, locale),
       fetchVersion(appConfig.name),
+      fetchDict(appConfig.name),
     ]);
     const t = getT(dict);
 
@@ -107,7 +109,7 @@ export function createGuidesPage(appConfig: AppConfig) {
               "@type": "ListItem",
               position: i + 1,
               name: g.label,
-              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${version.data.enDict[g.type]}`, locale)}`,
+              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${enDict[g.type]}`, locale)}`,
             })),
           }}
         />
@@ -157,7 +159,7 @@ export function createGuidesPage(appConfig: AppConfig) {
                   >
                     <Link
                       href={localizePath(
-                        `/guides/${encodeURIComponent(version.data.enDict[guide.type])}`,
+                        `/guides/${encodeURIComponent(enDict[guide.type])}`,
                         locale,
                       )}
                       className="block"

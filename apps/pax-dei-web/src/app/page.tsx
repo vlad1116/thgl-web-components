@@ -3,7 +3,7 @@ import { FloatingAds } from "@repo/ui/ads";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import type { Metadata } from "next";
-import { fetchVersion, translate } from "@repo/lib";
+import { fetchDict, fetchVersion, translate } from "@repo/lib";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
 import { APP_CONFIG } from "@/config";
 
@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   },
 };
 export default async function Home() {
-  const version = await fetchVersion(APP_CONFIG.name);
+  const [version, dict] = await Promise.all([
+    fetchVersion(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
 
   return (
     <CoordinatesProvider
@@ -45,7 +48,7 @@ export default async function Home() {
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,
-              translate(version.data.enDict, k),
+              translate(dict, k),
             ]),
           )}
         >

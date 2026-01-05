@@ -279,7 +279,7 @@ export function App({
                     mapEnTitles={Object.fromEntries(
                       Object.keys(tiles).map((k) => [
                         k,
-                        translate(version.data.enDict, k),
+                        translate(dict, k),
                       ]),
                     )}
                   />

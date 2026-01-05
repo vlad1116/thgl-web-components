@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { AppConfig, fetchVersion } from "./config";
+import { AppConfig, fetchDict, fetchVersion } from "./config";
 import { DEFAULT_LOCALE, localizePath } from "./i18n";
 
 export function createSitemap(appConfig: AppConfig) {
@@ -25,14 +25,17 @@ export function createSitemap(appConfig: AppConfig) {
   };
 
   return async function (): Promise<MetadataRoute.Sitemap> {
-    const version = await fetchVersion(appConfig.name);
+    const [version, enDict] = await Promise.all([
+      fetchVersion(appConfig.name),
+      fetchDict(appConfig.name),
+    ]);
     const mapNames = Object.keys(version.data.tiles);
 
     const entries = new Map<string, MetadataRoute.Sitemap[number]>();
 
     // Maps
     for (const mapName of mapNames) {
-      const title = version.data.enDict[mapName];
+      const title = enDict[mapName];
       const path = `/maps/${encodeURIComponent(title)}`;
       const url = baseUrl + path;
 
@@ -65,7 +68,7 @@ export function createSitemap(appConfig: AppConfig) {
     if (appConfig.internalLinks?.some((link) => link.href === "/guides")) {
       for (const filter of version.data.filters) {
         // Guide group
-        const groupTitle = version.data.enDict[filter.group];
+        const groupTitle = enDict[filter.group];
         const path = `/guides/${encodeURIComponent(groupTitle)}`;
         const url = baseUrl + path;
 
@@ -81,7 +84,7 @@ export function createSitemap(appConfig: AppConfig) {
 
         // Guide types
         for (const value of filter.values) {
-          const typeTitle = version.data.enDict[value.id];
+          const typeTitle = enDict[value.id];
           const typePath = `/guides/${encodeURIComponent(typeTitle)}`;
           const typeUrl = baseUrl + typePath;
 
