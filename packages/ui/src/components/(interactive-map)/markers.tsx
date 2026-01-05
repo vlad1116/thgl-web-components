@@ -12,6 +12,8 @@ import CanvasMarker, {
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
 import {
+  buildDiscoveryLookup,
+  checkNodeDiscovered,
   getAppUrl,
   getIconsUrl,
   getNodeId,
@@ -183,8 +185,8 @@ function MarkersContent({
     (state) => state.hideDiscoveredNodes,
   );
   const discoveredNodes = useSettingsStore((state) => state.discoveredNodes);
-  const discoveredSet = useMemo(
-    () => new Set(discoveredNodes),
+  const discoveryLookup = useMemo(
+    () => buildDiscoveryLookup(discoveredNodes),
     [discoveredNodes],
   );
   const setDiscoverNode = useSettingsStore((state) => state.setDiscoverNode);
@@ -262,21 +264,16 @@ function MarkersContent({
       const isCluster = Boolean(spawn.cluster && spawn.cluster.length > 0);
 
       const nodeId = getNodeId(spawn);
-      let isDiscovered: boolean;
-      if (nodeId.includes("@")) {
-        const [baseId] = nodeId.split("@");
-        isDiscovered = discoveredSet.has(nodeId) || discoveredSet.has(baseId);
-      } else {
-        isDiscovered = discoveredSet.has(nodeId);
-      }
+      let isDiscovered = checkNodeDiscovered(nodeId, discoveryLookup);
       if (isCluster && isDiscovered) {
         if (
           spawn.cluster!.some(
             (a) =>
-              !discoveredSet.has(
+              !checkNodeDiscovered(
                 a.id?.includes("@")
                   ? a.id
                   : `${a.id || a.type}@${a.p[0]}:${a.p[1]}`,
+                discoveryLookup,
               ),
           )
         ) {
@@ -509,7 +506,7 @@ function MarkersContent({
     spawns,
     sharedMyFilters,
     hideDiscoveredNodes,
-    discoveredSet,
+    discoveryLookup,
     tempPrivateNodeId,
     selectedNodeId,
     highlightSpawnIDs,

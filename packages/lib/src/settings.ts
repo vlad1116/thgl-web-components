@@ -317,6 +317,12 @@ const getStorageName = () => {
   return "settings-storage";
 };
 
+// Cache for isDiscoveredNode results - invalidated when discoveredNodes changes
+let discoveredCache: Map<string, boolean> | null = null;
+let discoveredSet: Set<string> | null = null;
+let discoveredCoordsSet: Set<string> | null = null;
+let cachedDiscoveredNodes: string[] | null = null;
+
 export const useSettingsStore = create(
   persist<SettingsStore>(
     (set, get) => {
@@ -541,13 +547,50 @@ export const useSettingsStore = create(
         isDiscoveredNode: (nodeId) => {
           const state = get();
           const discoveredNodes = state.discoveredNodes;
-          if (nodeId.includes("@")) {
-            return (
-              discoveredNodes.includes(nodeId) ||
-              discoveredNodes.some((id) => id === nodeId.split("@")[0])
-            );
+
+          // Invalidate cache and rebuild sets if discoveredNodes changed
+          if (cachedDiscoveredNodes !== discoveredNodes) {
+            cachedDiscoveredNodes = discoveredNodes;
+            discoveredCache = new Map();
+            discoveredSet = new Set(discoveredNodes);
+            discoveredCoordsSet = new Set();
+            for (const id of discoveredNodes) {
+              if (id.includes("@")) {
+                const atIndex = id.indexOf("@");
+                discoveredCoordsSet.add(id.slice(atIndex + 1));
+              }
+            }
           }
-          return discoveredNodes.includes(nodeId);
+
+          // Return cached result if available
+          const cached = discoveredCache!.get(nodeId);
+          if (cached !== undefined) {
+            return cached;
+          }
+
+          // Calculate result - all lookups are O(1)
+          let result: boolean;
+
+          // Fast path: no @ means simple ID
+          if (!nodeId.includes("@")) {
+            result = discoveredSet!.has(nodeId);
+          } else if (discoveredSet!.has(nodeId)) {
+            // Exact match
+            result = true;
+          } else {
+            // Parse nodeId once
+            const atIndex = nodeId.indexOf("@");
+            const baseId = nodeId.slice(0, atIndex);
+            const coords = nodeId.slice(atIndex + 1);
+
+            // Check base ID match or coordinate match (all O(1))
+            result =
+              discoveredSet!.has(baseId) || discoveredCoordsSet!.has(coords);
+          }
+
+          // Cache and return
+          discoveredCache!.set(nodeId, result);
+          return result;
         },
 
         toggleDiscoveredNode: (nodeId: string) => {
@@ -555,13 +598,27 @@ export const useSettingsStore = create(
           const discoveredNodes = state.discoveredNodes;
           const isDiscovered = state.isDiscoveredNode(nodeId);
 
+          // Parse nodeId once for coordinate matching
+          const nodeCoords = nodeId.includes("@")
+            ? nodeId.slice(nodeId.indexOf("@") + 1)
+            : null;
+
           const updatedNodes = isDiscovered
             ? discoveredNodes.filter((id) => {
+                // Exact match
                 if (id === nodeId) {
                   return false;
                 }
+                // Base ID match (type without coordinates)
                 if (nodeId.includes("@") && nodeId.split("@")[0] === id) {
                   return false;
+                }
+                // Coordinate match (for backward compatibility)
+                if (nodeCoords && id.includes("@")) {
+                  const idCoords = id.slice(id.indexOf("@") + 1);
+                  if (idCoords === nodeCoords) {
+                    return false;
+                  }
                 }
                 return true;
               })
@@ -572,15 +629,30 @@ export const useSettingsStore = create(
 
         setDiscoverNode: (nodeId, discovered) => {
           const state = get();
+
+          // Parse nodeId once for coordinate matching
+          const nodeCoords = nodeId.includes("@")
+            ? nodeId.slice(nodeId.indexOf("@") + 1)
+            : null;
+
           updateSettings({
             discoveredNodes: discovered
               ? [...new Set([...state.discoveredNodes, nodeId])]
               : state.discoveredNodes.filter((id) => {
+                  // Exact match
                   if (id === nodeId) {
                     return false;
                   }
+                  // Base ID match (type without coordinates)
                   if (nodeId.includes("@") && nodeId.split("@")[0] === id) {
                     return false;
+                  }
+                  // Coordinate match (for backward compatibility)
+                  if (nodeCoords && id.includes("@")) {
+                    const idCoords = id.slice(id.indexOf("@") + 1);
+                    if (idCoords === nodeCoords) {
+                      return false;
+                    }
                   }
                   return true;
                 }),

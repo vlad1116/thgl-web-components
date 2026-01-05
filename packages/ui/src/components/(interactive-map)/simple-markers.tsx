@@ -6,6 +6,8 @@ import CanvasMarker, {
   clearCanvasCache,
 } from "./canvas-marker";
 import {
+  buildDiscoveryLookup,
+  checkNodeDiscovered,
   getIconsUrl,
   getNodeId,
   useSettingsStore,
@@ -61,8 +63,8 @@ export function SimpleMarkers({
   );
   const setDiscoverNode = useSettingsStore((state) => state.setDiscoverNode);
   const discoveredNodes = useSettingsStore((state) => state.discoveredNodes);
-  const discoveredSet = useMemo(
-    () => new Set(discoveredNodes),
+  const discoveryLookup = useMemo(
+    () => buildDiscoveryLookup(discoveredNodes),
     [discoveredNodes],
   );
 
@@ -93,12 +95,7 @@ export function SimpleMarkers({
       let isDiscovered: boolean;
       if (!withoutDiscoveredNodes) {
         const nodeId = getNodeId(spawn);
-        if (nodeId.includes("@")) {
-          const [baseId] = nodeId.split("@");
-          isDiscovered = discoveredSet.has(nodeId) || discoveredSet.has(baseId);
-        } else {
-          isDiscovered = discoveredSet.has(nodeId);
-        }
+        isDiscovered = checkNodeDiscovered(nodeId, discoveryLookup);
 
         if (isDiscovered && hideDiscoveredNodes) {
           return;
@@ -211,7 +208,7 @@ export function SimpleMarkers({
     spawns,
     isLoadingSprite,
     highlightedIds,
-    discoveredSet,
+    discoveryLookup,
     colorBlindMode,
     colorBlindSeverity,
   ]);
