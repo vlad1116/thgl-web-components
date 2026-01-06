@@ -108,6 +108,7 @@ export default function PileMapClient({
       id: s.id,
       name: t(s.id),
       p: s.p,
+      type: s.type,
       icon: stableNodeIcon,
     }));
 

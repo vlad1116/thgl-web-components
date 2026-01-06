@@ -1,6 +1,11 @@
 "use client";
 
-import { SimpleMap, SimpleMarkers } from "@repo/ui/interactive-map";
+import { useRef } from "react";
+import {
+  SimpleWebMap,
+  SimpleWebMarkers,
+  type SimpleWebMapRef,
+} from "@repo/ui/interactive-map";
 import { SimpleSpawn, type TilesConfig } from "@repo/lib";
 
 export default function SimpleMapDynamic({
@@ -12,13 +17,21 @@ export default function SimpleMapDynamic({
   spawns: SimpleSpawn[];
   tiles: TilesConfig;
 }): JSX.Element {
+  const mapRef = useRef<SimpleWebMapRef | null>(null);
+
   return (
     <div className="h-60 md:h-96 mt-4">
-      <SimpleMap mapName={mapName} tileOptions={tiles} appName="once-human" />
-      <SimpleMarkers
+      <SimpleWebMap
+        mapName={mapName}
+        tileOptions={tiles}
+        appName="once-human"
+        mapRef={mapRef}
+      />
+      <SimpleWebMarkers
         spawns={spawns}
         iconsPath="/icons/icons.webp"
         appName="once-human"
+        mapRef={mapRef}
       />
     </div>
   );

@@ -40,6 +40,7 @@ export function SimpleMarkers({
 }) {
   const map = useMap();
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
+  const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
   const handleMapMouseMoveRef = useRef<((e: LeafletMouseEvent) => void) | null>(
     null,
   );
@@ -120,12 +121,14 @@ export function SimpleMarkers({
             : rotatedCoord;
       }
 
+      // Apply per-filter icon size multiplier if available
+      const filterMultiplier = spawn.type ? (iconSizeByFilter[spawn.type] ?? 1) : 1;
       const marker = new CanvasMarker(markerPosition, {
         id: spawn.id,
         icon: typeof spawn.icon === "string" ? { url: spawn.icon } : spawn.icon,
         color: spawn.color,
         baseRadius: baseRadius,
-        radius: baseRadius * baseIconSize,
+        radius: baseRadius * baseIconSize * filterMultiplier,
         isHighlighted: highlightedIds.includes(spawn.id),
         isDiscovered,
         colorBlindMode,
@@ -211,6 +214,8 @@ export function SimpleMarkers({
     discoveryLookup,
     colorBlindMode,
     colorBlindSeverity,
+    baseIconSize,
+    iconSizeByFilter,
   ]);
 
   const mapContainer = map?.getPane("mapPane");

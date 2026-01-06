@@ -14,6 +14,7 @@ export { DuneHeatmaps } from "./dune-heatmaps";
 export { NodeDetails } from "./node-details";
 export { PaliaGridToggle } from "./palia-grid-toggle";
 export { PaliaGrid } from "./palia-grid";
+export { PaliaWebGrid } from "./palia-web-grid";
 export { PaliaTime } from "./palia-time";
 export {
   PaliaWeeklyWants,

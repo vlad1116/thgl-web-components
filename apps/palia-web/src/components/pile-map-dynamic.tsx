@@ -1,6 +1,12 @@
 "use client";
 
-import { SimpleMap, SimpleMarkers } from "@repo/ui/interactive-map";
+import { useRef } from "react";
+import {
+  SimpleWebMap,
+  SimpleWebMarkers,
+  type SimpleWebMapRef,
+} from "@repo/ui/interactive-map";
+import { PaliaWebGrid } from "@repo/ui/data";
 import { type TilesConfig, type SimpleSpawn } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 
@@ -15,36 +21,30 @@ export default function PileMapDynamic({
   tiles: TilesConfig;
   icons: string;
 }): JSX.Element {
-  const pileSpawns = spawns.filter((spawn) => spawn.name.includes("Pile"));
-  const center = pileSpawns.reduce(
-    (acc, curr) => {
-      acc[0] += curr.p[0];
-      acc[1] += curr.p[1];
-      return acc;
-    },
-    [0, 0] as [number, number],
-  );
-  center[0] /= pileSpawns.length;
-  center[1] /= pileSpawns.length;
+  const mapRef = useRef<SimpleWebMapRef | null>(null);
+
+  // Use first spawn as center (the pile)
+  const center: [number, number] | undefined =
+    spawns.length > 0 ? [spawns[0].p[0], spawns[0].p[1]] : undefined;
+
   return (
     <div className="h-64 md:h-96 mt-4">
-      <SimpleMap
+      <SimpleWebMap
         mapName={mapName}
         tileOptions={tiles}
         appName={APP_CONFIG.name}
-        view={{
-          center: center,
-          zoom: 0,
-        }}
+        view={center ? { center, zoom: 0 } : undefined}
+        mapRef={mapRef}
       />
-      <SimpleMarkers
+      <SimpleWebMarkers
         spawns={spawns}
-        imageSprite
         iconsPath={icons}
         appName={APP_CONFIG.name}
         highlightedIds={spawns.length === 1 ? [spawns[0].id] : undefined}
         withoutDiscoveredNodes
+        mapRef={mapRef}
       />
+      <PaliaWebGrid mapName={mapName} mapRef={mapRef} force />
     </div>
   );
 }

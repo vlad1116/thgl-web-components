@@ -6,6 +6,7 @@ export default defineConfig((options: Options) => ({
     "src/server/index.ts",
     "src/overwolf/index.ts",
     "src/thgl-app/index.ts",
+    "src/web-map/index.ts",
   ],
   dts: true,
   format: ["esm"],
