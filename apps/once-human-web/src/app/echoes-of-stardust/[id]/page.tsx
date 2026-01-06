@@ -3,7 +3,7 @@ import { type Metadata } from "next";
 import { type Database } from "@repo/ui/providers";
 import { Button } from "@repo/ui/controls";
 import { ExternalAnchor } from "@repo/ui/header";
-import { fetchDatabase, fetchTiles } from "@repo/lib";
+import { fetchDatabase, fetchDict, fetchTiles, translate } from "@repo/lib";
 import SimpleMapClient from "@/components/simple-map-client";
 import { APP_CONFIG } from "@/config";
 
@@ -15,7 +15,10 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { id } = await params;
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const [database, enDict] = await Promise.all([
+    fetchDatabase(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
 
   const category = database.find((item) =>
     item.items.some((i) => i.id === id),
@@ -29,8 +32,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${item.props.title} – The Hidden Gaming Lair`,
-    description: item.props.content,
+    title: `${translate(enDict, item.props.title)} – The Hidden Gaming Lair`,
+    description: translate(enDict, item.props.content),
   };
 }
 
@@ -40,8 +43,11 @@ export default async function Item({
   params: Params;
 }): Promise<JSX.Element> {
   const { id } = await params;
-  const tiles = await fetchTiles(APP_CONFIG.name);
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const [tiles, database, enDict] = await Promise.all([
+    fetchTiles(APP_CONFIG.name),
+    fetchDatabase(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name),
+  ]);
 
   const category = database.find((item) =>
     item.items.some((i) => i.id === id),
@@ -56,12 +62,12 @@ export default async function Item({
 
   return (
     <div className="py-6 text-left space-y-2">
-      <h3 className="uppercase text-4xl">{item.props.title}</h3>
-      <p className="text-primary">{item.props.title1}</p>
-      <p className="text-primary">{item.props.title2}</p>
-      <p className="text-primary">{item.props.title3}</p>
+      <h3 className="uppercase text-4xl">{translate(enDict, item.props.title)}</h3>
+      <p className="text-primary">{translate(enDict, item.props.title1)}</p>
+      <p className="text-primary">{translate(enDict, item.props.title2)}</p>
+      <p className="text-primary">{translate(enDict, item.props.title3)}</p>
       <p className="pt-4 text-muted-foreground whitespace-break-spaces">
-        {item.props.content.trim()}
+        {translate(enDict, item.props.content).trim()}
       </p>
       <h3 className="uppercase text-3xl">Location</h3>
       {item.props.location ? (
@@ -69,7 +75,7 @@ export default async function Item({
           spawns={[
             {
               id: item.id,
-              name: item.props.title,
+              name: translate(enDict, item.props.title),
               icon: null,
               p: [item.props.location[1], item.props.location[0]],
             },

@@ -1,6 +1,6 @@
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
-import { fetchDatabase, fetchDict } from "@repo/lib";
+import { fetchDatabase, fetchDict, translate } from "@repo/lib";
 import { DatabaseSidebar } from "@/components/database-sidebar";
 import { APP_CONFIG } from "@/config";
 
@@ -27,7 +27,7 @@ export default async function Layout({
       },
       items: item.items.map((subitem) => ({
         key: subitem.id,
-        text: subitem.props.title,
+        text: translate(enDict, subitem.props.title),
         href: `/echoes-of-stardust/${subitem.id}`,
       })),
     };
