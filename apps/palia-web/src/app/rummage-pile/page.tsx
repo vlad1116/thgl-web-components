@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { getApiUrl, decodeFromBuffer, fetchVersion } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
+import { DownloadIcon, FilterIcon, MapPinIcon } from "lucide-react";
 import Filter from "./filter.webp";
 import Map from "./map.webp";
 import PileMapClient from "@/components/pile-map-client";
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   },
   title: "Palia Rummage Pile and Chapaa Pile – The Hidden Gaming Lair",
   description:
-    "Discover Rummage Pile and Chapaa Pile locations in Palia. Find the Baharai Rummage Pile and Kilima Rummage Pile to collect valuable resources and items.",
+    "Discover Rummage Pile and Chapaa Pile locations in Palia. Find piles in Kilima Village, Bahari Bay, and Elderwood to collect valuable resources and items.",
 };
 
 export default async function RummagePile() {
@@ -60,8 +61,8 @@ export default async function RummagePile() {
             <h2 className="text-2xl">Rummage Piles</h2>
             <p className="text-sm">
               Discover Rummage Pile and Chapaa Pile locations in Palia. Select
-              between Bahari Bay and Kilima Village to find valuable resources
-              and items.
+              between Kilima Village, Bahari Bay, and Elderwood to find
+              valuable resources and items.
             </p>
           </>
         }
@@ -78,24 +79,99 @@ export default async function RummagePile() {
               />
               <PaliaGrid force />
             </Suspense>
-            <div className="flex flex-col gap-2 items-center">
-              <h3 className="text-xl font-semibold text-primary mb-4">
-                In-Game App
-              </h3>
-              <p>
-                Unlock the full potential by installing the In-Game app to
-                discover the Rummage Pile locations in real-time!
-              </p>
-              <p>1: Install the In-Game app from the Overwolf App Store</p>
-              <Button asChild>
-                <ExternalAnchor href="https://www.overwolf.com/app/Leon_Machens-Palia_Map">
-                  Overwolf App Store
+            {/* In-Game App CTA Section */}
+            <div className="mt-8 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-primary mb-2">
+                  Real-Time Pile Tracking
+                </h3>
+                <p className="text-muted-foreground">
+                  Never miss a Rummage Pile again with live in-game overlay
+                </p>
+              </div>
+
+              {/* Step Cards */}
+              <div className="grid gap-6 md:grid-cols-3 mb-8">
+                {/* Step 1 */}
+                <ExternalAnchor
+                  href="https://www.th.gl/companion-app"
+                  className="relative group"
+                >
+                  <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full group-hover:border-primary/50 transition-colors">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
+                      1
+                    </div>
+                    <DownloadIcon className="w-8 h-8 text-primary shrink-0" />
+                    <div className="text-center">
+                      <p className="font-medium mb-1">Install the App</p>
+                      <p className="text-sm text-muted-foreground">
+                        Get the THGL companion app
+                      </p>
+                    </div>
+                  </div>
+                </ExternalAnchor>
+
+                {/* Step 2 */}
+                <div className="relative group">
+                  <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
+                      2
+                    </div>
+                    <FilterIcon className="w-8 h-8 text-primary shrink-0" />
+                    <div className="text-center">
+                      <p className="font-medium mb-1">Enable Filter</p>
+                      <p className="text-sm text-muted-foreground">
+                        Select Rummage Pile in filters
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="relative group">
+                  <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
+                      3
+                    </div>
+                    <MapPinIcon className="w-8 h-8 text-primary shrink-0" />
+                    <div className="text-center">
+                      <p className="font-medium mb-1">Track Live</p>
+                      <p className="text-sm text-muted-foreground">
+                        See piles on your in-game map
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Screenshots */}
+              <div className="grid gap-4 md:grid-cols-2 mb-8">
+                <div className="rounded-lg overflow-hidden shadow-lg border border-border/50">
+                  <Image
+                    src={Filter}
+                    alt="Rummage Piles Filter"
+                    className="w-full h-auto"
+                  />
+                </div>
+                <div className="rounded-lg overflow-hidden shadow-lg border border-border/50">
+                  <Image
+                    src={Map}
+                    alt="Map View"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <Button size="lg" className="shadow-lg shadow-primary/20" asChild>
+                <ExternalAnchor href="https://www.th.gl/companion-app">
+                  <DownloadIcon className="w-4 h-4 mr-2" />
+                  Get THGL Companion App
                 </ExternalAnchor>
               </Button>
-              <p>2: Play Palia and select the Rummage Pile in the filters</p>
-              <Image src={Filter} alt="Rummage Piles Filter" />
-              <p>3: See the Pile and much more on the map</p>
-              <Image src={Map} alt="Map View" />
             </div>
           </>
         }

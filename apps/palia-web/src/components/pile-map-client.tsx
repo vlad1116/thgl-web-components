@@ -5,6 +5,7 @@ import { notFound, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import { Button } from "@repo/ui/controls";
 import Link from "next/link";
+import { MapIcon, ExpandIcon } from "lucide-react";
 import { type Spawns, useT } from "@repo/ui/providers";
 import { Skeleton } from "@repo/ui/data";
 import { type TilesConfig, type FiltersConfig, SimpleSpawn } from "@repo/lib";
@@ -112,38 +113,80 @@ export default function PileMapClient({
       icon: stableNodeIcon,
     }));
 
-  function formatDate(date: Date) {
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  function formatRelativeTime(date: Date) {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString();
   }
+
+  const fullMapUrl = isKillimaValley
+    ? "/maps/Kilima%20Village"
+    : isBahariBay
+      ? "/maps/Bahari%20Bay"
+      : "/maps/Elderwood";
+
+  const maps = [
+    { id: "kilima-valley", label: "Kilima Valley", active: isKillimaValley },
+    { id: "bahari-bay", label: "Bahari Bay", active: isBahariBay },
+    { id: "elderwood", label: "Elderwood", active: isElderwood },
+  ];
 
   return (
     <>
-      <div className="flex items-center justify-center gap-4">
-        <Button variant={isKillimaValley ? "default" : "secondary"} asChild>
-          <Link href={`?${createQueryString("map", "kilima-valley")}`}>
-            Kilima Valley
-          </Link>
-        </Button>
-        <Button variant={isBahariBay ? "default" : "secondary"} asChild>
-          <Link href={`?${createQueryString("map", "bahari-bay")}`}>
-            Bahari Bay
-          </Link>
-        </Button>
-        <Button variant={isElderwood ? "default" : "secondary"} asChild>
-          <Link href={`?${createQueryString("map", "elderwood")}`}>
-            Elderwood
-          </Link>
-        </Button>
+      {/* Map Selector */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {maps.map((map) => (
+          <Button
+            key={map.id}
+            variant={map.active ? "default" : "secondary"}
+            className={
+              map.active
+                ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
+                : "hover:bg-secondary/60"
+            }
+            asChild
+          >
+            <Link href={`?${createQueryString("map", map.id)}`}>
+              <MapIcon className="w-4 h-4 mr-2" />
+              {map.label}
+            </Link>
+          </Button>
+        ))}
       </div>
+
+      {/* Map Display */}
       <PileMapDynamic
         spawns={[...targetSpawns, ...stableSpawns]}
         mapName={mapName}
         tiles={tiles}
         icons={icons}
       />
-      <p className="text-zinc-200 text-sm">
-        Updated at {formatDate(new Date(timestamp))}
-      </p>
+
+      {/* Status Bar */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        {/* Live Indicator */}
+        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-400 border border-emerald-500/20">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          Live • {formatRelativeTime(new Date(timestamp))}
+        </div>
+
+        {/* Full Map Link */}
+        <Link
+          href={fullMapUrl}
+          className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+        >
+          <ExpandIcon className="w-3.5 h-3.5" />
+          Explore Full Map
+        </Link>
+      </div>
     </>
   );
 }
