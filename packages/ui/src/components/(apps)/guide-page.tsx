@@ -38,7 +38,8 @@ export function createGuidePageGenerateMetadata(appConfig: AppConfig) {
     ]);
 
     const guideTitle =
-      getTypeFromVersion(version, type, dict) || getGroupFromVersion(version, type, dict);
+      getTypeFromVersion(version, type, dict) ||
+      getGroupFromVersion(version, type, dict);
 
     if (!guideTitle) {
       return {};

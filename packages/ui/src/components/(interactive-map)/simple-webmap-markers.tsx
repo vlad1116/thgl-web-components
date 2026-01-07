@@ -59,6 +59,9 @@ export function SimpleWebMarkers({
     () => new Set(discoveredNodes),
     [discoveredNodes],
   );
+  // Keep a ref to the latest discoveredSet for use in event handlers
+  const discoveredSetRef = useRef(discoveredSet);
+  discoveredSetRef.current = discoveredSet;
   const spawnMapRef = useRef<Map<string, SimpleSpawn>>(new Map());
   const containerRef = useRef<HTMLElement | null>(null);
   const justClickedMarkerRef = useRef(false);
@@ -242,7 +245,8 @@ export function SimpleWebMarkers({
         const s = spawnMapRef.current.get(m.id);
         if (!s) return;
         const nodeId = getNodeId(s);
-        const wasDiscovered = discoveredSet.has(nodeId);
+        // Use ref to get latest discoveredSet (avoids stale closure)
+        const wasDiscovered = discoveredSetRef.current.has(nodeId);
         setDiscoverNode(nodeId, !wasDiscovered);
       });
     }

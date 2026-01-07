@@ -1,8 +1,12 @@
 "use client";
 
-import { SimpleMap } from "../(interactive-map)/simple-map";
-import { SimpleMarkers } from "../(interactive-map)/simple-markers";
-import { type TilesConfig, type SimpleSpawn, AppConfig } from "@repo/lib";
+import { useRef } from "react";
+import {
+  SimpleWebMap,
+  SimpleWebMarkers,
+  type SimpleWebMapRef,
+} from "../(interactive-map)";
+import { type TilesConfig, type SimpleSpawn } from "@repo/lib";
 import { AdditionalTooltipType } from "../(content)";
 
 export default function SimpleMapDynamic({
@@ -20,16 +24,23 @@ export default function SimpleMapDynamic({
   appName: string;
   additionalTooltip?: AdditionalTooltipType;
 }): JSX.Element {
+  const mapRef = useRef<SimpleWebMapRef | null>(null);
+
   return (
     <div className="h-64 md:h-96 mt-4">
-      <SimpleMap mapName={mapName} tileOptions={tiles} appName={appName} />
-      <SimpleMarkers
+      <SimpleWebMap
+        mapName={mapName}
+        tileOptions={tiles}
+        appName={appName}
+        mapRef={mapRef}
+      />
+      <SimpleWebMarkers
         spawns={spawns}
-        imageSprite
         appName={appName}
         highlightedIds={highlightedIds}
         iconsPath="/icons/icons.webp"
         additionalTooltip={additionalTooltip}
+        mapRef={mapRef}
       />
     </div>
   );

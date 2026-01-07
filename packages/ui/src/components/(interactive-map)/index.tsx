@@ -10,8 +10,6 @@ export { Player } from "./player";
 export { PrivateNode } from "./private-node";
 export { PrivateDrawing } from "./private-drawing";
 export { Regions } from "./regions";
-export { SimpleMap } from "./simple-map";
-export { SimpleMarkers } from "./simple-markers";
 export { SimpleWebMap, type SimpleWebMapRef } from "./simple-webmap";
 export { SimpleWebMarkers } from "./simple-webmap-markers";
 export { TraceLine } from "./trace-line";

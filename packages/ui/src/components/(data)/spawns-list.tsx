@@ -1,5 +1,5 @@
 "use client";
-import { type SimpleSpawn, useSettingsStore } from "@repo/lib";
+import { getNodeId, type SimpleSpawn, useSettingsStore } from "@repo/lib";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { useT } from "../(providers)";
@@ -35,7 +35,7 @@ export function SpawnsList({
     <div className="flex flex-col gap-1 max-w-2xl w-full">
       {Object.entries(groupById).map(([name, groupSpawns]) => {
         const progress = groupSpawns.filter((spawn) =>
-          isDiscoveredNode(spawn.id),
+          isDiscoveredNode(getNodeId(spawn)),
         ).length;
         const max = groupSpawns.length;
         const isMax = progress === max;
