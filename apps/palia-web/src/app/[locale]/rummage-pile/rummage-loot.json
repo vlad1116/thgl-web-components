@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-08T19:24:45.063Z",
+  "generatedAt": "2026-01-08T20:58:59.785Z",
   "locales": [
     "en",
     "de",
@@ -109,6 +109,18 @@
         "pt-BR": "Sazonal",
         "zh-CN": "季节性",
         "zh-TW": "季節性"
+      },
+      "label_quest": {
+        "en": "Quest",
+        "de": "Quest",
+        "es": "Misión",
+        "fr": "Quête",
+        "it": "Missione",
+        "ja": "クエスト",
+        "ko": "퀘스트",
+        "pt-BR": "Missão",
+        "zh-CN": "任务",
+        "zh-TW": "任務"
       },
       "rarity_Common": {
         "en": "Common",
@@ -664,6 +676,54 @@
         "zh-CN": "沙爪的礼物",
         "zh-TW": "珊迪‧肉球的禮物"
       },
+      "DA_ItemType_QuestItem_BahariBoyzRecord": {
+        "en": "Bahari Boyz Record",
+        "de": "„Bahari Boyz”-Schallplatte",
+        "es": "Disco de los Bahari Boyz",
+        "fr": "Disque des Bahari Boyz",
+        "it": "Disco dei Bahari Boyz",
+        "ja": "バハリ・ボーイズ・レコード",
+        "ko": "바하리 보이즈 음반",
+        "pt-BR": "Disco de Bahari Boyz",
+        "zh-CN": "巴哈利男孩唱片",
+        "zh-TW": "巴哈里男孩唱片"
+      },
+      "DA_ItemType_Questitem_MysteriousRuin": {
+        "en": "Small Handheld Device",
+        "de": "Kleiner handlicher Apparat",
+        "es": "Artefacto de mano pequeño",
+        "fr": "Petit appareil portable",
+        "it": "Piccolo dispositivo portatile",
+        "ja": "小さな手持ち端末",
+        "ko": "소형 휴대용 장비",
+        "pt-BR": "Dispositivo Portátil Pequeno",
+        "zh-CN": "小型手持设备",
+        "zh-TW": "小型手持設備"
+      },
+      "DA_ItemType_Questitem_QuillPen": {
+        "en": "Fancy Quill Pen",
+        "de": "Eleganter Federkiel",
+        "es": "Pluma estilográfica elegante",
+        "fr": "Plume sophistiquée",
+        "it": "Penna d'oca elegante",
+        "ja": "おしゃれな羽根ペン",
+        "ko": "근사한 깃털 펜",
+        "pt-BR": "Caneta de pena chique",
+        "zh-CN": "精美的羽毛笔",
+        "zh-TW": "漂亮的羽毛筆"
+      },
+      "DA_ItemType_QuestItem_BrokenFlowBulb": {
+        "en": "Odd Wooden Box",
+        "de": "Seltsame Holzbox",
+        "es": "Caja antigua de madera",
+        "fr": "Boîte en bois étrange",
+        "it": "Strana scatola di legno",
+        "ja": "変わった木箱",
+        "ko": "이상한 나무 상자",
+        "pt-BR": "Caixa de madeira estranha",
+        "zh-CN": "奇怪的木箱",
+        "zh-TW": "詭異木箱"
+      },
       "DA_ItemType_Decor_Generic_183_Deco_CandleJar_01": {
         "en": "Flotsam Large Candle",
         "de": "Flotsam Large Candle",
@@ -831,6 +891,114 @@
         "pt-BR": "Summer Stripe Ice Bucket",
         "zh-CN": "Summer Stripe Ice Bucket",
         "zh-TW": "Summer Stripe Ice Bucket"
+      },
+      "DA_ItemType_Questitem_Founditem_TaylinLetter1": {
+        "en": "An Unmarked Letter",
+        "de": "Ein nicht unterzeichneter Brief",
+        "es": "Una carta sin identificar",
+        "fr": "Une lettre anonyme",
+        "it": "Una lettera anonima",
+        "ja": "宛先不明の手紙",
+        "ko": "표시가 없는 편지",
+        "pt-BR": "Uma Carta Não Marcada",
+        "zh-CN": "无名信",
+        "zh-TW": "沒有標記的信件"
+      },
+      "DA_ItemType_Questitem_Founditem_EshelonLetter": {
+        "en": "Message in a Bottle",
+        "de": "Flaschenpost",
+        "es": "Mensaje en una botella",
+        "fr": "Message en bouteille",
+        "it": "Messaggio in bottiglia",
+        "ja": "瓶に入ったメッセージ",
+        "ko": "병 속에 든 메시지",
+        "pt-BR": "Mensagem em uma Garrafa",
+        "zh-CN": "瓶中信",
+        "zh-TW": "瓶中訊息"
+      },
+      "DA_ItemType_Questitem_VaultRaid_1": {
+        "en": "Signet Ring",
+        "de": "Siegelring",
+        "es": "Sello",
+        "fr": "La chevalière",
+        "it": "Anello con sigillo",
+        "ja": "シグネットリング",
+        "ko": "인장 반지",
+        "pt-BR": "Anel gravado",
+        "zh-CN": "图章戒指",
+        "zh-TW": "圖章戒指"
+      },
+      "DA_ItemType_Questitem_VaultRaid_2": {
+        "en": "Golden Bust",
+        "de": "Goldene Büste",
+        "es": "Busto dorado",
+        "fr": "Le buste en or",
+        "it": "Busto dorato",
+        "ja": "黄金の胸像",
+        "ko": "황금 흉상",
+        "pt-BR": "Busto dourado",
+        "zh-CN": "金色半身像",
+        "zh-TW": "黃金半身像"
+      },
+      "DA_ItemType_Questitem_VaultRaid_3": {
+        "en": "Cat's Paw Diamond",
+        "de": "Katzenpfotendiamant",
+        "es": "Diamante de garra de gato",
+        "fr": "Diamant patte-de-chat",
+        "it": "Diamante zampa di gatto",
+        "ja": "キャットポーダイヤモンド",
+        "ko": "고양이 발바닥 다이아몬드",
+        "pt-BR": "Diamante patinha de gato",
+        "zh-CN": "猫爪钻石",
+        "zh-TW": "貓爪鑽石"
+      },
+      "DA_ItemType_Questitem_VaultRaid_4": {
+        "en": "Magic Book",
+        "de": "Magisches Buch",
+        "es": "Libro mágico",
+        "fr": "Grimoire",
+        "it": "Libro magico",
+        "ja": "魔法の本",
+        "ko": "마법의 책",
+        "pt-BR": "Livro de Magia",
+        "zh-CN": "魔法书",
+        "zh-TW": "魔法書"
+      },
+      "DA_ItemType_Questitem_VaultRaid_5": {
+        "en": "Mysterious Goggles",
+        "de": "Mysteriöse Schutzbrille",
+        "es": "Gafas misteriosas",
+        "fr": "Lunettes mystérieuses",
+        "it": "Occhiali misteriosi",
+        "ja": "謎のゴーグル",
+        "ko": "수수께끼의 고글",
+        "pt-BR": "Óculos Misteriosos",
+        "zh-CN": "神秘护目镜",
+        "zh-TW": "神祕護目鏡"
+      },
+      "DA_ItemType_Questitem_VaultRaid_6": {
+        "en": "Trick Mirror",
+        "de": "Trickspiegel",
+        "es": "Espejo trucado",
+        "fr": "Faux miroir",
+        "it": "Specchio illusorio",
+        "ja": "トリックミラー",
+        "ko": "속임수 거울",
+        "pt-BR": "Espelho da Ilusão",
+        "zh-CN": "诡秘之镜",
+        "zh-TW": "魔術鏡"
+      },
+      "DA_ItemType_Questitem_VaultRaid_7": {
+        "en": "Masthead",
+        "de": "Mastspitze",
+        "es": "Mástil",
+        "fr": "Tête de mât",
+        "it": "Colombiere",
+        "ja": "マストの先端",
+        "ko": "돛대 꼭대기",
+        "pt-BR": "Calcês",
+        "zh-CN": "桅顶",
+        "zh-TW": "桅桿頂部"
       },
       "DA_ItemType_Artifact_Huge1": {
         "en": "Ancient Machine #1",
@@ -1200,826 +1368,1040 @@
       "locationKey": "location_kilima",
       "items": [
         {
+          "id": "DA_ItemType_QuestItem_BahariBoyzRecord",
+          "name": "Bahari Boyz Record",
+          "weight": 300,
+          "chance": "22.9%",
+          "icon": "WT_Icon_FIQ_Kilima_BahariBoyzRecord",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_QuillPen",
+          "name": "Fancy Quill Pen",
+          "weight": 300,
+          "chance": "22.9%",
+          "icon": "WT_Icon_FIQ_Kilima_LuckyQuill",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_QuestItem_BrokenFlowBulb",
+          "name": "Odd Wooden Box",
+          "weight": 300,
+          "chance": "22.9%",
+          "icon": "Icon_Lootbox_Decor",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_MysteriousRuin",
+          "name": "Small Handheld Device",
+          "weight": 300,
+          "chance": "22.9%",
+          "icon": "Icon_Quest_CommunicationDevice",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
           "id": "DA_ItemType_Winterlights_SnowmanPresent",
           "name": "Sandy Paws Present",
           "weight": 10,
-          "chance": "9.1%",
+          "chance": "0.8%",
           "icon": "Icon_Winter_Present_Snowman",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": true
         },
         {
           "id": "DA_ItemType_Forage_Flower_BriarDaisy",
           "name": "Briar Daisy",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Flower_Daisy_Briar",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Mushroom_Brightshroom",
           "name": "Brightshroom",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Crop_MushroomBlue",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Copper",
           "name": "Copper Ore",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Ore_Copper",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Moss_DragonsBeard",
           "name": "Dragon's Beard Peat",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Moss_Rare",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_SweetLeaves",
           "name": "Sweet Leaf",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Spice_SweetLeaves",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Bug_Worm",
           "name": "Worm",
           "weight": 5,
-          "chance": "4.5%",
+          "chance": "0.4%",
           "icon": "Icon_Bug_Worm",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_152_Deco_BlanketBasket",
           "name": "Blanket Storage Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_152_Deco_BlanketBasket",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_156_Deco_BlanketLadder",
           "name": "Cozy Ladder",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_156_Deco_BlanketLadder",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_155_Deco_Basket_Med",
           "name": "Cozy Rattan Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_155_Deco_Basket_Med",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_154_Deco_Basket_Lg",
           "name": "Cozy Woven Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_154_Deco_Basket_Lg",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_159_Deco_FirewoodHolder",
           "name": "Firewood Holder",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_159_Deco_FirewoodHolder",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_157_Deco_LaundryBasket",
           "name": "Laundry Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_157_Deco_LaundryBasket",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Rewards_decor_Kidspool01_Plushie",
           "name": "Plushie Pool",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "WT_Icon_Decor_Rewards_decor_Kidspool01_Plushie",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_160_Deco_PitcherBasin",
           "name": "Porcelain Pitcher",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_160_Deco_PitcherBasin",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_153_Deco_SewingBasket",
           "name": "Sewing Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_153_Deco_SewingBasket",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_02_furniture_PicnicBench",
           "name": "Summer Stripe Bench",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "WT_Icon_Decor_Summer_02_furniture_PicnicBench",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_07_decor_DrinkCooler",
           "name": "Summer Stripe Cooler",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "WT_Icon_Decor_Summer_07_decor_DrinkCooler",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_01_furniture_PicnicTable",
           "name": "Summer Stripe Table",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "WT_Icon_Decor_Summer_01_furniture_PicnicTable",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_158_Deco_TieredBasket",
           "name": "Tiered Fruit Basket",
           "weight": 3,
-          "chance": "2.7%",
+          "chance": "0.2%",
           "icon": "Icon_Generic_158_Deco_TieredBasket",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Apple",
           "name": "Apple",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Apple",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Blueberries",
           "name": "Blueberries",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Blueberry",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Carrot",
           "name": "Carrot",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Carrot",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Corn",
           "name": "Corn",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Corn",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Bug_Glow_Worm",
           "name": "Glow Worm",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Bug_Glow_Worm",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Potato",
           "name": "Potato",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Potato",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Rice",
           "name": "Rice",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Rice",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_SpicyPepper",
           "name": "Spicy Pepper",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_PepperSpicy",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Tomato",
           "name": "Tomato",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Tomato",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Wheat",
           "name": "Wheat",
           "weight": 2,
-          "chance": "1.8%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_Wheat",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_BugCatching",
           "name": "Buzzy Jar",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_BuzzyJar",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_DariCloves",
           "name": "Dari Cloves",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Flower_DariClove",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Foraging",
           "name": "Dowsing Rod",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_DowsingRod",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Wood_Magicwood",
           "name": "Flow-Infused Wood",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Wood_Magicwood",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Gold",
           "name": "Gold Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Ore_Gold",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Flower_HeartDropLily",
           "name": "Heartdrop Lily",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Flower_Heartdrop",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_HeatRoot",
           "name": "Heat Root",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Spice_Heatroot",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Hunting",
           "name": "Hunter's Horn",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_HuntersHorn",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Mining",
           "name": "Ore Compass",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_OreCompass",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Palium",
           "name": "Palium Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Ore_Palium",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Silver",
           "name": "Silver Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.1%",
           "icon": "Icon_Ore_Silver",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         }
       ],
-      "totalWeight": 110
+      "totalWeight": 1310
     },
     "beachTrash": {
       "nameKey": "pool_beachTrash",
       "locationKey": "location_bahari",
       "items": [
         {
+          "id": "DA_ItemType_Questitem_Founditem_TaylinLetter1",
+          "name": "An Unmarked Letter",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_SealedLetter",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_3",
+          "name": "Cat's Paw Diamond",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_CatspawDiamond",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_2",
+          "name": "Golden Bust",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_GrimalkinBust",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_4",
+          "name": "Magic Book",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Book_C_Green",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_7",
+          "name": "Masthead",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_GrimalkinMastHead",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_Founditem_EshelonLetter",
+          "name": "Message in a Bottle",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "WT_Icon_FIQ_MessageInBottle",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_5",
+          "name": "Mysterious Goggles",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_MagicGoggles",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_1",
+          "name": "Signet Ring",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_GrimalkinSignetRing",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Questitem_VaultRaid_6",
+          "name": "Trick Mirror",
+          "weight": 300,
+          "chance": "10.7%",
+          "icon": "Icon_Quest_TrickMirror",
+          "isRecipe": false,
+          "isQuest": true,
+          "isSeasonal": false
+        },
+        {
           "id": "DA_ItemType_Winterlights_SnowmanPresent",
           "name": "Sandy Paws Present",
           "weight": 10,
-          "chance": "8.6%",
+          "chance": "0.4%",
           "icon": "Icon_Winter_Present_Snowman",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Flower_BriarDaisy",
           "name": "Briar Daisy",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Flower_Daisy_Briar",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Mushroom_Brightshroom",
           "name": "Brightshroom",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Crop_MushroomBlue",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Copper",
           "name": "Copper Ore",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Ore_Copper",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Moss_DragonsBeard",
           "name": "Dragon's Beard Peat",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Moss_Rare",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_SweetLeaves",
           "name": "Sweet Leaf",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Spice_SweetLeaves",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Bug_Worm",
           "name": "Worm",
           "weight": 5,
-          "chance": "4.3%",
+          "chance": "0.2%",
           "icon": "Icon_Bug_Worm",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_188_Furniture_BoatBookshelf",
           "name": "Flotsam Bookshelf",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Furniture_BoatBookshelf",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_192_Deco_Shell_lg_02",
           "name": "Flotsam Conch",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Shell_Lg_02",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_186_Deco_DriftwoodDisplay",
           "name": "Flotsam Driftwood Decor",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_DriftwoodDisplay",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_193_Deco_GlassFloat",
           "name": "Flotsam Glass Buoy",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_GlassFloat",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_190_Deco_ShellWindchime",
           "name": "Flotsam Hanging Mobile",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_ShellWindchime",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_183_Deco_CandleJar_01",
           "name": "Flotsam Large Candle",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_CandleJar_01",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_189_Deco_Porthole",
           "name": "Flotsam Porthole Frame",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Porthole",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_185_Deco_ShellJar",
           "name": "Flotsam Sand Art",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_ShellJar",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_191_Deco_Shell_lg_01",
           "name": "Flotsam Scallop",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Shell_Lg_01",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_184_Deco_CandleJar_02",
           "name": "Flotsam Small Candle",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_CandleJar_02",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Generic_187_Deco_TowelRack",
           "name": "Flotsam Towel Rack",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_TowelRack",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Rewards_decor_Kidspool01_Plushie",
           "name": "Plushie Pool",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Rewards_decor_Kidspool01_Plushie",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_06_decor_Popsicles",
           "name": "Summer Stripe Ice Bucket",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Summer_06_decor_Popsicles",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_03_furniture_Chaise",
           "name": "Summer Stripe Recliner",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Summer_03_furniture_Chaise",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Decor_Summer_04_furniture_Umbrella",
           "name": "Summer Stripe Umbrella",
           "weight": 3,
-          "chance": "2.6%",
+          "chance": "0.1%",
           "icon": "WT_Icon_Decor_Summer_04_furniture_Umbrella",
           "isRecipe": true,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Apple",
           "name": "Apple",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Apple",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Blueberries",
           "name": "Blueberries",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Blueberry",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Carrot",
           "name": "Carrot",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Carrot",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Corn",
           "name": "Corn",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Corn",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Bug_Glow_Worm",
           "name": "Glow Worm",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Bug_Glow_Worm",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Potato",
           "name": "Potato",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Potato",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Rice",
           "name": "Rice",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Rice",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_SpicyPepper",
           "name": "Spicy Pepper",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_PepperSpicy",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Tomato",
           "name": "Tomato",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Tomato",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Crop_Wheat",
           "name": "Wheat",
           "weight": 2,
-          "chance": "1.7%",
+          "chance": "0.1%",
           "icon": "Icon_Crop_Wheat",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_BugCatching",
           "name": "Buzzy Jar",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_BuzzyJar",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_DariCloves",
           "name": "Dari Cloves",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Flower_DariClove",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Foraging",
           "name": "Dowsing Rod",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_DowsingRod",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Wood_Magicwood",
           "name": "Flow-Infused Wood",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Wood_Magicwood",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Gold",
           "name": "Gold Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Ore_Gold",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Flower_HeartDropLily",
           "name": "Heartdrop Lily",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Flower_Heartdrop",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Forage_Spice_HeatRoot",
           "name": "Heat Root",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Spice_Heatroot",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Hunting",
           "name": "Hunter's Horn",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_HuntersHorn",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_ResourceTracker_Mining",
           "name": "Ore Compass",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_OreCompass",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Palium",
           "name": "Palium Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Ore_Palium",
           "rarity": "Common",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
           "id": "DA_ItemType_Mineral_Ore_Silver",
           "name": "Silver Ore",
           "weight": 1,
-          "chance": "0.9%",
+          "chance": "0.0%",
           "icon": "Icon_Ore_Silver",
           "rarity": "Uncommon",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         }
       ],
-      "totalWeight": 116
+      "totalWeight": 2816
     },
     "elderwood": {
       "nameKey": "pool_elderwood",
@@ -2033,6 +2415,7 @@
           "icon": "Icon_Winter_Present_Snowman",
           "rarity": "Epic",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2043,6 +2426,7 @@
           "icon": "ICON_Artifact_AncientHumanToy2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2053,6 +2437,7 @@
           "icon": "ICON_Artifact_AncientHumanToy1",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2063,6 +2448,7 @@
           "icon": "ICON_Artifact_AncientHumanOrerry2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2073,6 +2459,7 @@
           "icon": "ICON_Artifact_AncientHumanOrerry3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2083,6 +2470,7 @@
           "icon": "ICON_Artifact_AncientHumanOrerry4",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2093,6 +2481,7 @@
           "icon": "ICON_Artifact_AncientHumanOrerry5",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2103,6 +2492,7 @@
           "icon": "ICON_Artifact_AncientHumanOrerry6",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2113,6 +2503,7 @@
           "icon": "ICON_Artifact_AncientHumanNecklace2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2123,6 +2514,7 @@
           "icon": "ICON_Artifact_AncientHumanNecklace3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2133,6 +2525,7 @@
           "icon": "ICON_Artifact_KitsuuStatue2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2143,6 +2536,7 @@
           "icon": "ICON_Artifact_KitsuuStatue3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2153,6 +2547,7 @@
           "icon": "ICON_Artifact_KitsuuStatue4",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2163,6 +2558,7 @@
           "icon": "ICON_Artifact_CeremonialDress2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2173,6 +2569,7 @@
           "icon": "ICON_Artifact_CeremonialDress3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2183,6 +2580,7 @@
           "icon": "ICON_Artifact_CeremonialDress4",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2193,6 +2591,7 @@
           "icon": "ICON_Artifact_UmbraanLute2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2203,6 +2602,7 @@
           "icon": "ICON_Artifact_UmbraanLute3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2213,6 +2613,7 @@
           "icon": "ICON_Artifact_Painting2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2223,6 +2624,7 @@
           "icon": "ICON_Artifact_Painting3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2233,6 +2635,7 @@
           "icon": "ICON_Artifact_Painting4",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2243,6 +2646,7 @@
           "icon": "ICON_Artifact_UmbraanIncensePot",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2253,6 +2657,7 @@
           "icon": "ICON_Artifact_MajiriWarBanner2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2263,6 +2668,7 @@
           "icon": "ICON_Artifact_MajiriWarBanner3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2273,6 +2679,7 @@
           "icon": "ICON_Artifact_MajiriWarBanner4",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2283,6 +2690,7 @@
           "icon": "ICON_Artifact_CryptidAlien",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2293,6 +2701,7 @@
           "icon": "ICON_Artifact_MajiriWarHorn2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2303,6 +2712,7 @@
           "icon": "ICON_Artifact_MajiriWarHorn3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2313,6 +2723,7 @@
           "icon": "ICON_Artifact_CryptidMermaid",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2323,6 +2734,7 @@
           "icon": "ICON_Artifact_MajiriGeneralsSword2",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         },
         {
@@ -2333,6 +2745,7 @@
           "icon": "ICON_Artifact_MajiriGeneralsSword3",
           "rarity": "Rare",
           "isRecipe": false,
+          "isQuest": false,
           "isSeasonal": false
         }
       ],

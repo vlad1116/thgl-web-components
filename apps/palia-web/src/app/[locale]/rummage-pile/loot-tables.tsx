@@ -30,8 +30,54 @@ type LootItem = {
   icon: string;
   rarity?: string;
   isRecipe?: boolean;
+  isQuest?: boolean;
   isSeasonal?: boolean;
 };
+
+// Check if an item can only be collected once (recipes and quest items)
+function isOneTimeItem(item: LootItem): boolean {
+  return !!(item.isRecipe || item.isQuest);
+}
+
+// Calculate adjusted drop chances based on collected one-time items
+function calculateAdjustedChances(
+  items: LootItem[],
+  poolId: string,
+  tracker: TrackerData,
+): Map<string, string> {
+  const chances = new Map<string, string>();
+
+  // Calculate weight of collected one-time items
+  let collectedOneTimeWeight = 0;
+  for (const item of items) {
+    if (isOneTimeItem(item) && (tracker[poolId]?.[item.id] || 0) >= 1) {
+      collectedOneTimeWeight += item.weight;
+    }
+  }
+
+  // Calculate total remaining weight
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  const adjustedTotalWeight = totalWeight - collectedOneTimeWeight;
+
+  // Calculate adjusted chance for each item
+  for (const item of items) {
+    const isCollectedOneTime =
+      isOneTimeItem(item) && (tracker[poolId]?.[item.id] || 0) >= 1;
+
+    if (isCollectedOneTime) {
+      // Collected one-time items have 0% chance
+      chances.set(item.id, "0%");
+    } else if (adjustedTotalWeight > 0) {
+      // Recalculate chance based on adjusted total
+      const chance = ((item.weight / adjustedTotalWeight) * 100).toFixed(1);
+      chances.set(item.id, `${chance}%`);
+    } else {
+      chances.set(item.id, item.chance);
+    }
+  }
+
+  return chances;
+}
 
 type LootPool = {
   nameKey: string;
@@ -100,12 +146,16 @@ function getItemName(itemId: string, locale: Locale): string {
 
 function createColumns(
   poolId: string,
+  items: LootItem[],
   tracker: TrackerData,
   locale: Locale,
   t: (key: string) => string,
   onIncrement: (poolId: string, itemName: string) => void,
   onDecrement: (poolId: string, itemName: string) => void,
 ): ColumnDef<LootItem>[] {
+  // Calculate adjusted chances based on collected one-time items
+  const adjustedChances = calculateAdjustedChances(items, poolId, tracker);
+
   return [
     {
       accessorKey: "name",
@@ -122,12 +172,25 @@ function createColumns(
       cell: ({ row }) => {
         const item = row.original;
         const itemName = getItemName(item.id, locale);
+        const isCollectedOneTime =
+          isOneTimeItem(item) && (tracker[poolId]?.[item.id] || 0) >= 1;
         return (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{itemName}</span>
+          <div
+            className={`flex items-center gap-2 ${isCollectedOneTime ? "opacity-50" : ""}`}
+          >
+            <span
+              className={`font-medium ${isCollectedOneTime ? "line-through" : ""}`}
+            >
+              {itemName}
+            </span>
             {item.isRecipe && (
               <span className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 {t("rummagePile.label.recipe")}
+              </span>
+            )}
+            {item.isQuest && (
+              <span className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                {t("rummagePile.label.quest")}
               </span>
             )}
             {item.isSeasonal && (
@@ -154,14 +217,27 @@ function createColumns(
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => (
-        <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary border border-primary/20">
-          {row.getValue("chance")}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const adjustedChance = adjustedChances.get(item.id) || item.chance;
+        const isCollectedOneTime =
+          isOneTimeItem(item) && (tracker[poolId]?.[item.id] || 0) >= 1;
+        return (
+          <span
+            className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-medium border ${
+              isCollectedOneTime
+                ? "bg-muted/30 text-muted-foreground/50 border-muted/20"
+                : "bg-primary/10 text-primary border-primary/20"
+            }`}
+          >
+            {adjustedChance}
+          </span>
+        );
+      },
       sortingFn: (rowA, rowB) => {
-        const a = parseFloat(rowA.original.chance);
-        const b = parseFloat(rowB.original.chance);
+        // Sort by adjusted chance
+        const a = parseFloat(adjustedChances.get(rowA.original.id) || rowA.original.chance);
+        const b = parseFloat(adjustedChances.get(rowB.original.id) || rowB.original.chance);
         return a - b;
       },
     },
@@ -215,6 +291,8 @@ function createColumns(
       cell: ({ row }) => {
         const item = row.original;
         const count = tracker[poolId]?.[item.id] || 0;
+        const isOneTime = isOneTimeItem(item);
+        const isMaxed = isOneTime && count >= 1;
         return (
           <div className="flex items-center gap-1">
             <Button
@@ -236,7 +314,7 @@ function createColumns(
                   : "bg-muted/30 text-muted-foreground"
               }`}
             >
-              {count}
+              {isOneTime ? (count >= 1 ? "1" : "0") : count}
             </span>
             <Button
               variant="ghost"
@@ -246,6 +324,7 @@ function createColumns(
                 e.stopPropagation();
                 onIncrement(poolId, item.id);
               }}
+              disabled={isMaxed}
             >
               <PlusIcon className="h-3.5 w-3.5" />
             </Button>
@@ -359,13 +438,14 @@ export default function LootTables({
     () =>
       createColumns(
         activeTab,
+        activePool.items,
         tracker,
         locale,
         t,
         handleIncrement,
         handleDecrement,
       ),
-    [activeTab, tracker, locale, t, handleIncrement, handleDecrement],
+    [activeTab, activePool.items, tracker, locale, t, handleIncrement, handleDecrement],
   );
 
   // Calculate total collected for current pool
