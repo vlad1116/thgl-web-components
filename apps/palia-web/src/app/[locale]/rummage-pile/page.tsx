@@ -61,6 +61,9 @@ export default async function RummagePile({ params }: PageProps) {
   const timedLootPilesResponse = await fetch(
     "https://palia-api.th.gl/nodes?type=timedLootPiles",
     {
+      headers: {
+        authorization: process.env.PALIA_API_KEY || "",
+      },
       next: {
         revalidate: 300, // Auto-revalidate every 5 minutes
         tags: ["rummage-pile"], // Allow manual revalidation
