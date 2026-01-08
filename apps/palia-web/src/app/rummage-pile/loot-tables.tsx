@@ -412,9 +412,8 @@ export default function LootTables() {
 
       {/* Footer note */}
       <p className="mt-4 text-xs text-muted-foreground/70 text-center">
-        Drop rates are extracted from game files and may change with updates.
-        Seasonal items only appear during their respective events. Your
-        collection progress is saved locally.
+        Drop rates may change with updates and could vary based on progression.
+        Your collection is saved locally.
       </p>
     </section>
   );
