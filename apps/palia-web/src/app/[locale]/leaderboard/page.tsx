@@ -58,6 +58,9 @@ export default async function Leaderboard({ params }: PageProps) {
   const respone = await fetch(
     "https://palia-api.th.gl/nodes?type=players&limit=100",
     {
+      headers: {
+        authorization: process.env.PALIA_API_KEY || "",
+      },
       cache: "force-cache",
       next: { tags: ["leaderboard"] },
     },
@@ -105,7 +108,9 @@ export default async function Leaderboard({ params }: PageProps) {
                 <th>#</th>
                 <th>{t("leaderboard.table.name")}</th>
                 <th>{t("leaderboard.table.level")}</th>
-                <th className="hidden sm:block">{t("leaderboard.table.skills")}</th>
+                <th className="hidden sm:block">
+                  {t("leaderboard.table.skills")}
+                </th>
                 <th>{t("leaderboard.table.plotLevel")}</th>
               </tr>
             </thead>
