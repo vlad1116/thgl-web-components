@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@repo/ui/controls";
 import { ScrollArea } from "@repo/ui/controls";
 import { DataTable, type ColumnDef } from "@repo/ui/data";
@@ -15,11 +15,15 @@ import {
   MinusIcon,
   RotateCcwIcon,
 } from "lucide-react";
+import { useT } from "@repo/ui/providers";
 import rummageLoot from "./rummage-loot.json";
 
 const STORAGE_KEY = "palia-rummage-loot-tracker";
 
+type Locale = (typeof rummageLoot.locales)[number];
+
 type LootItem = {
+  id: string;
   name: string;
   weight: number;
   chance: string;
@@ -30,8 +34,8 @@ type LootItem = {
 };
 
 type LootPool = {
-  name: string;
-  location: string;
+  nameKey: string;
+  locationKey: string;
   items: LootItem[];
   totalWeight: number;
 };
@@ -39,22 +43,23 @@ type LootPool = {
 type TrackerData = Record<string, Record<string, number>>;
 
 const pools = rummageLoot.pools as Record<string, LootPool>;
+const itemTranslations = rummageLoot.translations.items;
 
 const tabs = [
   {
     id: "chapaaNest",
-    label: "Kilima Village",
     icon: HomeIcon,
+    poolKey: "chapaaNest",
   },
   {
     id: "beachTrash",
-    label: "Bahari Bay",
     icon: UmbrellaIcon,
+    poolKey: "beachTrash",
   },
   {
     id: "elderwood",
-    label: "Elderwood",
     icon: TreesIcon,
+    poolKey: "elderwood",
   },
 ];
 
@@ -82,9 +87,22 @@ const rarityBgColors: Record<string, string> = {
   Legendary: "bg-amber-500/10 border-amber-500/20",
 };
 
+// Get item name translation from rummage-loot.json
+function getItemName(itemId: string, locale: Locale): string {
+  const translation = itemTranslations[itemId as keyof typeof itemTranslations] as
+    | Record<Locale, string>
+    | undefined;
+  if (translation) {
+    return translation[locale] || translation.en;
+  }
+  return itemId;
+}
+
 function createColumns(
   poolId: string,
   tracker: TrackerData,
+  locale: Locale,
+  t: (key: string) => string,
   onIncrement: (poolId: string, itemName: string) => void,
   onDecrement: (poolId: string, itemName: string) => void,
 ): ColumnDef<LootItem>[] {
@@ -97,24 +115,25 @@ function createColumns(
           className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Item
+          {t("rummagePile.loot.column.item")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
         const item = row.original;
+        const itemName = getItemName(item.id, locale);
         return (
           <div className="flex items-center gap-2">
-            <span className="font-medium">{item.name}</span>
+            <span className="font-medium">{itemName}</span>
             {item.isRecipe && (
               <span className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                Recipe
+                {t("rummagePile.label.recipe")}
               </span>
             )}
             {item.isSeasonal && (
               <span
                 className="shrink-0 text-sky-400"
-                title="Seasonal - Winter only"
+                title={t("rummagePile.label.seasonal")}
               >
                 <SnowflakeIcon className="w-3.5 h-3.5" />
               </span>
@@ -131,7 +150,7 @@ function createColumns(
           className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Chance
+          {t("rummagePile.loot.column.chance")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -154,7 +173,7 @@ function createColumns(
           className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Rarity
+          {t("rummagePile.loot.column.rarity")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -163,13 +182,14 @@ function createColumns(
         if (!rarity) {
           return <span className="text-muted-foreground/50">—</span>;
         }
+        const rarityName = t(`rummagePile.rarity.${rarity}`);
         return (
           <span
             className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${
               rarityBgColors[rarity] || "bg-muted/50"
             } ${rarityColors[rarity] || "text-muted-foreground"}`}
           >
-            {rarity}
+            {rarityName}
           </span>
         );
       },
@@ -187,14 +207,14 @@ function createColumns(
           className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Collected
+          {t("rummagePile.loot.column.collected")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      accessorFn: (row) => tracker[poolId]?.[row.name] || 0,
+      accessorFn: (row) => tracker[poolId]?.[row.id] || 0,
       cell: ({ row }) => {
         const item = row.original;
-        const count = tracker[poolId]?.[item.name] || 0;
+        const count = tracker[poolId]?.[item.id] || 0;
         return (
           <div className="flex items-center gap-1">
             <Button
@@ -203,7 +223,7 @@ function createColumns(
               className="h-7 w-7 shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
-                onDecrement(poolId, item.name);
+                onDecrement(poolId, item.id);
               }}
               disabled={count === 0}
             >
@@ -224,7 +244,7 @@ function createColumns(
               className="h-7 w-7 shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
-                onIncrement(poolId, item.name);
+                onIncrement(poolId, item.id);
               }}
             >
               <PlusIcon className="h-3.5 w-3.5" />
@@ -233,15 +253,44 @@ function createColumns(
         );
       },
       sortingFn: (rowA, rowB) => {
-        const a = tracker[poolId]?.[rowA.original.name] || 0;
-        const b = tracker[poolId]?.[rowB.original.name] || 0;
+        const a = tracker[poolId]?.[rowA.original.id] || 0;
+        const b = tracker[poolId]?.[rowB.original.id] || 0;
         return a - b;
       },
     },
   ];
 }
 
-export default function LootTables() {
+// Normalize locale string to match supported locales
+function normalizeLocale(localeParam: string): Locale {
+  // Direct match
+  if (rummageLoot.locales.includes(localeParam as Locale)) {
+    return localeParam as Locale;
+  }
+  // Default to English for unsupported locales
+  return "en";
+}
+
+// Pool key to translation key mapping
+const poolNameKeys: Record<string, string> = {
+  chapaaNest: "rummagePile.pool.chapaaNest",
+  beachTrash: "rummagePile.pool.beachTrash",
+  elderwood: "rummagePile.pool.elderwood",
+};
+
+const locationKeys: Record<string, string> = {
+  chapaaNest: "rummagePile.location.kilima",
+  beachTrash: "rummagePile.location.bahari",
+  elderwood: "rummagePile.location.elderwood",
+};
+
+export default function LootTables({
+  locale: localeParam,
+}: {
+  locale: string;
+}) {
+  const locale = normalizeLocale(localeParam);
+  const t = useT();
   const [activeTab, setActiveTab] = useState("chapaaNest");
   const [tracker, setTracker] = useState<TrackerData>({});
   const [isLoaded, setIsLoaded] = useState(false);
@@ -270,25 +319,25 @@ export default function LootTables() {
     }
   }, [tracker, isLoaded]);
 
-  const handleIncrement = useCallback((poolId: string, itemName: string) => {
+  const handleIncrement = useCallback((poolId: string, itemId: string) => {
     setTracker((prev) => ({
       ...prev,
       [poolId]: {
         ...prev[poolId],
-        [itemName]: (prev[poolId]?.[itemName] || 0) + 1,
+        [itemId]: (prev[poolId]?.[itemId] || 0) + 1,
       },
     }));
   }, []);
 
-  const handleDecrement = useCallback((poolId: string, itemName: string) => {
+  const handleDecrement = useCallback((poolId: string, itemId: string) => {
     setTracker((prev) => {
-      const currentCount = prev[poolId]?.[itemName] || 0;
+      const currentCount = prev[poolId]?.[itemId] || 0;
       if (currentCount <= 0) return prev;
       return {
         ...prev,
         [poolId]: {
           ...prev[poolId],
-          [itemName]: currentCount - 1,
+          [itemId]: currentCount - 1,
         },
       };
     });
@@ -306,11 +355,17 @@ export default function LootTables() {
   }, []);
 
   const activePool = pools[activeTab];
-  const columns = createColumns(
-    activeTab,
-    tracker,
-    handleIncrement,
-    handleDecrement,
+  const columns = useMemo(
+    () =>
+      createColumns(
+        activeTab,
+        tracker,
+        locale,
+        t,
+        handleIncrement,
+        handleDecrement,
+      ),
+    [activeTab, tracker, locale, t, handleIncrement, handleDecrement],
   );
 
   // Calculate total collected for current pool
@@ -318,6 +373,9 @@ export default function LootTables() {
     (sum, count) => sum + count,
     0,
   );
+
+  const poolName = t(poolNameKeys[activeTab]);
+  const locationName = t(locationKeys[activeTab]);
 
   return (
     <section
@@ -329,10 +387,10 @@ export default function LootTables() {
         <div>
           <h3 className="text-2xl font-bold text-primary mb-2 flex items-center gap-2">
             <PackageIcon className="w-6 h-6" />
-            Loot Drop Tables
+            {t("rummagePile.loot.title")}
           </h3>
           <p className="text-muted-foreground">
-            See what items you can find in each region&apos;s rummage piles
+            {t("rummagePile.loot.description")}
           </p>
         </div>
         <Button
@@ -342,7 +400,7 @@ export default function LootTables() {
           onClick={handleResetAll}
         >
           <RotateCcwIcon className="w-3.5 h-3.5 mr-2" />
-          Reset All
+          {t("rummagePile.loot.resetAll")}
         </Button>
       </div>
 
@@ -351,6 +409,7 @@ export default function LootTables() {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const tabLabel = t(locationKeys[tab.id]);
           const poolTotal = Object.values(tracker[tab.id] || {}).reduce(
             (sum, count) => sum + count,
             0,
@@ -367,7 +426,7 @@ export default function LootTables() {
               onClick={() => setActiveTab(tab.id)}
             >
               <Icon className="w-4 h-4 mr-2" />
-              {tab.label}
+              {tabLabel}
               {poolTotal > 0 && (
                 <span className="ml-2 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-xs font-semibold text-emerald-400">
                   {poolTotal}
@@ -381,12 +440,17 @@ export default function LootTables() {
       {/* Pool Info */}
       <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
         <span className="inline-flex items-center gap-2 rounded-full bg-card/50 px-4 py-1.5 text-sm text-muted-foreground border border-border/50">
-          {activePool.items.length} possible drops from {activePool.name}
+          {t("rummagePile.loot.possibleDrops")
+            .replace("{count}", String(activePool.items.length))
+            .replace("{pool}", poolName)}
         </span>
         {totalCollected > 0 && (
           <>
             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-400 border border-emerald-500/20">
-              {totalCollected} items collected
+              {t("rummagePile.loot.itemsCollected").replace(
+                "{count}",
+                String(totalCollected),
+              )}
             </span>
             <Button
               variant="ghost"
@@ -395,7 +459,7 @@ export default function LootTables() {
               onClick={() => handleResetPool(activeTab)}
             >
               <RotateCcwIcon className="w-3 h-3 mr-1" />
-              Reset {activePool.name}
+              {t("rummagePile.loot.resetPool").replace("{pool}", poolName)}
             </Button>
           </>
         )}
@@ -412,8 +476,7 @@ export default function LootTables() {
 
       {/* Footer note */}
       <p className="mt-4 text-xs text-muted-foreground/70 text-center">
-        Drop rates may change with updates and could vary based on progression.
-        Your collection is saved locally.
+        {t("rummagePile.loot.footer")}
       </p>
     </section>
   );

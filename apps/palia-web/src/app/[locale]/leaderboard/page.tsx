@@ -3,17 +3,36 @@ import { type Metadata } from "next";
 import { ContentLayout } from "@repo/ui/ads";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
-import { getIconsUrl } from "@repo/lib";
+import { getIconsUrl, getT, getMetadataAlternates } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
+import { getStaticDictionary } from "@repo/ui/dicts";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/leaderboard",
-  },
-  title: "Palia App Leaderboard – The Hidden Gaming Lair",
-  description:
-    "Check out the Palia App Leaderboard and see who has the highest rank and skill levels.",
-};
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const locale = (await params).locale ?? "en";
+  const dict = await getStaticDictionary(APP_CONFIG.name, locale);
+  const t = getT(dict);
+
+  const { canonical, languageAlternates } = getMetadataAlternates(
+    "/leaderboard",
+    locale,
+    APP_CONFIG.supportedLocales,
+  );
+
+  return {
+    alternates: {
+      canonical,
+      languages: languageAlternates,
+    },
+    title: t("leaderboard.meta.title"),
+    description: t("leaderboard.meta.description"),
+  };
+}
 
 const SKILL_ICONS = {
   BugCatching: "Icon_Skill_Bug_01.webp",
@@ -31,7 +50,11 @@ const SKILL_ICONS = {
   // Master:"Icon_Skill_Bug_01.webp",
 };
 
-export default async function Leaderboard() {
+export default async function Leaderboard({ params }: PageProps) {
+  const { locale } = await params;
+  const dict = await getStaticDictionary(APP_CONFIG.name, locale);
+  const t = getT(dict);
+
   const respone = await fetch(
     "https://palia-api.th.gl/nodes?type=players&limit=100",
     {
@@ -61,21 +84,17 @@ export default async function Leaderboard() {
         id="palia"
         header={
           <>
-            <h2 className="text-2xl">Palia App Leaderboard</h2>
+            <h2 className="text-2xl">{t("leaderboard.heading")}</h2>
             <p className="text-sm">
-              Check out the Palia App Leaderboard and see who has the highest
-              rank and skill levels. Leaderboard. Discover where you rank in
-              character level and skill proficiency. To join this leaderboard,
-              ensure you have the{" "}
+              {t("leaderboard.description.part1")}{" "}
               <ExternalAnchor
                 href="https://www.overwolf.com/app/Leon_Machens-Palia_Map"
                 className="inline-flex gap-1 text-primary"
               >
-                In-Game App
+                {t("leaderboard.description.inGameApp")}
                 <ExternalLink className="w-3 h-3" />
               </ExternalAnchor>{" "}
-              installed. Dive into the world of Palia, track your progress, and
-              compete with other players for the top spot!
+              {t("leaderboard.description.part2")}
             </p>
           </>
         }
@@ -84,10 +103,10 @@ export default async function Leaderboard() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Name</th>
-                <th>Level</th>
-                <th className="hidden sm:block">Skills</th>
-                <th>Plot Level</th>
+                <th>{t("leaderboard.table.name")}</th>
+                <th>{t("leaderboard.table.level")}</th>
+                <th className="hidden sm:block">{t("leaderboard.table.skills")}</th>
+                <th>{t("leaderboard.table.plotLevel")}</th>
               </tr>
             </thead>
             <tbody>

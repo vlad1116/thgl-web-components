@@ -32,9 +32,11 @@ const LOCALE_LABELS: Record<string, string> = {
 export function LocaleSwitcher({
   locales,
   current,
+  defaultLocale = "en",
 }: {
   locales: string[];
   current: string;
+  defaultLocale?: string;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -52,9 +54,17 @@ export function LocaleSwitcher({
           const segments = [...currentSegments];
 
           if (currentIsLocale) {
-            segments[0] = locale;
+            // Replace or remove the locale segment
+            if (locale === defaultLocale) {
+              segments.shift(); // Remove locale for default
+            } else {
+              segments[0] = locale;
+            }
           } else {
-            segments.unshift(locale);
+            // Only add locale prefix for non-default locales
+            if (locale !== defaultLocale) {
+              segments.unshift(locale);
+            }
           }
 
           const href =

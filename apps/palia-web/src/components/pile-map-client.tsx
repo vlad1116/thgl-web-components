@@ -15,7 +15,7 @@ import {
 import { type Spawns, useT } from "@repo/ui/providers";
 import { Skeleton } from "@repo/ui/data";
 import { type TilesConfig, type FiltersConfig, SimpleSpawn } from "@repo/lib";
-import { type TimedLootPiles } from "@/app/rummage-pile/page";
+import { type TimedLootPiles } from "@/app/[locale]/rummage-pile/page";
 
 const PileMapDynamic = dynamic(() => import("./pile-map-dynamic"), {
   ssr: false,
@@ -29,6 +29,7 @@ export default function PileMapClient({
   stableNodeIcon,
   tiles,
   icons,
+  locale,
 }: {
   timedLootPiles: TimedLootPiles;
   stableNodes: Spawns;
@@ -36,6 +37,7 @@ export default function PileMapClient({
   stableNodeIcon: FiltersConfig[number]["values"][number]["icon"];
   tiles: TilesConfig;
   icons: string;
+  locale: string;
 }): JSX.Element {
   const t = useT();
   const searchParams = useSearchParams();
@@ -123,11 +125,13 @@ export default function PileMapClient({
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1) return t("rummagePile.map.justNow");
+    if (diffMins < 60)
+      return t("rummagePile.map.minutesAgo").replace("{count}", String(diffMins));
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return date.toLocaleDateString();
+    if (diffHours < 24)
+      return t("rummagePile.map.hoursAgo").replace("{count}", String(diffHours));
+    return date.toLocaleDateString(locale);
   }
 
   const fullMapUrl = isKillimaValley
@@ -139,19 +143,19 @@ export default function PileMapClient({
   const maps = [
     {
       id: "kilima-valley",
-      label: "Kilima Valley",
+      labelKey: "rummagePile.map.kilimaValley",
       icon: HomeIcon,
       active: isKillimaValley,
     },
     {
       id: "bahari-bay",
-      label: "Bahari Bay",
+      labelKey: "rummagePile.map.bahariBay",
       icon: UmbrellaIcon,
       active: isBahariBay,
     },
     {
       id: "elderwood",
-      label: "Elderwood",
+      labelKey: "rummagePile.map.elderwood",
       icon: TreesIcon,
       active: isElderwood,
     },
@@ -176,7 +180,7 @@ export default function PileMapClient({
             >
               <Link href={`?${createQueryString("map", map.id)}`}>
                 <Icon className="w-4 h-4 mr-2" />
-                {map.label}
+                {t(map.labelKey)}
               </Link>
             </Button>
           );
@@ -199,7 +203,7 @@ export default function PileMapClient({
             <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-          Live • {formatRelativeTime(new Date(timestamp))}
+          {t("rummagePile.map.live")} • {formatRelativeTime(new Date(timestamp))}
         </div>
 
         {/* Full Map Link */}
@@ -208,7 +212,7 @@ export default function PileMapClient({
           className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
         >
           <ExpandIcon className="w-3.5 h-3.5" />
-          Explore Full Map
+          {t("rummagePile.map.exploreFullMap")}
         </Link>
 
         {/* Loot Tables Link */}
@@ -217,7 +221,7 @@ export default function PileMapClient({
           className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
         >
           <PackageIcon className="w-3.5 h-3.5" />
-          View Loot Tables
+          {t("rummagePile.map.viewLootTables")}
         </a>
       </div>
     </>

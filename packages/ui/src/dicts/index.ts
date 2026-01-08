@@ -42,6 +42,18 @@ const appDictionaries = {
     "zh-TW": () =>
       import("./dune-awakening.zh-TW.json").then((mod) => mod.default),
   },
+  palia: {
+    en: () => import("./palia.en.json").then((mod) => mod.default),
+    de: () => import("./palia.de.json").then((mod) => mod.default),
+    es: () => import("./palia.es.json").then((mod) => mod.default),
+    fr: () => import("./palia.fr.json").then((mod) => mod.default),
+    it: () => import("./palia.it.json").then((mod) => mod.default),
+    ja: () => import("./palia.ja.json").then((mod) => mod.default),
+    ko: () => import("./palia.ko.json").then((mod) => mod.default),
+    "pt-BR": () => import("./palia.pt-BR.json").then((mod) => mod.default),
+    "zh-CN": () => import("./palia.zh-CN.json").then((mod) => mod.default),
+    "zh-TW": () => import("./palia.zh-TW.json").then((mod) => mod.default),
+  },
 } satisfies Record<
   string,
   Record<string, () => Promise<Record<string, string>>>
@@ -58,7 +70,6 @@ export async function getGlobalDictionary(locale: string): Promise<Dict> {
     globalDictionaries[locale as keyof typeof globalDictionaries] ??
     globalDictionaries.en;
   const fallbackLoader = globalDictionaries.en;
-
   try {
     return await dictLoader();
   } catch {

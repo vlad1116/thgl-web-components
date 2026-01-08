@@ -4,7 +4,13 @@ import { ContentLayout } from "@repo/ui/ads";
 import { Button } from "@repo/ui/controls";
 import Image from "next/image";
 import { Suspense } from "react";
-import { getApiUrl, decodeFromBuffer, fetchVersion } from "@repo/lib";
+import {
+  getApiUrl,
+  decodeFromBuffer,
+  fetchVersion,
+  getT,
+  getMetadataAlternates,
+} from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
 import { DownloadIcon, FilterIcon, MapPinIcon } from "lucide-react";
@@ -13,17 +19,39 @@ import Map from "./map.webp";
 import PileMapClient from "@/components/pile-map-client";
 import LootTables from "./loot-tables";
 import { APP_CONFIG } from "@/config";
+import { getStaticDictionary } from "@repo/ui/dicts";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/rummage-pile",
-  },
-  title: "Palia Rummage Pile and Chapaa Pile – The Hidden Gaming Lair",
-  description:
-    "Discover Rummage Pile and Chapaa Pile locations in Palia. Find piles in Kilima Village, Bahari Bay, and Elderwood to collect valuable resources and items.",
-};
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
 
-export default async function RummagePile() {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const locale = (await params).locale ?? "en";
+  const dict = await getStaticDictionary(APP_CONFIG.name, locale);
+  const t = getT(dict);
+
+  const { canonical, languageAlternates } = getMetadataAlternates(
+    "/rummage-pile",
+    locale,
+    APP_CONFIG.supportedLocales,
+  );
+
+  return {
+    alternates: {
+      canonical,
+      languages: languageAlternates,
+    },
+    title: t("rummagePile.meta.title"),
+    description: t("rummagePile.meta.description"),
+  };
+}
+
+export default async function RummagePile({ params }: PageProps) {
+  const { locale } = await params;
+  const dict = await getStaticDictionary(APP_CONFIG.name, locale);
+  const t = getT(dict);
   const version = await fetchVersion(APP_CONFIG.name);
 
   const rummagePileIcon = version.data.filters
@@ -59,12 +87,8 @@ export default async function RummagePile() {
         id="palia"
         header={
           <>
-            <h2 className="text-2xl">Rummage Piles</h2>
-            <p className="text-sm">
-              Discover Rummage Pile and Chapaa Pile locations in Palia. Select
-              between Kilima Village, Bahari Bay, and Elderwood to find
-              valuable resources and items.
-            </p>
+            <h2 className="text-2xl">{t("rummagePile.heading")}</h2>
+            <p className="text-sm">{t("rummagePile.description")}</p>
           </>
         }
         content={
@@ -77,6 +101,7 @@ export default async function RummagePile() {
                 icon={rummagePileIcon}
                 tiles={version.data.tiles}
                 icons={version.more.icons}
+                locale={locale}
               />
               <PaliaGrid force />
             </Suspense>
@@ -84,10 +109,10 @@ export default async function RummagePile() {
             <div className="mt-8 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-primary mb-2">
-                  Real-Time Pile Tracking
+                  {t("rummagePile.cta.title")}
                 </h3>
                 <p className="text-muted-foreground">
-                  Never miss a Rummage Pile again with live in-game overlay
+                  {t("rummagePile.cta.description")}
                 </p>
               </div>
 
@@ -105,9 +130,11 @@ export default async function RummagePile() {
                     </div>
                     <DownloadIcon className="w-8 h-8 text-primary shrink-0" />
                     <div className="text-center">
-                      <p className="font-medium mb-1">Install the App</p>
+                      <p className="font-medium mb-1">
+                        {t("rummagePile.cta.step1.title")}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Get the THGL companion app
+                        {t("rummagePile.cta.step1.description")}
                       </p>
                     </div>
                   </div>
@@ -122,9 +149,11 @@ export default async function RummagePile() {
                     </div>
                     <FilterIcon className="w-8 h-8 text-primary shrink-0" />
                     <div className="text-center">
-                      <p className="font-medium mb-1">Enable Filter</p>
+                      <p className="font-medium mb-1">
+                        {t("rummagePile.cta.step2.title")}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Select Rummage Pile in filters
+                        {t("rummagePile.cta.step2.description")}
                       </p>
                     </div>
                   </div>
@@ -139,9 +168,11 @@ export default async function RummagePile() {
                     </div>
                     <MapPinIcon className="w-8 h-8 text-primary shrink-0" />
                     <div className="text-center">
-                      <p className="font-medium mb-1">Track Live</p>
+                      <p className="font-medium mb-1">
+                        {t("rummagePile.cta.step3.title")}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        See piles on your in-game map
+                        {t("rummagePile.cta.step3.description")}
                       </p>
                     </div>
                   </div>
@@ -153,14 +184,14 @@ export default async function RummagePile() {
                 <div className="rounded-lg overflow-hidden shadow-lg border border-border/50">
                   <Image
                     src={Filter}
-                    alt="Rummage Piles Filter"
+                    alt={t("rummagePile.cta.filterAlt")}
                     className="w-full h-auto"
                   />
                 </div>
                 <div className="rounded-lg overflow-hidden shadow-lg border border-border/50">
                   <Image
                     src={Map}
-                    alt="Map View"
+                    alt={t("rummagePile.cta.mapAlt")}
                     className="w-full h-auto"
                   />
                 </div>
@@ -170,13 +201,13 @@ export default async function RummagePile() {
               <Button size="lg" className="shadow-lg shadow-primary/20" asChild>
                 <ExternalAnchor href="https://www.th.gl/companion-app">
                   <DownloadIcon className="w-4 h-4 mr-2" />
-                  Get THGL Companion App
+                  {t("rummagePile.cta.button")}
                 </ExternalAnchor>
               </Button>
             </div>
 
             {/* Loot Tables Section */}
-            <LootTables />
+            <LootTables locale={locale} />
           </>
         }
       />

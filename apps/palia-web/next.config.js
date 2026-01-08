@@ -3,18 +3,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/:lang/rummage-pile",
+        source: "/en/rummage-pile",
         destination: "/rummage-pile",
         permanent: true,
       },
       {
-        source: "/:lang/leaderboard",
+        source: "/en/leaderboard",
         destination: "/leaderboard",
         permanent: true,
       },
       {
         source: "/:lang/download",
-        destination: "https://www.overwolf.com/app/Leon_Machens-Palia_Map",
+        destination: "https://www.th.gl/companion-app",
         permanent: true,
       },
     ];
