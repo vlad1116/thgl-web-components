@@ -11,6 +11,7 @@ import { DownloadIcon, FilterIcon, MapPinIcon } from "lucide-react";
 import Filter from "./filter.webp";
 import Map from "./map.webp";
 import PileMapClient from "@/components/pile-map-client";
+import LootTables from "./loot-tables";
 import { APP_CONFIG } from "@/config";
 
 export const metadata: Metadata = {
@@ -173,6 +174,9 @@ export default async function RummagePile() {
                 </ExternalAnchor>
               </Button>
             </div>
+
+            {/* Loot Tables Section */}
+            <LootTables />
           </>
         }
       />

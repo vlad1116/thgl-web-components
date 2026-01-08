@@ -5,7 +5,13 @@ import { notFound, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import { Button } from "@repo/ui/controls";
 import Link from "next/link";
-import { MapIcon, ExpandIcon } from "lucide-react";
+import {
+  ExpandIcon,
+  PackageIcon,
+  HomeIcon,
+  UmbrellaIcon,
+  TreesIcon,
+} from "lucide-react";
 import { type Spawns, useT } from "@repo/ui/providers";
 import { Skeleton } from "@repo/ui/data";
 import { type TilesConfig, type FiltersConfig, SimpleSpawn } from "@repo/lib";
@@ -131,32 +137,50 @@ export default function PileMapClient({
       : "/maps/Elderwood";
 
   const maps = [
-    { id: "kilima-valley", label: "Kilima Valley", active: isKillimaValley },
-    { id: "bahari-bay", label: "Bahari Bay", active: isBahariBay },
-    { id: "elderwood", label: "Elderwood", active: isElderwood },
+    {
+      id: "kilima-valley",
+      label: "Kilima Valley",
+      icon: HomeIcon,
+      active: isKillimaValley,
+    },
+    {
+      id: "bahari-bay",
+      label: "Bahari Bay",
+      icon: UmbrellaIcon,
+      active: isBahariBay,
+    },
+    {
+      id: "elderwood",
+      label: "Elderwood",
+      icon: TreesIcon,
+      active: isElderwood,
+    },
   ];
 
   return (
     <>
       {/* Map Selector */}
       <div className="flex flex-wrap items-center justify-center gap-2">
-        {maps.map((map) => (
-          <Button
-            key={map.id}
-            variant={map.active ? "default" : "secondary"}
-            className={
-              map.active
-                ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
-                : "hover:bg-secondary/60"
-            }
-            asChild
-          >
-            <Link href={`?${createQueryString("map", map.id)}`}>
-              <MapIcon className="w-4 h-4 mr-2" />
-              {map.label}
-            </Link>
-          </Button>
-        ))}
+        {maps.map((map) => {
+          const Icon = map.icon;
+          return (
+            <Button
+              key={map.id}
+              variant={map.active ? "default" : "secondary"}
+              className={
+                map.active
+                  ? "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
+                  : "hover:bg-secondary/60"
+              }
+              asChild
+            >
+              <Link href={`?${createQueryString("map", map.id)}`}>
+                <Icon className="w-4 h-4 mr-2" />
+                {map.label}
+              </Link>
+            </Button>
+          );
+        })}
       </div>
 
       {/* Map Display */}
@@ -186,6 +210,15 @@ export default function PileMapClient({
           <ExpandIcon className="w-3.5 h-3.5" />
           Explore Full Map
         </Link>
+
+        {/* Loot Tables Link */}
+        <a
+          href="#loot-tables"
+          className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+        >
+          <PackageIcon className="w-3.5 h-3.5" />
+          View Loot Tables
+        </a>
       </div>
     </>
   );

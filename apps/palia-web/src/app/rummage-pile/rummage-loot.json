@@ -1,0 +1,1033 @@
+{
+  "generatedAt": "2026-01-08T08:34:06.902Z",
+  "pools": {
+    "chapaaNest": {
+      "name": "Chapaa Nest",
+      "location": "Kilima Village",
+      "items": [
+        {
+          "name": "Sandy Paws Present",
+          "weight": 10,
+          "chance": "9.1%",
+          "icon": "Icon_Winter_Present_Snowman",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": true
+        },
+        {
+          "name": "Briar Daisy",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Flower_Daisy_Briar",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Brightshroom",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Crop_MushroomBlue",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Copper Ore",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Ore_Copper",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dragon's Beard Peat",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Moss_Rare",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Sweet Leaf",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Spice_SweetLeaves",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Worm",
+          "weight": 5,
+          "chance": "4.5%",
+          "icon": "Icon_Bug_Worm",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Blanket Storage Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_152_Deco_BlanketBasket",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Cozy Ladder",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_156_Deco_BlanketLadder",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Cozy Rattan Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_155_Deco_Basket_Med",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Cozy Woven Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_154_Deco_Basket_Lg",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Firewood Holder",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_159_Deco_FirewoodHolder",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Laundry Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_157_Deco_LaundryBasket",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Plushie Pool",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "WT_Icon_Decor_Rewards_decor_Kidspool01_Plushie",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Porcelain Pitcher",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_160_Deco_PitcherBasin",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Sewing Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_153_Deco_SewingBasket",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Bench",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "WT_Icon_Decor_Summer_02_furniture_PicnicBench",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Cooler",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "WT_Icon_Decor_Summer_07_decor_DrinkCooler",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Table",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "WT_Icon_Decor_Summer_01_furniture_PicnicTable",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Tiered Fruit Basket",
+          "weight": 3,
+          "chance": "2.7%",
+          "icon": "Icon_Generic_158_Deco_TieredBasket",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Apple",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Apple",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Blueberries",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Blueberry",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Carrot",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Carrot",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Corn",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Corn",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Glow Worm",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Bug_Glow_Worm",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Potato",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Potato",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Rice",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Rice",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Spicy Pepper",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_PepperSpicy",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Tomato",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Tomato",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wheat",
+          "weight": 2,
+          "chance": "1.8%",
+          "icon": "Icon_Crop_Wheat",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Buzzy Jar",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_BuzzyJar",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dari Cloves",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Flower_DariClove",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dowsing Rod",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_DowsingRod",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flow-Infused Wood",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Wood_Magicwood",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Gold Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Gold",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Heartdrop Lily",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Flower_Heartdrop",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Heat Root",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Spice_Heatroot",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Hunter's Horn",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_HuntersHorn",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ore Compass",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_OreCompass",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Palium Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Palium",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Silver Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Silver",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        }
+      ],
+      "totalWeight": 110
+    },
+    "beachTrash": {
+      "name": "Beach Pile",
+      "location": "Bahari Bay",
+      "items": [
+        {
+          "name": "Sandy Paws Present",
+          "weight": 10,
+          "chance": "8.6%",
+          "icon": "Icon_Winter_Present_Snowman",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Briar Daisy",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Flower_Daisy_Briar",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Brightshroom",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Crop_MushroomBlue",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Copper Ore",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Ore_Copper",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dragon's Beard Peat",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Moss_Rare",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Sweet Leaf",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Spice_SweetLeaves",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Worm",
+          "weight": 5,
+          "chance": "4.3%",
+          "icon": "Icon_Bug_Worm",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Bookshelf",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Furniture_BoatBookshelf",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Conch",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Shell_Lg_02",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Driftwood Decor",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_DriftwoodDisplay",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Glass Buoy",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_GlassFloat",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Hanging Mobile",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_ShellWindchime",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Large Candle",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_CandleJar_01",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Porthole Frame",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Porthole",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Sand Art",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_ShellJar",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Scallop",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Shell_Lg_01",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Small Candle",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_CandleJar_02",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flotsam Towel Rack",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_TowelRack",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Plushie Pool",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Rewards_decor_Kidspool01_Plushie",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Ice Bucket",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Summer_06_decor_Popsicles",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Recliner",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Summer_03_furniture_Chaise",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Summer Stripe Umbrella",
+          "weight": 3,
+          "chance": "2.6%",
+          "icon": "WT_Icon_Decor_Summer_04_furniture_Umbrella",
+          "isRecipe": true,
+          "isSeasonal": false
+        },
+        {
+          "name": "Apple",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Apple",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Blueberries",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Blueberry",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Carrot",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Carrot",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Corn",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Corn",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Glow Worm",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Bug_Glow_Worm",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Potato",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Potato",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Rice",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Rice",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Spicy Pepper",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_PepperSpicy",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Tomato",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Tomato",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wheat",
+          "weight": 2,
+          "chance": "1.7%",
+          "icon": "Icon_Crop_Wheat",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Buzzy Jar",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_BuzzyJar",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dari Cloves",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Flower_DariClove",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Dowsing Rod",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_DowsingRod",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Flow-Infused Wood",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Wood_Magicwood",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Gold Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Gold",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Heartdrop Lily",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Flower_Heartdrop",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Heat Root",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Spice_Heatroot",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Hunter's Horn",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_HuntersHorn",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ore Compass",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_OreCompass",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Palium Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Palium",
+          "rarity": "Common",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Silver Ore",
+          "weight": 1,
+          "chance": "0.9%",
+          "icon": "Icon_Ore_Silver",
+          "rarity": "Uncommon",
+          "isRecipe": false,
+          "isSeasonal": false
+        }
+      ],
+      "totalWeight": 116
+    },
+    "elderwood": {
+      "name": "Rummage Pile",
+      "location": "Elderwood",
+      "items": [
+        {
+          "name": "Sandy Paws Present",
+          "weight": 3,
+          "chance": "9.1%",
+          "icon": "Icon_Winter_Present_Snowman",
+          "rarity": "Epic",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Drum Toy",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanToy2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Galdur Toy",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanToy1",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Machine #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanOrerry2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Machine #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanOrerry3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Machine #3",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanOrerry4",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Machine #4",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanOrerry5",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Machine #5",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanOrerry6",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Necklace #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanNecklace2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Necklace #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_AncientHumanNecklace3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Statue #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_KitsuuStatue2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Statue #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_KitsuuStatue3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Ancient Statue #3",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_KitsuuStatue4",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Dress #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_CeremonialDress2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Dress #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_CeremonialDress3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Dress #3",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_CeremonialDress4",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Lute #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_UmbraanLute2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Lute #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_UmbraanLute3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Painting #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_Painting2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Painting #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_Painting3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Painting #3",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_Painting4",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Umbraan Pot",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_UmbraanIncensePot",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Banner #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriWarBanner2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Banner #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriWarBanner3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Banner #3",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriWarBanner4",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Creature",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_CryptidAlien",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Horn #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriWarHorn2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Horn #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriWarHorn3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Mermaid",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_CryptidMermaid",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Sword #1",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriGeneralsSword2",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        },
+        {
+          "name": "Wartorn Sword #2",
+          "weight": 1,
+          "chance": "3.0%",
+          "icon": "ICON_Artifact_MajiriGeneralsSword3",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isSeasonal": false
+        }
+      ],
+      "totalWeight": 33
+    }
+  }
+}
