@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import { type Spawns, useT } from "@repo/ui/providers";
 import { Skeleton } from "@repo/ui/data";
-import { type TilesConfig, type FiltersConfig, SimpleSpawn } from "@repo/lib";
+import {
+  type TilesConfig,
+  type FiltersConfig,
+  SimpleSpawn,
+  decodeFromBuffer,
+} from "@repo/lib";
 import { type TimedLootPiles } from "@/app/[locale]/rummage-pile/page";
 
 const PileMapDynamic = dynamic(() => import("./pile-map-dynamic"), {
@@ -23,21 +28,21 @@ const PileMapDynamic = dynamic(() => import("./pile-map-dynamic"), {
 });
 
 export default function PileMapClient({
-  timedLootPiles,
   stableNodes,
   icon,
   stableNodeIcon,
   tiles,
   icons,
   locale,
+  encodedTimedLootPiles,
 }: {
-  timedLootPiles: TimedLootPiles;
   stableNodes: Spawns;
   icon: FiltersConfig[number]["values"][number]["icon"];
   stableNodeIcon: FiltersConfig[number]["values"][number]["icon"];
   tiles: TilesConfig;
   icons: string;
   locale: string;
+  encodedTimedLootPiles: string;
 }): JSX.Element {
   const t = useT();
   const searchParams = useSearchParams();
@@ -45,6 +50,9 @@ export default function PileMapClient({
   const isBahariBay = mapParam === "bahari-bay";
   const isElderwood = mapParam === "elderwood";
   const isKillimaValley = !isBahariBay && !isElderwood;
+  const timedLootPiles = decodeFromBuffer<TimedLootPiles>(
+    Buffer.from(encodedTimedLootPiles, "base64"),
+  );
 
   useEffect(() => {
     if (!mapParam) {
@@ -127,10 +135,16 @@ export default function PileMapClient({
     const diffMins = Math.floor(diffMs / 60000);
     if (diffMins < 1) return t("rummagePile.map.justNow");
     if (diffMins < 60)
-      return t("rummagePile.map.minutesAgo").replace("{count}", String(diffMins));
+      return t("rummagePile.map.minutesAgo").replace(
+        "{count}",
+        String(diffMins),
+      );
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24)
-      return t("rummagePile.map.hoursAgo").replace("{count}", String(diffHours));
+      return t("rummagePile.map.hoursAgo").replace(
+        "{count}",
+        String(diffHours),
+      );
     return date.toLocaleDateString(locale);
   }
 
@@ -203,7 +217,8 @@ export default function PileMapClient({
             <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-          {t("rummagePile.map.live")} • {formatRelativeTime(new Date(timestamp))}
+          {t("rummagePile.map.live")} •{" "}
+          {formatRelativeTime(new Date(timestamp))}
         </div>
 
         {/* Full Map Link */}

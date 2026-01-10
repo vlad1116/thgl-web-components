@@ -10,6 +10,7 @@ import {
   fetchVersion,
   getT,
   getMetadataAlternates,
+  encodeToBuffer,
 } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
@@ -84,6 +85,8 @@ export default async function RummagePile({ params }: PageProps) {
     .find((f) => f.group === "locations")!
     .values.find((v) => v.id === "stable")!.icon;
 
+  const encodedTimedLootPiles = encodeToBuffer(data).toString("base64");
+
   return (
     <HeaderOffset full>
       <ContentLayout
@@ -98,7 +101,7 @@ export default async function RummagePile({ params }: PageProps) {
           <>
             <Suspense>
               <PileMapClient
-                timedLootPiles={data}
+                encodedTimedLootPiles={encodedTimedLootPiles}
                 stableNodes={stableNodes}
                 stableNodeIcon={stableNodeIcon}
                 icon={rummagePileIcon}
