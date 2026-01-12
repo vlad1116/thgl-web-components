@@ -390,6 +390,7 @@ function MarkersContent({
                 group: filter?.group,
                 isPrivate: spawn.isPrivate,
                 isLive: Boolean(spawn.address),
+                data: spawn.data,
               },
             ];
             if (isCluster) {
@@ -405,6 +406,7 @@ function MarkersContent({
                   group: filter?.group,
                   isPrivate: spawn.isPrivate,
                   isLive: Boolean(spawn.address),
+                  data: spawn.data,
                 })),
               );
             }

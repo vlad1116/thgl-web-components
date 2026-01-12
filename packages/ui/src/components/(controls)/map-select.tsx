@@ -53,7 +53,7 @@ export function MapSelect({
                 {mapNames.map(({ name, defaultTitle }) => (
                   <CommandItem
                     key={name}
-                    value={name}
+                    value={t(name)}
                     onSelect={() => {
                       if (name === mapName) {
                         setOpen(false);

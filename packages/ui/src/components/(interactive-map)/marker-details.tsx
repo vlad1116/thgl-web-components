@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useT } from "../(providers)";
 import { ScrollArea } from "../ui/scroll-area";
 import Markdown from "markdown-to-jsx";
@@ -17,6 +18,7 @@ export type TooltipItem = {
   group?: string;
   isPrivate?: boolean;
   isLive?: boolean;
+  data?: Record<string, string[]>;
 };
 
 export function MarkerDetails({
@@ -60,9 +62,60 @@ export function MarkerDetails({
         }
       : null,
   );
-  const desc = item.description
-    ? item.description.replace("\n", "<br>")
-    : t(item.termId, { isDesc: true, fallback: item.type });
+  // Build description from templates + spawn.data if available
+  const desc = useMemo(() => {
+    if (item.description) {
+      return item.description.replace("\n", "<br>");
+    }
+
+    // If spawn has data (monster with level/hpBars etc), use templates
+    if (item.data?.level) {
+      const vars: Record<string, string> = {};
+
+      // Build realm section
+      if (item.data.realm?.[0]) {
+        vars.realm = t("spawn_desc_realm", {
+          vars: { realm: item.data.realm[0] },
+        });
+      } else {
+        vars.realm = "";
+      }
+
+      // Build subtitle section
+      if (item.data.subtitle?.[0]) {
+        vars.subtitle = t("spawn_desc_subtitle", {
+          vars: { subtitle: item.data.subtitle[0] },
+        });
+      } else {
+        vars.subtitle = "";
+      }
+
+      // Level and HP bars
+      vars.level = item.data.level[0];
+      vars.hpBars = item.data.hpBars?.[0] ?? "1";
+
+      // Build spawn timing section
+      if (item.data.count?.[0]) {
+        const spawnVars: Record<string, string> = {
+          count: item.data.count[0],
+          interval: item.data.interval?.[0] ?? "",
+          delay: "",
+        };
+        if (item.data.delay?.[0]) {
+          spawnVars.delay = t("spawn_desc_delay", {
+            vars: { delay: item.data.delay[0] },
+          });
+        }
+        vars.spawn = t("spawn_desc_spawn", { vars: spawnVars });
+      } else {
+        vars.spawn = "";
+      }
+
+      return t("spawn_desc_monster", { vars });
+    }
+
+    return t(item.termId, { isDesc: true, fallback: item.type });
+  }, [item, t]);
   return (
     <>
       <article
