@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@repo/ui/controls";
-import { ScrollArea } from "@repo/ui/controls";
 import { DataTable, type ColumnDef } from "@repo/ui/data";
 import {
   PackageIcon,
@@ -14,6 +13,7 @@ import {
   PlusIcon,
   MinusIcon,
   RotateCcwIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { useT } from "@repo/ui/providers";
 import rummageLoot from "./rummage-loot.json";
@@ -37,6 +37,13 @@ type LootItem = {
 // Check if an item can only be collected once (recipes and quest items)
 function isOneTimeItem(item: LootItem): boolean {
   return !!(item.isRecipe || item.isQuest);
+}
+
+// Generate paliapedia URL from item ID
+function getPaliapediaUrl(itemId: string): string {
+  // Remove DA_ItemType_ prefix and convert to lowercase with hyphens
+  const slug = itemId.replace(/^DA_ItemType_/, "").toLowerCase().replace(/_/g, "-");
+  return `https://paliapedia.com/item/${slug}/`;
 }
 
 // Calculate adjusted drop chances based on collected one-time items
@@ -174,15 +181,20 @@ function createColumns(
         const itemName = getItemName(item.id, locale);
         const isCollectedOneTime =
           isOneTimeItem(item) && (tracker[poolId]?.[item.id] || 0) >= 1;
+        const paliapediaUrl = getPaliapediaUrl(item.id);
         return (
           <div
             className={`flex items-center gap-2 ${isCollectedOneTime ? "opacity-50" : ""}`}
           >
-            <span
-              className={`font-medium ${isCollectedOneTime ? "line-through" : ""}`}
+            <a
+              href={paliapediaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1 font-medium hover:text-primary hover:underline ${isCollectedOneTime ? "line-through" : ""}`}
             >
               {itemName}
-            </span>
+              <ExternalLinkIcon className="w-3 h-3 opacity-50" />
+            </a>
             {item.isRecipe && (
               <span className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 {t("rummagePile.label.recipe")}
@@ -545,14 +557,12 @@ export default function LootTables({
         )}
       </div>
 
-      {/* Data Table with ScrollArea */}
-      <ScrollArea className="h-[420px]">
-        <DataTable
-          columns={columns}
-          data={activePool.items}
-          filterColumn="name"
-        />
-      </ScrollArea>
+      {/* Data Table */}
+      <DataTable
+        columns={columns}
+        data={activePool.items}
+        filterColumn="name"
+      />
 
       {/* Footer note */}
       <p className="mt-4 text-xs text-muted-foreground/70 text-center">
