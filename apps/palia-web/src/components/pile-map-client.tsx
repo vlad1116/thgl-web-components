@@ -18,7 +18,7 @@ import {
   type TilesConfig,
   type FiltersConfig,
   SimpleSpawn,
-  decodeFromBuffer,
+  deobfuscateAndDecode,
 } from "@repo/lib";
 import { type TimedLootPiles } from "@/app/[locale]/rummage-pile/page";
 
@@ -50,8 +50,8 @@ export default function PileMapClient({
   const isBahariBay = mapParam === "bahari-bay";
   const isElderwood = mapParam === "elderwood";
   const isKillimaValley = !isBahariBay && !isElderwood;
-  const timedLootPiles = decodeFromBuffer<TimedLootPiles>(
-    Buffer.from(encodedTimedLootPiles, "base64"),
+  const timedLootPiles = deobfuscateAndDecode<TimedLootPiles>(
+    encodedTimedLootPiles,
   );
 
   useEffect(() => {

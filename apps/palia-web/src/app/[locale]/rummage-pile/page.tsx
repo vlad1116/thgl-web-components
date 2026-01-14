@@ -10,7 +10,7 @@ import {
   fetchVersion,
   getT,
   getMetadataAlternates,
-  encodeToBuffer,
+  encodeAndObfuscate,
 } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
@@ -85,7 +85,7 @@ export default async function RummagePile({ params }: PageProps) {
     .find((f) => f.group === "locations")!
     .values.find((v) => v.id === "stable")!.icon;
 
-  const encodedTimedLootPiles = encodeToBuffer(data).toString("base64");
+  const encodedTimedLootPiles = encodeAndObfuscate(data);
 
   return (
     <HeaderOffset full>
