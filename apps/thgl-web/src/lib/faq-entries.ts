@@ -617,12 +617,53 @@ You're using an ad blocker or DNS filter that blocks NitroPay.
 - Whitelist \`*.th.gl\` in your ad blocker
 - Subscribe via [Support Me](/support-me) to remove ads
 
-**Known blockers:**  
+**Known blockers:**
 AdBlock, uBlock, Malwarebytes, Pi-Hole, Firefox strict mode, and more.
 
 If you're unsure, check if [this file](https://s.nitropay.com/ads-1487.js) loads. If not, you're being blocked.
     `.trim(),
     labels: ["General", "Subscription", "Technical"],
+  },
+  {
+    id: "why-adblock-detection",
+    headline: "Why ad-blocker detection exists",
+    question: "Why does TH.GL have ad-blocker detection?",
+    answer: `
+## The Short Answer
+
+Ads allow TH.GL to be **100% free** with no paywalls. Every feature is available to everyone. The detection shows a **closable message** — it doesn't block you from using the site.
+
+## Why Not Just Let Ad Blockers Do Their Thing?
+
+I would — if they only blocked ads. But ad blockers like uBlock Origin and AdGuard actively **break website functionality**, not just ads:
+
+### What Ad Blockers Have Done to TH.GL:
+- **Corrupted supporter accounts** — uBlock injects fake data into localStorage, overwriting real subscriber data
+- **Broke core features** — Peer Link, settings dialogs, and whiteboard were hidden by overly broad CSS filters
+- **Crashed the site** — A uBlock filter with invalid JSON crashed the site for all uBlock users until I caught the error
+- **Block privacy-friendly analytics** — Self-hosted Plausible (no cookies, no tracking, GDPR-compliant) is blocked
+
+### Example of Active uBlock Filter:
+\`\`\`
+th.gl##+js(trusted-set-local-storage-item, account-storage, {...})
+\`\`\`
+This rule overwrites your account data — even if you're a paying supporter. [See the commit](https://github.com/uBlockOrigin/uAssets/commit/ce335b4abe490553f22dfd6e7cfb5a0811b2618c).
+
+## What the Detection Actually Does
+
+1. Shows a **closable message** explaining the situation
+2. Links to options: whitelist, subscribe, or keep blocking
+3. **Does NOT prevent you from using the site**
+
+## My Position
+
+- I'm fine with people blocking ads — as long as they know they're doing it
+- I'm NOT fine with ad blockers breaking functionality and corrupting user data
+- You should be able to make an **informed choice**
+
+For the full story, see [Why Ad Blockers Are Breaking TH.GL](/blog/ad-blockers-breaking-websites).
+    `.trim(),
+    labels: ["General", "Technical"],
   },
   {
     id: "windows-insider",
