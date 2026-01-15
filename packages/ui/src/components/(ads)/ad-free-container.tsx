@@ -29,6 +29,13 @@ export function AdFreeContainer({
     if (!displayCheck) {
       return;
     }
+    // Skip check if window is minimized (WebView2 doesn't set document.hidden)
+    if (window.innerWidth === 0 || window.innerHeight === 0) {
+      const timeoutHandle = setTimeout(() => {
+        setTick((prev) => prev + 1);
+      }, 500);
+      return () => clearTimeout(timeoutHandle);
+    }
     try {
       if (!el.current || !document.body.contains(el.current)) {
         setContentError();

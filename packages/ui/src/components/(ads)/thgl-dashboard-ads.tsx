@@ -14,6 +14,7 @@ export function THGLDashboardAds({
   return (
     <ScriptLoader
       loading={<NitroPayResponsiveLoading id={id} className={className} />}
+      fallback={<NitroPayResponsiveLoading id={id} className={className} />}
     >
       <NitroPayResponsive id={id} className={className} />
     </ScriptLoader>
@@ -71,7 +72,7 @@ function NitroPayResponsiveLoading({
 }) {
   return (
     <AdFreeContainer noBorder className={`h-full overflow-hidden ${className}`}>
-      <div className="w-full shrink-0" id={id} />
+      <div className="w-full shrink-0 min-h-[280px]" id={id} />
     </AdFreeContainer>
   );
 }
