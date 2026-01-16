@@ -7,6 +7,8 @@ export interface GridLayerOptions {
   opacity?: number;
   showLabels?: boolean;
   labelOpacity?: number;
+  labelFormatter?: (row: number, col: number, divisions: number) => string;
+  labelColor?: string;
 }
 
 interface LabelData {
@@ -66,6 +68,8 @@ export class GridLayer implements Layer {
       opacity: options.opacity ?? 0.2,
       showLabels: options.showLabels ?? true,
       labelOpacity: options.labelOpacity ?? 0.8,
+      labelFormatter: options.labelFormatter ?? ((row, col) => `${String.fromCharCode(65 + row)}${col + 1}`),
+      labelColor: options.labelColor ?? "#ffffff",
     };
   }
 
@@ -244,10 +248,10 @@ export class GridLayer implements Layer {
     const divisions = this.options.divisions;
     const labels: string[] = [];
 
-    // Generate all label strings
+    // Generate all label strings using the formatter
     for (let i = 0; i < divisions; i++) {
       for (let j = 0; j < divisions; j++) {
-        labels.push(`${String.fromCharCode(65 + i)}${j + 1}`);
+        labels.push(this.options.labelFormatter(i, j, divisions));
       }
     }
 
@@ -300,8 +304,9 @@ export class GridLayer implements Layer {
       ctx.fillText(labels[i], x + 1, y - 1);
       ctx.fillText(labels[i], x - 1, y + 1);
 
-      // Draw text
-      ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+      // Draw text with custom color
+      const [lr, lg, lb] = this.parseColor(this.options.labelColor);
+      ctx.fillStyle = `rgba(${Math.round(lr * 255)}, ${Math.round(lg * 255)}, ${Math.round(lb * 255)}, 1.0)`;
       ctx.fillText(labels[i], x, y);
 
       // Store texture coordinates (normalized) - row is flipped due to canvas transform
@@ -333,7 +338,7 @@ export class GridLayer implements Layer {
     this.labels = [];
     for (let i = 0; i < divisions; i++) {
       for (let j = 0; j < divisions; j++) {
-        const text = `${String.fromCharCode(65 + i)}${j + 1}`;
+        const text = this.options.labelFormatter(i, j, divisions);
         const texCoords = labelTexCoords.get(text)!;
         this.labels.push({
           lat: minLat + j * cellHeight + cellHeight / 2,

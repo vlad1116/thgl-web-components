@@ -1,5 +1,5 @@
-import { ActorPlayer } from "@repo/lib/overwolf";
-import leaflet from "leaflet";
+import type { ActorPlayer } from "@repo/lib/overwolf";
+import type { IconMarkerLayer, IconMarkerInstance } from "@repo/lib/web-map";
 
 const SCALE = 0.083492;
 const DEG_45 = Math.PI / 4; // 45 degrees in radians
@@ -7,6 +7,7 @@ const OFFSET = {
   x: 113.2,
   y: -227.4,
 };
+
 export const normalizePoint = ({
   x,
   y,
@@ -27,45 +28,106 @@ export const normalizePoint = ({
   };
 };
 
-export class PlayerMarker extends leaflet.Marker {
-  declare options: leaflet.MarkerOptions & {
-    rotation: number;
-    rotationOffset?: number;
-  };
-  private _icon: HTMLElement | undefined = undefined;
+export interface PlayerMarkerOptions {
+  id: string;
+  rotation: number;
+  rotationOffset?: number;
+  size: number;
+  iconUrl?: string;
+}
+
+/**
+ * Player marker for WebMap - manages a player icon marker instance
+ */
+export class PlayerMarker {
+  private _id: string;
+  private _latLng: [number, number] = [0, 0];
+  private _rotation: number = 0;
+  private _rotationOffset: number = 0;
+  private _size: number;
   private _lastRawRotation: number = 0;
   private _accumulatedSpins: number = 0;
+  private _markerLayer: IconMarkerLayer | null = null;
+  private _iconUrl?: string;
+  private _iconImage?: HTMLImageElement;
 
   constructor(
-    latLng: leaflet.LatLngExpression,
-    options: leaflet.MarkerOptions & {
-      rotation: number;
-      rotationOffset?: number;
-    },
+    latLng: [number, number],
+    options: PlayerMarkerOptions,
   ) {
-    super(latLng, options);
+    this._id = options.id;
+    this._latLng = latLng;
+    this._rotation = options.rotation;
+    this._rotationOffset = options.rotationOffset ?? 0;
+    this._size = options.size;
     this._lastRawRotation = options.rotation;
+    this._iconUrl = options.iconUrl;
   }
 
-  _setPos(pos: leaflet.Point): void {
-    if (!this._icon) {
-      return;
-    }
-    // Set transition only once, not on every position update
-    // Duration matches the map pan interval so player icon and map move in sync
-    if (!this._icon.style.transition) {
-      this._icon.style.transition = "transform 0.2s linear";
-      this._icon.style.transformOrigin = "center";
-    }
-
-    this._icon.style.transform = `translate3d(${pos.x}px,${pos.y}px,0) rotate(${this.options.rotation}deg)`;
-    return;
+  get id(): string {
+    return this._id;
   }
 
+  getLatLng(): [number, number] {
+    return this._latLng;
+  }
+
+  setLatLng(latLng: [number, number]) {
+    this._latLng = latLng;
+    this._updateMarker();
+  }
+
+  getRotation(): number {
+    return this._rotation;
+  }
+
+  setSize(size: number) {
+    this._size = size;
+    this._updateMarker();
+  }
+
+  /**
+   * Set the icon image for the player marker
+   */
+  setIcon(image: HTMLImageElement) {
+    this._iconImage = image;
+    if (this._markerLayer) {
+      // Add the player sheet with the icon image
+      this._markerLayer.setSheet("player", image);
+    }
+    this._updateMarker();
+  }
+
+  /**
+   * Add this marker to a marker layer
+   */
+  addTo(markerLayer: IconMarkerLayer) {
+    this._markerLayer = markerLayer;
+
+    // Set up the player icon sheet if we have an image
+    if (this._iconImage) {
+      markerLayer.setSheet("player", this._iconImage);
+    }
+
+    // Add the marker instance
+    const instance = this._createInstance();
+    markerLayer.add(instance);
+  }
+
+  /**
+   * Remove this marker from its layer
+   */
+  remove() {
+    if (this._markerLayer) {
+      this._markerLayer.remove(this._id);
+      this._markerLayer = null;
+    }
+  }
+
+  /**
+   * Update player position and rotation
+   */
   updatePosition({ x, y, r }: ActorPlayer) {
-    const latLng = this.getLatLng();
-    const newLatLng = [x, y] as leaflet.LatLngTuple;
-
     // Only recalculate rotation when r actually changes
     if (r !== this._lastRawRotation) {
       // Check if we crossed the 180/-180 boundary
@@ -82,17 +144,51 @@ export class PlayerMarker extends leaflet.Marker {
       let playerRotation = r + 360 * this._accumulatedSpins;
 
       // Apply rotation offset if configured
-      if (this.options.rotationOffset) {
-        playerRotation += this.options.rotationOffset;
+      if (this._rotationOffset) {
+        playerRotation += this._rotationOffset;
       }
 
-      this.options.rotation = playerRotation;
+      this._rotation = playerRotation;
       this._lastRawRotation = r;
     }
 
-    // Update position if changed
-    if (!latLng.equals(newLatLng)) {
-      this.setLatLng(newLatLng);
+    // Update position
+    const newLatLng: [number, number] = [x, y];
+    if (this._latLng[0] !== newLatLng[0] || this._latLng[1] !== newLatLng[1]) {
+      this._latLng = newLatLng;
     }
+
+    this._updateMarker();
+  }
+
+  /**
+   * Create an IconMarkerInstance for this player
+   */
+  private _createInstance(): IconMarkerInstance {
+    const dpr = window.devicePixelRatio || 1;
+    return {
+      id: this._id,
+      latLng: this._latLng,
+      size: this._size * dpr,
+      sheet: "player",
+      rect: { x: 0, y: 0, width: 36, height: 36 }, // Default player icon size
+      rotation: (this._rotation * Math.PI) / 180, // Convert to radians
+      keepUpright: true, // Player icon should always face up
+      isHighlighted: false,
+    };
+  }
+
+  /**
+   * Update the marker in the layer
+   */
+  private _updateMarker() {
+    if (!this._markerLayer) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    this._markerLayer.updateMarker(this._id, {
+      latLng: this._latLng,
+      size: this._size * dpr,
+      rotation: (this._rotation * Math.PI) / 180,
+    });
   }
 }

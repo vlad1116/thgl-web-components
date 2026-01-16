@@ -1,12 +1,13 @@
 "use client";
 import { useMapStore } from "../(interactive-map)/store";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { cn, useSettingsStore, useUserStore } from "@repo/lib";
+import { ImageOverlayLayer } from "@repo/lib/web-map";
 import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useT } from "../(providers)";
@@ -33,7 +34,7 @@ const RESOURCE_HEATMAPS = [
 export function DuneHeatmaps() {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const { map, leaflet } = useMapStore();
+  const map = useMapStore((state) => state.map);
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const resourceFilterNames = useMemo(
@@ -45,9 +46,10 @@ export function DuneHeatmaps() {
     [filters, resourceFilterNames],
   );
   const lockedWindow = useSettingsStore((state) => state.lockedWindow);
+  const imageOverlayRef = useRef<ImageOverlayLayer | null>(null);
 
   useEffect(() => {
-    if (!map || !leaflet) {
+    if (!map) {
       return;
     }
     if (map.mapName !== "survival_1") {
@@ -63,14 +65,18 @@ export function DuneHeatmaps() {
       return;
     }
 
-    const imageOverlay = leaflet.imageOverlay(resourceHeatmap.url, map.bounds);
-    imageOverlay.addTo(map);
+    const imageOverlay = new ImageOverlayLayer({
+      url: resourceHeatmap.url,
+      bounds: map.bounds,
+      opacity: 1.0,
+    });
+    map.addLayer(imageOverlay, { zIndex: 20 });
+    imageOverlayRef.current = imageOverlay;
 
     return () => {
-      try {
-        imageOverlay.removeFrom(map);
-      } catch (e) {
-        //
+      if (map && imageOverlayRef.current) {
+        map.removeLayer(imageOverlayRef.current);
+        imageOverlayRef.current = null;
       }
     };
   }, [map, activeResourceFilter]);

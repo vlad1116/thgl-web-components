@@ -1,6 +1,7 @@
 import type { Layer, LatLng, RenderState } from "../types";
 import { createProgram } from "../utils/gl";
 import { ColorBlindMode } from "../utils/color-blind";
+import { devLog } from "../../dev-log";
 
 // Simple icon marker layer that draws textured quads from one or more sprite sheets.
 // Batches draw calls per sheet texture and uses instancing within each batch.
@@ -32,6 +33,7 @@ export interface IconMarkerInstance {
   isSelected?: boolean;
   rotation?: number; // radians
   keepUpright?: boolean; // do not rotate with map bearing
+  tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
 }
 
 type SheetTex = { name: string; tex: WebGLTexture; w: number; h: number };
@@ -50,6 +52,7 @@ in float a_count;   // stacked count (>=1)
 in float a_angle;   // rotation in radians
 in float a_renderMode; // 0=icon, 1=height stem
 in float a_keepUpright; // 1=billboard mode, 0=use own rotation
+in vec4 a_tint;     // RGBA tint color (1,1,1,1 = no tint)
 uniform mat3 u_view; // world->clip
 uniform float u_pitch; // camera pitch for 3D effect
 uniform float u_bearing; // camera bearing for perspective direction
@@ -64,6 +67,7 @@ out float v_disc;
 out vec2 v_flags;
 out float v_count;
 out float v_renderMode;
+out vec4 v_tint;
 void main(){
   v_renderMode = a_renderMode;
 
@@ -145,6 +149,7 @@ void main(){
   v_disc = a_disc;
   v_flags = a_flags;
   v_count = a_count;
+  v_tint = a_tint;
 }
 `;
 
@@ -159,6 +164,7 @@ in float v_disc;
 in vec2 v_flags;
 in float v_count;
 in float v_renderMode;
+in vec4 v_tint;
 out vec4 outColor;
 // 7-segment helpers for tiny digit rendering
 float hseg(vec2 uv, float y){
@@ -244,6 +250,8 @@ void main(){
 
   // Normal icon rendering
   vec4 c = texture(u_tex, v_uv);
+  // Apply tint color (multiply RGB, use tint alpha to blend)
+  c.rgb = mix(c.rgb, c.rgb * v_tint.rgb, v_tint.a);
   if (v_disc > 0.5) {
     float g = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
     c = vec4(vec3(g), c.a * 0.5);
@@ -361,6 +369,7 @@ export class IconMarkerLayer implements Layer {
     keepUprights?: Float32Array;
     stemModes?: Float32Array;
     iconModes?: Float32Array;
+    tints?: Float32Array;
     capacity: number;
   } = { capacity: 0 };
 
@@ -374,6 +383,7 @@ export class IconMarkerLayer implements Layer {
   private counts!: WebGLBuffer;
   private renderModes!: WebGLBuffer;
   private keepUprights!: WebGLBuffer;
+  private tints!: WebGLBuffer;
   private u_view_loc: WebGLUniformLocation | null = null;
   private u_tex_loc: WebGLUniformLocation | null = null;
   private u_pitch_loc: WebGLUniformLocation | null = null;
@@ -387,11 +397,41 @@ export class IconMarkerLayer implements Layer {
   private colorBlindSeverity: number = 1;
 
   addSheet(name: string, source: string | HTMLImageElement) {
+    const isNew = !this.sheetImages.has(name);
     if (source instanceof HTMLImageElement) {
       this.sheetImages.set(name, source);
     } else {
       this.sheetImages.set(name, this.createImage(source));
     }
+    if (isNew) {
+      devLog.info("IconMarkerLayer", "addSheet", {
+        sheetName: name,
+        sourceType: source instanceof HTMLImageElement ? "HTMLImageElement" : "URL",
+        totalSheetImages: this.sheetImages.size,
+      });
+    }
+  }
+  // Alias for addSheet (for consistency with simple-webmap-markers)
+  // Also invalidates the cached WebGL texture so it gets recreated
+  setSheet(name: string, source: HTMLImageElement) {
+    this.sheetImages.set(name, source);
+    // Delete cached WebGL texture so ensureSheet recreates it with new image
+    this.sheets.delete(name);
+  }
+  // Get a marker by ID
+  getMarker(id: string): IconMarkerInstance | undefined {
+    const index = this.instancesById.get(id);
+    if (index === undefined) return undefined;
+    return this.instances[index] ?? undefined;
+  }
+  // Update a marker's properties
+  updateMarker(id: string, updates: Partial<IconMarkerInstance>) {
+    const index = this.instancesById.get(id);
+    if (index === undefined) return;
+    const existing = this.instances[index];
+    if (!existing) return;
+    this.instances[index] = { ...existing, ...updates, id: existing.id };
+    this.instancesVersion++;
   }
   add(m: IconMarkerInstance) {
     // Check if marker already exists by ID
@@ -668,6 +708,14 @@ export class IconMarkerLayer implements Layer {
     gl.vertexAttribPointer(a_keepUpright, 1, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(a_keepUpright, 1);
 
+    // Tint attribute (RGBA color)
+    this.tints = gl.createBuffer()!;
+    const a_tint = gl.getAttribLocation(this.program!, "a_tint");
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+    gl.enableVertexAttribArray(a_tint);
+    gl.vertexAttribPointer(a_tint, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(a_tint, 1);
+
     gl.bindVertexArray(null);
     // cache uniform locations
     this.u_view_loc = gl.getUniformLocation(this.program!, "u_view");
@@ -757,15 +805,40 @@ export class IconMarkerLayer implements Layer {
     }
 
     const img = this.sheetImages.get(name);
-    if (!img || !img.complete || img.naturalWidth === 0) return null;
+    if (!img) {
+      devLog.debug("IconMarkerLayer", "ensureSheet: no image found", {
+        sheetName: name,
+        availableSheets: Array.from(this.sheetImages.keys()),
+      });
+      return null;
+    }
+    if (!img.complete || img.naturalWidth === 0) {
+      devLog.debug("IconMarkerLayer", "ensureSheet: image not ready", {
+        sheetName: name,
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        src: img.src?.substring(0, 100),
+      });
+      return null;
+    }
+
+    devLog.info("IconMarkerLayer", "Creating WebGL texture", {
+      sheetName: name,
+      imageSize: { w: img.naturalWidth, h: img.naturalHeight },
+      totalSheets: this.sheets.size + 1,
+    });
+
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // Use trilinear filtering with mipmaps for better quality when scaling down
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    // Generate mipmaps for better downscaling quality
+    gl.generateMipmap(gl.TEXTURE_2D);
     const entry = { name, tex, w: img.naturalWidth, h: img.naturalHeight };
     this.sheets.set(name, entry);
     return entry;
@@ -773,7 +846,10 @@ export class IconMarkerLayer implements Layer {
 
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!this.program || !this.vao) return;
-    if (this.instances.length === 0) return;
+    if (this.instances.length === 0) {
+      devLog.debug("IconMarkerLayer", "render: no instances");
+      return;
+    }
 
     // Group by sheet
     const groups = new Map<string, IconMarkerInstance[]>();
@@ -787,6 +863,16 @@ export class IconMarkerLayer implements Layer {
         groups.set(m.sheet, arr);
       }
       arr.push(m);
+    }
+
+    // Log sheets being rendered (only first time or when changed)
+    const sheetKeys = Array.from(groups.keys()).sort().join(",");
+    if ((this as any)._lastSheetKeys !== sheetKeys) {
+      (this as any)._lastSheetKeys = sheetKeys;
+      devLog.info("IconMarkerLayer", "render: sheets", {
+        sheets: Array.from(groups.keys()),
+        totalMarkers: this.instances.filter(m => m !== null).length,
+      });
     }
 
     gl.useProgram(this.program);
@@ -831,6 +917,7 @@ export class IconMarkerLayer implements Layer {
           keepUprights: new Float32Array(newCap),
           stemModes: new Float32Array(newCap),
           iconModes: new Float32Array(newCap),
+          tints: new Float32Array(newCap * 4),
           capacity: newCap,
         };
       }
@@ -843,6 +930,7 @@ export class IconMarkerLayer implements Layer {
       const counts = this.preallocatedBuffers.counts!;
       const angles = this.preallocatedBuffers.angles!;
       const keepUprights = this.preallocatedBuffers.keepUprights!;
+      const tints = this.preallocatedBuffers.tints!;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         const p = state.projection(m.latLng);
@@ -871,11 +959,10 @@ export class IconMarkerLayer implements Layer {
               ? 0
               : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
         }
+        // Only show z-arrow when zPos is explicitly set (requires player position)
         let direction = 0;
         if (m.zPos === "top") direction = 1;
         else if (m.zPos === "bottom") direction = -1;
-        else if (rawZ > 0) direction = 1;
-        else if (rawZ < 0) direction = -1;
         flags[i * 2 + 0] = normalizedHeight;
         flags[i * 2 + 1] = direction;
         counts[i] = 1; // Not used, but kept for shader compatibility
@@ -885,6 +972,24 @@ export class IconMarkerLayer implements Layer {
         angles[i] = angle;
         // Set keepUpright flag: 1 for billboard mode, 0 for player rotation
         keepUprights[i] = m.keepUpright !== false ? 1.0 : 0.0;
+        // Parse tint color (hex string to RGBA)
+        if (m.tint) {
+          const hex = m.tint.replace("#", "");
+          const r = parseInt(hex.substring(0, 2), 16) / 255;
+          const g = parseInt(hex.substring(2, 4), 16) / 255;
+          const b = parseInt(hex.substring(4, 6), 16) / 255;
+          const a = hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
+          tints[i * 4 + 0] = r;
+          tints[i * 4 + 1] = g;
+          tints[i * 4 + 2] = b;
+          tints[i * 4 + 3] = a;
+        } else {
+          // No tint - use white with 0 alpha (no effect)
+          tints[i * 4 + 0] = 1;
+          tints[i * 4 + 1] = 1;
+          tints[i * 4 + 2] = 1;
+          tints[i * 4 + 3] = 0;
+        }
       }
       // Upload all attribute data using subarray views to avoid copies
       const count = list.length;
@@ -930,6 +1035,12 @@ export class IconMarkerLayer implements Layer {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         keepUprights.subarray(0, count),
+        gl.DYNAMIC_DRAW,
+      );
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        tints.subarray(0, count * 4),
         gl.DYNAMIC_DRAW,
       );
 
@@ -1004,12 +1115,15 @@ export class IconMarkerLayer implements Layer {
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // Use trilinear filtering with mipmaps for better quality when scaling down
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    // Generate mipmaps for better downscaling quality
+    gl.generateMipmap(gl.TEXTURE_2D);
 
     const entry = { name: DEFAULT_CIRCLE_SHEET, tex, w: size, h: size };
     this.sheets.set(DEFAULT_CIRCLE_SHEET, entry);

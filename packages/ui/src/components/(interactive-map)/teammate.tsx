@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
-import leaflet, { PointExpression } from "leaflet";
 import { rotateCoordinate } from "./rotation";
 import { getIconsUrl, MarkerOptions, TilesConfig } from "@repo/lib";
 import { useSettingsStore } from "@repo/lib";
@@ -34,73 +33,64 @@ export function Teammate({
     (state) => state.colorBlindSeverity,
   );
 
-  const iconCache = useRef<Map<string, string>>(new Map());
+  const iconImageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
-  async function buildIcon(
+  async function buildIconImage(
     iconUrl: string,
-    size: number[],
     mode: ColorBlindMode,
     severity: number,
-  ) {
-    const cacheKey = `${iconUrl}@${size[0]}x${size[1]}:${mode}:${severity.toFixed(2)}`;
-    const cached = iconCache.current.get(cacheKey);
+  ): Promise<HTMLImageElement> {
+    const cacheKey = `${iconUrl}:${mode}:${severity.toFixed(2)}`;
+    const cached = iconImageCache.current.get(cacheKey);
     if (cached) {
-      return leaflet.icon({
-        iconUrl: cached,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
+      return cached;
     }
+
+    // Load the source image
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("teammate-icon-load"));
+      image.src = iconUrl;
+    });
+
+    // If no color blind transform needed, return original
     if (mode === "none" || severity <= 0) {
-      return leaflet.icon({
-        iconUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
+      iconImageCache.current.set(cacheKey, img);
+      return img;
     }
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("teammate-icon-load"));
-        img.src = iconUrl;
-      });
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = iconUrl;
-      const canvas = document.createElement("canvas");
-      const [w, h] = size;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      applyColorBlindTransform(
-        imageData.data,
-        mode as Exclude<ColorBlindMode, "none">,
-        severity,
-      );
-      ctx.putImageData(imageData, 0, 0);
-      const dataUrl = canvas.toDataURL();
-      iconCache.current.set(cacheKey, dataUrl);
-      return leaflet.icon({
-        iconUrl: dataUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
-    } catch (e) {
-      // Fallback to unprocessed icon on error
-      return leaflet.icon({
-        iconUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
-    }
+
+    // Apply color blind transform
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    applyColorBlindTransform(
+      imageData.data,
+      mode as Exclude<ColorBlindMode, "none">,
+      severity,
+    );
+    ctx.putImageData(imageData, 0, 0);
+
+    // Create a new image from the processed canvas
+    const processedImg = await new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("teammate-icon-process"));
+        image.src = canvas.toDataURL();
+      },
+    );
+
+    iconImageCache.current.set(cacheKey, processedImg);
+    return processedImg;
   }
 
   useEffect(() => {
-    if (!map?.mapName) {
+    if (!map?.mapName || !map.markerLayer) {
       return;
     }
 
@@ -115,19 +105,9 @@ export function Teammate({
         ? `/icons/${markerOptions.playerIcon}`
         : "https://th.gl/global_icons/player.png";
       const iconUrl = getIconsUrl(appName, iconName, iconsPath);
-      // Slightly smaller size for teammates (30px base instead of 36px)
-      const width = Math.max(
-        10,
-        Math.round(30 * baseIconSize * playerIconSize),
-      );
-      const height = Math.max(
-        10,
-        Math.round(30 * baseIconSize * playerIconSize),
-      );
-      const size = [width, height];
-      const icon = await buildIcon(
+
+      const iconImage = await buildIconImage(
         iconUrl,
-        size,
         colorBlindMode,
         colorBlindSeverity,
       );
@@ -147,53 +127,36 @@ export function Teammate({
         );
       }
 
+      // Slightly smaller size for teammates (30px base instead of 36px)
+      const size = Math.max(10, Math.round(30 * baseIconSize * playerIconSize));
+
       if (!marker.current) {
+        // Use a unique ID for each teammate based on their peer ID or name
+        const markerId = `teammate-${player.name || player.id || "unknown"}`;
         marker.current = new PlayerMarker(teammatePosition, {
-          icon,
-          interactive: true, // Enable interaction for tooltip
+          id: markerId,
           rotation: player.r,
-          pane: "tooltipPane",
           rotationOffset,
+          size,
         });
-        // Add tooltip with player name
-        if (player.name) {
-          marker.current.bindTooltip(player.name, {
-            permanent: false,
-            direction: "top",
-            offset: [0, -20],
-            className: "teammate-tooltip",
-          });
-        }
+        marker.current.setIcon(iconImage);
+        marker.current.addTo(map.markerLayer!);
       } else {
-        marker.current.setIcon(icon);
+        marker.current.setIcon(iconImage);
+        marker.current.setSize(size);
         marker.current.updatePosition({
           ...player,
           x: teammatePosition[0],
           y: teammatePosition[1],
         });
-        // Update tooltip if name changed
-        if (player.name) {
-          marker.current.unbindTooltip();
-          marker.current.bindTooltip(player.name, {
-            permanent: false,
-            direction: "top",
-            offset: [0, -20],
-            className: "teammate-tooltip",
-          });
-        }
       }
-      try {
-        marker.current.addTo(map);
-      } catch (e) {}
     };
 
     run();
 
     return () => {
-      try {
-        marker.current?.remove();
-        marker.current = null;
-      } catch (e) {}
+      marker.current?.remove();
+      marker.current = null;
     };
   }, [map?.mapName, player?.mapName]);
 
@@ -205,24 +168,15 @@ export function Teammate({
         ? `/icons/${markerOptions.playerIcon}`
         : "https://th.gl/global_icons/player.png";
       const iconUrl = getIconsUrl(appName, iconName, iconsPath);
-      const width = Math.max(
-        10,
-        Math.round(30 * baseIconSize * playerIconSize),
-      );
-      const height = Math.max(
-        10,
-        Math.round(30 * baseIconSize * playerIconSize),
-      );
-      const size = [width, height];
-      const newIcon = await buildIcon(
+
+      const iconImage = await buildIconImage(
         iconUrl,
-        size,
         colorBlindMode,
         colorBlindSeverity,
       );
-      try {
-        marker.current?.setIcon(newIcon);
-      } catch (e) {}
+      marker.current?.setIcon(iconImage);
+      const size = Math.max(10, Math.round(30 * baseIconSize * playerIconSize));
+      marker.current?.setSize(size);
     };
     run();
   }, [baseIconSize, playerIconSize, colorBlindMode]);

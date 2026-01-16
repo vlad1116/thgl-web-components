@@ -62,7 +62,7 @@ export function setupMapRotation(
   map: LeafletMap,
   rotation: { angle: number; center: [number, number] },
 ) {
-  map._rotationDegrees = rotation.angle;
-  map._rotationRadians = (rotation.angle * Math.PI) / 180;
-  map._rotationCenter = rotation.center;
+  map.rotationDegrees = rotation.angle;
+  map.rotationRadians = (rotation.angle * Math.PI) / 180;
+  map.rotationCenter = rotation.center;
 }

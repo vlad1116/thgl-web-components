@@ -73,7 +73,7 @@ export function PaliaWebGrid({
       labelOpacity: 0.9,
     });
 
-    ref.webmap.addLayer(gridLayer, { zIndex: 50 });
+    ref.webmap.addLayer(gridLayer, { zIndex: 30 });
     gridLayerRef.current = gridLayer;
 
     return () => {

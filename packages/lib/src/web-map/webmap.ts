@@ -11,9 +11,13 @@ import type {
 // Event system for WebMap
 export interface WebMapEventMap {
   click: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  dblclick: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  contextmenu: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mousemove: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mousedown: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mouseup: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  moveend: void;
+  zoomend: void;
 }
 
 type EventHandler<T = any> = (event: T) => void;
@@ -117,12 +121,18 @@ export class WebMap {
   private pinchMidpoint?: { x: number; y: number };
   // Double-tap to zoom state
   private lastTap?: { x: number; y: number; t: number };
+  // Movement tracking for moveend/zoomend events
+  private wasMoving = false;
+  private lastZoom: number = 0;
+  // Flag to force a render
+  private needsRender = false;
 
   constructor(opts: WebMapOptions) {
     this.canvas = opts.canvas;
     this.center = opts.center;
     this.zoom = opts.zoom;
     this.targetZoom = opts.zoom;
+    this.lastZoom = opts.zoom;
     this.bearing = opts.bearing ?? 0;
     if (opts.pitch !== undefined)
       this.pitch = Math.max(0, Math.min(1.4, opts.pitch));
@@ -204,6 +214,27 @@ export class WebMap {
           (layer as any).handleContextMenu(state, screen);
         }
       }
+
+      // Fire contextmenu event to regular listeners
+      const latlng = this.screenToLatLng(localX, localY);
+      this.fire("contextmenu", {
+        latlng,
+        layerPoint: { x: localX, y: localY },
+        originalEvent: e,
+      });
+    });
+
+    // Handle double-click
+    this.canvas.addEventListener("dblclick", (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const localX = e.clientX - rect.left;
+      const localY = e.clientY - rect.top;
+      const latlng = this.screenToLatLng(localX, localY);
+      this.fire("dblclick", {
+        latlng,
+        layerPoint: { x: localX, y: localY },
+        originalEvent: e,
+      });
     });
 
     this.canvas.addEventListener("pointerdown", (e) => {
@@ -631,6 +662,91 @@ export class WebMap {
   getZoom() {
     return this.zoom;
   }
+  /**
+   * Zoom in by one level
+   */
+  zoomIn() {
+    this.targetZoom = Math.min(this.maxZoom, this.zoom + 1);
+  }
+  /**
+   * Zoom out by one level
+   */
+  zoomOut() {
+    this.targetZoom = Math.max(this.minZoom, this.zoom - 1);
+  }
+  getMinZoom() {
+    return this.minZoom;
+  }
+  getMaxZoom() {
+    return this.maxZoom;
+  }
+
+  /**
+   * Fit the map to a bounding box of coordinates
+   * @param bounds Array of [lat, lng] points to fit
+   * @param options Optional settings for padding and max zoom
+   */
+  fitBounds(
+    bounds: (readonly [number, number] | [number, number] | [number, number, number])[],
+    options?: { maxZoom?: number; padding?: [number, number]; duration?: number },
+  ) {
+    if (bounds.length === 0) return;
+
+    // Find bounding box
+    let minLat = Infinity,
+      maxLat = -Infinity;
+    let minLng = Infinity,
+      maxLng = -Infinity;
+    for (const [lat, lng] of bounds) {
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+    }
+
+    // Calculate center
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+    this.center = [centerLat, centerLng];
+
+    // Calculate zoom to fit bounds
+    const canvasWidth = this.canvas.clientWidth;
+    const canvasHeight = this.canvas.clientHeight;
+    const padding = options?.padding ?? [50, 50];
+    const effectiveWidth = canvasWidth - padding[0] * 2;
+    const effectiveHeight = canvasHeight - padding[1] * 2;
+
+    if (effectiveWidth <= 0 || effectiveHeight <= 0) return;
+
+    // Project corners at reference zoom to get world coordinates
+    const refZoom = 0;
+    const p1 = this.proj.project([minLat, minLng], refZoom);
+    const p2 = this.proj.project([maxLat, maxLng], refZoom);
+
+    const boundsWidth = Math.abs(p2.x - p1.x);
+    const boundsHeight = Math.abs(p2.y - p1.y);
+
+    if (boundsWidth === 0 && boundsHeight === 0) {
+      // Single point - just center on it
+      const maxZoom = options?.maxZoom ?? this.maxZoom;
+      this.zoom = Math.min(maxZoom, this.maxZoom);
+      this.targetZoom = this.zoom;
+      return;
+    }
+
+    // Calculate zoom that fits the bounds
+    const scaleX = boundsWidth > 0 ? effectiveWidth / boundsWidth : Infinity;
+    const scaleY = boundsHeight > 0 ? effectiveHeight / boundsHeight : Infinity;
+    const scale = Math.min(scaleX, scaleY);
+    let calculatedZoom = refZoom + Math.log2(scale);
+
+    // Apply constraints
+    const maxZoom = options?.maxZoom ?? this.maxZoom;
+    calculatedZoom = Math.max(this.minZoom, Math.min(maxZoom, calculatedZoom));
+    this.zoom = calculatedZoom;
+    this.targetZoom = calculatedZoom;
+  }
+
   getBearing() {
     return this.bearing;
   }
@@ -656,6 +772,17 @@ export class WebMap {
     this.interactionsDisabled = false;
     this.canvas.style.cursor = "grab";
   }
+
+  /**
+   * Force the map to re-check its container size.
+   * Leaflet-compatible method for easier migration.
+   */
+  invalidateSize() {
+    // Force canvas size update on next frame
+    // The frame() method already handles canvas resize
+    this.needsRender = true;
+  }
+
   getRotationPivot() {
     if (!this.rotationPivot) return null;
 
@@ -1007,6 +1134,26 @@ export class WebMap {
 
     for (const { layer } of this.layers) {
       layer.render?.(gl, state);
+    }
+
+    // Track movement for moveend/zoomend events
+    const isMoving =
+      this.dragging ||
+      this.rotating ||
+      this.panAnim !== undefined ||
+      this.zoomAnim !== undefined ||
+      Math.abs(this.targetZoom - this.zoom) > 1e-3;
+
+    if (this.wasMoving && !isMoving) {
+      // Movement just stopped
+      this.fire("moveend", undefined as any);
+      if (Math.abs(this.zoom - this.lastZoom) > 0.01) {
+        this.fire("zoomend", undefined as any);
+      }
+    }
+    this.wasMoving = isMoving;
+    if (!isMoving) {
+      this.lastZoom = this.zoom;
     }
   }
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   IconMarkerLayer,
@@ -67,6 +67,109 @@ export function SimpleWebMarkers({
   const justClickedMarkerRef = useRef(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
+  // Track if mouse is in the "safe zone" (marker, tooltip, or between them)
+  useEffect(() => {
+    if (!tooltipIsOpen || !tooltipData || !containerRef.current) return;
+
+    const container = containerRef.current;
+
+    const isInSafeZone = (e: MouseEvent): boolean => {
+      const { x, y, radius } = tooltipData;
+
+      // Get mouse position relative to container
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Check if mouse is over the tooltip element
+      if (tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        if (
+          e.clientX >= tooltipRect.left &&
+          e.clientX <= tooltipRect.right &&
+          e.clientY >= tooltipRect.top &&
+          e.clientY <= tooltipRect.bottom
+        ) {
+          return true;
+        }
+      }
+
+      // Check if mouse is within expanded marker radius (with padding)
+      const markerPadding = 10;
+      const dx = mouseX - x;
+      const dy = mouseY - y;
+      const distToMarker = Math.sqrt(dx * dx + dy * dy);
+      if (distToMarker <= radius + markerPadding) {
+        return true;
+      }
+
+      // Check if mouse is in the corridor between marker and tooltip
+      // The tooltip is positioned above the marker
+      const tooltipBottom = y - radius - 8; // 8px gap
+      if (mouseY < y && mouseY > tooltipBottom - 10) {
+        // Check if within horizontal bounds (tooltip width centered on x)
+        const corridorHalfWidth = Math.max(radius + 20, 100);
+        if (Math.abs(mouseX - x) <= corridorHalfWidth) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isInSafeZone(e)) {
+        setTooltipIsOpen(false);
+      }
+    };
+
+    // Small delay before adding listener to avoid immediate close
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("mousemove", handleMouseMove);
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [tooltipIsOpen, tooltipData]);
+
+  // Callback ref to attach wheel event listener when tooltip mounts
+  const tooltipWheelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Store in tooltipRef for other uses
+      tooltipRef.current = node;
+
+      if (!node) return;
+
+      const canvas = mapRef.current?.webmap?.getContainer();
+      if (!canvas) return;
+
+      const handleWheel = (e: WheelEvent) => {
+        // Forward wheel event to the map canvas for zooming
+        e.preventDefault();
+        e.stopPropagation();
+        const wheelEvent = new WheelEvent("wheel", {
+          deltaX: e.deltaX,
+          deltaY: e.deltaY,
+          deltaZ: e.deltaZ,
+          deltaMode: e.deltaMode,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          screenX: e.screenX,
+          screenY: e.screenY,
+          bubbles: true,
+          cancelable: true,
+        });
+        canvas.dispatchEvent(wheelEvent);
+      };
+
+      // Use capture phase to intercept all wheel events on the tooltip
+      node.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    },
+    [mapRef],
+  );
+
   // Load sprite sheet and add markers
   useEffect(() => {
     const ref = mapRef.current;
@@ -115,20 +218,69 @@ export function SimpleWebMarkers({
       const rawIcon = spawn.icon;
       // Multiply by DPR to maintain consistent visual size across devices
       // Apply per-filter icon size multiplier if available
+      // Multiply by 1.5 to match Leaflet's zoom-based scaling at typical zoom levels
       const filterMultiplier = spawn.type ? (iconSizeByFilter[spawn.type] ?? 1) : 1;
-      const size = baseRadius * 2 * baseIconSize * filterMultiplier * dpr;
+      const size = baseRadius * 2 * 1.5 * baseIconSize * filterMultiplier * dpr;
 
       // Determine sheet and icon rect
       // If no icon is provided, use the default circle sheet
       let sheetName = "icons";
-      let iconRect = { x: 0, y: 0, width: 32, height: 32 };
+      let iconRect = { x: 0, y: 0, width: 64, height: 64 };
 
       if (!rawIcon) {
         // No icon - use default circle
         sheetName = DEFAULT_CIRCLE_SHEET;
         iconRect = { x: 0, y: 0, width: 64, height: 64 };
+      } else if (typeof rawIcon !== "string" && "url" in rawIcon && rawIcon.url) {
+        // Custom URL-based icon
+        const iconUrl = rawIcon.url as string;
+
+        // Check if this is a standalone icon (single image) or a sprite sheet
+        const hasValidSpriteCoords =
+          "x" in rawIcon &&
+          typeof rawIcon.x === "number" &&
+          typeof rawIcon.y === "number";
+
+        // Check if this is from the game-icons sprite sheets (local paths)
+        const isGameIconsSprite = iconUrl.includes("/game-icons/") && hasValidSpriteCoords;
+
+        // Treat as standalone only if it's a data URL, external URL, or has no sprite coords
+        const isStandaloneIcon =
+          iconUrl.startsWith("data:") ||
+          iconUrl.includes("game-icons.net") ||
+          (!hasValidSpriteCoords && iconUrl.includes("/my_")); // Custom uploaded icons without coords
+
+        if (isGameIconsSprite) {
+          // Game-icons sprite sheet - use full URL as sheet name and register it
+          sheetName = getIconsUrl(appName, iconUrl, iconsPath);
+          markerLayer.addSheet(sheetName, sheetName);
+          iconRect = {
+            x: rawIcon.x ?? 0,
+            y: rawIcon.y ?? 0,
+            width: rawIcon.width ?? 32,
+            height: rawIcon.height ?? 32,
+          };
+        } else if (isStandaloneIcon) {
+          // Standalone icons - use full URL as sheet name and register it
+          sheetName = getIconsUrl(appName, iconUrl, iconsPath);
+          markerLayer.addSheet(sheetName, sheetName);
+          iconRect = {
+            x: 0,
+            y: 0,
+            width: rawIcon.width ?? 64,
+            height: rawIcon.height ?? 64,
+          };
+        } else if (hasValidSpriteCoords) {
+          // Other sprite sheet with coords - use default "icons" sheet
+          iconRect = {
+            x: rawIcon.x ?? 0,
+            y: rawIcon.y ?? 0,
+            width: rawIcon.width ?? 32,
+            height: rawIcon.height ?? 32,
+          };
+        }
       } else if (typeof rawIcon !== "string" && "x" in rawIcon) {
-        // Icon with sprite rect
+        // Icon sprite from default sheet (has x,y but no url)
         iconRect = {
           x: rawIcon.x ?? 0,
           y: rawIcon.y ?? 0,
@@ -218,10 +370,7 @@ export function SimpleWebMarkers({
       markerLayer.registerEventHandler(spawn.id, "mouseover", (m) => {
         showTooltipForMarker(m);
       });
-
-      markerLayer.registerEventHandler(spawn.id, "mouseout", () => {
-        setTooltipIsOpen(false);
-      });
+      // Note: mouseout is handled by safe zone tracking above
 
       // Click handler - show tooltip on tap (for touch devices) and call onClick
       markerLayer.registerEventHandler(spawn.id, "click", (m) => {
@@ -355,8 +504,8 @@ export function SimpleWebMarkers({
       {containerRef.current && tooltipData && tooltipIsOpen
         ? createPortal(
             <div
-              ref={tooltipRef}
-              className="cursor-default z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none"
+              ref={tooltipWheelRef}
+              className="cursor-default z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none max-w-xs"
               onClick={(event) => {
                 event.stopPropagation();
               }}

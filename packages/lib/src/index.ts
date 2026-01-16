@@ -3,6 +3,7 @@ export * from "./changelog";
 export * from "./cbor";
 export * from "./config";
 export * from "./coordinates";
+export * from "./dev-log";
 export * from "./discord";
 export * from "./dom";
 export * from "./env";

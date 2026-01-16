@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
-import leaflet, { PointExpression } from "leaflet";
 import { rotateCoordinate } from "./rotation";
 import type { ActorPlayer } from "@repo/lib/overwolf";
 import {
@@ -33,8 +32,6 @@ export function Player({
 }): JSX.Element {
   const map = useMap();
   const marker = useRef<PlayerMarker | null>(null);
-  const rangeCircle = useRef<leaflet.Marker | null>(null);
-  const rangeCircleVisualRef = useRef<HTMLElement | null>(null);
   const followPlayerPosition = useSettingsStore((state) => state.followPlayer);
   const setMapName = useUserStore((state) => state.setMapName);
   const t = useT();
@@ -44,12 +41,6 @@ export function Player({
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
   );
-  const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
-  const showAudioAlertRange = useSettingsStore(
-    (state) => state.showAudioAlertRange,
-  );
-
-  const iconCache = useRef<Map<string, string>>(new Map());
 
   // Memoize icon URL and size to avoid recalculating on every render
   const iconUrl = useMemo(() => {
@@ -67,70 +58,64 @@ export function Player({
     [baseIconSize, playerIconSize],
   );
 
-  async function buildIcon(
+  const iconImageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  async function buildIconImage(
     iconUrl: string,
-    size: number[],
     mode: ColorBlindMode,
     severity: number,
-  ) {
-    const cacheKey = `${iconUrl}@${size[0]}x${size[1]}:${mode}:${severity.toFixed(2)}`;
-    const cached = iconCache.current.get(cacheKey);
+  ): Promise<HTMLImageElement> {
+    const cacheKey = `${iconUrl}:${mode}:${severity.toFixed(2)}`;
+    const cached = iconImageCache.current.get(cacheKey);
     if (cached) {
-      return leaflet.icon({
-        iconUrl: cached,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
+      return cached;
     }
-    if (mode === "none" || severity <= 0) {
-      return leaflet.icon({
-        iconUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
-    }
-    try {
-      // Load image once and reuse it for canvas drawing
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
-        image.crossOrigin = "anonymous";
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error("player-icon-load"));
-        image.src = iconUrl;
-      });
 
-      const canvas = document.createElement("canvas");
-      const [w, h] = size;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      applyColorBlindTransform(
-        imageData.data,
-        mode as Exclude<ColorBlindMode, "none">,
-        severity,
-      );
-      ctx.putImageData(imageData, 0, 0);
-      const dataUrl = canvas.toDataURL();
-      iconCache.current.set(cacheKey, dataUrl);
-      return leaflet.icon({
-        iconUrl: dataUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
-    } catch (e) {
-      // Fallback to unprocessed icon on error
-      return leaflet.icon({
-        iconUrl,
-        className: "player",
-        iconSize: size as PointExpression,
-      });
+    // Load the source image
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("player-icon-load"));
+      image.src = iconUrl;
+    });
+
+    // If no color blind transform needed, return original
+    if (mode === "none" || severity <= 0) {
+      iconImageCache.current.set(cacheKey, img);
+      return img;
     }
+
+    // Apply color blind transform
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    applyColorBlindTransform(
+      imageData.data,
+      mode as Exclude<ColorBlindMode, "none">,
+      severity,
+    );
+    ctx.putImageData(imageData, 0, 0);
+
+    // Create a new image from the processed canvas
+    const processedImg = await new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("player-icon-process"));
+        image.src = canvas.toDataURL();
+      },
+    );
+
+    iconImageCache.current.set(cacheKey, processedImg);
+    return processedImg;
   }
 
   useEffect(() => {
-    if (!map?.mapName) {
+    if (!map?.mapName || !map.markerLayer) {
       return;
     }
 
@@ -140,9 +125,8 @@ export function Player({
     }
 
     const run = async () => {
-      const icon = await buildIcon(
+      const iconImage = await buildIconImage(
         iconUrl,
-        iconSize,
         colorBlindMode,
         colorBlindSeverity,
       );
@@ -162,16 +146,21 @@ export function Player({
         );
       }
 
+      // Calculate pixel size
+      const size = Math.max(10, Math.round(iconSize[0]));
+
       if (!marker.current) {
         marker.current = new PlayerMarker(playerPosition, {
-          icon,
-          interactive: false,
+          id: "player",
           rotation: player.r,
-          pane: "tooltipPane",
           rotationOffset,
+          size,
         });
+        marker.current.setIcon(iconImage);
+        marker.current.addTo(map.markerLayer!);
       } else {
-        marker.current.setIcon(icon);
+        marker.current.setIcon(iconImage);
+        marker.current.setSize(size);
         // Create a modified player object with rotated coordinates
         marker.current.updatePosition({
           ...player,
@@ -180,24 +169,15 @@ export function Player({
         });
       }
 
-      try {
-        marker.current.addTo(map);
-        map.panTo(playerPosition, {
-          animate: false,
-          duration: 0,
-          easeLinearity: 1,
-          noMoveStart: true,
-        });
-      } catch (e) {}
+      // Pan to player position
+      map.setCenter(playerPosition);
     };
 
     run();
 
     return () => {
-      try {
-        marker.current?.remove();
-        marker.current = null;
-      } catch (e) {}
+      marker.current?.remove();
+      marker.current = null;
     };
   }, [map?.mapName, player?.mapName]);
 
@@ -205,15 +185,14 @@ export function Player({
   useEffect(() => {
     if (!marker.current) return;
     const run = async () => {
-      const newIcon = await buildIcon(
+      const iconImage = await buildIconImage(
         iconUrl,
-        iconSize,
         colorBlindMode,
         colorBlindSeverity,
       );
-      try {
-        marker.current?.setIcon(newIcon);
-      } catch (e) {}
+      marker.current?.setIcon(iconImage);
+      const size = Math.max(10, Math.round(iconSize[0]));
+      marker.current?.setSize(size);
     };
     run();
   }, [iconUrl, iconSize, colorBlindMode, colorBlindSeverity]);
@@ -271,24 +250,9 @@ export function Player({
         return;
       }
 
-      const now = performance.now();
-      const shouldPan =
-        followPlayerPosition &&
-        now - lastPanTimeRef.current >= PAN_INTERVAL;
-
-      // Always update range circle position (DOM-based with CSS transition, no canvas redraws)
-      if (rangeCircle.current) {
-        rangeCircle.current.setLatLng(playerPosition);
-      }
-
-      if (shouldPan) {
-        lastPanTimeRef.current = now;
-        map.panTo(playerPosition, {
-          animate: true,
-          duration: PAN_INTERVAL / 1000,
-          easeLinearity: 1,
-          noMoveStart: true,
-        });
+      if (followPlayerPosition) {
+        // Pan to player position
+        map.setCenter(playerPosition);
       }
     });
 
@@ -317,82 +281,7 @@ export function Player({
     }
   }, [player?.mapName]);
 
-  // Audio alert range circle — DOM-based marker with CSS transition for smooth movement.
-  // Uses a DivIcon styled as a circle instead of Leaflet Circle (vector layer) so that
-  // setLatLng only updates CSS transform (no canvas redraws) and the CSS transition
-  // smoothly interpolates position, matching the player marker's movement.
-  useEffect(() => {
-    if (!map || !showAudioAlertRange) {
-      if (rangeCircle.current) {
-        rangeCircle.current.remove();
-        rangeCircle.current = null;
-        rangeCircleVisualRef.current = null;
-      }
-      return;
-    }
-
-    // Calculate pixel radius from game-unit radius at current zoom
-    const updateSize = () => {
-      const visual = rangeCircleVisualRef.current;
-      if (!visual || !map || !rangeCircle.current) return;
-      const latlng = rangeCircle.current.getLatLng();
-      const centerPx = map.latLngToLayerPoint(latlng);
-      const edgePx = map.latLngToLayerPoint(
-        leaflet.latLng(latlng.lat + audioAlertRange, latlng.lng),
-      );
-      const pixelRadius = Math.abs(centerPx.y - edgePx.y);
-      const size = pixelRadius * 2;
-      visual.style.width = `${size}px`;
-      visual.style.height = `${size}px`;
-    };
-
-    if (!rangeCircle.current) {
-      // Apply rotation to player position if configured
-      let playerPosition: [number, number] = [player.x, player.y];
-      const rotationDegrees = map._rotationDegrees;
-      const rotationCenter = map._rotationCenter;
-      if (rotationDegrees && rotationCenter) {
-        playerPosition = rotateCoordinate(
-          [player.x, player.y],
-          rotationDegrees,
-          rotationCenter,
-        );
-      }
-
-      rangeCircle.current = leaflet.marker(playerPosition, {
-        icon: leaflet.divIcon({
-          className: "",
-          iconSize: [0, 0],
-          html: `<div class="range-circle-visual" style="position:absolute;border-radius:50%;border:2px dashed rgba(34,197,94,0.8);background:rgba(34,197,94,0.1);box-sizing:border-box;pointer-events:none;transform:translate(-50%,-50%)"></div>`,
-        }),
-        interactive: false,
-        pane: "overlayPane",
-      });
-      rangeCircle.current.addTo(map);
-
-      // CSS transition for smooth movement matching player marker (0.2s linear)
-      const el = rangeCircle.current.getElement();
-      if (el) {
-        el.style.transition = "transform 0.2s linear";
-      }
-      rangeCircleVisualRef.current = el?.querySelector(
-        ".range-circle-visual",
-      ) as HTMLElement;
-    }
-
-    // Update size for current zoom and when audioAlertRange changes
-    updateSize();
-    map.on("zoomend", updateSize);
-
-    return () => {
-      map.off("zoomend", updateSize);
-      if (rangeCircle.current) {
-        rangeCircle.current.remove();
-        rangeCircle.current = null;
-        rangeCircleVisualRef.current = null;
-      }
-    };
-  }, [map, showAudioAlertRange, audioAlertRange]);
+  // TODO: Add audio alert range circle visualization for WebGL map
 
   return <></>;
 }
