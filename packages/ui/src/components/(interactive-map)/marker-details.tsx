@@ -7,8 +7,10 @@ import { Discovery } from "./discovery";
 import useSWR from "swr";
 import { API_FORGE_URL, cn } from "@repo/lib";
 import { Comment, Skeleton } from "../(data)";
-import { MessageCircle } from "lucide-react";
+import { Copy, MessageCircle } from "lucide-react";
 import { AdditionalTooltip, AdditionalTooltipType } from "../(content)";
+import { Button } from "../(controls)";
+import { toast } from "sonner";
 
 export type TooltipItem = {
   id: string;
@@ -95,9 +97,26 @@ export function MarkerDetails({
           {t(item.type) || item.type.replace(/my_\d+_/, "")}
           {item.group && ` | ${t(item.group) || item.group}`}
         </p>
-        <p className="text-xs text-muted-foreground">
-          [{latLng[1].toFixed(0)}, {latLng[0].toFixed(0)}
-          {latLng[2] ? `, ${latLng[2].toFixed(0)}` : ""}]
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <span>
+            [{latLng[1].toFixed(0)}, {latLng[0].toFixed(0)}
+            {latLng[2] ? `, ${latLng[2].toFixed(0)}` : ""}]
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={(e) => {
+              e.stopPropagation();
+              const value = latLng[2]
+                ? `[${latLng[1].toFixed(0)}, ${latLng[0].toFixed(0)}, ${latLng[2].toFixed(0)}]`
+                : `[${latLng[1].toFixed(0)}, ${latLng[0].toFixed(0)}]`;
+              navigator.clipboard.writeText(value);
+              toast("Copied to clipboard");
+            }}
+          >
+            <Copy className="w-3 h-3" />
+          </Button>
         </p>
         {distance && (
           <p className="text-xs text-muted-foreground">
