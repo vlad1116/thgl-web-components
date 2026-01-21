@@ -78,6 +78,7 @@ export default async function Map({ params }: PageProps) {
           tileOptions={version.data.tiles}
           appName={APP_CONFIG.name}
           iconsPath={version.more.icons}
+          coordinateCopyFormat={APP_CONFIG.markerOptions?.coordinateCopyFormat}
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,

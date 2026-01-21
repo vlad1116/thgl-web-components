@@ -8,17 +8,53 @@ import { Separator } from "../ui/separator";
 import { Comments } from "./comments";
 import { ScrollArea } from "../ui/scroll-area";
 import { AdditionalTooltip, AdditionalTooltipType } from "../(content)";
+import { Copy } from "lucide-react";
+import { Button } from "../(controls)";
+import { toast } from "sonner";
+
+function formatCoordinates(
+  coords: [number, number] | [number, number, number],
+  format?: string,
+): string {
+  if (format) {
+    return format
+      .replace("{x}", coords[1].toFixed(0))
+      .replace("{y}", coords[0].toFixed(0))
+      .replace("{z}", coords[2]?.toFixed(0) ?? "");
+  }
+  return coords[2] !== undefined
+    ? `[${coords[1].toFixed(0)}, ${coords[0].toFixed(0)}, ${coords[2].toFixed(0)}]`
+    : `[${coords[1].toFixed(0)}, ${coords[0].toFixed(0)}]`;
+}
+
+function copyToClipboard(text: string): void {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    // Fallback for non-secure contexts
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+}
 
 export function NodeDetails({
   id,
   appName,
   hideComments,
   additionalTooltip,
+  coordinateCopyFormat,
 }: {
   id: string;
   appName: string;
   hideComments?: boolean;
   additionalTooltip?: AdditionalTooltipType;
+  coordinateCopyFormat?: string;
 }) {
   const t = useT();
   const { spawns, filters } = useCoordinates();
@@ -118,9 +154,24 @@ export function NodeDetails({
               ? filter.group && ` | ${t(filter.group) || filter.group}`
               : ""}
           </p>
-          <p className="text-xs text-muted-foreground">
-            [{spawn.p[1].toFixed(0)}, {spawn.p[0].toFixed(0)}
-            {spawn.p[2] ? `, ${spawn.p[2].toFixed(0)}` : ""}]
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <span>
+              [{spawn.p[1].toFixed(0)}, {spawn.p[0].toFixed(0)}
+              {spawn.p[2] ? `, ${spawn.p[2].toFixed(0)}` : ""}]
+            </span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5"
+              onClick={() => {
+                copyToClipboard(
+                  formatCoordinates(spawn.p, coordinateCopyFormat),
+                );
+                toast("Copied to clipboard");
+              }}
+            >
+              <Copy className="w-3 h-3" />
+            </Button>
           </p>
           {distance && (
             <p className="text-xs text-muted-foreground">

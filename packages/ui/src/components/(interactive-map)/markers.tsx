@@ -147,6 +147,7 @@ export function Markers({
                 }}
                 hideComments={hideComments}
                 additionalTooltip={additionalTooltip}
+                coordinateCopyFormat={markerOptions.coordinateCopyFormat}
               />
             </HoverCardContent>
           </HoverCardPortal>

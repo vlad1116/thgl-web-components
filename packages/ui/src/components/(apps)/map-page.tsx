@@ -131,6 +131,7 @@ export function createMapPage(
             iconsPath={version.more.icons}
             additionalFilters={additionalFilters}
             additionalTooltip={additionalTooltip}
+            coordinateCopyFormat={appConfig.markerOptions?.coordinateCopyFormat}
             mapEnTitles={Object.fromEntries(
               Object.keys(version.data.tiles).map((k) => [
                 k,

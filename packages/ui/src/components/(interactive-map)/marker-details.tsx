@@ -23,6 +23,37 @@ export type TooltipItem = {
   data?: Record<string, string[]>;
 };
 
+function formatCoordinates(
+  coords: [number, number] | [number, number, number],
+  format?: string,
+): string {
+  if (format) {
+    return format
+      .replace("{x}", coords[1].toFixed(0))
+      .replace("{y}", coords[0].toFixed(0))
+      .replace("{z}", coords[2]?.toFixed(0) ?? "");
+  }
+  return coords[2] !== undefined
+    ? `[${coords[1].toFixed(0)}, ${coords[0].toFixed(0)}, ${coords[2].toFixed(0)}]`
+    : `[${coords[1].toFixed(0)}, ${coords[0].toFixed(0)}]`;
+}
+
+function copyToClipboard(text: string): void {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    // Fallback for non-secure contexts
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+}
+
 export function MarkerDetails({
   appName,
   item,
@@ -33,6 +64,7 @@ export function MarkerDetails({
   onClick,
   onClose,
   additionalTooltip,
+  coordinateCopyFormat,
 }: {
   appName: string;
   item: TooltipItem;
@@ -43,6 +75,7 @@ export function MarkerDetails({
   onClick: () => void;
   onClose: () => void;
   additionalTooltip?: AdditionalTooltipType;
+  coordinateCopyFormat?: string;
 }) {
   const t = useT();
 
@@ -108,10 +141,7 @@ export function MarkerDetails({
             className="h-5 w-5"
             onClick={(e) => {
               e.stopPropagation();
-              const value = latLng[2]
-                ? `[${latLng[1].toFixed(0)}, ${latLng[0].toFixed(0)}, ${latLng[2].toFixed(0)}]`
-                : `[${latLng[1].toFixed(0)}, ${latLng[0].toFixed(0)}]`;
-              navigator.clipboard.writeText(value);
+              copyToClipboard(formatCoordinates(latLng, coordinateCopyFormat));
               toast("Copied to clipboard");
             }}
           >

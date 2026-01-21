@@ -32,6 +32,7 @@ export function MarkersSearch({
   iconsPath,
   className,
   mapEnTitles,
+  coordinateCopyFormat,
 }: {
   lastMapUpdate?: number;
   appName: string;
@@ -44,6 +45,7 @@ export function MarkersSearch({
   iconsPath: string;
   className?: string;
   mapEnTitles?: Record<string, string>;
+  coordinateCopyFormat?: string;
 }): JSX.Element {
   const t = useT();
   const { _hasHydrated, search, setSearch, searchIsLoading, selectedNodeId } =
@@ -95,6 +97,7 @@ export function MarkersSearch({
           appName={appName}
           hideComments={hideComments}
           additionalTooltip={additionalTooltip}
+          coordinateCopyFormat={coordinateCopyFormat}
         />
       )}
       <div

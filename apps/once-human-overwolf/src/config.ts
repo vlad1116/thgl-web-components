@@ -16,5 +16,6 @@ export const APP_CONFIG: OverwolfAppConfig = {
       xyMaxDistance: 200,
       zDistance: 3,
     },
+    coordinateCopyFormat: "({x},{y})",
   },
 };

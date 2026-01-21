@@ -137,6 +137,7 @@ export function App({
                   additionalFilters={additionalFilters}
                   iconsPath={version?.more.icons}
                   additionalTooltip={additionalTooltip}
+                  coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
                   mapEnTitles={Object.fromEntries(
                     Object.keys(tiles).map((k) => [
                       k,

@@ -22,6 +22,7 @@ export function MarkerTooltip({
   hideDiscovered,
   hideComments,
   additionalTooltip,
+  coordinateCopyFormat,
 }: {
   appName: string;
   latLng: [number, number] | [number, number, number];
@@ -31,6 +32,7 @@ export function MarkerTooltip({
   hideDiscovered?: boolean;
   hideComments?: boolean;
   additionalTooltip?: AdditionalTooltipType;
+  coordinateCopyFormat?: string;
 }) {
   const player = useGameState((state) => state.player);
   const distance = useMemo(
@@ -72,6 +74,7 @@ export function MarkerTooltip({
               }}
               distance={distance}
               additionalTooltip={additionalTooltip}
+              coordinateCopyFormat={coordinateCopyFormat}
             />
           </CarouselItem>
         ))}

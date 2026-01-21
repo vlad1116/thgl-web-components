@@ -276,6 +276,7 @@ export function App({
                     iconsPath={version?.more.icons}
                     className="top-[40px] md:ml-0"
                     additionalTooltip={additionalTooltip}
+                    coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
                     mapEnTitles={Object.fromEntries(
                       Object.keys(tiles).map((k) => [
                         k,

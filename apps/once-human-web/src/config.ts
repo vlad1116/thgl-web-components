@@ -117,6 +117,7 @@ export const APP_CONFIG: AppConfig = {
       xyMaxDistance: 200,
       zDistance: 3,
     },
+    coordinateCopyFormat: "({x},{y})",
   },
   keywords: ["Ores", "Resources", "Riddles", "Deviants"],
 };
