@@ -28,16 +28,30 @@ export const APP_CONFIG: AppConfig = {
       bgImage: getPreviewImageUrl("blue-protocol-star-resonance", "asterleeds"),
       linkText: "Explore the Asterleeds Map",
     },
-    // {
-    //   title: "Bahamar Highlands Map",
-    //   description:
-    //     "Navigate Blue Protocol: Star Resonance's Bahamar Highlands with our interactive maps.",
-    //   href: "/maps/Bahamar%20Highlands",
-    //   iconName: "Map",
-    //   bgImage:
-    //     "https://data.th.gl/blue-protocol-star-resonance/map-tiles/bahamar_highlands/preview.webp",
-    //   linkText: "Explore the Bahamar Highlands Map",
-    // },
+    {
+      title: "Bahamar Highlands Map",
+      description:
+        "Navigate Blue Protocol: Star Resonance's Bahamar Highlands with our interactive maps.",
+      href: "/maps/Bahamar%20Highlands",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "bahamar_highlands",
+      ),
+      linkText: "Explore the Bahamar Highlands Map",
+    },
+    {
+      title: "Bahamar Highlands (Deepreach) Map",
+      description:
+        "Navigate Blue Protocol: Star Resonance's Bahamar Highlands Deepreach with our interactive maps.",
+      href: "/maps/Bahamar%20Highlands%20(Deepreach)",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "bahamar_highlands_deepreach",
+      ),
+      linkText: "Explore the Bahamar Highlands Deepreach Map",
+    },
     {
       title: "Windhowl Canyon Map",
       description:
