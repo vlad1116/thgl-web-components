@@ -282,6 +282,7 @@ export const games: Array<Game> = [
           xyMaxDistance: 200,
           zDistance: 3,
         },
+        coordinateCopyFormat: "({x},{y})",
       },
       games: [
         {
@@ -614,6 +615,7 @@ export type Game = {
         xyMaxDistance: number;
         zDistance: number;
       };
+      coordinateCopyFormat?: string;
     };
     games: {
       title: string;
