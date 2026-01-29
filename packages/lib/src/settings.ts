@@ -95,6 +95,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   hideDiscoveredNodes: false,
   actorsPollingRate: 100,
   showTraceLine: true,
+  followPlayer: true,
   traceLineLength: 100,
   traceLineRate: 5,
   traceLineColor: "#1ccdd1B3",
@@ -146,6 +147,7 @@ export type ProfileSettings = {
   hideDiscoveredNodes: boolean;
   actorsPollingRate: number;
   showTraceLine: boolean;
+  followPlayer: boolean;
   traceLineLength: number;
   traceLineRate: number;
   traceLineColor: string;
@@ -205,6 +207,7 @@ export interface ProfileActions {
   setDiscoveredNodes: (discoveredNodes: string[]) => void;
   setActorsPollingRate: (actorsPollingRate: number) => void;
   toggleShowTraceLine: () => void;
+  toggleFollowPlayer: () => void;
   setTraceLineLength: (traceLineLength: number) => void;
   setTraceLineRate: (traceLineRate: number) => void;
   setTraceLineColor: (traceLineColor: string) => void;
@@ -678,6 +681,13 @@ export const useSettingsStore = create(
           const state = get();
           updateSettings({
             showTraceLine: !state.showTraceLine,
+          });
+        },
+
+        toggleFollowPlayer: () => {
+          const state = get();
+          updateSettings({
+            followPlayer: !state.followPlayer,
           });
         },
 

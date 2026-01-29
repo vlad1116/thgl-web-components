@@ -305,6 +305,14 @@ export function SettingsDialogContent({
                       onCheckedChange={settingsStore.toggleShowTraceLine}
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="follow-player">Follow Player</Label>
+                    <Switch
+                      id="follow-player"
+                      checked={profileSettings.followPlayer}
+                      onCheckedChange={settingsStore.toggleFollowPlayer}
+                    />
+                  </div>
                   <div className="flex items-center gap-2 justify-between">
                     <Label htmlFor="trace-line-length">Trace Line Length</Label>
                     <Input

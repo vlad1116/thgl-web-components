@@ -33,7 +33,7 @@ export function Player({
 }): JSX.Element {
   const map = useMap();
   const marker = useRef<PlayerMarker | null>(null);
-  const followPlayerPosition = true;
+  const followPlayerPosition = useSettingsStore((state) => state.followPlayer);
   const setMapName = useUserStore((state) => state.setMapName);
   const t = useT();
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
