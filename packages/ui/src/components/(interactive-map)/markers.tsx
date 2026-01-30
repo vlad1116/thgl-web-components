@@ -717,6 +717,7 @@ function MarkersContent({
     }
   }, [
     throttledPlayer,
+    spawns,
     audioAlertsEnabled,
     hasPreviewAccess,
     audioAlertRange,
