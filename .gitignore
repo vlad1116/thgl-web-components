@@ -17,3 +17,4 @@ System.Runtime.CompilerServices.Unsafe.dll
 obfuscar.xml
 .claude/settings.local.json
 private/
+.mcp.json
