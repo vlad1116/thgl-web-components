@@ -352,6 +352,16 @@ class CanvasMarker extends CircleMarker {
     }
   }
 
+  // Override setLatLng to keep _latLngTuple in sync for audio alert detection
+  setLatLng(latLng: leaflet.LatLngExpression): this {
+    if (Array.isArray(latLng)) {
+      this._latLngTuple = latLng as leaflet.LatLngTuple;
+    } else if ("lat" in latLng && "lng" in latLng) {
+      this._latLngTuple = [latLng.lat, latLng.lng];
+    }
+    return super.setLatLng(latLng);
+  }
+
   update() {
     try {
       if (this.options.isHighlighted) {

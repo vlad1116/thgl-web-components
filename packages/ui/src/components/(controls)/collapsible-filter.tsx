@@ -4,8 +4,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { FilterTooltip } from "./filter-tooltip";
+import { FilterSettingsPopover } from "./filter-settings-popover";
 import { useT } from "../(providers)";
 import { useMemo, useState } from "react";
 import { FoldVertical, UnfoldVertical } from "lucide-react";
@@ -30,12 +29,20 @@ export function CollapsibleFilter({
     [filters, filter],
   );
 
+  const filterIds = useMemo(
+    () => filter.values.map((v) => v.id),
+    [filter.values],
+  );
+
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
-        className={cn("flex items-center transition-colors w-full px-1.5", {
-          "text-muted-foreground": !activeFiltersLength,
-        })}
+        className={cn(
+          "group flex items-center transition-colors w-full px-1.5",
+          {
+            "text-muted-foreground": !activeFiltersLength,
+          },
+        )}
       >
         <button
           className={cn(
@@ -67,6 +74,12 @@ export function CollapsibleFilter({
             ({activeFiltersLength}/{filter.values.length})
           </span>
         </button>
+        <FilterSettingsPopover
+          isGroup
+          groupId={filter.group}
+          filterIds={filterIds}
+          filterLabel={t(filter.group) || filter.group}
+        />
         <CollapsibleTrigger asChild>
           <button className="hover:text-primary p-2">
             {open ? (
@@ -87,55 +100,48 @@ export function CollapsibleFilter({
           })
 
           .map((f) => (
-            <div key={f.id} className="flex md:basis-1/2 overflow-hidden">
-              <Tooltip delayDuration={50} disableHoverableContent>
-                <TooltipTrigger asChild>
-                  <button
-                    className={cn(
-                      "grow flex gap-2 items-center transition-colors hover:text-primary p-2 truncate",
-                      {
-                        "text-muted-foreground": !filters.includes(f.id),
-                      },
-                    )}
-                    onClick={() => {
-                      toggleFilter(f.id);
+            <div key={f.id} className="flex grow items-center md:basis-1/2 pr-2">
+              <button
+                className={cn(
+                  "flex gap-2 items-center transition-colors hover:text-primary p-2 truncate",
+                  {
+                    "text-muted-foreground": !filters.includes(f.id),
+                  },
+                )}
+                onClick={() => {
+                  toggleFilter(f.id);
+                }}
+                type="button"
+              >
+                {typeof f.icon === "string" ? (
+                  <img
+                    alt=""
+                    className="h-5 w-5 shrink-0"
+                    height={20}
+                    src={getIconsUrl(appName, f.icon, iconsPath)}
+                    width={20}
+                  />
+                ) : (
+                  <img
+                    alt=""
+                    className="shrink-0 object-none w-[64px] h-[64px]"
+                    src={getIconsUrl(appName, f.icon.url, iconsPath)}
+                    width={f.icon.width}
+                    height={f.icon.height}
+                    style={{
+                      objectPosition: `-${f.icon.x}px -${f.icon.y}px`,
+                      zoom: 0.35,
                     }}
-                    type="button"
-                  >
-                    {typeof f.icon === "string" ? (
-                      <img
-                        alt=""
-                        className="h-5 w-5 shrink-0"
-                        height={20}
-                        src={getIconsUrl(appName, f.icon, iconsPath)}
-                        width={20}
-                      />
-                    ) : (
-                      <img
-                        alt=""
-                        className="shrink-0 object-none w-[64px] h-[64px]"
-                        src={getIconsUrl(appName, f.icon.url, iconsPath)}
-                        width={f.icon.width}
-                        height={f.icon.height}
-                        style={{
-                          objectPosition: `-${f.icon.x}px -${f.icon.y}px`,
-                          zoom: 0.35,
-                        }}
-                      />
-                    )}
-                    <span className="truncate">{t(f.id) || f.id}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-96">
-                  {f.live_only && (
-                    <p className="font-bold tex-lg text-orange-500">
-                      This filter is only available with the live mode of the
-                      In-Game app.
-                    </p>
-                  )}
-                  <FilterTooltip id={f.id} />
-                </TooltipContent>
-              </Tooltip>
+                  />
+                )}
+                <span className="truncate">{t(f.id) || f.id}</span>
+              </button>
+              <div className="grow" />
+              <FilterSettingsPopover
+                filterId={f.id}
+                filterLabel={t(f.id) || f.id}
+                liveOnly={f.live_only}
+              />
             </div>
           ))}
       </CollapsibleContent>

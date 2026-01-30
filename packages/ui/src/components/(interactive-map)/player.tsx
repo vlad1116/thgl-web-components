@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
-import leaflet, { PointExpression } from "leaflet";
+import leaflet, { Circle, PointExpression } from "leaflet";
 import { rotateCoordinate } from "./rotation";
 import type { ActorPlayer } from "@repo/lib/overwolf";
 import {
@@ -33,6 +33,7 @@ export function Player({
 }): JSX.Element {
   const map = useMap();
   const marker = useRef<PlayerMarker | null>(null);
+  const rangeCircle = useRef<Circle | null>(null);
   const followPlayerPosition = useSettingsStore((state) => state.followPlayer);
   const setMapName = useUserStore((state) => state.setMapName);
   const t = useT();
@@ -41,6 +42,13 @@ export function Player({
   const colorBlindMode = useSettingsStore((state) => state.colorBlindMode);
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
+  );
+  const audioAlertsEnabled = useSettingsStore(
+    (state) => state.audioAlertsEnabled,
+  );
+  const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
+  const showAudioAlertRange = useSettingsStore(
+    (state) => state.showAudioAlertRange,
   );
 
   const iconCache = useRef<Map<string, string>>(new Map());
@@ -273,6 +281,64 @@ export function Player({
       }
     }
   }, [player?.mapName]);
+
+  // Audio alert range circle
+  useEffect(() => {
+    if (!map) return;
+
+    const shouldShow = audioAlertsEnabled && showAudioAlertRange;
+
+    if (!shouldShow) {
+      if (rangeCircle.current) {
+        rangeCircle.current.remove();
+        rangeCircle.current = null;
+      }
+      return;
+    }
+
+    // Apply rotation to player position if configured
+    let playerPosition: [number, number] = [player.x, player.y];
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      playerPosition = rotateCoordinate(
+        [player.x, player.y],
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+
+    if (!rangeCircle.current) {
+      rangeCircle.current = leaflet.circle(playerPosition, {
+        radius: audioAlertRange,
+        color: "#22c55e",
+        weight: 2,
+        opacity: 0.8,
+        fillColor: "#22c55e",
+        fillOpacity: 0.1,
+        dashArray: "8, 8",
+        interactive: false,
+      });
+      rangeCircle.current.addTo(map);
+    } else {
+      rangeCircle.current.setLatLng(playerPosition);
+      rangeCircle.current.setRadius(audioAlertRange);
+    }
+
+    return () => {
+      if (rangeCircle.current) {
+        rangeCircle.current.remove();
+        rangeCircle.current = null;
+      }
+    };
+  }, [
+    map,
+    player.x,
+    player.y,
+    audioAlertsEnabled,
+    showAudioAlertRange,
+    audioAlertRange,
+  ]);
 
   return <></>;
 }

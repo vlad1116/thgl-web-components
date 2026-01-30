@@ -10,6 +10,7 @@ import {
   writeFileOverwolf,
   saveFile,
   useSettingsStore,
+  useAccountStore,
   openFileOrFiles,
   FiltersConfig,
 } from "@repo/lib";
@@ -31,6 +32,8 @@ import {
 } from "../ui/select";
 import { Slider } from "../ui/slider";
 import { ProfileManager } from "./profile-manager";
+import { Play } from "lucide-react";
+import { playAlertSound, ALERT_SOUND_OPTIONS } from "./audio-alert";
 
 export function SettingsDialogContent({
   activeApp,
@@ -49,6 +52,9 @@ export function SettingsDialogContent({
 }) {
   const settingsStore = useSettingsStore();
   const profileSettings = useSettingsStore((state) => state);
+  const hasPreviewAccess = useAccountStore(
+    (state) => state.perks.previewReleaseAccess,
+  );
 
   return (
     <DialogContent
@@ -349,6 +355,126 @@ export function SettingsDialogContent({
                   </div>
                 </>
               )}
+              <Separator />
+              <h4 className="text-md font-semibold">Audio Alerts</h4>
+              <p className="text-muted-foreground text-xs">
+                Play a sound when tracked items appear within range. Configure
+                per-filter alerts using the settings icon next to each filter.
+              </p>
+              {!hasPreviewAccess && (
+                <p className="text-amber-500 text-xs">
+                  This feature requires{" "}
+                  <a
+                    href="https://www.th.gl/support-me"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-amber-400"
+                  >
+                    Preview Release
+                  </a>{" "}
+                  access to function.
+                </p>
+              )}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="audio-alerts-enabled">Enable Audio Alerts</Label>
+                <Switch
+                  id="audio-alerts-enabled"
+                  checked={profileSettings.audioAlertsEnabled}
+                  onCheckedChange={settingsStore.setAudioAlertsEnabled}
+                  disabled={!hasPreviewAccess && !profileSettings.audioAlertsEnabled}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 justify-between">
+                  <Label htmlFor="audio-alert-range">Alert Range</Label>
+                  <Input
+                    type="number"
+                    id="audio-alert-range"
+                    value={profileSettings.audioAlertRange}
+                    className="w-24"
+                    onChange={(e) =>
+                      settingsStore.setAudioAlertRange(+e.target.value)
+                    }
+                    min={10}
+                    disabled={!profileSettings.audioAlertsEnabled}
+                  />
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Distance in map units. The ideal value depends on the game and
+                  map scale.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="show-audio-alert-range">Show Range on Map</Label>
+                  <Switch
+                    id="show-audio-alert-range"
+                    checked={profileSettings.showAudioAlertRange}
+                    onCheckedChange={settingsStore.toggleShowAudioAlertRange}
+                    disabled={!profileSettings.audioAlertsEnabled}
+                  />
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Display a circle around your player to visualize the alert
+                  range.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 justify-between">
+                <Label htmlFor="audio-alert-sound">Alert Sound</Label>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={profileSettings.audioAlertSound}
+                    onValueChange={settingsStore.setAudioAlertSound}
+                    disabled={!profileSettings.audioAlertsEnabled}
+                  >
+                    <SelectTrigger className="w-28 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALERT_SOUND_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      playAlertSound(
+                        profileSettings.audioAlertSound,
+                        profileSettings.audioAlertVolume,
+                      )
+                    }
+                    disabled={!profileSettings.audioAlertsEnabled}
+                    title="Preview sound"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 justify-between">
+                <Label htmlFor="audio-alert-volume">Volume</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    id="audio-alert-volume"
+                    className="w-28 h-8 p-0"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    value={[profileSettings.audioAlertVolume]}
+                    onValueChange={(values) => {
+                      settingsStore.setAudioAlertVolume(values[0]);
+                    }}
+                    disabled={!profileSettings.audioAlertsEnabled}
+                  />
+                  <span className="text-xs text-muted-foreground w-10 text-right">
+                    {Math.round(profileSettings.audioAlertVolume * 100)}%
+                  </span>
+                </div>
+              </div>
             </>
           )}
           {children}

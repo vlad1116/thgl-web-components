@@ -99,6 +99,12 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   traceLineLength: 100,
   traceLineRate: 5,
   traceLineColor: "#1ccdd1B3",
+  audioAlertsEnabled: false,
+  audioAlertRange: 1000,
+  audioAlertSound: "chime" as const,
+  audioAlertVolume: 0.5,
+  showAudioAlertRange: false,
+  audioAlertByFilter: {},
   displayDiscordActivityStatus: true,
   presets: {},
   tempPrivateNode: null,
@@ -151,6 +157,12 @@ export type ProfileSettings = {
   traceLineLength: number;
   traceLineRate: number;
   traceLineColor: string;
+  audioAlertsEnabled: boolean;
+  audioAlertRange: number;
+  audioAlertSound: "chime" | "ping" | "beacon" | "soft";
+  audioAlertVolume: number;
+  showAudioAlertRange: boolean;
+  audioAlertByFilter: Record<string, boolean>;
   displayDiscordActivityStatus: boolean;
   presets: Record<string, string[]>;
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
@@ -211,6 +223,13 @@ export interface ProfileActions {
   setTraceLineLength: (traceLineLength: number) => void;
   setTraceLineRate: (traceLineRate: number) => void;
   setTraceLineColor: (traceLineColor: string) => void;
+  setAudioAlertsEnabled: (enabled: boolean) => void;
+  setAudioAlertRange: (range: number) => void;
+  setAudioAlertSound: (sound: "chime" | "ping" | "beacon" | "soft") => void;
+  setAudioAlertVolume: (volume: number) => void;
+  toggleShowAudioAlertRange: () => void;
+  toggleAudioAlertByFilter: (filterId: string) => void;
+  setAudioAlertByFilters: (filterIds: string[], enabled: boolean) => void;
   setDisplayDiscordActivityStatus: (
     displayDiscordActivityStatus: boolean,
   ) => void;
@@ -701,6 +720,49 @@ export const useSettingsStore = create(
 
         setTraceLineColor: (traceLineColor: string) => {
           updateSettings({ traceLineColor });
+        },
+
+        setAudioAlertsEnabled: (enabled: boolean) => {
+          updateSettings({ audioAlertsEnabled: enabled });
+        },
+
+        setAudioAlertRange: (range: number) => {
+          updateSettings({ audioAlertRange: range });
+        },
+
+        setAudioAlertSound: (sound) => {
+          updateSettings({ audioAlertSound: sound });
+        },
+
+        setAudioAlertVolume: (volume: number) => {
+          updateSettings({ audioAlertVolume: Math.max(0, Math.min(1, volume)) });
+        },
+
+        toggleShowAudioAlertRange: () => {
+          const state = get();
+          updateSettings({ showAudioAlertRange: !state.showAudioAlertRange });
+        },
+
+        toggleAudioAlertByFilter: (filterId: string) => {
+          const state = get();
+          const current = state.audioAlertByFilter[filterId] ?? false;
+          updateSettings({
+            audioAlertByFilter: { ...state.audioAlertByFilter, [filterId]: !current },
+          });
+        },
+
+        setAudioAlertByFilters: (filterIds: string[], enabled: boolean) => {
+          const state = get();
+          const updates = filterIds.reduce(
+            (acc, id) => {
+              acc[id] = enabled;
+              return acc;
+            },
+            {} as Record<string, boolean>,
+          );
+          updateSettings({
+            audioAlertByFilter: { ...state.audioAlertByFilter, ...updates },
+          });
         },
 
         setDisplayDiscordActivityStatus: (

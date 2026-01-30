@@ -19,6 +19,7 @@ import {
   getNodeId,
   MarkerOptions,
   Spawn,
+  useAccountStore,
   useConnectionStore,
   useGameState,
   useSettingsStore,
@@ -27,6 +28,7 @@ import {
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
 import { AdditionalTooltipType } from "../(content)";
+import { playAlertSound } from "../(controls)/audio-alert";
 
 export function Markers({
   appName,
@@ -196,6 +198,22 @@ function MarkersContent({
   const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
   const sharedMyFilters = useConnectionStore((state) => state.myFilters);
   const liveMode = useSettingsStore((state) => state.liveMode);
+  const audioAlertsEnabled = useSettingsStore(
+    (state) => state.audioAlertsEnabled,
+  );
+  const setAudioAlertsEnabled = useSettingsStore(
+    (state) => state.setAudioAlertsEnabled,
+  );
+  const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
+  const audioAlertByFilter = useSettingsStore(
+    (state) => state.audioAlertByFilter,
+  );
+  const audioAlertSound = useSettingsStore((state) => state.audioAlertSound);
+  const audioAlertVolume = useSettingsStore((state) => state.audioAlertVolume);
+  const hasPreviewAccess = useAccountStore(
+    (state) => state.perks.previewReleaseAccess,
+  );
+  const accountHydrated = useAccountStore((state) => state._hasHydrated);
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
   const typeToGroup = useMemo(() => {
     const mapTypeToGroup = new Map<string, string>();
@@ -220,6 +238,16 @@ function MarkersContent({
   const player = useGameState((state) => state.player);
   const throttledPlayer = useThrottle(player, 1000);
   const firstRender = useRef(true);
+
+  // Audio alert tracking - tracks if we've already alerted for current in-range spawns
+  const hasAlertedRef = useRef<boolean>(false);
+
+  // Auto-disable audio alerts when preview access is lost
+  useEffect(() => {
+    if (accountHydrated && !hasPreviewAccess && audioAlertsEnabled) {
+      setAudioAlertsEnabled(false);
+    }
+  }, [accountHydrated, hasPreviewAccess, audioAlertsEnabled, setAudioAlertsEnabled]);
 
   // Cache rotated coordinates to avoid recalculating on every render
   const rotationCache = useMemo(() => {
@@ -636,6 +664,67 @@ function MarkersContent({
       } catch (e) {}
     });
   }, [colorBlindSeverity]);
+
+  // Audio alerts when player is within range of tracked spawns
+  useEffect(() => {
+    if (
+      !audioAlertsEnabled ||
+      !hasPreviewAccess ||
+      !throttledPlayer ||
+      !existingSpawnIds.current
+    )
+      return;
+
+    // Apply rotation to player position if needed
+    let playerX = throttledPlayer.x;
+    let playerY = throttledPlayer.y;
+    if (rotationCache) {
+      const rotatedPlayer = rotationCache.getRotated(
+        throttledPlayer.x,
+        throttledPlayer.y,
+      );
+      playerX = rotatedPlayer[0];
+      playerY = rotatedPlayer[1];
+    }
+
+    const rangeSq = audioAlertRange * audioAlertRange;
+
+    // Check if any spawn with audio alerts enabled is in range
+    let anyInRange = false;
+    for (const marker of existingSpawnIds.current.values()) {
+      const typeId = marker.options.typeId as string;
+      if (!audioAlertByFilter[typeId]) continue;
+
+      const pos = marker._latLngTuple as [number, number];
+      const dx = playerX - pos[0];
+      const dy = playerY - pos[1];
+
+      if (dx * dx + dy * dy <= rangeSq) {
+        anyInRange = true;
+        break;
+      }
+    }
+
+    if (anyInRange) {
+      // Play sound only on transition from none to some in range
+      if (!hasAlertedRef.current) {
+        hasAlertedRef.current = true;
+        playAlertSound(audioAlertSound, audioAlertVolume);
+      }
+    } else {
+      // Reset when all spawns are out of range
+      hasAlertedRef.current = false;
+    }
+  }, [
+    throttledPlayer,
+    audioAlertsEnabled,
+    hasPreviewAccess,
+    audioAlertRange,
+    audioAlertByFilter,
+    audioAlertSound,
+    audioAlertVolume,
+    rotationCache,
+  ]);
 
   useEffect(() => {
     if (!fitBoundsOnChange || liveMode || spawns.length === 0 || !map) {
