@@ -7,7 +7,7 @@ import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { useSettingsStore, useAccountStore } from "@repo/lib";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FilterTooltip } from "./filter-tooltip";
 
 type FilterSettingsPopoverProps =
@@ -30,6 +30,7 @@ type FilterSettingsPopoverProps =
 
 export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const { filterLabel, isGroup } = props;
+  const [open, setOpen] = useState(false);
 
   const iconSizeByFilter = useSettingsStore((s) => s.iconSizeByFilter);
   const setIconSizeByFilter = useSettingsStore((s) => s.setIconSizeByFilter);
@@ -86,10 +87,11 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   };
 
   return (
-    <Popover modal>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           className="p-1 hover:text-primary transition-colors shrink-0 text-muted-foreground"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           type="button"
         >
