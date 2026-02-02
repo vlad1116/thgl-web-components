@@ -71,6 +71,7 @@ export const useTHGLAppState = create(
       gameSessions: Array<GameSessionInfo>;
       updateGameSession: (session: GameSessionInfo) => void;
       clearClosedSessions: () => void;
+      cleanupStaleSessions: (activePids: number[]) => void;
     }>(
       (set) => ({
         _hasHydrated: false,
@@ -109,6 +110,16 @@ export const useTHGLAppState = create(
         clearClosedSessions: () =>
           set((state) => ({
             gameSessions: state.gameSessions.filter((s) => s.status !== "closed"),
+          })),
+        cleanupStaleSessions: (activePids) =>
+          set((state) => ({
+            gameSessions: state.gameSessions.map((s) => {
+              // If session is not closed and its PID is not in active list, mark as closed
+              if (s.status !== "closed" && !activePids.includes(s.pid)) {
+                return { ...s, status: "closed", endedAt: s.endedAt ?? Date.now() };
+              }
+              return s;
+            }),
           })),
       }),
       {

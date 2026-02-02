@@ -1,5 +1,6 @@
 import { useGameState } from "../game";
 import { useSettingsStore } from "../settings";
+import { RunningGame } from "./games";
 import { useLiveState, useTHGLAppState } from "./states";
 import { getInitialStateFromWebview } from "./version";
 import { postWebviewMessage } from "./webview";
@@ -199,6 +200,9 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           if (role === "dashboard") {
             if (message.action === "runningGames") {
               liveState.setRunningGames(message.payload);
+              // Cleanup stale sessions - mark sessions as closed if their PID is no longer active
+              const activePids = message.payload.map((g: RunningGame) => g.pid);
+              useTHGLAppState.getState().cleanupStaleSessions(activePids);
             } else if (message.action === "gameSession") {
               useTHGLAppState.getState().updateGameSession(message.payload);
             } else if (message.action === "connectedClients") {
@@ -250,6 +254,11 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
         liveState.setWindowMode(data.windowMode);
         liveState.setGpuFlag(data.gpuFlag);
         console.log("Dashboard received initial state:", data);
+
+        // Cleanup stale sessions on startup - use current running games if available, else empty
+        const currentRunningGames = liveState.runningGames ?? [];
+        const activePids = currentRunningGames.map((g) => g.pid);
+        useTHGLAppState.getState().cleanupStaleSessions(activePids);
       })
       .catch((e) => {
         console.error("Failed to get initial state:", e);
