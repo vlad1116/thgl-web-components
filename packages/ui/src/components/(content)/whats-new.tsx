@@ -9,6 +9,29 @@ import { DiscordMessage } from "./discord-message";
 
 export type { UpdateItem };
 
+// Render inline markdown (bold, italic, code)
+function renderInlineMarkdown(text: string): React.ReactNode {
+  // Split by **bold**, *italic*, and `code` patterns
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code key={i} className="bg-muted px-1 py-0.5 rounded text-xs">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
 function ChangelogContent({ content }: { content: string }) {
   return (
     <div className="text-sm text-muted-foreground">
@@ -18,28 +41,28 @@ function ChangelogContent({ content }: { content: string }) {
           return (
             <p key={i} className="my-1 flex gap-2">
               <span className="text-muted-foreground/60">•</span>
-              <span>{trimmed.slice(2)}</span>
+              <span>{renderInlineMarkdown(trimmed.slice(2))}</span>
             </p>
           );
         }
         if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
           return (
             <p key={i} className="font-semibold text-foreground text-base mt-3 mb-1">
-              {trimmed.slice(2)}
+              {renderInlineMarkdown(trimmed.slice(2))}
             </p>
           );
         }
         if (trimmed.startsWith("## ")) {
           return (
             <p key={i} className="font-medium text-foreground mt-3 mb-1">
-              {trimmed.slice(3)}
+              {renderInlineMarkdown(trimmed.slice(3))}
             </p>
           );
         }
         if (trimmed) {
           return (
             <p key={i} className="my-1">
-              {trimmed}
+              {renderInlineMarkdown(trimmed)}
             </p>
           );
         }
