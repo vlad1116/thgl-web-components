@@ -4,6 +4,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FilterSettingsPopover } from "./filter-settings-popover";
 import { useT } from "../(providers)";
 import { useMemo, useState } from "react";
@@ -100,42 +101,49 @@ export function CollapsibleFilter({
           })
 
           .map((f) => (
-            <div key={f.id} className="flex grow items-center md:basis-1/2 pr-2">
-              <button
-                className={cn(
-                  "flex gap-2 items-center transition-colors hover:text-primary p-2 truncate",
-                  {
-                    "text-muted-foreground": !filters.includes(f.id),
-                  },
-                )}
-                onClick={() => {
-                  toggleFilter(f.id);
-                }}
-                type="button"
-              >
-                {typeof f.icon === "string" ? (
-                  <img
-                    alt=""
-                    className="h-5 w-5 shrink-0"
-                    height={20}
-                    src={getIconsUrl(appName, f.icon, iconsPath)}
-                    width={20}
-                  />
-                ) : (
-                  <img
-                    alt=""
-                    className="shrink-0 object-none w-[64px] h-[64px]"
-                    src={getIconsUrl(appName, f.icon.url, iconsPath)}
-                    width={f.icon.width}
-                    height={f.icon.height}
-                    style={{
-                      objectPosition: `-${f.icon.x}px -${f.icon.y}px`,
-                      zoom: 0.35,
+            <div key={f.id} className="flex grow items-center md:basis-1/2 pr-2 min-w-0">
+              <Tooltip delayDuration={300} disableHoverableContent>
+                <TooltipTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex gap-2 items-center transition-colors hover:text-primary p-2 truncate min-w-0",
+                      {
+                        "text-muted-foreground": !filters.includes(f.id),
+                      },
+                    )}
+                    onClick={() => {
+                      toggleFilter(f.id);
                     }}
-                  />
-                )}
-                <span className="truncate">{t(f.id) || f.id}</span>
-              </button>
+                    type="button"
+                  >
+                    {typeof f.icon === "string" ? (
+                      <img
+                        alt=""
+                        className="h-5 w-5 shrink-0"
+                        height={20}
+                        src={getIconsUrl(appName, f.icon, iconsPath)}
+                        width={20}
+                      />
+                    ) : (
+                      <img
+                        alt=""
+                        className="shrink-0 object-none w-[64px] h-[64px]"
+                        src={getIconsUrl(appName, f.icon.url, iconsPath)}
+                        width={f.icon.width}
+                        height={f.icon.height}
+                        style={{
+                          objectPosition: `-${f.icon.x}px -${f.icon.y}px`,
+                          zoom: 0.35,
+                        }}
+                      />
+                    )}
+                    <span className="truncate">{t(f.id) || f.id}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {t(f.id) || f.id}
+                </TooltipContent>
+              </Tooltip>
               <div className="grow" />
               <FilterSettingsPopover
                 filterId={f.id}
