@@ -2,7 +2,7 @@ import type { DiscordMessageData } from "./discord";
 import type { Game } from "./games";
 
 export type ChangelogEntry = {
-  version: string;
+  version?: string;
   date: string | null;
   content: string;
   timestamp: number;
@@ -17,7 +17,7 @@ export type UpdateItem =
     }
   | {
       type: "changelog";
-      version: string;
+      version?: string;
       date: string | null;
       content: string;
       timestamp: number;

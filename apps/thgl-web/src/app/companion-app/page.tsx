@@ -70,7 +70,7 @@ export default async function CompanionAppPage() {
   // Convert app updates to changelog entries
   const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 5).map((msg) => {
     const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
-    const version = versionMatch?.[1] || versionMatch?.[2] || "Unknown";
+    const version = versionMatch?.[1] || versionMatch?.[2];
 
     return {
       version,

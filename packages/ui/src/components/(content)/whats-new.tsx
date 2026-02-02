@@ -33,40 +33,63 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 }
 
 function ChangelogContent({ content }: { content: string }) {
+  // Split content by code blocks (```...```)
+  const parts = content.split(/(```[\s\S]*?```)/g);
+
   return (
     <div className="text-sm text-muted-foreground">
-      {content.split("\n").map((line, i) => {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("- ")) {
+      {parts.map((part, partIndex) => {
+        // Handle code blocks
+        if (part.startsWith("```") && part.endsWith("```")) {
+          const codeContent = part.slice(3, -3).replace(/^\w*\n/, ""); // Remove language hint
           return (
-            <p key={i} className="my-1 flex gap-2">
-              <span className="text-muted-foreground/60">•</span>
-              <span>{renderInlineMarkdown(trimmed.slice(2))}</span>
-            </p>
+            <pre
+              key={partIndex}
+              className="my-2 p-2 bg-muted rounded text-xs overflow-x-auto"
+            >
+              {codeContent}
+            </pre>
           );
         }
-        if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
-          return (
-            <p key={i} className="font-semibold text-foreground text-base mt-3 mb-1">
-              {renderInlineMarkdown(trimmed.slice(2))}
-            </p>
-          );
-        }
-        if (trimmed.startsWith("## ")) {
-          return (
-            <p key={i} className="font-medium text-foreground mt-3 mb-1">
-              {renderInlineMarkdown(trimmed.slice(3))}
-            </p>
-          );
-        }
-        if (trimmed) {
-          return (
-            <p key={i} className="my-1">
-              {renderInlineMarkdown(trimmed)}
-            </p>
-          );
-        }
-        return null;
+
+        // Handle regular content line by line
+        return part.split("\n").map((line, i) => {
+          const trimmed = line.trim();
+          const key = `${partIndex}-${i}`;
+          if (trimmed.startsWith("- ")) {
+            return (
+              <p key={key} className="my-1 flex gap-2">
+                <span className="text-muted-foreground/60">•</span>
+                <span>{renderInlineMarkdown(trimmed.slice(2))}</span>
+              </p>
+            );
+          }
+          if (trimmed.startsWith("# ") && !trimmed.startsWith("## ")) {
+            return (
+              <p
+                key={key}
+                className="font-semibold text-foreground text-base mt-3 mb-1"
+              >
+                {renderInlineMarkdown(trimmed.slice(2))}
+              </p>
+            );
+          }
+          if (trimmed.startsWith("## ")) {
+            return (
+              <p key={key} className="font-medium text-foreground mt-3 mb-1">
+                {renderInlineMarkdown(trimmed.slice(3))}
+              </p>
+            );
+          }
+          if (trimmed) {
+            return (
+              <p key={key} className="my-1">
+                {renderInlineMarkdown(trimmed)}
+              </p>
+            );
+          }
+          return null;
+        });
       })}
     </div>
   );
