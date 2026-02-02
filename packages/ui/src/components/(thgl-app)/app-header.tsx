@@ -212,13 +212,22 @@ export function AppHeader({
                 <DialogHeader>
                   <DialogTitle>Send Debug Snapshot</DialogTitle>
                   <DialogDescription>
-                    Send logs and current game state to support for debugging.
-                    Please describe what issue you're experiencing.
+                    For bug reports, please join our{" "}
+                    <a
+                      href="https://th.gl/discord"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline hover:no-underline"
+                    >
+                      Discord server
+                    </a>{" "}
+                    and describe your issue there. Only send debug logs if asked
+                    by support.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <Textarea
-                    placeholder="Describe the issue (e.g., 'Standing next to ore that is not detected')"
+                    placeholder="Description provided to support (e.g., 'Standing next to ore that is not detected')"
                     value={debugContext}
                     onChange={(e) => setDebugContext(e.target.value)}
                     rows={5}
