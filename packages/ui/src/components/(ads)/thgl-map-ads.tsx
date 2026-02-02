@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getNitroAds } from "./nitro-pay";
 import { ScriptLoader } from "./nitro-script";
 import { THGLAppConfig } from "@repo/lib";
@@ -16,26 +16,186 @@ const MovableAdsContainer = dynamic(
   },
 );
 
+// SSR-safe media query hook
+function useMediaQuerySafe(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    setMatches(mediaQuery.matches);
+
+    const handler = (event: MediaQueryListEvent) => {
+      setMatches(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, [query]);
+
+  return matches;
+}
+
+// Ad format configurations based on window size (matching Overwolf breakpoints)
+// Available NitroPay sizes: 728x90, 970x90, 970x250, 300x250, 336x280, 320x50, 320x100, 320x480, 160x600, 300x600
+type AdFormat = {
+  sizes: [string, string][];
+  minWidth: number;
+  minHeight: number;
+  variant: string;
+};
+
+// Desktop breakpoints (not overlay)
+const DESKTOP_BANNER: AdFormat = {
+  // Height < 700px
+  sizes: [
+    ["970", "90"],
+    ["728", "90"],
+  ],
+  minWidth: 728,
+  minHeight: 90,
+  variant: "banner",
+};
+
+const DESKTOP_SMALL_SIDEBAR: AdFormat = {
+  // Width < 1680px AND Height >= 700px
+  sizes: [
+    ["160", "600"],
+    ["300", "250"],
+  ],
+  minWidth: 160,
+  minHeight: 250,
+  variant: "small-sidebar",
+};
+
+const DESKTOP_MEDIUM_SIDEBAR: AdFormat = {
+  // Width >= 1680px AND Height 700-1049px
+  sizes: [
+    ["300", "600"],
+    ["160", "600"],
+    ["336", "280"],
+    ["300", "250"],
+  ],
+  minWidth: 300,
+  minHeight: 250,
+  variant: "medium-sidebar",
+};
+
+const DESKTOP_LARGE_SIDEBAR: AdFormat = {
+  // Width >= 1680px AND Height >= 1050px
+  sizes: [
+    ["300", "600"],
+    ["160", "600"],
+    ["336", "280"],
+    ["300", "250"],
+  ],
+  minWidth: 300,
+  minHeight: 250,
+  variant: "large-sidebar",
+};
+
+// Overlay breakpoints
+const OVERLAY_SMALL: AdFormat = {
+  // Width < 1920px
+  sizes: [
+    ["300", "250"],
+    ["320", "100"],
+  ],
+  minWidth: 300,
+  minHeight: 100,
+  variant: "overlay-small",
+};
+
+const OVERLAY_LARGE: AdFormat = {
+  // Width >= 1920px
+  sizes: [
+    ["336", "280"],
+    ["300", "250"],
+    ["320", "100"],
+  ],
+  minWidth: 336,
+  minHeight: 100,
+  variant: "overlay-large",
+};
+
+function useAdFormat(isOverlay: boolean): AdFormat | null {
+  const [hydrated, setHydrated] = useState(false);
+
+  // Desktop breakpoints
+  const isSmallHeight = useMediaQuerySafe("(max-height: 699px)");
+  const isNarrowTall = useMediaQuerySafe(
+    "(max-width: 1679px) and (min-height: 700px)",
+  );
+  const isWideMedium = useMediaQuerySafe(
+    "(min-width: 1680px) and (min-height: 700px) and (max-height: 1049px)",
+  );
+  const isWideTall = useMediaQuerySafe(
+    "(min-width: 1680px) and (min-height: 1050px)",
+  );
+
+  // Overlay breakpoints
+  const isLargeOverlay = useMediaQuerySafe("(min-width: 1920px)");
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return useMemo(() => {
+    if (!hydrated) return null;
+
+    if (isOverlay) {
+      return isLargeOverlay ? OVERLAY_LARGE : OVERLAY_SMALL;
+    }
+
+    // Desktop mode
+    if (isSmallHeight) return DESKTOP_BANNER;
+    if (isNarrowTall) return DESKTOP_SMALL_SIDEBAR;
+    if (isWideMedium) return DESKTOP_MEDIUM_SIDEBAR;
+    if (isWideTall) return DESKTOP_LARGE_SIDEBAR;
+
+    // Fallback
+    return DESKTOP_SMALL_SIDEBAR;
+  }, [hydrated, isOverlay, isSmallHeight, isNarrowTall, isWideMedium, isWideTall, isLargeOverlay]);
+}
+
 export function THGLMapAds({
   isOverlay,
   appConfig,
 }: {
   isOverlay?: boolean;
   appConfig: THGLAppConfig;
-}): JSX.Element {
+}): JSX.Element | null {
+  const adFormat = useAdFormat(isOverlay ?? false);
+
+  // Wait for hydration to determine the correct ad format
+  if (!adFormat) return null;
+
   const id =
-    "thgl-" + appConfig.name + "-" + (isOverlay ? "overlay" : "desktop");
+    "thgl-" +
+    appConfig.name +
+    "-" +
+    (isOverlay ? "overlay" : "desktop") +
+    "-" +
+    adFormat.variant;
+
+  // Use key to force re-mount when format changes, ensuring clean ad recreation
   return (
     <ScriptLoader
+      key={adFormat.variant}
       loading={
         <NitroPayAdLoading
           id={id}
           isOverlay={isOverlay}
           appConfig={appConfig}
+          adFormat={adFormat}
         />
       }
     >
-      <NitroPayAd id={id} isOverlay={isOverlay} appConfig={appConfig} />
+      <NitroPayAd
+        id={id}
+        isOverlay={isOverlay}
+        appConfig={appConfig}
+        adFormat={adFormat}
+      />
     </ScriptLoader>
   );
 }
@@ -44,10 +204,12 @@ function NitroPayAd({
   id,
   isOverlay,
   appConfig,
+  adFormat,
 }: {
   id: string;
   isOverlay?: boolean;
   appConfig: THGLAppConfig;
+  adFormat: AdFormat;
 }): JSX.Element {
   useEffect(() => {
     try {
@@ -56,16 +218,12 @@ function NitroPayAd({
           platform: "thgl-app",
           game: appConfig.name,
           view: isOverlay ? "overlay" : "desktop",
+          variant: adFormat.variant,
         }, // Use 'platform' as primary discriminator to avoid bleed over with web
         refreshTime: 30,
         renderVisibleOnly: false,
         outstream: "never",
-        sizes: [
-          ["300", "250"],
-          ["320", "50"],
-          ["320", "100"],
-          ["336", "280"],
-        ],
+        sizes: adFormat.sizes,
         report: {
           enabled: false,
           icon: false,
@@ -79,14 +237,23 @@ function NitroPayAd({
     } catch (error) {
       console.error(`[THGLMapAds] Failed to create ad ${id}:`, error);
     }
-  }, [id]);
+  }, [id, adFormat.sizes, adFormat.variant, appConfig.name, isOverlay]);
 
   return (
     <MovableAdsContainer
       className="right-0 bottom-0"
-      transformId={appConfig.name + "-" + (isOverlay ? "overlay" : "map")}
+      transformId={
+        appConfig.name + "-" + (isOverlay ? "overlay" : "map") + "-" + adFormat.variant
+      }
     >
-      <div className="bg-background/50 min-w-[300px] min-h-[280px]" id={id} />
+      <div
+        className="bg-background/50"
+        style={{
+          minWidth: adFormat.minWidth,
+          minHeight: adFormat.minHeight,
+        }}
+        id={id}
+      />
     </MovableAdsContainer>
   );
 }
@@ -95,17 +262,28 @@ function NitroPayAdLoading({
   id,
   isOverlay,
   appConfig,
+  adFormat,
 }: {
   id: string;
   isOverlay?: boolean;
   appConfig: THGLAppConfig;
+  adFormat: AdFormat;
 }) {
   return (
     <MovableAdsContainer
       className="right-0 bottom-0"
-      transformId={appConfig.name + "-" + (isOverlay ? "overlay" : "map")}
+      transformId={
+        appConfig.name + "-" + (isOverlay ? "overlay" : "map") + "-" + adFormat.variant
+      }
     >
-      <div className="bg-background/50 min-w-[300px] min-h-[50px]" id={id} />
+      <div
+        className="bg-background/50"
+        style={{
+          minWidth: adFormat.minWidth,
+          minHeight: adFormat.minHeight,
+        }}
+        id={id}
+      />
     </MovableAdsContainer>
   );
 }
