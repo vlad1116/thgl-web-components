@@ -149,10 +149,8 @@ export function NodeDetails({
             {t(termId || spawn.type, { fallback: spawn.type })}
           </h3>
           <p className="italic flex gap-2 items-center">
-            {t(spawn.type) || spawn.type.replace(/my_\d+_/, "")}
-            {filter
-              ? filter.group && ` | ${t(filter.group) || filter.group}`
-              : ""}
+            {t(spawn.type, { fallback: spawn.type })}
+            {filter?.group && ` | ${t(filter.group, { fallback: filter.group })}`}
           </p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <span>

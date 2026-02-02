@@ -127,8 +127,8 @@ export function MarkerDetails({
           {t(item.termId, { fallback: item.type }) || item.termId}
         </h3>
         <p className="italic flex gap-2 items-center">
-          {t(item.type) || item.type.replace(/my_\d+_/, "")}
-          {item.group && ` | ${t(item.group) || item.group}`}
+          {t(item.type, { fallback: item.type })}
+          {item.group && ` | ${t(item.group, { fallback: item.group })}`}
         </p>
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <span>

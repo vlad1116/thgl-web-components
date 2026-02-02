@@ -106,7 +106,9 @@ export function MarkersSearchResults({
               )}
               <div className="text-left">
                 <div className="truncate">
-                  {spawns[0].isPrivate ? spawns[0].name : key}
+                  {spawns[0].isPrivate && spawns[0].name
+                    ? t(spawns[0].name, { fallback: spawns[0].name })
+                    : key}
                   {spawns.length > 1 && (
                     <span className="ml-1 text-gray-400 text-xs">
                       {spawns.length} times
@@ -114,7 +116,7 @@ export function MarkersSearchResults({
                   )}
                 </div>
                 <div className="text-gray-400 text-xs">
-                  {t(spawns[0].type)}
+                  {t(spawns[0].type, { fallback: spawns[0].type })}
                   {hasMultipleMaps && (
                     <span>{` - ${t(groupedMapName) || groupedMapName}`}</span>
                   )}

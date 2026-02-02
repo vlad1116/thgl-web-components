@@ -62,7 +62,8 @@ export function translate(
     if (options?.isDesc) {
       value = "";
     } else {
-      value = term;
+      // Strip my_<timestamp>_ prefix from custom filter names
+      value = term.replace(/^my_\d+_/, "");
     }
   }
 
@@ -104,7 +105,8 @@ export function getT(dict: Record<string, string>) {
           if (options?.isDesc) {
             template = "";
           } else {
-            template = term;
+            // Strip my_<timestamp>_ prefix from custom filter names
+            template = term.replace(/^my_\d+_/, "");
           }
         }
 
