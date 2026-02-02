@@ -137,7 +137,7 @@ export function WhatsNew({
               </CardContent>
             </Card>
           ) : (
-            <Card key={`changelog-${update.version}`}>
+            <Card key={`changelog-${update.version || update.timestamp}`}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -148,7 +148,9 @@ export function WhatsNew({
                       height={16}
                       className="rounded"
                     />
-                    <span className="font-medium">App v{update.version}</span>
+                    <span className="font-medium">
+                      {update.version ? `App v${update.version}` : "App Update"}
+                    </span>
                   </div>
                   {update.date && (
                     <span className="text-xs text-muted-foreground">
@@ -206,7 +208,7 @@ export function ChangelogList({
       )}
       <div className="space-y-4">
         {entries.map((entry) => (
-          <Card key={entry.version}>
+          <Card key={entry.version || entry.timestamp}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -217,7 +219,9 @@ export function ChangelogList({
                     height={16}
                     className="rounded"
                   />
-                  <span className="font-medium">v{entry.version}</span>
+                  <span className="font-medium">
+                    {entry.version ? `v${entry.version}` : "Update"}
+                  </span>
                 </div>
                 {entry.date && (
                   <span className="text-xs text-muted-foreground">

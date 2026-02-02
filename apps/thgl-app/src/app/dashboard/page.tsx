@@ -39,7 +39,7 @@ export default async function DashboardHome() {
   const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 5).map((msg) => {
     // Extract version from message (e.g., "**3.0.0**" or "# 3.0.0")
     const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
-    const version = versionMatch?.[1] || versionMatch?.[2] || "Unknown";
+    const version = versionMatch?.[1] || versionMatch?.[2] || "";
 
     return {
       version,
