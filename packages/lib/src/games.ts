@@ -240,7 +240,7 @@ export const games: Array<Game> = [
       games: [
         {
           title: "Palworld",
-          processNames: ["Palworld-Win64-Shipping.exe"],
+          processNames: ["Palworld-Win64-Shipping.exe", "Palworld-WinGDK-Shipping.exe"],
         },
       ],
       defaultHotkeys: {

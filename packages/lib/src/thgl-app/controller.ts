@@ -21,6 +21,7 @@ let activeGames: string[] = []; // Track running games for update check logic
 let updateCheckInterval: NodeJS.Timeout | null = null;
 let updateTriggered = false;
 let currentWindowMode: WindowMode = "overlay";
+let windowModeLoaded = false; // Track if window mode has been loaded from C++
 
 // Wait for persistent state to hydrate from storage
 function waitForHydration(): Promise<void> {
@@ -38,6 +39,25 @@ function waitForHydration(): Promise<void> {
         }
       },
     );
+  });
+}
+
+// Wait for window mode to be loaded from C++
+function waitForWindowMode(): Promise<void> {
+  return new Promise((resolve) => {
+    if (windowModeLoaded) {
+      resolve();
+      return;
+    }
+    // Poll for window mode loaded (max 2 seconds)
+    let attempts = 0;
+    const interval = setInterval(() => {
+      if (windowModeLoaded || attempts >= 20) {
+        clearInterval(interval);
+        resolve();
+      }
+      attempts++;
+    }, 100);
   });
 }
 
@@ -132,10 +152,12 @@ export async function initController(currentVersion: CurrentVersion) {
           async (runningGame) => {
             // Wait for persistent state to hydrate before checking settings
             await waitForHydration();
+            // Wait for window mode to be loaded from C++ to avoid race condition
+            await waitForWindowMode();
 
             const { disabledApps, autoRunGames } =
               useTHGLAppState.getState();
-            console.log("Game started:", runningGame);
+            console.log("Game started:", runningGame, "windowMode:", currentWindowMode);
 
             games.forEach((game) => {
               const companion = game.companion;
@@ -268,11 +290,13 @@ export async function initController(currentVersion: CurrentVersion) {
   getWindowMode()
     .then((response) => {
       currentWindowMode = response.data;
+      windowModeLoaded = true;
       useLiveState.getState().setWindowMode(response.data);
-      console.log("Window mode:", response.data);
+      console.log("Window mode loaded:", response.data);
     })
     .catch((e) => {
       console.error("Failed to get window mode", e);
+      windowModeLoaded = true; // Mark as loaded even on error to prevent blocking
     });
 
   // Wait for hydration before checking dashboard preference
