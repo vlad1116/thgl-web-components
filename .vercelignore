@@ -2,4 +2,5 @@
 .github
 .vscode
 apps/*-overwolf
+mcp-servers
 tests
