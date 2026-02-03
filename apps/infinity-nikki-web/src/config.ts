@@ -18,6 +18,14 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Overworld Map",
     },
     {
+      title: "Wanxiang Realm Map",
+      description: "Navigate the Wanxiang Realm with our interactive maps.",
+      href: "/maps/Wanxiang%20Realm",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("infinity-nikki", "4020034"),
+      linkText: "View the Wanxiang Realm Map",
+    },
+    {
       title: "Danqing Island Map",
       description: "Navigate the Danqing Island with our interactive maps.",
       href: "/maps/Danqing%20Island",
@@ -62,5 +70,6 @@ export const APP_CONFIG: AppConfig = {
   keywords: [
     "Whimstar & Whim Balloon spots",
     "Dew of Inspiration & Dew of Firework routes",
+    "Wanxiang Bell & Whim Lantern locations",
   ],
 };
