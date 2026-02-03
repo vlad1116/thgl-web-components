@@ -44,7 +44,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.harko.description",
       linkText: "config.internalLinks.harko.linkText",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("dune-awakening", "sh_harkovillage", "3"),
+      bgImage: getPreviewImageUrl("dune-awakening", "sh_harkovillage", "4"),
     },
     {
       href: "/maps/The%20Deep%20Desert",
@@ -52,7 +52,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.deep.description",
       linkText: "config.internalLinks.deep.linkText",
       iconName: "Map",
-      bgImage: getPreviewImageUrl("dune-awakening", "deepdesert_1", "3"),
+      bgImage: getPreviewImageUrl("dune-awakening", "deepdesert_1", "4"),
     },
     {
       href: "/private-servers",
