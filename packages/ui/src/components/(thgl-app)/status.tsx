@@ -8,9 +8,7 @@ import {
   TooltipTrigger,
 } from "../(controls)";
 import { useAccountStore } from "@repo/lib";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import {
-  AlertCircle,
   ChevronDown,
   ChevronUp,
   Gamepad2,
@@ -24,7 +22,6 @@ export function Status() {
   const account = useAccountStore();
   const runningGames = useLiveState((state) => state.runningGames);
   const version = useLiveState((state) => state.version);
-  const isRunningAsAdmin = useLiveState((state) => state.isRunningAsAdmin);
   const connectedClients = useLiveState((state) => state.connectedClients);
   const controllerClient = connectedClients?.find(
     (client) => client.role === "controller",
@@ -34,18 +31,7 @@ export function Status() {
   );
 
   return (
-    <>
-      {isRunningAsAdmin === false && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Admin Rights Required</AlertTitle>
-          <AlertDescription>
-            Running as standard user. Some features may not work properly.
-            Please restart as administrator.
-          </AlertDescription>
-        </Alert>
-      )}
-      <div className="rounded-lg border bg-card">
+    <div className="rounded-lg border bg-card">
         {/* Running Games */}
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -151,7 +137,6 @@ export function Status() {
             </div>
           )}
         </div>
-      </div>
-    </>
+    </div>
   );
 }

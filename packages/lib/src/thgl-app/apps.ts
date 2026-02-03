@@ -120,13 +120,6 @@ export function getVersion() {
   });
 }
 
-export function getIsRunningAsAdmin() {
-  return postWebviewMessage<boolean>({
-    action: "isRunningAsAdmin",
-    payload: {},
-  });
-}
-
 export function getIsTaskInstalled() {
   return postWebviewMessage<boolean>({
     action: "isTaskInstalled",
@@ -209,8 +202,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               liveState.setConnectedClients(message.payload);
             } else if (message.action === "version") {
               liveState.setVersion(message.payload);
-            } else if (message.action === "isRunningAsAdmin") {
-              liveState.setIsRunningAsAdmin(message.payload);
             } else if (message.action === "isTaskInstalled") {
               liveState.setIsTaskInstalled(message.payload);
             } else if (message.action === "windowModeChanged") {
@@ -249,7 +240,6 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
       .then((res) => {
         const data = res.data;
         liveState.setVersion(data.version);
-        liveState.setIsRunningAsAdmin(data.isRunningAsAdmin);
         liveState.setIsTaskInstalled(data.isTaskInstalled);
         liveState.setWindowMode(data.windowMode);
         liveState.setGpuFlag(data.gpuFlag);

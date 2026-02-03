@@ -24,8 +24,6 @@ export type GameSessionInfo = {
 };
 
 export const useLiveState = create<{
-  isRunningAsAdmin: boolean | null;
-  setIsRunningAsAdmin: (isRunningAsAdmin: boolean) => void;
   isTaskInstalled: boolean | null;
   setIsTaskInstalled: (isTaskInstalled: boolean) => void;
   version: AppVersion | null;
@@ -39,8 +37,6 @@ export const useLiveState = create<{
   connectedClients: Array<ConnectedClient> | null;
   setConnectedClients: (urls: Array<ConnectedClient>) => void;
 }>((set) => ({
-  isRunningAsAdmin: null,
-  setIsRunningAsAdmin: (isRunningAsAdmin) => set({ isRunningAsAdmin }),
   isTaskInstalled: null,
   setIsTaskInstalled: (isTaskInstalled) => set({ isTaskInstalled }),
   version: null,

@@ -13,7 +13,6 @@ export type AppVersion = {
 
 export type InitialState = {
   version: AppVersion;
-  isRunningAsAdmin: boolean;
   isTaskInstalled: boolean;
   windowMode: WindowMode;
   gpuFlag: GpuFlag;
@@ -26,13 +25,6 @@ export function getVersionFromWebview() {
 export function getInitialStateFromWebview() {
   return postWebviewMessage<InitialState>({
     action: "getInitialState",
-    payload: {},
-  });
-}
-
-export function isRunningAsAdminFromWebview() {
-  return postWebviewMessage<boolean>({
-    action: "isRunningAsAdmin",
     payload: {},
   });
 }
