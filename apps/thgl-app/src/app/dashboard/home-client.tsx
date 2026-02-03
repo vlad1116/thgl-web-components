@@ -13,13 +13,7 @@ import {
 } from "@repo/ui/controls";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Circle,
-  AlertCircle,
-  Lightbulb,
-  MessageSquare,
-  BookOpen,
-} from "lucide-react";
+import { Circle, Lightbulb, MessageSquare, BookOpen } from "lucide-react";
 
 const blogEntries = [
   {
@@ -50,7 +44,6 @@ export function HomePageClient({
   suggestions: ForumPost[];
 }) {
   const runningGames = useLiveState((state) => state.runningGames);
-  const isRunningAsAdmin = useLiveState((state) => state.isRunningAsAdmin);
 
   const companionGames = games.filter((game) => game.companion);
 
@@ -87,26 +80,6 @@ export function HomePageClient({
             Blog
           </a>
         </div>
-
-        {/* Admin Warning */}
-        {isRunningAsAdmin === false && (
-          <Card className="border-destructive bg-destructive/10">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-                <div>
-                  <p className="font-semibold text-destructive">
-                    Admin Rights Required
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Running as standard user. Some features may not work
-                    properly. Please restart as administrator.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Running Games */}
         {runningGamesList.length > 0 && (

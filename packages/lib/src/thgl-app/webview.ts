@@ -106,10 +106,6 @@ export type WEBVIEW_RESPONSE_MESSAGE<T = undefined> = {
 
 export type WEBVIEW_SEND_MESSAGE =
   | {
-      action: "isRunningAsAdmin";
-      payload: {};
-    }
-  | {
       action: "isTaskInstalled";
       payload: {};
     }
