@@ -36,6 +36,10 @@ export const useLiveState = create<{
   setRunningGames: (games: Array<RunningGame>) => void;
   connectedClients: Array<ConnectedClient> | null;
   setConnectedClients: (urls: Array<ConnectedClient>) => void;
+  isRunningAsAdmin: boolean;
+  setIsRunningAsAdmin: (isAdmin: boolean) => void;
+  alwaysRunAsAdmin: boolean;
+  setAlwaysRunAsAdmin: (always: boolean) => void;
 }>((set) => ({
   isTaskInstalled: null,
   setIsTaskInstalled: (isTaskInstalled) => set({ isTaskInstalled }),
@@ -49,6 +53,10 @@ export const useLiveState = create<{
   setRunningGames: (games) => set({ runningGames: games }),
   connectedClients: null,
   setConnectedClients: (clients) => set({ connectedClients: clients }),
+  isRunningAsAdmin: false,
+  setIsRunningAsAdmin: (isAdmin) => set({ isRunningAsAdmin: isAdmin }),
+  alwaysRunAsAdmin: false,
+  setAlwaysRunAsAdmin: (always) => set({ alwaysRunAsAdmin: always }),
 }));
 
 export const useTHGLAppState = create(
@@ -120,7 +128,7 @@ export const useTHGLAppState = create(
       }),
       {
         name: "thgl-app",
-        version: 2,
+        version: 3,
         onRehydrateStorage: () => (state) => {
           state?.setHasHydrated(true);
         },

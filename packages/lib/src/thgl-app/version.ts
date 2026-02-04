@@ -16,6 +16,8 @@ export type InitialState = {
   isTaskInstalled: boolean;
   windowMode: WindowMode;
   gpuFlag: GpuFlag;
+  isRunningAsAdmin: boolean;
+  alwaysRunAsAdmin: boolean;
 };
 
 export function getVersionFromWebview() {
@@ -60,4 +62,8 @@ export function getGpuFlag() {
 
 export function setGpuFlag(flag: GpuFlag) {
   return postWebviewMessage({ action: "setGpuFlag", payload: { flag } });
+}
+
+export function setAlwaysRunAsAdmin(always: boolean) {
+  return postWebviewMessage({ action: "setAlwaysRunAsAdmin", payload: { always } });
 }

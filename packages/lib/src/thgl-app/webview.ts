@@ -95,6 +95,10 @@ export type WEBVIEW_RECEIVE_MESSAGE =
   | {
       action: "windowModeChanged";
       payload: "overlay" | "desktop" | "both";
+    }
+  | {
+      action: "alwaysRunAsAdminChanged";
+      payload: boolean;
     };
 
 export type WEBVIEW_RESPONSE_MESSAGE<T = undefined> = {
@@ -212,6 +216,23 @@ export type WEBVIEW_SEND_MESSAGE =
       action: "setGpuFlag";
       payload: {
         flag: GpuFlag;
+      };
+    }
+  | {
+      action: "setAlwaysRunAsAdmin";
+      payload: {
+        always: boolean;
+      };
+    }
+  | {
+      action: "relaunchAsAdmin";
+      payload: {};
+    }
+  | {
+      action: "closeElevationPrompt";
+      payload: {
+        gameId: string;
+        openDesktop?: boolean;
       };
     };
 

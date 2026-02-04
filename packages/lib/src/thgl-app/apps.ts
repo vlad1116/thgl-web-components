@@ -187,6 +187,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               gameState.setCharacter(message.payload);
             } else if (message.action === "windowModeChanged") {
               liveState.setWindowMode(message.payload);
+            } else if (message.action === "alwaysRunAsAdminChanged") {
+              liveState.setAlwaysRunAsAdmin(message.payload);
             }
           }
           // Dashboard specific handlers - receive directly from C++
@@ -206,6 +208,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               liveState.setIsTaskInstalled(message.payload);
             } else if (message.action === "windowModeChanged") {
               liveState.setWindowMode(message.payload);
+            } else if (message.action === "alwaysRunAsAdminChanged") {
+              liveState.setAlwaysRunAsAdmin(message.payload);
             }
           }
           // Client (Overlay/Desktop) handlers for DevTools and close requests
@@ -236,23 +240,37 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
 
   // For dashboard role, request initial state from C++ when ready
   if (role === "dashboard") {
-    getInitialStateFromWebview()
-      .then((res) => {
-        const data = res.data;
-        liveState.setVersion(data.version);
-        liveState.setIsTaskInstalled(data.isTaskInstalled);
-        liveState.setWindowMode(data.windowMode);
-        liveState.setGpuFlag(data.gpuFlag);
-        console.log("Dashboard received initial state:", data);
+    const fetchInitialState = async (retries = 3, delay = 500): Promise<void> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const res = await getInitialStateFromWebview();
+          const data = res.data;
+          liveState.setVersion(data.version);
+          // isTaskInstalled is fetched separately to avoid blocking
+          if (data.isTaskInstalled !== null) {
+            liveState.setIsTaskInstalled(data.isTaskInstalled);
+          }
+          liveState.setWindowMode(data.windowMode);
+          liveState.setGpuFlag(data.gpuFlag);
+          liveState.setIsRunningAsAdmin(data.isRunningAsAdmin ?? false);
+          liveState.setAlwaysRunAsAdmin(data.alwaysRunAsAdmin ?? false);
+          console.log("Dashboard received initial state:", data);
 
-        // Cleanup stale sessions on startup - use current running games if available, else empty
-        const currentRunningGames = liveState.runningGames ?? [];
-        const activePids = currentRunningGames.map((g) => g.pid);
-        useTHGLAppState.getState().cleanupStaleSessions(activePids);
-      })
-      .catch((e) => {
-        console.error("Failed to get initial state:", e);
-      });
+          // Cleanup stale sessions on startup - use current running games if available, else empty
+          const currentRunningGames = liveState.runningGames ?? [];
+          const activePids = currentRunningGames.map((g) => g.pid);
+          useTHGLAppState.getState().cleanupStaleSessions(activePids);
+          return; // Success, exit
+        } catch (e) {
+          console.warn(`Failed to get initial state (attempt ${attempt}/${retries}):`, e);
+          if (attempt < retries) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+        }
+      }
+      console.error("Failed to get initial state after all retries");
+    };
+    fetchInitialState();
   }
 
   // For client role, fetch window mode directly from C++
