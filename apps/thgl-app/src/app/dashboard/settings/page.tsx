@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Settings, ChevronDown, ChevronUp, AlertTriangle, Shield } from "lucide-react";
 import {
   ScrollArea,
   Label,
@@ -22,9 +22,11 @@ import {
   useLiveState,
   useTHGLAppState,
   setGpuFlag,
+  setAlwaysRunAsAdmin as setAlwaysRunAsAdminApi,
+  getIsTaskInstalled,
   GpuFlag,
 } from "@repo/lib/thgl-app";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // GPU flag options with descriptions
 const gpuFlagOptions: {
@@ -72,6 +74,20 @@ export default function SettingsPage() {
   const connectedClients = useLiveState((state) => state.connectedClients);
   const gpuFlag = useLiveState((state) => state.gpuFlag);
   const setGpuFlagState = useLiveState((state) => state.setGpuFlag);
+  const isRunningAsAdmin = useLiveState((state) => state.isRunningAsAdmin);
+  const alwaysRunAsAdmin = useLiveState((state) => state.alwaysRunAsAdmin);
+  const setAlwaysRunAsAdmin = useLiveState(
+    (state) => state.setAlwaysRunAsAdmin
+  );
+
+  // Fetch isTaskInstalled when settings page mounts (not in initial state to avoid blocking)
+  useEffect(() => {
+    if (isTaskInstalled === null) {
+      getIsTaskInstalled()
+        .then((res) => setIsTaskInstalled(res.data))
+        .catch(console.error);
+    }
+  }, []);
 
   // Track the initial GPU flag value when component mounts
   if (initialGpuFlag === null && gpuFlag) {
@@ -154,6 +170,38 @@ export default function SettingsPage() {
                 id="open-dashboard-on-start"
                 checked={openDashboardOnStart}
                 onCheckedChange={setOpenDashboardOnStart}
+              />
+            </div>
+            <div className="border-t" />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Label
+                    htmlFor="always-run-as-admin"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Always run as administrator
+                  </Label>
+                  {isRunningAsAdmin && (
+                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                      <Shield className="w-3 h-3" />
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Required for overlays on games running as admin
+                </p>
+              </div>
+              <Switch
+                id="always-run-as-admin"
+                checked={alwaysRunAsAdmin}
+                onCheckedChange={(checked) => {
+                  // Update C++ setting (persistent)
+                  setAlwaysRunAsAdminApi(checked)
+                    .then(() => setAlwaysRunAsAdmin(checked))
+                    .catch(console.error);
+                }}
               />
             </div>
           </div>

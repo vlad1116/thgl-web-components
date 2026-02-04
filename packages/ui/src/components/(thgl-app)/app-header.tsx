@@ -1,14 +1,14 @@
 "use client";
 import { cn, useAccountStore } from "@repo/lib";
 import { useState } from "react";
-import { sendDebugSnapshot } from "@repo/lib/thgl-app";
+import { sendDebugSnapshot, useLiveState } from "@repo/lib/thgl-app";
 import {
   Button,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../(controls)";
-import { Bug, Info, Settings, User } from "lucide-react";
+import { Bug, Info, Settings, Shield, User } from "lucide-react";
 import { ExternalAnchor } from "../(header)";
 import { AccountDialog } from "./account-dialog";
 import {
@@ -32,6 +32,7 @@ export function AppHeader({
   settingsDialogContent?: JSX.Element;
 }) {
   const account = useAccountStore();
+  const isRunningAsAdmin = useLiveState((state) => state.isRunningAsAdmin);
   const [isStartDragging, setIsStartDragging] = useState(false);
   const [debugContext, setDebugContext] = useState("");
   const [isSendingDebug, setIsSendingDebug] = useState(false);
@@ -143,6 +144,12 @@ export function AppHeader({
           className={cn("ml-2 grow flex items-center gap-2 text-sm font-bold")}
         >
           {children}
+          {isRunningAsAdmin && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
+              <Shield className="w-3 h-3" />
+              <span>Admin</span>
+            </div>
+          )}
           <div
             className={cn("absolute top-0 right-0 h-[32px]")}
             onMouseDown={(e) => e.stopPropagation()}
