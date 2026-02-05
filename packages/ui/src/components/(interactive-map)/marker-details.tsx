@@ -54,6 +54,30 @@ function copyToClipboard(text: string): void {
   }
 }
 
+// Parse individual coordinates from item.id format: "type@x:y" or "type@x:y:z"
+function parseItemCoords(
+  itemId: string,
+  fallback: [number, number] | [number, number, number],
+): [number, number] | [number, number, number] {
+  const atIndex = itemId.indexOf("@");
+  if (atIndex === -1) return fallback;
+
+  const coordPart = itemId.slice(atIndex + 1);
+  const parts = coordPart.split(":");
+  if (parts.length < 2) return fallback;
+
+  const x = parseFloat(parts[0]);
+  const y = parseFloat(parts[1]);
+  if (isNaN(x) || isNaN(y)) return fallback;
+
+  if (parts.length >= 3) {
+    const z = parseFloat(parts[2]);
+    if (!isNaN(z)) return [x, y, z];
+  }
+
+  return [x, y];
+}
+
 export function MarkerDetails({
   appName,
   item,
@@ -78,6 +102,12 @@ export function MarkerDetails({
   coordinateCopyFormat?: string;
 }) {
   const t = useT();
+
+  // Use item-specific coordinates if embedded in ID, otherwise fall back to shared latLng
+  const itemCoords = useMemo(
+    () => parseItemCoords(item.id, latLng),
+    [item.id, latLng],
+  );
 
   const { data: comments, isLoading } = useSWR(
     `/comments/${item.id}`,
@@ -132,8 +162,8 @@ export function MarkerDetails({
         </p>
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <span>
-            [{latLng[1].toFixed(0)}, {latLng[0].toFixed(0)}
-            {latLng[2] ? `, ${latLng[2].toFixed(0)}` : ""}]
+            [{itemCoords[1].toFixed(0)}, {itemCoords[0].toFixed(0)}
+            {itemCoords[2] ? `, ${itemCoords[2].toFixed(0)}` : ""}]
           </span>
           <Button
             size="icon"
@@ -141,7 +171,7 @@ export function MarkerDetails({
             className="h-5 w-5"
             onClick={(e) => {
               e.stopPropagation();
-              copyToClipboard(formatCoordinates(latLng, coordinateCopyFormat));
+              copyToClipboard(formatCoordinates(itemCoords, coordinateCopyFormat));
               toast("Copied to clipboard");
             }}
           >
