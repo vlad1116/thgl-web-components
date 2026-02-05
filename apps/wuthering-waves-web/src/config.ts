@@ -44,6 +44,14 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Chronorift Metropolis",
     },
     {
+      title: "Honami City",
+      description: "Explore Honami City with our interactive maps.",
+      href: "/maps/Honami%20City",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_2_8_Suibo"),
+      linkText: "Explore Honami City",
+    },
+    {
       title: "Fabricatorium of the Deep Map",
       description:
         "Explore the Fabricatorium of the Deep with our interactive maps.",
