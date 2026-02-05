@@ -447,21 +447,24 @@ More info: [New World Compliance Guide](https://dev.overwolf.com/ow-native/guide
     id: "fps-drops",
     headline: "FPS drops, lag, or performance issues with THGL apps",
     question:
-      "I have low FPS, lag, or performance drops when using the Overwolf or Companion App. What can I do?",
+      "I have low FPS, lag, or performance drops when using the Overwolf or THGL Companion App. What can I do?",
     answer: `
 ## General Solutions (All Apps)
 
 Try these solutions first, regardless of which app you're using:
 
-**1. Update GPU Drivers**
+**1. Only Run One Map Launcher**
+Make sure you're only running one map launcher at a time. Running both Overwolf and the THGL Companion App simultaneously will impact performance. Overwolf is significantly heavier, so if you already have it running, you're more likely to notice lag from other apps. Generally, switching from Overwolf to the THGL Companion App should improve performance since the Companion is much lighter.
+
+**2. Update GPU Drivers**
 Always make sure that your GPU drivers are up-to-date.
 
-**2. Check Antivirus Software**
+**3. Check Antivirus Software**
 Some antivirus programs can slow down app requests. Windows Defender typically doesn't cause issues, but third-party antivirus software might interfere with performance.
 
-## Companion App Solutions
+## THGL Companion App Solutions
 
-If you're experiencing performance issues with the TH.GL Companion App, especially when using 2nd screen mode:
+If you're experiencing performance issues with the THGL Companion App, especially when using 2nd screen mode:
 
 ### Common Cause
 This usually happens when your GPU driver or Windows decides to use all resources for the game itself.
@@ -469,7 +472,7 @@ This usually happens when your GPU driver or Windows decides to use all resource
 ### Solutions to Try
 
 **1. Game Display Mode (Important)**
-Running the game in **exclusive fullscreen** can cause various issues with the Companion App. Use **borderless fullscreen** or **windowed mode** instead for better compatibility and performance.
+Running the game in **exclusive fullscreen** can cause various issues with the THGL Companion App. Use **borderless fullscreen** or **windowed mode** instead for better compatibility and performance.
 
 **2. Windows Graphics Settings**
 1. Go to: Settings → System → Display → Graphics
