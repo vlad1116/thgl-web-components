@@ -39,8 +39,9 @@ function useMediaQuerySafe(query: string): boolean {
 // Available NitroPay sizes: 728x90, 970x90, 970x250, 300x250, 336x280, 320x50, 320x100, 320x480, 160x600, 300x600
 type AdFormat = {
   sizes: [string, string][];
-  minWidth: number;
-  minHeight: number;
+  // Fixed container dimensions (max of all possible ad sizes) to prevent dynamic resizing
+  width: number;
+  height: number;
   variant: string;
 };
 
@@ -51,19 +52,16 @@ const DESKTOP_BANNER: AdFormat = {
     ["970", "90"],
     ["728", "90"],
   ],
-  minWidth: 728,
-  minHeight: 90,
+  width: 970,
+  height: 90,
   variant: "banner",
 };
 
 const DESKTOP_SMALL_SIDEBAR: AdFormat = {
   // Width < 1680px AND Height >= 700px
-  sizes: [
-    ["160", "600"],
-    ["300", "250"],
-  ],
-  minWidth: 160,
-  minHeight: 250,
+  sizes: [["160", "600"]],
+  width: 160,
+  height: 600,
   variant: "small-sidebar",
 };
 
@@ -72,11 +70,10 @@ const DESKTOP_MEDIUM_SIDEBAR: AdFormat = {
   sizes: [
     ["300", "600"],
     ["160", "600"],
-    ["336", "280"],
     ["300", "250"],
   ],
-  minWidth: 300,
-  minHeight: 250,
+  width: 300,
+  height: 600,
   variant: "medium-sidebar",
 };
 
@@ -88,8 +85,8 @@ const DESKTOP_LARGE_SIDEBAR: AdFormat = {
     ["336", "280"],
     ["300", "250"],
   ],
-  minWidth: 300,
-  minHeight: 250,
+  width: 336,
+  height: 600,
   variant: "large-sidebar",
 };
 
@@ -100,8 +97,8 @@ const OVERLAY_SMALL: AdFormat = {
     ["300", "250"],
     ["320", "100"],
   ],
-  minWidth: 300,
-  minHeight: 100,
+  width: 320,
+  height: 250,
   variant: "overlay-small",
 };
 
@@ -112,8 +109,8 @@ const OVERLAY_LARGE: AdFormat = {
     ["300", "250"],
     ["320", "100"],
   ],
-  minWidth: 336,
-  minHeight: 100,
+  width: 336,
+  height: 280,
   variant: "overlay-large",
 };
 
@@ -249,8 +246,8 @@ function NitroPayAd({
       <div
         className="bg-background/50"
         style={{
-          minWidth: adFormat.minWidth,
-          minHeight: adFormat.minHeight,
+          width: adFormat.width,
+          height: adFormat.height,
         }}
         id={id}
       />
@@ -279,8 +276,8 @@ function NitroPayAdLoading({
       <div
         className="bg-background/50"
         style={{
-          minWidth: adFormat.minWidth,
-          minHeight: adFormat.minHeight,
+          width: adFormat.width,
+          height: adFormat.height,
         }}
         id={id}
       />
