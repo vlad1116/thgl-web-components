@@ -803,25 +803,15 @@ function MarkersContent({
     });
   }, [highlightSpawnIDs]);
 
-  // Update markers when color blind mode changes
+  // Update markers when color blind settings change (combined to avoid double cache clear and redraw)
   useEffect(() => {
     clearCanvasCache();
     existingSpawnIds.current?.forEach((marker) => {
       try {
-        marker.setColorBlindMode(colorBlindMode);
+        marker.setColorBlindSettings(colorBlindMode, colorBlindSeverity);
       } catch (e) {}
     });
-  }, [colorBlindMode]);
-
-  // Update markers when color blind severity changes
-  useEffect(() => {
-    clearCanvasCache();
-    existingSpawnIds.current?.forEach((marker) => {
-      try {
-        marker.setColorBlindSeverity(colorBlindSeverity);
-      } catch (e) {}
-    });
-  }, [colorBlindSeverity]);
+  }, [colorBlindMode, colorBlindSeverity]);
 
   useEffect(() => {
     if (!fitBoundsOnChange || liveMode || spawns.length === 0 || !map) {

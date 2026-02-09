@@ -157,66 +157,57 @@ leaflet.Canvas.include({
         context.fill();
         context.stroke();
       }
-      if (fillColor) {
-        // Get the image data
-        const imageData = context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        );
+      // Combined pixel processing: fillColor replacement + color-blind transform
+      // Using a single getImageData/putImageData cycle instead of two separate ones
+      const needsFillColor = Boolean(fillColor);
+      const needsColorBlind =
+        !isDiscovered &&
+        colorBlindMode &&
+        colorBlindMode !== "none" &&
+        colorBlindSeverity > 0;
+
+      if (needsFillColor || needsColorBlind) {
+        // Single getImageData call for both transforms
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Parse the target color
-        const r = parseInt(fillColor.slice(1, 3), 16);
-        const g = parseInt(fillColor.slice(3, 5), 16);
-        const b = parseInt(fillColor.slice(5, 7), 16);
-        const a = parseInt(fillColor.slice(7, 9), 16);
+        // Apply fillColor replacement if needed
+        if (needsFillColor) {
+          // Parse the target color once
+          const r = parseInt(fillColor!.slice(1, 3), 16);
+          const g = parseInt(fillColor!.slice(3, 5), 16);
+          const b = parseInt(fillColor!.slice(5, 7), 16);
+          const a = parseInt(fillColor!.slice(7, 9), 16);
 
-        // Iterate over each pixel
-        for (let i = 0; i < data.length; i += 4) {
-          const [currentR, currentG, currentB, currentA] = [
-            data[i],
-            data[i + 1],
-            data[i + 2],
-            data[i + 3],
-          ];
+          // Iterate over each pixel
+          for (let i = 0; i < data.length; i += 4) {
+            const currentR = data[i];
+            const currentG = data[i + 1];
+            const currentB = data[i + 2];
+            const currentA = data[i + 3];
 
-          // Calculate the brightness of the current pixel
-          const brightness =
-            0.299 * currentR + 0.587 * currentG + 0.114 * currentB;
+            // Calculate the brightness of the current pixel
+            const brightness = 0.299 * currentR + 0.587 * currentG + 0.114 * currentB;
 
-          // Check if the brightness is above the threshold
-          if (brightness > 150) {
-            // Apply the target color while preserving the alpha channel
-            data[i] = r;
-            data[i + 1] = g;
-            data[i + 2] = b;
-            if (a) {
-              data[i + 3] = Math.min(currentA, a);
+            // Check if the brightness is above the threshold
+            if (brightness > 150) {
+              // Apply the target color while preserving the alpha channel
+              data[i] = r;
+              data[i + 1] = g;
+              data[i + 2] = b;
+              if (a) {
+                data[i + 3] = Math.min(currentA, a);
+              }
             }
           }
         }
 
-        // Put the modified image data back to the canvas
-        context.putImageData(imageData, 0, 0);
-      }
+        // Apply color-blind transform if needed (after fillColor, on same data)
+        if (needsColorBlind) {
+          applyColorBlindTransform(data, colorBlindMode!, colorBlindSeverity);
+        }
 
-      // Apply color-blind simulation after all drawing, unless discovered nodes are greyed
-      if (
-        !isDiscovered &&
-        colorBlindMode &&
-        colorBlindMode !== "none" &&
-        colorBlindSeverity > 0
-      ) {
-        const imageData = context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        );
-        const data = imageData.data;
-        applyColorBlindTransform(data, colorBlindMode, colorBlindSeverity);
+        // Single putImageData call for both transforms
         context.putImageData(imageData, 0, 0);
       }
 
@@ -424,15 +415,28 @@ class CanvasMarker extends CircleMarker {
     this.update();
   }
 
-  setColorBlindMode(mode: ColorBlindMode) {
+  setColorBlindMode(mode: ColorBlindMode, skipUpdate = false) {
     if (this.options.colorBlindMode === mode) return;
     this.options.colorBlindMode = mode;
-    this.update();
+    if (!skipUpdate) this.update();
   }
 
-  setColorBlindSeverity(severity: number) {
+  setColorBlindSeverity(severity: number, skipUpdate = false) {
     const s = Math.max(0, Math.min(1, severity));
     if (this.options.colorBlindSeverity === s) return;
+    this.options.colorBlindSeverity = s;
+    if (!skipUpdate) this.update();
+  }
+
+  // Batch update color blind settings to avoid double redraw
+  setColorBlindSettings(mode: ColorBlindMode, severity: number) {
+    const s = Math.max(0, Math.min(1, severity));
+    const modeChanged = this.options.colorBlindMode !== mode;
+    const severityChanged = this.options.colorBlindSeverity !== s;
+
+    if (!modeChanged && !severityChanged) return;
+
+    this.options.colorBlindMode = mode;
     this.options.colorBlindSeverity = s;
     this.update();
   }
