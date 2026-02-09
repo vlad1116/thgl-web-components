@@ -30,6 +30,7 @@ import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
 import { AdditionalTooltipType } from "../(content)";
 import { playAlertSound } from "../(controls)/audio-alert";
+import { SpatialGrid } from "./spatial-grid";
 
 export function Markers({
   appName,
@@ -235,6 +236,8 @@ function MarkersContent({
   );
   const highlightSpawnIDs = useGameState((state) => state.highlightSpawnIDs);
   const existingSpawnIds = useRef<Map<string | number, CanvasMarker>>();
+  // Spatial grid for efficient proximity queries - cell size based on typical range
+  const spatialGridRef = useRef<SpatialGrid<CanvasMarker>>();
   const player = useGameState((state) => state.player);
   const throttledPlayer = useThrottle(player, 1000);
   const firstRender = useRef(true);
@@ -285,12 +288,23 @@ function MarkersContent({
     };
   }, [map, map?._rotationDegrees, map?._rotationCenter]);
 
+  // Determine the cell size for spatial grid based on max range we need to check
+  const spatialCellSize = useMemo(() => {
+    const zPosMaxDist = markerOptions.zPos?.xyMaxDistance ?? 0;
+    // Use the larger of audioAlertRange or zPos max distance, with a minimum of 500
+    return Math.max(500, audioAlertRange, zPosMaxDist);
+  }, [audioAlertRange, markerOptions.zPos?.xyMaxDistance]);
+
   useEffect(() => {
     if (!map || !map._mapPane) {
       return;
     }
     if (!existingSpawnIds.current) {
       existingSpawnIds.current = new Map();
+    }
+    // Initialize or rebuild spatial grid with current cell size
+    if (!spatialGridRef.current) {
+      spatialGridRef.current = new SpatialGrid<CanvasMarker>(spatialCellSize);
     }
 
     let tooltipDelayTimeout: NodeJS.Timeout | undefined;
@@ -332,6 +346,10 @@ function MarkersContent({
         if (isDiscovered && hideDiscoveredNodes) {
           existingMarker.remove();
           existingSpawnIds.current!.delete(spawn.address || id);
+          // Remove from spatial grid
+          if (spatialGridRef.current) {
+            spatialGridRef.current.remove(existingMarker);
+          }
         } else if (existingMarker.options.isDiscovered !== isDiscovered) {
           existingMarker.toggleDiscovered();
         }
@@ -351,6 +369,10 @@ function MarkersContent({
           }
           if (!existingMarker.getLatLng().equals(markerPosition)) {
             existingMarker.setLatLng(markerPosition);
+            // Update position in spatial grid
+            if (spatialGridRef.current) {
+              spatialGridRef.current.update(existingMarker, markerPosition[0], markerPosition[1]);
+            }
           }
         }
         if (existingMarker.options.isHighlighted !== isHighlighted) {
@@ -502,6 +524,10 @@ function MarkersContent({
         },
       });
       existingSpawnIds.current!.set(spawn.address || id, marker);
+      // Add to spatial grid for efficient proximity queries
+      if (spatialGridRef.current) {
+        spatialGridRef.current.add(marker, markerPosition[0], markerPosition[1]);
+      }
       try {
         marker.addTo(map);
       } catch (e) {
@@ -538,6 +564,10 @@ function MarkersContent({
         continue;
       }
       existingSpawnIds.current.delete(key);
+      // Remove from spatial grid
+      if (spatialGridRef.current) {
+        spatialGridRef.current.remove(marker);
+      }
 
       try {
         marker.off();
@@ -576,7 +606,7 @@ function MarkersContent({
   }, [throttledPlayer, rotationCache]);
 
   // Consolidated effect for z-position, audio alerts, and labels
-  // All three need to iterate markers and calculate distances, so we combine them
+  // Uses spatial grid for efficient proximity queries when available
   useEffect(() => {
     if (!existingSpawnIds.current || !rotatedPlayer) return;
 
@@ -591,9 +621,8 @@ function MarkersContent({
 
     // Pre-calculate constants for z-position checks
     const hasZPos = Boolean(markerOptions.zPos);
-    const zPosMaxDistSq = hasZPos
-      ? markerOptions.zPos!.xyMaxDistance * markerOptions.zPos!.xyMaxDistance
-      : 0;
+    const zPosMaxDist = hasZPos ? markerOptions.zPos!.xyMaxDistance : 0;
+    const zPosMaxDistSq = zPosMaxDist * zPosMaxDist;
     const zDistance = hasZPos ? markerOptions.zPos!.zDistance : 0;
 
     // Pre-calculate constants for audio/label range checks
@@ -604,9 +633,25 @@ function MarkersContent({
     // Track if any audio-enabled spawn is in range (for audio alert)
     let anyAudioInRange = false;
 
-    // Single iteration over all markers
-    for (const marker of existingSpawnIds.current.values()) {
+    // Determine max query distance for spatial grid
+    const maxQueryDist = Math.max(audioAlertRange, zPosMaxDist);
+    const useSpatialGrid = spatialGridRef.current && spatialGridRef.current.size > 100;
+
+    // Track which markers we've processed (for resetting distant markers)
+    const processedMarkers = useSpatialGrid ? new Set<CanvasMarker>() : null;
+
+    // Get nearby markers from spatial grid if available and beneficial
+    const markersToCheck = useSpatialGrid
+      ? spatialGridRef.current!.getNearby(playerX, playerY, maxQueryDist)
+      : existingSpawnIds.current.values();
+
+    // Process nearby markers (or all markers if no spatial grid)
+    for (const marker of markersToCheck) {
       if (!marker.options || !marker.options.id) continue;
+
+      if (processedMarkers) {
+        processedMarkers.add(marker);
+      }
 
       const pos = marker._latLngTuple as [number, number] | [number, number, number];
       const spawnX = pos[0];
@@ -652,6 +697,34 @@ function MarkersContent({
 
           if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
             marker.setText(newText, labelTextSize);
+          }
+        }
+      }
+    }
+
+    // If using spatial grid, process distant markers to reset z-pos and handle always/hotkey labels
+    if (useSpatialGrid && processedMarkers) {
+      for (const marker of existingSpawnIds.current.values()) {
+        if (processedMarkers.has(marker)) continue;
+        if (!marker.options || !marker.options.id) continue;
+
+        // Reset z-position for distant markers
+        if (hasZPos && marker.options.zPos !== null) {
+          marker.setZPos(null);
+        }
+
+        // Handle labels for distant markers (only "always" and "hotkey" modes apply)
+        if (checkLabels) {
+          const typeId = marker.options.typeId as string;
+          if (typeId) {
+            const labelMode = labelModeByFilter[typeId];
+            // For distant markers, isInRange is always false
+            const showLabel = shouldShowLabel(typeId, labelMode, false);
+            const newText = showLabel ? t(typeId, { fallback: typeId }) : undefined;
+
+            if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
+              marker.setText(newText, labelTextSize);
+            }
           }
         }
       }
@@ -704,6 +777,7 @@ function MarkersContent({
         } catch (e) {}
       });
       existingSpawnIds.current?.clear();
+      spatialGridRef.current?.clear();
     };
   }, [map]);
 
