@@ -142,3 +142,214 @@ When asked to analyze Overwolf log files, refer to `.claude/overwolf-logs-analys
 2. Check **Game HTML logs** - for overlay/rendering issues
 3. Review **OverwolfPerf** - for performance complaints
 4. Check **DxDiag** - for hardware/driver compatibility
+
+## Hotkey System
+
+Hotkeys for desktop apps (Overwolf and THGL Companion App) require updates in multiple locations:
+
+### Adding a New Hotkey
+
+1. **Overwolf Apps** - Update ALL `manifest.json` files in `apps/*-overwolf/`:
+   ```json
+   "hotkeys": {
+     "hotkey_name": {
+       "title": "Human Readable Title",
+       "action-type": "custom",
+       "default": "Shift+F5"
+     }
+   }
+   ```
+
+2. **THGL App & Settings Store** - Update `packages/lib/src/settings.ts`:
+   ```typescript
+   // In DEFAULT_PROFILE_SETTINGS.hotkeys:
+   hotkeys: {
+     toggle_app: "F6",
+     zoom_in_app: "F7",
+     zoom_out_app: "F8",
+     toggle_lock_app: "F9",
+     discover_node: "F10",
+     toggle_live_mode: "F5",
+     toggle_overlay_fullscreen: "Shift+F9",
+     show_labels: "Shift+F5",
+   },
+   ```
+
+3. **Hotkey Handler** - Implement in `packages/ui/src/components/(overwolf)/map-hotkeys.tsx` or equivalent
+
+### Overwolf Manifest Files
+All 9 Overwolf apps need identical hotkey configurations:
+- `apps/avowed-overwolf/manifest.json`
+- `apps/diablo4-overwolf/manifest.json`
+- `apps/hogwarts-legacy-overwolf/manifest.json`
+- `apps/once-human-overwolf/manifest.json`
+- `apps/palia-overwolf/manifest.json`
+- `apps/palworld-overwolf/manifest.json`
+- `apps/pax-dei-overwolf/manifest.json`
+- `apps/satisfactory-overwolf/manifest.json`
+- `apps/wuthering-waves-overwolf/manifest.json`
+
+## Preview Access Features
+
+Some features are gated behind Preview Release access for Elite Supporters.
+
+### Implementation Pattern
+
+```typescript
+// In component:
+const hasPreviewAccess = useAccountStore(
+  (state) => state.perks.previewReleaseAccess,
+);
+
+// Conditionally render or enable feature:
+if (hasPreviewAccess) {
+  // Show preview feature
+}
+```
+
+### Current Preview Features
+- Marker Labels (label mode per filter, text size, hotkey toggle)
+
+### Graduating Features to Public
+When a preview feature is ready for all users:
+1. Remove `hasPreviewAccess` checks from the code
+2. Update release notes to announce public availability
+3. Add new preview feature to maintain supporter value
+
+## Per-Filter Settings Pattern
+
+The filter settings popover (`packages/ui/src/components/(controls)/filter-settings-popover.tsx`) provides per-filter configuration.
+
+### Current Per-Filter Settings
+- **Icon Size**: `iconSizeByFilter` in settings store
+- **Audio Alert**: `audioAlertByFilter` in settings store
+- **Label Mode**: `labelModeByFilter` in settings store (preview access)
+
+### Adding a New Per-Filter Setting
+
+1. **Settings Store** (`packages/lib/src/settings.ts`):
+   ```typescript
+   // Add to ProfileSettings type:
+   newSettingByFilter: Record<string, ValueType>;
+
+   // Add to DEFAULT_PROFILE_SETTINGS:
+   newSettingByFilter: {},
+
+   // Add action:
+   setNewSettingByFilter: (filterId: string, value: ValueType) => void;
+   ```
+
+2. **Filter Settings Popover** - Add UI control in the popover
+
+3. **Markers Component** - Read setting and apply to markers
+
+### Group Settings
+Some settings support group-level control (all filters in a group):
+- Use `setNewSettingByFilters(filterIds[], value)` for batch updates
+- Check for "mixed" state when group has different values per filter
+
+## Performance Optimization Patterns
+
+For maps with thousands of markers and real-time updates:
+
+### Spatial Grid for Proximity Queries
+Located in `packages/ui/src/components/(interactive-map)/spatial-grid.ts`
+
+```typescript
+// O(k) queries instead of O(n) iteration
+const spatialGrid = new SpatialGrid<CanvasMarker>(cellSize);
+spatialGrid.add(marker, x, y);
+spatialGrid.getNearby(playerX, playerY, maxDistance);
+```
+
+Use when: Checking proximity for many markers (audio alerts, z-position, labels)
+
+### Canvas Caching
+Located in `packages/ui/src/components/(interactive-map)/canvas-marker.ts`
+
+- Cache rendered marker canvases by unique key
+- Clear cache on zoom change (`clearCanvasCache()`)
+- Include all visual properties in cache key (icon, size, color, colorBlind settings)
+
+### Consolidated Loops
+Instead of multiple O(n) passes over markers:
+```typescript
+// BAD: 3 separate loops
+markers.forEach(checkZPosition);
+markers.forEach(checkAudioAlert);
+markers.forEach(updateLabels);
+
+// GOOD: Single consolidated loop
+for (const marker of markers) {
+  // Check z-position
+  // Check audio alert
+  // Update labels
+}
+```
+
+### Memoization
+```typescript
+// Memoize expensive calculations
+const rotatedPlayer = useMemo(() => {
+  if (!player || !rotationCache) return null;
+  const rotated = rotationCache.getRotated(player.x, player.y);
+  return { x: rotated[0], y: rotated[1], z: player.z };
+}, [player, rotationCache]);
+```
+
+### Batched Pixel Operations
+When manipulating canvas pixels:
+```typescript
+// BAD: Multiple getImageData/putImageData cycles
+applyFillColor(context);  // getImageData + putImageData
+applyColorBlind(context); // getImageData + putImageData
+
+// GOOD: Single cycle for all transforms
+const imageData = context.getImageData(0, 0, width, height);
+applyFillColorToData(imageData.data);
+applyColorBlindToData(imageData.data);
+context.putImageData(imageData, 0, 0);
+```
+
+## Release Workflow
+
+### Code Changes
+1. Implement feature/fix
+2. Run `bun run typecheck` to verify
+3. Commit with descriptive message
+4. Create PR for review (no direct pushes to main)
+
+### Announcements
+After merging:
+
+1. **Discord** (`#app-updates` channel):
+   - Use bold headers, no emojis
+   - Include role mentions for relevant games
+   - Add support links and app links at top
+   - Attach screenshots if applicable
+
+2. **Patreon** (for significant updates):
+   - Similar format to Discord but more personal tone
+   - Start with "Hey everyone!"
+   - End with "— DevLeon"
+   - Highlight supporter-exclusive features
+
+### Announcement Template (Discord)
+```
+_To get pinged for future updates, claim the @{Game} role in <id:customize>_
+
+You can [support me](https://www.th.gl/support-me) (no more ads) and by sharing this project on social media.
+[{game}.th.gl](https://{game}.th.gl)
+[THGL Companion App](https://www.th.gl/companion-app)
+
+**Feature Title**
+
+Description of the feature...
+
+How it works
+- Step 1
+- Step 2
+
+**Bug Fixes**
+- Fix description
+```
