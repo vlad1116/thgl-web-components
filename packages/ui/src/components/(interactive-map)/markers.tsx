@@ -556,62 +556,134 @@ function MarkersContent({
     rotationCache,
   ]);
 
-  useEffect(() => {
-    if (!markerOptions.zPos || !throttledPlayer || !existingSpawnIds.current)
-      return;
-    if (
-      throttledPlayer?.mapName &&
-      throttledPlayer?.mapName &&
-      player?.mapName !== map?.mapName
-    ) {
-      return;
-    }
+  // Memoize rotated player position to avoid recalculating in multiple places
+  const rotatedPlayer = useMemo(() => {
+    if (!throttledPlayer) return null;
 
-    // Cache constant values outside the loop for better performance
-    const maxDistSq =
-      markerOptions.zPos.xyMaxDistance * markerOptions.zPos.xyMaxDistance;
-    const zDistance = markerOptions.zPos.zDistance;
-
-    // Apply rotation to player position to match rotated spawn positions
     let playerX = throttledPlayer.x;
     let playerY = throttledPlayer.y;
     if (rotationCache) {
-      const rotatedPlayer = rotationCache.getRotated(
-        throttledPlayer.x,
-        throttledPlayer.y,
-      );
-      playerX = rotatedPlayer[0];
-      playerY = rotatedPlayer[1];
+      const rotated = rotationCache.getRotated(throttledPlayer.x, throttledPlayer.y);
+      playerX = rotated[0];
+      playerY = rotated[1];
     }
-    const playerZ = throttledPlayer.z;
+    return {
+      x: playerX,
+      y: playerY,
+      z: throttledPlayer.z,
+      mapName: throttledPlayer.mapName,
+    };
+  }, [throttledPlayer, rotationCache]);
 
+  // Consolidated effect for z-position, audio alerts, and labels
+  // All three need to iterate markers and calculate distances, so we combine them
+  useEffect(() => {
+    if (!existingSpawnIds.current || !rotatedPlayer) return;
+
+    // Skip if player is on a different map
+    if (rotatedPlayer.mapName && player?.mapName !== map?.mapName) {
+      return;
+    }
+
+    const playerX = rotatedPlayer.x;
+    const playerY = rotatedPlayer.y;
+    const playerZ = rotatedPlayer.z;
+
+    // Pre-calculate constants for z-position checks
+    const hasZPos = Boolean(markerOptions.zPos);
+    const zPosMaxDistSq = hasZPos
+      ? markerOptions.zPos!.xyMaxDistance * markerOptions.zPos!.xyMaxDistance
+      : 0;
+    const zDistance = hasZPos ? markerOptions.zPos!.zDistance : 0;
+
+    // Pre-calculate constants for audio/label range checks
+    const audioRangeSq = audioAlertRange * audioAlertRange;
+    const checkAudio = audioAlertsEnabled;
+    const checkLabels = hasPreviewAccess;
+
+    // Track if any audio-enabled spawn is in range (for audio alert)
+    let anyAudioInRange = false;
+
+    // Single iteration over all markers
     for (const marker of existingSpawnIds.current.values()) {
       if (!marker.options || !marker.options.id) continue;
-      const spawnP = marker._latLngTuple as [number, number, number];
-      if (spawnP.length !== 3) continue;
 
-      // Calculate XY distance squared
-      const dx = playerX - spawnP[0];
-      const dy = playerY - spawnP[1];
-      const xyDistSq = dx * dx + dy * dy;
+      const pos = marker._latLngTuple as [number, number] | [number, number, number];
+      const spawnX = pos[0];
+      const spawnY = pos[1];
 
-      // Early exit if too far away
-      let newZPos: CanvasMarkerOptions["zPos"] = null;
-      if (xyDistSq <= maxDistSq) {
-        const dz = playerZ - spawnP[2];
-        if (dz > zDistance) {
-          newZPos = "bottom";
-        } else if (dz < -zDistance) {
-          newZPos = "top";
+      // Calculate distance squared once (used by z-pos, audio, and labels)
+      const dx = playerX - spawnX;
+      const dy = playerY - spawnY;
+      const distSq = dx * dx + dy * dy;
+
+      // --- Z-Position Detection ---
+      if (hasZPos && pos.length === 3) {
+        let newZPos: CanvasMarkerOptions["zPos"] = null;
+        if (distSq <= zPosMaxDistSq) {
+          const dz = playerZ - pos[2];
+          if (dz > zDistance) {
+            newZPos = "bottom";
+          } else if (dz < -zDistance) {
+            newZPos = "top";
+          }
+        }
+        if (marker.options.zPos !== newZPos) {
+          marker.setZPos(newZPos);
         }
       }
 
-      // Only update if changed
-      if (marker.options.zPos !== newZPos) {
-        marker.setZPos(newZPos);
+      // --- Audio Alert Check ---
+      if (checkAudio && !anyAudioInRange) {
+        const typeId = marker.options.typeId as string;
+        if (audioAlertByFilter[typeId] && distSq <= audioRangeSq) {
+          anyAudioInRange = true;
+        }
+      }
+
+      // --- Label Updates ---
+      if (checkLabels) {
+        const typeId = marker.options.typeId as string;
+        if (typeId) {
+          const labelMode = labelModeByFilter[typeId];
+          const isInRange = distSq <= audioRangeSq;
+          const showLabel = shouldShowLabel(typeId, labelMode, isInRange);
+          const newText = showLabel ? t(typeId, { fallback: typeId }) : undefined;
+
+          if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
+            marker.setText(newText, labelTextSize);
+          }
+        }
       }
     }
-  }, [throttledPlayer, markerOptions.zPos, rotationCache]);
+
+    // Handle audio alert after loop completes
+    if (checkAudio) {
+      if (anyAudioInRange) {
+        if (!hasAlertedRef.current) {
+          hasAlertedRef.current = true;
+          playAlertSound(audioAlertSound, audioAlertVolume);
+        }
+      } else {
+        hasAlertedRef.current = false;
+      }
+    }
+  }, [
+    rotatedPlayer,
+    player?.mapName,
+    map?.mapName,
+    markerOptions.zPos,
+    audioAlertsEnabled,
+    audioAlertRange,
+    audioAlertByFilter,
+    audioAlertSound,
+    audioAlertVolume,
+    hasPreviewAccess,
+    labelModeByFilter,
+    labelTextSize,
+    shouldShowLabel,
+    t,
+  ]);
 
   useEffect(() => {
     if (!map) {
@@ -676,127 +748,6 @@ function MarkersContent({
       } catch (e) {}
     });
   }, [colorBlindSeverity]);
-
-  // Audio alerts when player is within range of tracked spawns
-  useEffect(() => {
-    if (
-      !audioAlertsEnabled ||
-      !throttledPlayer ||
-      !existingSpawnIds.current
-    )
-      return;
-
-    // Apply rotation to player position if needed
-    let playerX = throttledPlayer.x;
-    let playerY = throttledPlayer.y;
-    if (rotationCache) {
-      const rotatedPlayer = rotationCache.getRotated(
-        throttledPlayer.x,
-        throttledPlayer.y,
-      );
-      playerX = rotatedPlayer[0];
-      playerY = rotatedPlayer[1];
-    }
-
-    const rangeSq = audioAlertRange * audioAlertRange;
-
-    // Check if any spawn with audio alerts enabled is in range
-    let anyInRange = false;
-    for (const marker of existingSpawnIds.current.values()) {
-      const typeId = marker.options.typeId as string;
-      if (!audioAlertByFilter[typeId]) continue;
-
-      const pos = marker._latLngTuple as [number, number];
-      const dx = playerX - pos[0];
-      const dy = playerY - pos[1];
-
-      if (dx * dx + dy * dy <= rangeSq) {
-        anyInRange = true;
-        break;
-      }
-    }
-
-    if (anyInRange) {
-      // Play sound only on transition from none to some in range
-      if (!hasAlertedRef.current) {
-        hasAlertedRef.current = true;
-        playAlertSound(audioAlertSound, audioAlertVolume);
-      }
-    } else {
-      // Reset when all spawns are out of range
-      hasAlertedRef.current = false;
-    }
-  }, [
-    throttledPlayer,
-    spawns,
-    audioAlertsEnabled,
-    audioAlertRange,
-    audioAlertByFilter,
-    audioAlertSound,
-    audioAlertVolume,
-    rotationCache,
-  ]);
-
-  // Update marker labels when label settings, player position, or hotkey changes
-  useEffect(() => {
-    if (!existingSpawnIds.current || !hasPreviewAccess) return;
-
-    // Calculate player position for "inRange" mode
-    let playerX: number | null = null;
-    let playerY: number | null = null;
-    if (throttledPlayer) {
-      playerX = throttledPlayer.x;
-      playerY = throttledPlayer.y;
-      if (rotationCache) {
-        const rotatedPlayer = rotationCache.getRotated(
-          throttledPlayer.x,
-          throttledPlayer.y,
-        );
-        playerX = rotatedPlayer[0];
-        playerY = rotatedPlayer[1];
-      }
-    }
-
-    const rangeSq = audioAlertRange * audioAlertRange;
-
-    for (const marker of existingSpawnIds.current.values()) {
-      const typeId = marker.options.typeId as string;
-      if (!typeId) continue;
-
-      const labelMode = labelModeByFilter[typeId];
-
-      // Calculate if marker is in range (for "inRange" mode)
-      let isInRange = false;
-      if (playerX !== null && playerY !== null) {
-        const pos = marker._latLngTuple as [number, number];
-        const dx = playerX - pos[0];
-        const dy = playerY - pos[1];
-        isInRange = dx * dx + dy * dy <= rangeSq;
-      }
-
-      const showLabel = shouldShowLabel(typeId, labelMode, isInRange);
-
-      // Get the marker's name for the label
-      const newText = showLabel
-        ? t(typeId, { fallback: typeId })
-        : undefined;
-
-      // Only update if the text changed
-      if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
-        marker.setText(newText, labelTextSize);
-      }
-    }
-  }, [
-    spawns,
-    labelModeByFilter,
-    labelTextSize,
-    throttledPlayer,
-    audioAlertRange,
-    rotationCache,
-    shouldShowLabel,
-    hasPreviewAccess,
-    t,
-  ]);
 
   useEffect(() => {
     if (!fitBoundsOnChange || liveMode || spawns.length === 0 || !map) {
