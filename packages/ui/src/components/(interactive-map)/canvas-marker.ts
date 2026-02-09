@@ -32,41 +32,44 @@ leaflet.Canvas.include({
     const dx = p.x - radius;
     const dy = p.y - radius;
 
+    // Track if we drew an icon (to know if we should proceed to text)
+    let iconDrawn = false;
+
     if (icon !== undefined) {
       if (icon === null || layer.imageElement.width === 0) {
         layerContext.beginPath();
         layerContext.arc(p.x, p.y, radius * 0.75, 0, Math.PI * 2);
         layerContext.fillStyle = fillColor || "rgba(255, 255, 255, 0.6)";
         layerContext.fill();
-        return;
-      }
-      const colorBlindMode = layer.options.colorBlindMode || "none";
-      const colorBlindSeverity =
-        typeof layer.options.colorBlindSeverity === "number"
-          ? layer.options.colorBlindSeverity
-          : 1;
-      const severityKey = Number.isFinite(colorBlindSeverity)
-        ? Number(colorBlindSeverity).toFixed(2)
-        : "1.00";
-      // Optimize cache key generation using array join (faster than string concatenation)
-      const keyParts = [
-        icon.url,
-        "width" in icon ? `${icon.x}${icon.y}` : "",
-        radius,
-        isHighlighted ? "1" : "0",
-        isDiscovered ? "1" : "0",
-        isCluster ? "1" : "0",
-        fillColor || "",
-        zPos || "",
-        colorBlindMode,
-        severityKey,
-      ];
-      const key = keyParts.join(":");
-      const cachedCanvas = canvasCache.get(key);
-      if (cachedCanvas) {
-        layerContext.drawImage(cachedCanvas, dx, dy);
-        return;
-      }
+        iconDrawn = true;
+      } else {
+        const colorBlindMode = layer.options.colorBlindMode || "none";
+        const colorBlindSeverity =
+          typeof layer.options.colorBlindSeverity === "number"
+            ? layer.options.colorBlindSeverity
+            : 1;
+        const severityKey = Number.isFinite(colorBlindSeverity)
+          ? Number(colorBlindSeverity).toFixed(2)
+          : "1.00";
+        // Optimize cache key generation using array join (faster than string concatenation)
+        const keyParts = [
+          icon.url,
+          "width" in icon ? `${icon.x}${icon.y}` : "",
+          radius,
+          isHighlighted ? "1" : "0",
+          isDiscovered ? "1" : "0",
+          isCluster ? "1" : "0",
+          fillColor || "",
+          zPos || "",
+          colorBlindMode,
+          severityKey,
+        ];
+        const key = keyParts.join(":");
+        const cachedCanvas = canvasCache.get(key);
+        if (cachedCanvas) {
+          layerContext.drawImage(cachedCanvas, dx, dy);
+          iconDrawn = true;
+        } else {
       const canvas = document.createElement("canvas");
       canvas.width = imageSize;
       canvas.height = imageSize;
@@ -217,22 +220,28 @@ leaflet.Canvas.include({
         context.putImageData(imageData, 0, 0);
       }
 
-      if (!noCache) {
-        canvasCache.set(key, canvas);
+          if (!noCache) {
+            canvasCache.set(key, canvas);
+          }
+          layerContext.drawImage(canvas, dx, dy);
+          iconDrawn = true;
+        }
       }
-      layerContext.drawImage(canvas, dx, dy);
-      return;
     }
-    if (layer.options.text) {
-      layerContext.fillStyle = "#e6e5e3";
-      layerContext.textAlign = "center";
-      layerContext.strokeStyle = "#594f42";
 
-      layerContext.font = `normal 700 ${radius}px Arial`;
+    // Render text label above the icon (if set)
+    if (layer.options.text) {
+      layerContext.fillStyle = "#ffffff";
+      layerContext.textAlign = "center";
+      layerContext.strokeStyle = "#000000";
+      const textScale = layer.options.textScale ?? 1;
+      layerContext.font = `normal 700 ${radius * textScale}px Arial`;
       layerContext.lineWidth = 3;
-      layerContext.strokeText(layer.options.text, p.x, p.y);
+      // Position text above the icon
+      const textY = p.y - radius - 4;
+      layerContext.strokeText(layer.options.text, p.x, textY);
       layerContext.lineWidth = 1;
-      layerContext.fillText(layer.options.text, p.x, p.y);
+      layerContext.fillText(layer.options.text, p.x, textY);
     }
   },
 });
@@ -262,6 +271,7 @@ export type CanvasMarkerOptions = {
   noCache?: boolean;
   icon?: CanvasMarkerIcon | null;
   text?: string;
+  textScale?: number;
   zPos?: "top" | "bottom" | null;
   colorBlindMode?: ColorBlindMode;
   colorBlindSeverity?: number;
@@ -403,6 +413,14 @@ class CanvasMarker extends CircleMarker {
 
   setHighlight(isHighlighted: boolean) {
     this.options.isHighlighted = isHighlighted;
+    this.update();
+  }
+
+  setText(text: string | undefined, textScale?: number) {
+    this.options.text = text;
+    if (textScale !== undefined) {
+      this.options.textScale = textScale;
+    }
     this.update();
   }
 

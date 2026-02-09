@@ -22,6 +22,10 @@ export function MapHotkeys() {
         map.zoomOut();
       } else if (event.name === HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN) {
         useSettingsStore.getState().toggleOverlayFullscreen();
+      } else if (event.name === HOTKEYS.SHOW_LABELS) {
+        // Toggle show labels state
+        const current = useGameState.getState().showLabelsActive;
+        useGameState.getState().setShowLabelsActive(!current);
       }
     };
     overwolf.settings.hotkeys.onPressed.addListener(handleHotkey);

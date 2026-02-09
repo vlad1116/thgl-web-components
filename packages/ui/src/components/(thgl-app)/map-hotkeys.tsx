@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "../(interactive-map)/store";
-import { useGameState, useSettingsStore, useUserStore } from "@repo/lib";
+import { useSettingsStore, useUserStore, useGameState } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { toast } from "sonner";
 import { HOTKEYS, onWebviewMessage } from "@repo/lib/thgl-app";
@@ -29,6 +29,10 @@ export function MapHotkeys() {
           useSettingsStore.getState().toggleLockedWindow();
         } else if (hotkeyAction === HOTKEYS.TOGGLE_LIVE_MODE) {
           useSettingsStore.getState().toggleLiveMode();
+        } else if (hotkeyAction === HOTKEYS.SHOW_LABELS) {
+          // Toggle show labels state
+          const current = useGameState.getState().showLabelsActive;
+          useGameState.getState().setShowLabelsActive(!current);
         }
       }
     });

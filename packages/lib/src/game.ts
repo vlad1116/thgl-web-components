@@ -15,6 +15,8 @@ export const useGameState = create<{
   removeHighlightSpawnIDs: (id: string[]) => void;
   isUpdatingApp: boolean;
   setIsUpdatingApp: (isUpdatingApp: boolean) => void;
+  showLabelsActive: boolean;
+  setShowLabelsActive: (active: boolean) => void;
 }>((set) => ({
   windowInfo: null,
   isOverlay: null,
@@ -39,4 +41,6 @@ export const useGameState = create<{
     })),
   isUpdatingApp: false,
   setIsUpdatingApp: (isUpdatingApp) => set({ isUpdatingApp }),
+  showLabelsActive: false,
+  setShowLabelsActive: (active) => set({ showLabelsActive: active }),
 }));

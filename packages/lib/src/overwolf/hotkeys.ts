@@ -6,4 +6,5 @@ export const HOTKEYS = {
   DISCOVER_NODE: "discover_node",
   TOGGLE_LIVE_MODE: "toggle_live_mode",
   TOGGLE_OVERLAY_FULLSCREEN: "toggle_overlay_fullscreen",
+  SHOW_LABELS: "show_labels",
 };

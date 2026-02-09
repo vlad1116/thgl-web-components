@@ -1,8 +1,8 @@
 "use client";
 import type { LeafletMouseEvent } from "leaflet";
 import { DomEvent } from "leaflet";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Spawns, useCoordinates } from "../(providers)";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Spawns, useCoordinates, useT } from "../(providers)";
 import { HoverCard, HoverCardContent, HoverCardPortal } from "../ui/hover-card";
 import CanvasMarker, {
   canvasMarkerImgs,
@@ -24,6 +24,7 @@ import {
   useGameState,
   useSettingsStore,
   useUserStore,
+  type LabelMode,
 } from "@repo/lib";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
@@ -183,6 +184,7 @@ function MarkersContent({
   appName: string;
 }) {
   const map = useMap();
+  const t = useT();
   const { spawns, icons, filters } = useCoordinates();
   const hideDiscoveredNodes = useSettingsStore(
     (state) => state.hideDiscoveredNodes,
@@ -201,19 +203,17 @@ function MarkersContent({
   const audioAlertsEnabled = useSettingsStore(
     (state) => state.audioAlertsEnabled,
   );
-  const setAudioAlertsEnabled = useSettingsStore(
-    (state) => state.setAudioAlertsEnabled,
-  );
   const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
   const audioAlertByFilter = useSettingsStore(
     (state) => state.audioAlertByFilter,
   );
   const audioAlertSound = useSettingsStore((state) => state.audioAlertSound);
   const audioAlertVolume = useSettingsStore((state) => state.audioAlertVolume);
+  const labelModeByFilter = useSettingsStore((state) => state.labelModeByFilter);
+  const labelTextSize = useSettingsStore((state) => state.labelTextSize);
   const hasPreviewAccess = useAccountStore(
     (state) => state.perks.previewReleaseAccess,
   );
-  const accountHydrated = useAccountStore((state) => state._hasHydrated);
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
   const typeToGroup = useMemo(() => {
     const mapTypeToGroup = new Map<string, string>();
@@ -242,12 +242,24 @@ function MarkersContent({
   // Audio alert tracking - tracks if we've already alerted for current in-range spawns
   const hasAlertedRef = useRef<boolean>(false);
 
-  // Auto-disable audio alerts when preview access is lost
-  useEffect(() => {
-    if (accountHydrated && !hasPreviewAccess && audioAlertsEnabled) {
-      setAudioAlertsEnabled(false);
-    }
-  }, [accountHydrated, hasPreviewAccess, audioAlertsEnabled, setAudioAlertsEnabled]);
+  // Hotkey state for showing all labels temporarily (set by MapHotkeys in Overwolf/THGL apps)
+  const showLabelsActive = useGameState((state) => state.showLabelsActive);
+
+  // Helper function to determine if label should show for a marker
+  const shouldShowLabel = useCallback(
+    (
+      typeId: string,
+      labelMode: LabelMode | undefined,
+      isInRange: boolean,
+    ): boolean => {
+      if (!labelMode || labelMode === "off") return false;
+      if (labelMode === "always") return true;
+      if (labelMode === "inRange") return isInRange;
+      if (labelMode === "hotkey") return showLabelsActive;
+      return false;
+    },
+    [showLabelsActive],
+  );
 
   // Cache rotated coordinates to avoid recalculating on every render
   const rotationCache = useMemo(() => {
@@ -669,7 +681,6 @@ function MarkersContent({
   useEffect(() => {
     if (
       !audioAlertsEnabled ||
-      !hasPreviewAccess ||
       !throttledPlayer ||
       !existingSpawnIds.current
     )
@@ -719,12 +730,72 @@ function MarkersContent({
     throttledPlayer,
     spawns,
     audioAlertsEnabled,
-    hasPreviewAccess,
     audioAlertRange,
     audioAlertByFilter,
     audioAlertSound,
     audioAlertVolume,
     rotationCache,
+  ]);
+
+  // Update marker labels when label settings, player position, or hotkey changes
+  useEffect(() => {
+    if (!existingSpawnIds.current || !hasPreviewAccess) return;
+
+    // Calculate player position for "inRange" mode
+    let playerX: number | null = null;
+    let playerY: number | null = null;
+    if (throttledPlayer) {
+      playerX = throttledPlayer.x;
+      playerY = throttledPlayer.y;
+      if (rotationCache) {
+        const rotatedPlayer = rotationCache.getRotated(
+          throttledPlayer.x,
+          throttledPlayer.y,
+        );
+        playerX = rotatedPlayer[0];
+        playerY = rotatedPlayer[1];
+      }
+    }
+
+    const rangeSq = audioAlertRange * audioAlertRange;
+
+    for (const marker of existingSpawnIds.current.values()) {
+      const typeId = marker.options.typeId as string;
+      if (!typeId) continue;
+
+      const labelMode = labelModeByFilter[typeId];
+
+      // Calculate if marker is in range (for "inRange" mode)
+      let isInRange = false;
+      if (playerX !== null && playerY !== null) {
+        const pos = marker._latLngTuple as [number, number];
+        const dx = playerX - pos[0];
+        const dy = playerY - pos[1];
+        isInRange = dx * dx + dy * dy <= rangeSq;
+      }
+
+      const showLabel = shouldShowLabel(typeId, labelMode, isInRange);
+
+      // Get the marker's name for the label
+      const newText = showLabel
+        ? t(typeId, { fallback: typeId })
+        : undefined;
+
+      // Only update if the text changed
+      if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
+        marker.setText(newText, labelTextSize);
+      }
+    }
+  }, [
+    spawns,
+    labelModeByFilter,
+    labelTextSize,
+    throttledPlayer,
+    audioAlertRange,
+    rotationCache,
+    shouldShowLabel,
+    hasPreviewAccess,
+    t,
   ]);
 
   useEffect(() => {

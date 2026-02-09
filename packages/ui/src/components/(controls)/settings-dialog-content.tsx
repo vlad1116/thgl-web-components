@@ -356,47 +356,23 @@ export function SettingsDialogContent({
                 </>
               )}
               <Separator />
-              <h4 className="text-md font-semibold">Audio Alerts</h4>
+              <h4 className="text-md font-semibold">Proximity Range</h4>
               <p className="text-muted-foreground text-xs">
-                Play a sound when tracked items appear within range. Configure
-                per-filter alerts using the settings icon next to each filter.
+                Used by audio alerts and &quot;In Range&quot; labels. Configure
+                per-filter using the settings icon next to each filter.
               </p>
-              {!hasPreviewAccess && (
-                <p className="text-amber-500 text-xs">
-                  This feature requires{" "}
-                  <a
-                    href="https://www.th.gl/support-me"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-amber-400"
-                  >
-                    Preview Release
-                  </a>{" "}
-                  access to function.
-                </p>
-              )}
-              <div className="flex items-center justify-between">
-                <Label htmlFor="audio-alerts-enabled">Enable Audio Alerts</Label>
-                <Switch
-                  id="audio-alerts-enabled"
-                  checked={profileSettings.audioAlertsEnabled}
-                  onCheckedChange={settingsStore.setAudioAlertsEnabled}
-                  disabled={!hasPreviewAccess && !profileSettings.audioAlertsEnabled}
-                />
-              </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 justify-between">
-                  <Label htmlFor="audio-alert-range">Alert Range</Label>
+                  <Label htmlFor="proximity-range">Range</Label>
                   <Input
                     type="number"
-                    id="audio-alert-range"
+                    id="proximity-range"
                     value={profileSettings.audioAlertRange}
                     className="w-24"
                     onChange={(e) =>
                       settingsStore.setAudioAlertRange(+e.target.value)
                     }
                     min={10}
-                    disabled={!profileSettings.audioAlertsEnabled}
                   />
                 </div>
                 <p className="text-muted-foreground text-xs">
@@ -404,20 +380,26 @@ export function SettingsDialogContent({
                   map scale.
                 </p>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="show-audio-alert-range">Show Range on Map</Label>
-                  <Switch
-                    id="show-audio-alert-range"
-                    checked={profileSettings.showAudioAlertRange}
-                    onCheckedChange={settingsStore.toggleShowAudioAlertRange}
-                    disabled={!profileSettings.audioAlertsEnabled}
-                  />
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Display a circle around your player to visualize the alert
-                  range.
-                </p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-proximity-range">Show Range on Map</Label>
+                <Switch
+                  id="show-proximity-range"
+                  checked={profileSettings.showAudioAlertRange}
+                  onCheckedChange={settingsStore.toggleShowAudioAlertRange}
+                />
+              </div>
+              <Separator />
+              <h4 className="text-md font-semibold">Audio Alerts</h4>
+              <p className="text-muted-foreground text-xs">
+                Play a sound when tracked items appear within range.
+              </p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="audio-alerts-enabled">Enable Audio Alerts</Label>
+                <Switch
+                  id="audio-alerts-enabled"
+                  checked={profileSettings.audioAlertsEnabled}
+                  onCheckedChange={settingsStore.setAudioAlertsEnabled}
+                />
               </div>
               <div className="flex items-center gap-2 justify-between">
                 <Label htmlFor="audio-alert-sound">Alert Sound</Label>
@@ -472,6 +454,47 @@ export function SettingsDialogContent({
                   />
                   <span className="text-xs text-muted-foreground w-10 text-right">
                     {Math.round(profileSettings.audioAlertVolume * 100)}%
+                  </span>
+                </div>
+              </div>
+              <Separator />
+              <h4 className="text-md font-semibold">Marker Labels</h4>
+              <p className="text-muted-foreground text-xs">
+                Show text labels above markers for easier identification.
+                Configure per-filter using the settings icon next to each
+                filter.
+              </p>
+              {!hasPreviewAccess && (
+                <p className="text-amber-500 text-xs">
+                  This feature requires{" "}
+                  <a
+                    href="https://www.th.gl/support-me"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-amber-400"
+                  >
+                    Preview Release
+                  </a>{" "}
+                  access.
+                </p>
+              )}
+              <div className="flex items-center gap-2 justify-between">
+                <Label htmlFor="label-text-size">Label Text Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    id="label-text-size"
+                    className="w-28 h-8 p-0"
+                    min={0.5}
+                    max={2}
+                    step={0.1}
+                    value={[profileSettings.labelTextSize]}
+                    onValueChange={(values) => {
+                      settingsStore.setLabelTextSize(values[0]);
+                    }}
+                    disabled={!hasPreviewAccess}
+                  />
+                  <span className="text-xs text-muted-foreground w-10 text-right">
+                    {profileSettings.labelTextSize.toFixed(1)}x
                   </span>
                 </div>
               </div>

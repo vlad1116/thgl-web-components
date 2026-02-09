@@ -105,6 +105,16 @@ export function THGLAppSettingsDialogContent({
               onClear={() => setRecordingName(null)}
             />
           </Label>
+          <Label className="flex items-center gap-2 justify-between">
+            Toggle Labels
+            <Hotkey
+              name={HOTKEYS.SHOW_LABELS}
+              isActive={recordingName === HOTKEYS.SHOW_LABELS}
+              onStart={() => setRecordingName(HOTKEYS.SHOW_LABELS)}
+              onStop={() => setRecordingName(null)}
+              onClear={() => setRecordingName(null)}
+            />
+          </Label>
         </>
       )}
     </SettingsDialogContent>

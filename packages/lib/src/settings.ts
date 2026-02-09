@@ -71,6 +71,8 @@ export type ColorBlindMode =
   | "deuteranopia"
   | "tritanopia";
 
+export type LabelMode = "off" | "always" | "inRange" | "hotkey";
+
 export type MapTransform = {
   borderRadius: string;
   transform: string;
@@ -79,7 +81,16 @@ export type MapTransform = {
 };
 
 export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
-  hotkeys: {},
+  hotkeys: {
+    toggle_app: "F6",
+    zoom_in_app: "F7",
+    zoom_out_app: "F8",
+    toggle_lock_app: "F9",
+    discover_node: "F10",
+    toggle_live_mode: "F5",
+    toggle_overlay_fullscreen: "Shift+F9",
+    show_labels: "Shift+F5",
+  },
   groupName: "",
   liveMode: true,
   overlayMode: null,
@@ -105,6 +116,9 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   audioAlertVolume: 0.5,
   showAudioAlertRange: false,
   audioAlertByFilter: {},
+  labelModeByFilter: {},
+  labelTextSize: 1,
+  showLabelsHotkey: "l",
   displayDiscordActivityStatus: true,
   presets: {},
   tempPrivateNode: null,
@@ -163,6 +177,9 @@ export type ProfileSettings = {
   audioAlertVolume: number;
   showAudioAlertRange: boolean;
   audioAlertByFilter: Record<string, boolean>;
+  labelModeByFilter: Record<string, LabelMode>;
+  labelTextSize: number;
+  showLabelsHotkey: string;
   displayDiscordActivityStatus: boolean;
   presets: Record<string, string[]>;
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
@@ -230,6 +247,10 @@ export interface ProfileActions {
   toggleShowAudioAlertRange: () => void;
   toggleAudioAlertByFilter: (filterId: string) => void;
   setAudioAlertByFilters: (filterIds: string[], enabled: boolean) => void;
+  setLabelModeByFilter: (filterId: string, mode: LabelMode) => void;
+  setLabelModeByFilters: (filterIds: string[], mode: LabelMode) => void;
+  setLabelTextSize: (size: number) => void;
+  setShowLabelsHotkey: (key: string) => void;
   setDisplayDiscordActivityStatus: (
     displayDiscordActivityStatus: boolean,
   ) => void;
@@ -763,6 +784,35 @@ export const useSettingsStore = create(
           updateSettings({
             audioAlertByFilter: { ...state.audioAlertByFilter, ...updates },
           });
+        },
+
+        setLabelModeByFilter: (filterId: string, mode: LabelMode) => {
+          const state = get();
+          updateSettings({
+            labelModeByFilter: { ...state.labelModeByFilter, [filterId]: mode },
+          });
+        },
+
+        setLabelModeByFilters: (filterIds: string[], mode: LabelMode) => {
+          const state = get();
+          const updates = filterIds.reduce(
+            (acc, id) => {
+              acc[id] = mode;
+              return acc;
+            },
+            {} as Record<string, LabelMode>,
+          );
+          updateSettings({
+            labelModeByFilter: { ...state.labelModeByFilter, ...updates },
+          });
+        },
+
+        setLabelTextSize: (size: number) => {
+          updateSettings({ labelTextSize: size });
+        },
+
+        setShowLabelsHotkey: (key: string) => {
+          updateSettings({ showLabelsHotkey: key });
         },
 
         setDisplayDiscordActivityStatus: (

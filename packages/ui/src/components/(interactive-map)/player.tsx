@@ -43,9 +43,6 @@ export function Player({
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
   );
-  const audioAlertsEnabled = useSettingsStore(
-    (state) => state.audioAlertsEnabled,
-  );
   const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
   const showAudioAlertRange = useSettingsStore(
     (state) => state.showAudioAlertRange,
@@ -286,7 +283,7 @@ export function Player({
   useEffect(() => {
     if (!map) return;
 
-    const shouldShow = audioAlertsEnabled && showAudioAlertRange;
+    const shouldShow = showAudioAlertRange;
 
     if (!shouldShow) {
       if (rangeCircle.current) {
@@ -335,7 +332,6 @@ export function Player({
     map,
     player.x,
     player.y,
-    audioAlertsEnabled,
     showAudioAlertRange,
     audioAlertRange,
   ]);
