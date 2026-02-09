@@ -614,16 +614,34 @@ This fixes 99% of admin permission issues.
     headline: "Ad blocker detected",
     question: "Why am I seeing an 'Ad Blocker Detected' message?",
     answer: `
-You're using an ad blocker or DNS filter that blocks NitroPay.
+You're using an ad blocker, browser extension, or network filter that blocks ads.
 
-**Fixes:**
+## Fixes
 - Whitelist \`*.th.gl\` in your ad blocker
 - Subscribe via [Support Me](/support-me) to remove ads
 
-**Known blockers:**
-AdBlock, uBlock, Malwarebytes, Pi-Hole, Firefox strict mode, and more.
+## Known Browser Extensions & Settings
+- AdBlock
+- AdBlock Plus
+- DuckDuckGo
+- Malwarebytes
+- uBlock Origin
+- Firefox Strict Mode
+- Opera Ad Blocker
+- Vivaldi Trackers Blocker
+- ReasonLabs
+- Kaspersky Anti-Banner
+- Kaspersky Internet Security
+- Safer Web
+- Portmaster
 
-If you're unsure, check if [this file](https://s.nitropay.com/ads-1487.js) loads. If not, you're being blocked.
+## Network-Wide Ad Blockers
+A network-wide ad blocker may be blocking ads across your entire home network. Popular solutions include Pi-Hole and AdGuard Home.
+
+**How to check:** Connect to the site with your phone on mobile data vs. your home WiFi. If ads only work on mobile data, your home network is blocking them.
+
+## Still Have Issues?
+In rare cases, your IP address may be blacklisted by the ad provider. Check if [this file](https://s.nitropay.com/ads-1487.js) loads. If not, ads are being blocked.
     `.trim(),
     labels: ["General", "Subscription", "Technical"],
   },
