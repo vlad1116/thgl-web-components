@@ -121,3 +121,24 @@ The `@repo/ui` package is organized into component folders by usage context to o
 - **Break dependency chains** - Components should not import from unrelated feature folders
 - **Client components** - "use client" components in barrel files can prevent tree-shaking in Next.js; isolated exports help (e.g., `@repo/ui/markers-search`)
 - **Package.json exports** - All component folders are explicitly exported in package.json for controlled access
+
+## Overwolf Log Analysis
+
+When asked to analyze Overwolf log files, refer to `.claude/overwolf-logs-analysis.md` for detailed instructions.
+
+**Log Location**: `%LOCALAPPDATA%\Overwolf\Log`
+
+**Quick Reference - Log Types**:
+| Log File | Pattern | Purpose |
+|----------|---------|---------|
+| Trace | `Trace_*.log` | Platform actions, system state, errors |
+| Game HTML | `<GameName>_*.Game.html` | Game integration, DLL injection, overlay rendering |
+| OBS | OBS logs | Recording engine, encoder, audio/video devices |
+| OverwolfPerf | OverwolfPerf logs | CPU/memory usage per process |
+| DxDiag | DxDiag.txt | System hardware, drivers, DirectX info |
+
+**Analysis Priority**:
+1. Start with **Trace logs** - search for `ERROR` and `WARN` entries
+2. Check **Game HTML logs** - for overlay/rendering issues
+3. Review **OverwolfPerf** - for performance complaints
+4. Check **DxDiag** - for hardware/driver compatibility
