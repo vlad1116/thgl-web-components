@@ -29,6 +29,18 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Asterleeds Map",
     },
     {
+      title: "Moonshadow Wilds Map",
+      description:
+        "Navigate Blue Protocol: Star Resonance's Moonshadow Wilds with our interactive maps.",
+      href: "/maps/Moonshadow%20Wilds",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "moonshadow_wilds",
+      ),
+      linkText: "Explore the Moonshadow Wilds Map",
+    },
+    {
       title: "Bahamar Highlands Map",
       description:
         "Navigate Blue Protocol: Star Resonance's Bahamar Highlands with our interactive maps.",
