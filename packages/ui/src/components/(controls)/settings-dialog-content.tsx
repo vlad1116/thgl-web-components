@@ -274,6 +274,19 @@ export function SettingsDialogContent({
               </span>
             </div>
           </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="high-contrast-mode">High Contrast Markers</Label>
+              <p className="text-muted-foreground text-xs">
+                Adds a bright glow around markers for better visibility
+              </p>
+            </div>
+            <Switch
+              id="high-contrast-mode"
+              checked={profileSettings.highContrastMode}
+              onCheckedChange={settingsStore.toggleHighContrastMode}
+            />
+          </div>
           {hideAppSettings ? (
             <IconSizes filters={filters} />
           ) : (

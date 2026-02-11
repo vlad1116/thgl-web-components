@@ -98,6 +98,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   lockedWindow: false,
   colorBlindMode: "none",
   colorBlindSeverity: 1,
+  highContrastMode: false,
   transforms: {},
   mapTransform: null,
   mapFilter: "none",
@@ -159,6 +160,7 @@ export type ProfileSettings = {
   lockedWindow: boolean;
   colorBlindMode: ColorBlindMode;
   colorBlindSeverity: number;
+  highContrastMode: boolean;
   transforms: Record<string, string>;
   mapTransform: MapTransform | null;
   mapFilter: string;
@@ -224,6 +226,7 @@ export interface ProfileActions {
   toggleLockedWindow: () => void;
   setColorBlindMode: (mode: ColorBlindMode) => void;
   setColorBlindSeverity: (severity: number) => void;
+  toggleHighContrastMode: () => void;
   setTransform: (id: string, transform: string) => void;
   setMapTransform: (mapTransform: MapTransform | null) => void;
   setMapFilter: (mapFilter: string) => void;
@@ -551,6 +554,13 @@ export const useSettingsStore = create(
         setColorBlindSeverity: (severity: number) => {
           updateSettings({
             colorBlindSeverity: Math.max(0, Math.min(1, severity)),
+          });
+        },
+
+        toggleHighContrastMode: () => {
+          const state = get();
+          updateSettings({
+            highContrastMode: !state.highContrastMode,
           });
         },
 

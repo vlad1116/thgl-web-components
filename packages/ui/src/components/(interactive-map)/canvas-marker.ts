@@ -63,6 +63,7 @@ leaflet.Canvas.include({
           zPos || "",
           colorBlindMode,
           severityKey,
+          layer.options.highContrastMode ? "hc" : "",
         ];
         const key = keyParts.join(":");
         const cachedCanvas = canvasCache.get(key);
@@ -82,8 +83,13 @@ leaflet.Canvas.include({
       // Batch canvas state changes to minimize overhead
       context.shadowOffsetX = 0;
       context.shadowOffsetY = 0;
-      context.shadowColor = "black";
-      context.shadowBlur = 1;
+      if (layer.options.highContrastMode) {
+        context.shadowColor = "white";
+        context.shadowBlur = 6;
+      } else {
+        context.shadowColor = "black";
+        context.shadowBlur = 1;
+      }
       if (isDiscovered) {
         context.filter = "grayscale(100%)";
         context.globalAlpha = 0.5;
@@ -266,6 +272,7 @@ export type CanvasMarkerOptions = {
   zPos?: "top" | "bottom" | null;
   colorBlindMode?: ColorBlindMode;
   colorBlindSeverity?: number;
+  highContrastMode?: boolean;
 };
 
 export const canvasMarkerImgs: Record<string, HTMLImageElement> = {};
@@ -418,6 +425,12 @@ class CanvasMarker extends CircleMarker {
   setColorBlindMode(mode: ColorBlindMode, skipUpdate = false) {
     if (this.options.colorBlindMode === mode) return;
     this.options.colorBlindMode = mode;
+    if (!skipUpdate) this.update();
+  }
+
+  setHighContrastMode(enabled: boolean, skipUpdate = false) {
+    if (this.options.highContrastMode === enabled) return;
+    this.options.highContrastMode = enabled;
     if (!skipUpdate) this.update();
   }
 
