@@ -23,6 +23,7 @@ type Icon = {
   name: string;
   url: string;
   author?: string;
+  filterId?: string;
   x: number;
   y: number;
   width: number;
@@ -85,6 +86,7 @@ export function IconPicker({
               if (typeof value.icon === "string") {
                 acc[name] = {
                   name: name,
+                  filterId: value.id,
                   x: 0,
                   y: 0,
                   width: 0,
@@ -96,6 +98,7 @@ export function IconPicker({
                   ...value.icon,
                   url: `/icons/${value.icon.url}`,
                   name: name,
+                  filterId: value.id,
                 };
               }
             });

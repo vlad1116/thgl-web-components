@@ -10,6 +10,7 @@ export type PrivateNode = {
   icon: {
     name: string;
     url: string;
+    filterId?: string;
     x?: number;
     y?: number;
     width?: number;

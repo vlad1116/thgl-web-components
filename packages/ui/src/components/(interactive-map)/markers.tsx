@@ -2,7 +2,7 @@
 import type { LeafletMouseEvent } from "leaflet";
 import { DomEvent } from "leaflet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Spawns, useCoordinates, useT } from "../(providers)";
+import { Spawns, useCoordinates, useT, type Icons } from "../(providers)";
 import { HoverCard, HoverCardContent, HoverCardPortal } from "../ui/hover-card";
 import CanvasMarker, {
   canvasMarkerImgs,
@@ -25,12 +25,54 @@ import {
   useSettingsStore,
   useUserStore,
   type LabelMode,
+  type PrivateNode,
 } from "@repo/lib";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
 import { AdditionalTooltipType } from "../(content)";
 import { playAlertSound } from "../(controls)/audio-alert";
 import { SpatialGrid } from "./spatial-grid";
+
+function resolvePrivateIcon(
+  icon: PrivateNode["icon"],
+  icons: Icons,
+  appIconsByName: Map<
+    string,
+    { x: number; y: number; width: number; height: number }
+  >,
+): PrivateNode["icon"] {
+  if (!icon) return icon;
+
+  // Strategy 1: Look up by filterId (new data, language-independent)
+  if (icon.filterId) {
+    const filterValue = icons.get(icon.filterId);
+    if (filterValue && typeof filterValue.icon !== "string") {
+      return {
+        ...icon,
+        x: filterValue.icon.x,
+        y: filterValue.icon.y,
+        width: filterValue.icon.width,
+        height: filterValue.icon.height,
+      };
+    }
+  }
+
+  // Strategy 2: Look up by translated name (legacy data without filterId)
+  if (icon.name) {
+    const current = appIconsByName.get(icon.name);
+    if (current) {
+      return {
+        ...icon,
+        x: current.x,
+        y: current.y,
+        width: current.width,
+        height: current.height,
+      };
+    }
+  }
+
+  return icon;
+}
 
 export function Markers({
   appName,
@@ -210,7 +252,9 @@ function MarkersContent({
   );
   const audioAlertSound = useSettingsStore((state) => state.audioAlertSound);
   const audioAlertVolume = useSettingsStore((state) => state.audioAlertVolume);
-  const labelModeByFilter = useSettingsStore((state) => state.labelModeByFilter);
+  const labelModeByFilter = useSettingsStore(
+    (state) => state.labelModeByFilter,
+  );
   const labelTextSize = useSettingsStore((state) => state.labelTextSize);
   const hasPreviewAccess = useAccountStore(
     (state) => state.perks.previewReleaseAccess,
@@ -224,6 +268,24 @@ function MarkersContent({
     return mapTypeToGroup;
   }, [filters]);
 
+  const appIconsByName = useMemo(() => {
+    const map = new Map<
+      string,
+      { x: number; y: number; width: number; height: number }
+    >();
+    for (const filter of filters) {
+      for (const value of filter.values) {
+        if (typeof value.icon !== "string") {
+          const name = t(value.id);
+          if (!map.has(name)) {
+            map.set(name, value.icon);
+          }
+        }
+      }
+    }
+    return map;
+  }, [filters, t]);
+
   const fitBoundsOnChange = useSettingsStore(
     (state) => state.fitBoundsOnChange,
   );
@@ -231,9 +293,7 @@ function MarkersContent({
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
   );
-  const highContrastMode = useSettingsStore(
-    (state) => state.highContrastMode,
-  );
+  const highContrastMode = useSettingsStore((state) => state.highContrastMode);
   const tempPrivateNodeId = useSettingsStore(
     (state) => state.tempPrivateNode?.id,
   );
@@ -374,7 +434,11 @@ function MarkersContent({
             existingMarker.setLatLng(markerPosition);
             // Update position in spatial grid
             if (spatialGridRef.current) {
-              spatialGridRef.current.update(existingMarker, markerPosition[0], markerPosition[1]);
+              spatialGridRef.current.update(
+                existingMarker,
+                markerPosition[0],
+                markerPosition[1],
+              );
             }
           }
         }
@@ -391,8 +455,12 @@ function MarkersContent({
         spawn.radius ??
         markerOptions.radius * (icon?.size ?? 1) * (isCluster ? 1.5 : 1);
 
+      const resolvedSpawnIcon = spawn.isPrivate
+        ? resolvePrivateIcon(spawn.icon ?? null, icons, appIconsByName)
+        : spawn.icon;
+
       const markerIcon =
-        spawn.icon ||
+        resolvedSpawnIcon ||
         (typeof icon?.icon === "string"
           ? {
               url: getIconsUrl(appName, icon.icon),
@@ -530,7 +598,11 @@ function MarkersContent({
       existingSpawnIds.current!.set(spawn.address || id, marker);
       // Add to spatial grid for efficient proximity queries
       if (spatialGridRef.current) {
-        spatialGridRef.current.add(marker, markerPosition[0], markerPosition[1]);
+        spatialGridRef.current.add(
+          marker,
+          markerPosition[0],
+          markerPosition[1],
+        );
       }
       try {
         marker.addTo(map);
@@ -597,7 +669,10 @@ function MarkersContent({
     let playerX = throttledPlayer.x;
     let playerY = throttledPlayer.y;
     if (rotationCache) {
-      const rotated = rotationCache.getRotated(throttledPlayer.x, throttledPlayer.y);
+      const rotated = rotationCache.getRotated(
+        throttledPlayer.x,
+        throttledPlayer.y,
+      );
       playerX = rotated[0];
       playerY = rotated[1];
     }
@@ -639,7 +714,8 @@ function MarkersContent({
 
     // Determine max query distance for spatial grid
     const maxQueryDist = Math.max(audioAlertRange, zPosMaxDist);
-    const useSpatialGrid = spatialGridRef.current && spatialGridRef.current.size > 100;
+    const useSpatialGrid =
+      spatialGridRef.current && spatialGridRef.current.size > 100;
 
     // Track which markers we've processed (for resetting distant markers)
     const processedMarkers = useSpatialGrid ? new Set<CanvasMarker>() : null;
@@ -657,7 +733,9 @@ function MarkersContent({
         processedMarkers.add(marker);
       }
 
-      const pos = marker._latLngTuple as [number, number] | [number, number, number];
+      const pos = marker._latLngTuple as
+        | [number, number]
+        | [number, number, number];
       const spawnX = pos[0];
       const spawnY = pos[1];
 
@@ -697,9 +775,14 @@ function MarkersContent({
           const labelMode = labelModeByFilter[typeId];
           const isInRange = distSq <= audioRangeSq;
           const showLabel = shouldShowLabel(typeId, labelMode, isInRange);
-          const newText = showLabel ? t(typeId, { fallback: typeId }) : undefined;
+          const newText = showLabel
+            ? t(typeId, { fallback: typeId })
+            : undefined;
 
-          if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
+          if (
+            marker.options.text !== newText ||
+            marker.options.textScale !== labelTextSize
+          ) {
             marker.setText(newText, labelTextSize);
           }
         }
@@ -724,9 +807,14 @@ function MarkersContent({
             const labelMode = labelModeByFilter[typeId];
             // For distant markers, isInRange is always false
             const showLabel = shouldShowLabel(typeId, labelMode, false);
-            const newText = showLabel ? t(typeId, { fallback: typeId }) : undefined;
+            const newText = showLabel
+              ? t(typeId, { fallback: typeId })
+              : undefined;
 
-            if (marker.options.text !== newText || marker.options.textScale !== labelTextSize) {
+            if (
+              marker.options.text !== newText ||
+              marker.options.textScale !== labelTextSize
+            ) {
               marker.setText(newText, labelTextSize);
             }
           }

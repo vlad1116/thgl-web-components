@@ -40,6 +40,7 @@ export type Spawn = {
   icon?: {
     name: string;
     url: string;
+    filterId?: string;
     x?: number;
     y?: number;
     width?: number;
