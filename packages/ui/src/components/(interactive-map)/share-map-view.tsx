@@ -40,7 +40,7 @@ export function ShareMapView({
   const { filters, globalFilters } = useUserStore();
 
   const url = useMemo(() => {
-    let url = `${location.protocol}://${location.host}${location.pathname}?map=${mapName}`;
+    let url = `${location.protocol}//${location.host}${location.pathname}?map=${mapName}`;
     if (!map) {
       return url;
     }
