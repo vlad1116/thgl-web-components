@@ -83,6 +83,7 @@ export {
   SelectScrollDownButton,
 } from "../ui/select";
 export { Switch } from "../ui/switch";
+export { Checkbox } from "../ui/checkbox";
 export {
   Tooltip,
   TooltipTrigger,

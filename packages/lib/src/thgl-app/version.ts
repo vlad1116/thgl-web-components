@@ -1,4 +1,4 @@
-import { postWebviewMessage, GpuFlag } from "./webview";
+import { postWebviewMessage, GpuFlag, CloseAction } from "./webview";
 import { WindowMode } from "./apps";
 
 export type CurrentVersion = {
@@ -18,6 +18,7 @@ export type InitialState = {
   gpuFlag: GpuFlag;
   isRunningAsAdmin: boolean;
   alwaysRunAsAdmin: boolean;
+  closeAction: CloseAction;
 };
 
 export function getVersionFromWebview() {
@@ -66,4 +67,8 @@ export function setGpuFlag(flag: GpuFlag) {
 
 export function setAlwaysRunAsAdmin(always: boolean) {
   return postWebviewMessage({ action: "setAlwaysRunAsAdmin", payload: { always } });
+}
+
+export function setCloseAction(closeAction: CloseAction) {
+  return postWebviewMessage({ action: "setCloseAction", payload: { closeAction } });
 }

@@ -99,6 +99,10 @@ export type WEBVIEW_RECEIVE_MESSAGE =
   | {
       action: "alwaysRunAsAdminChanged";
       payload: boolean;
+    }
+  | {
+      action: "closeActionChanged";
+      payload: CloseAction;
     };
 
 export type WEBVIEW_RESPONSE_MESSAGE<T = undefined> = {
@@ -234,6 +238,12 @@ export type WEBVIEW_SEND_MESSAGE =
         gameId: string;
         openDesktop?: boolean;
       };
+    }
+  | {
+      action: "setCloseAction";
+      payload: {
+        closeAction: CloseAction;
+      };
     };
 
 // GPU acceleration flags for WebView2
@@ -243,6 +253,12 @@ export type GpuFlag =
   | "disable-gpu-compositing" // Disable GPU compositing (may help with flickering)
   | "disable-direct-composition-video" // Only disable DirectComposition for video (least impact)
   | "disable-gpu"; // Full software rendering (slowest, use as last resort)
+
+// Close button behavior
+export type CloseAction =
+  | "ask" // Show dialog asking user (default)
+  | "minimizeToTray" // Minimize to system tray
+  | "exit"; // Exit the application
 
 export function onWebviewMessage(
   callback: (data: WEBVIEW_RECEIVE_MESSAGE) => void,

@@ -4,7 +4,7 @@ import { persist, subscribeWithSelector } from "zustand/middleware";
 import { WindowMode } from "./apps";
 import { RunningGame } from "./games";
 import { AppVersion } from "./version";
-import { GpuFlag } from "./webview";
+import { CloseAction, GpuFlag } from "./webview";
 
 export type ConnectedClient = {
   id: number;
@@ -38,6 +38,8 @@ export const useLiveState = create<{
   setConnectedClients: (urls: Array<ConnectedClient>) => void;
   isRunningAsAdmin: boolean;
   setIsRunningAsAdmin: (isAdmin: boolean) => void;
+  closeAction: CloseAction;
+  setCloseAction: (action: CloseAction) => void;
   alwaysRunAsAdmin: boolean;
   setAlwaysRunAsAdmin: (always: boolean) => void;
 }>((set) => ({
@@ -55,6 +57,8 @@ export const useLiveState = create<{
   setConnectedClients: (clients) => set({ connectedClients: clients }),
   isRunningAsAdmin: false,
   setIsRunningAsAdmin: (isAdmin) => set({ isRunningAsAdmin: isAdmin }),
+  closeAction: "ask",
+  setCloseAction: (action) => set({ closeAction: action }),
   alwaysRunAsAdmin: false,
   setAlwaysRunAsAdmin: (always) => set({ alwaysRunAsAdmin: always }),
 }));

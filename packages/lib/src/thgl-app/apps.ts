@@ -210,6 +210,8 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
               liveState.setWindowMode(message.payload);
             } else if (message.action === "alwaysRunAsAdminChanged") {
               liveState.setAlwaysRunAsAdmin(message.payload);
+            } else if (message.action === "closeActionChanged") {
+              liveState.setCloseAction(message.payload);
             }
           }
           // Client (Overlay/Desktop) handlers for DevTools and close requests
@@ -254,6 +256,7 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           liveState.setGpuFlag(data.gpuFlag);
           liveState.setIsRunningAsAdmin(data.isRunningAsAdmin ?? false);
           liveState.setAlwaysRunAsAdmin(data.alwaysRunAsAdmin ?? false);
+          liveState.setCloseAction(data.closeAction ?? "ask");
           console.log("Dashboard received initial state:", data);
 
           // Cleanup stale sessions on startup - use current running games if available, else empty

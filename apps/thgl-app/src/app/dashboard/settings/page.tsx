@@ -23,8 +23,10 @@ import {
   useTHGLAppState,
   setGpuFlag,
   setAlwaysRunAsAdmin as setAlwaysRunAsAdminApi,
+  setCloseAction as setCloseActionApi,
   getIsTaskInstalled,
   GpuFlag,
+  CloseAction,
 } from "@repo/lib/thgl-app";
 import { useState, useEffect } from "react";
 
@@ -59,6 +61,28 @@ const gpuFlagOptions: {
   },
 ];
 
+const closeActionOptions: {
+  value: CloseAction;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "ask",
+    label: "Ask every time",
+    description: "Show a dialog asking what to do when you close a window.",
+  },
+  {
+    value: "minimizeToTray",
+    label: "Minimize to tray",
+    description: "Hide the window and keep the app running in the background.",
+  },
+  {
+    value: "exit",
+    label: "Exit application",
+    description: "Quit the entire app when you close a window.",
+  },
+];
+
 export default function SettingsPage() {
   const [showDevTools, setShowDevTools] = useState(false);
   const [initialGpuFlag, setInitialGpuFlag] = useState<GpuFlag | null>(null);
@@ -79,6 +103,8 @@ export default function SettingsPage() {
   const setAlwaysRunAsAdmin = useLiveState(
     (state) => state.setAlwaysRunAsAdmin
   );
+  const closeAction = useLiveState((state) => state.closeAction);
+  const setCloseActionState = useLiveState((state) => state.setCloseAction);
 
   // Fetch isTaskInstalled when settings page mounts (not in initial state to avoid blocking)
   useEffect(() => {
@@ -95,6 +121,14 @@ export default function SettingsPage() {
   }
 
   const gpuFlagChanged = initialGpuFlag !== null && gpuFlag !== initialGpuFlag;
+
+  const handleCloseActionChange = (value: CloseAction) => {
+    setCloseActionApi(value)
+      .then(() => {
+        setCloseActionState(value);
+      })
+      .catch(console.error);
+  };
 
   const handleGpuFlagChange = (value: GpuFlag) => {
     setGpuFlag(value)
@@ -203,6 +237,33 @@ export default function SettingsPage() {
                     .catch(console.error);
                 }}
               />
+            </div>
+            <div className="border-t" />
+            <div className="space-y-2">
+              <Label htmlFor="close-action" className="text-sm font-normal">
+                Close button behavior
+              </Label>
+              <Select
+                value={closeAction}
+                onValueChange={(value) =>
+                  handleCloseActionChange(value as CloseAction)
+                }
+              >
+                <SelectTrigger id="close-action" className="w-full">
+                  <SelectValue placeholder="Select close behavior" />
+                </SelectTrigger>
+                <SelectContent>
+                  {closeActionOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {closeActionOptions.find((o) => o.value === closeAction)
+                  ?.description}
+              </p>
             </div>
           </div>
         </div>

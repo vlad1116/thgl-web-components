@@ -1,14 +1,21 @@
 "use client";
 import { cn, useAccountStore } from "@repo/lib";
 import { useState } from "react";
-import { sendDebugSnapshot, useLiveState } from "@repo/lib/thgl-app";
+import {
+  sendDebugSnapshot,
+  setCloseAction as setCloseActionApi,
+  useLiveState,
+  CloseAction,
+} from "@repo/lib/thgl-app";
 import {
   Button,
+  Checkbox,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
+  Label,
 } from "../(controls)";
-import { Bug, Info, Settings, Shield, User } from "lucide-react";
+import { Bug, Info, LogOut, Minus, Settings, Shield, User } from "lucide-react";
 import { ExternalAnchor } from "../(header)";
 import { AccountDialog } from "./account-dialog";
 import {
@@ -33,7 +40,11 @@ export function AppHeader({
 }) {
   const account = useAccountStore();
   const isRunningAsAdmin = useLiveState((state) => state.isRunningAsAdmin);
+  const closeAction = useLiveState((state) => state.closeAction);
+  const setCloseAction = useLiveState((state) => state.setCloseAction);
   const [isStartDragging, setIsStartDragging] = useState(false);
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(false);
   const [debugContext, setDebugContext] = useState("");
   const [isSendingDebug, setIsSendingDebug] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
@@ -58,6 +69,34 @@ export function AppHeader({
       setDebugStatus("error");
     } finally {
       setIsSendingDebug(false);
+    }
+  };
+
+  const handleCloseClick = () => {
+    if (closeAction === "ask") {
+      setRememberChoice(false);
+      setIsCloseDialogOpen(true);
+      return;
+    }
+    if (closeAction === "minimizeToTray") {
+      window.chrome.webview.postMessage("minimizeToTray");
+    } else {
+      window.chrome.webview.postMessage("exitApp");
+    }
+  };
+
+  const handleCloseChoice = (choice: "minimizeToTray" | "exit") => {
+    if (rememberChoice) {
+      const action: CloseAction = choice === "minimizeToTray" ? "minimizeToTray" : "exit";
+      setCloseActionApi(action)
+        .then(() => setCloseAction(action))
+        .catch(console.error);
+    }
+    setIsCloseDialogOpen(false);
+    if (choice === "minimizeToTray") {
+      window.chrome.webview.postMessage("minimizeToTray");
+    } else {
+      window.chrome.webview.postMessage("exitApp");
     }
   };
 
@@ -320,9 +359,7 @@ export function AppHeader({
             <button
               className="h-full w-[32px] inline-flex hover:bg-red-600"
               id="close"
-              onClick={() => {
-                window.chrome.webview.postMessage("close");
-              }}
+              onClick={handleCloseClick}
               type="button"
             >
               <svg className="h-full">
@@ -332,6 +369,57 @@ export function AppHeader({
           </div>
         </nav>
       </header>
+      <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Close window</DialogTitle>
+            <DialogDescription>
+              What would you like to do?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 py-2">
+            <button
+              type="button"
+              className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent transition-colors"
+              onClick={() => handleCloseChoice("minimizeToTray")}
+            >
+              <Minus className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Minimize to tray</div>
+                <div className="text-xs text-muted-foreground">
+                  Keep running in the background
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent transition-colors"
+              onClick={() => handleCloseChoice("exit")}
+            >
+              <LogOut className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Exit application</div>
+                <div className="text-xs text-muted-foreground">
+                  Quit the entire app
+                </div>
+              </div>
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="remember-close-choice"
+              checked={rememberChoice}
+              onCheckedChange={(checked) => setRememberChoice(checked === true)}
+            />
+            <Label
+              htmlFor="remember-close-choice"
+              className="text-sm font-normal text-muted-foreground cursor-pointer select-none"
+            >
+              Remember my choice
+            </Label>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
