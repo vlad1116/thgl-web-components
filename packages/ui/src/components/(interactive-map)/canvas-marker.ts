@@ -29,8 +29,9 @@ leaflet.Canvas.include({
       return;
     }
     const p = layer._point.round();
-    const dx = p.x - radius;
-    const dy = p.y - radius;
+    const hcPadding = layer.options.highContrastMode ? 2 : 0;
+    const dx = p.x - radius - hcPadding;
+    const dy = p.y - radius - hcPadding;
 
     // Track if we drew an icon (to know if we should proceed to text)
     let iconDrawn = false;
@@ -71,151 +72,202 @@ leaflet.Canvas.include({
           layerContext.drawImage(cachedCanvas, dx, dy);
           iconDrawn = true;
         } else {
-      const canvas = document.createElement("canvas");
-      canvas.width = imageSize;
-      canvas.height = imageSize;
-      if (isCluster) {
-        imageSize /= 1.5;
-      }
-      const context = canvas.getContext("2d", {
-        willReadFrequently: true, // Optimize for frequent getImageData calls
-      })!;
-      // Batch canvas state changes to minimize overhead
-      context.shadowOffsetX = 0;
-      context.shadowOffsetY = 0;
-      if (layer.options.highContrastMode) {
-        context.shadowColor = "white";
-        context.shadowBlur = 6;
-      } else {
-        context.shadowColor = "black";
-        context.shadowBlur = 1;
-      }
-      if (isDiscovered) {
-        context.filter = "grayscale(100%)";
-        context.globalAlpha = 0.5;
-      }
+          const canvas = document.createElement("canvas");
+          canvas.width = imageSize + hcPadding * 2;
+          canvas.height = imageSize + hcPadding * 2;
+          if (isCluster) {
+            imageSize /= 1.5;
+          }
+          const context = canvas.getContext("2d", {
+            willReadFrequently: true, // Optimize for frequent getImageData calls
+          })!;
+          context.shadowOffsetX = 0;
+          context.shadowOffsetY = 0;
+          if (!layer.options.highContrastMode) {
+            context.shadowColor = "black";
+            context.shadowBlur = 1;
+          }
+          if (isDiscovered) {
+            context.filter = "grayscale(100%)";
+            context.globalAlpha = 0.5;
+          }
 
-      if ("width" in icon) {
-        context.drawImage(
-          layer.imageElement,
-          icon.x,
-          icon.y,
-          icon.width || imageSize,
-          icon.height || imageSize,
-          (canvas.width - imageSize) / 2,
-          (canvas.height - imageSize) / 2,
-          imageSize,
-          imageSize,
-        );
-      } else {
-        context.drawImage(
-          layer.imageElement,
-          (canvas.width - imageSize) / 2,
-          (canvas.height - imageSize) / 2,
-          imageSize,
-          imageSize,
-        );
-      }
+          const imgX = (canvas.width - imageSize) / 2;
+          const imgY = (canvas.height - imageSize) / 2;
 
-      if (isCluster) {
-        context.beginPath();
-
-        const startX = (canvas.width * 1.1) / 4;
-        const startY = (canvas.height * 1.1) / 4;
-        const length = canvas.width / 6;
-        context.lineWidth = 2.5;
-        context.strokeStyle = "white";
-        context.shadowOffsetX = 0;
-        context.shadowOffsetY = 0;
-        context.shadowColor = "#000";
-        context.shadowBlur = 2;
-        context.moveTo(startX + length, startY);
-        context.lineTo(startX - length, startY);
-        context.moveTo(startX, startY + length);
-        context.lineTo(startX, startY - length);
-        context.stroke();
-      } else if (zPos === "top") {
-        context.beginPath();
-        const arrowSize = canvas.width / 6;
-        const arrowX = canvas.width / 6;
-        const arrowY = canvas.height / 6;
-        context.moveTo(arrowX, arrowY);
-        context.lineTo(arrowX - arrowSize, arrowY + arrowSize);
-        context.lineTo(arrowX + arrowSize, arrowY + arrowSize);
-        context.closePath();
-        context.fillStyle = "white";
-        context.strokeStyle = "black";
-        context.lineWidth = arrowSize / 10;
-        context.fill();
-        context.stroke();
-      } else if (zPos === "bottom") {
-        context.beginPath();
-        const arrowSize = canvas.width / 6;
-        const arrowX = canvas.width / 6;
-        const arrowY = canvas.height / 6;
-        context.moveTo(arrowX, arrowY);
-        context.lineTo(arrowX - arrowSize, arrowY - arrowSize);
-        context.lineTo(arrowX + arrowSize, arrowY - arrowSize);
-        context.closePath();
-        context.fillStyle = "white";
-        context.strokeStyle = "black";
-        context.lineWidth = arrowSize / 10;
-        context.fill();
-        context.stroke();
-      }
-      // Combined pixel processing: fillColor replacement + color-blind transform
-      // Using a single getImageData/putImageData cycle instead of two separate ones
-      const needsFillColor = Boolean(fillColor);
-      const needsColorBlind =
-        !isDiscovered &&
-        colorBlindMode &&
-        colorBlindMode !== "none" &&
-        colorBlindSeverity > 0;
-
-      if (needsFillColor || needsColorBlind) {
-        // Single getImageData call for both transforms
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // Apply fillColor replacement if needed
-        if (needsFillColor) {
-          // Parse the target color once
-          const r = parseInt(fillColor!.slice(1, 3), 16);
-          const g = parseInt(fillColor!.slice(3, 5), 16);
-          const b = parseInt(fillColor!.slice(5, 7), 16);
-          const a = parseInt(fillColor!.slice(7, 9), 16);
-
-          // Iterate over each pixel
-          for (let i = 0; i < data.length; i += 4) {
-            const currentR = data[i];
-            const currentG = data[i + 1];
-            const currentB = data[i + 2];
-            const currentA = data[i + 3];
-
-            // Calculate the brightness of the current pixel
-            const brightness = 0.299 * currentR + 0.587 * currentG + 0.114 * currentB;
-
-            // Check if the brightness is above the threshold
-            if (brightness > 150) {
-              // Apply the target color while preserving the alpha channel
-              data[i] = r;
-              data[i + 1] = g;
-              data[i + 2] = b;
-              if (a) {
-                data[i + 3] = Math.min(currentA, a);
-              }
+          // High contrast mode: draw white silhouette at offsets for a crisp outline
+          if (layer.options.highContrastMode) {
+            const silhouette = document.createElement("canvas");
+            silhouette.width = canvas.width;
+            silhouette.height = canvas.height;
+            const silCtx = silhouette.getContext("2d")!;
+            if ("width" in icon) {
+              silCtx.drawImage(
+                layer.imageElement,
+                icon.x,
+                icon.y,
+                icon.width || imageSize,
+                icon.height || imageSize,
+                imgX,
+                imgY,
+                imageSize,
+                imageSize,
+              );
+            } else {
+              silCtx.drawImage(
+                layer.imageElement,
+                imgX,
+                imgY,
+                imageSize,
+                imageSize,
+              );
+            }
+            // Convert to solid white silhouette
+            silCtx.globalCompositeOperation = "source-in";
+            silCtx.fillStyle = "white";
+            silCtx.fillRect(0, 0, silhouette.width, silhouette.height);
+            // Draw at 8 offsets to create a solid outline
+            const d = hcPadding;
+            for (const [ox, oy] of [
+              [-d, 0], [d, 0], [0, -d], [0, d],
+              [-d, -d], [d, -d], [-d, d], [d, d],
+            ]) {
+              context.drawImage(silhouette, ox, oy);
             }
           }
-        }
 
-        // Apply color-blind transform if needed (after fillColor, on same data)
-        if (needsColorBlind) {
-          applyColorBlindTransform(data, colorBlindMode!, colorBlindSeverity);
-        }
+          // Draw the actual icon
+          if ("width" in icon) {
+            context.drawImage(
+              layer.imageElement,
+              icon.x,
+              icon.y,
+              icon.width || imageSize,
+              icon.height || imageSize,
+              imgX,
+              imgY,
+              imageSize,
+              imageSize,
+            );
+          } else {
+            context.drawImage(
+              layer.imageElement,
+              imgX,
+              imgY,
+              imageSize,
+              imageSize,
+            );
+          }
 
-        // Single putImageData call for both transforms
-        context.putImageData(imageData, 0, 0);
-      }
+          if (isCluster) {
+            context.beginPath();
+
+            const startX = (canvas.width * 1.1) / 4;
+            const startY = (canvas.height * 1.1) / 4;
+            const length = canvas.width / 6;
+            context.lineWidth = 2.5;
+            context.strokeStyle = "white";
+            context.shadowOffsetX = 0;
+            context.shadowOffsetY = 0;
+            context.shadowColor = "#000";
+            context.shadowBlur = 2;
+            context.moveTo(startX + length, startY);
+            context.lineTo(startX - length, startY);
+            context.moveTo(startX, startY + length);
+            context.lineTo(startX, startY - length);
+            context.stroke();
+          } else if (zPos === "top") {
+            context.beginPath();
+            const arrowSize = canvas.width / 6;
+            const arrowX = canvas.width / 6;
+            const arrowY = canvas.height / 6;
+            context.moveTo(arrowX, arrowY);
+            context.lineTo(arrowX - arrowSize, arrowY + arrowSize);
+            context.lineTo(arrowX + arrowSize, arrowY + arrowSize);
+            context.closePath();
+            context.fillStyle = "white";
+            context.strokeStyle = "black";
+            context.lineWidth = arrowSize / 10;
+            context.fill();
+            context.stroke();
+          } else if (zPos === "bottom") {
+            context.beginPath();
+            const arrowSize = canvas.width / 6;
+            const arrowX = canvas.width / 6;
+            const arrowY = canvas.height / 6;
+            context.moveTo(arrowX, arrowY);
+            context.lineTo(arrowX - arrowSize, arrowY - arrowSize);
+            context.lineTo(arrowX + arrowSize, arrowY - arrowSize);
+            context.closePath();
+            context.fillStyle = "white";
+            context.strokeStyle = "black";
+            context.lineWidth = arrowSize / 10;
+            context.fill();
+            context.stroke();
+          }
+          // Combined pixel processing: fillColor replacement + color-blind transform
+          // Using a single getImageData/putImageData cycle instead of two separate ones
+          const needsFillColor = Boolean(fillColor);
+          const needsColorBlind =
+            !isDiscovered &&
+            colorBlindMode &&
+            colorBlindMode !== "none" &&
+            colorBlindSeverity > 0;
+
+          if (needsFillColor || needsColorBlind) {
+            // Single getImageData call for both transforms
+            const imageData = context.getImageData(
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+            );
+            const data = imageData.data;
+
+            // Apply fillColor replacement if needed
+            if (needsFillColor) {
+              // Parse the target color once
+              const r = parseInt(fillColor!.slice(1, 3), 16);
+              const g = parseInt(fillColor!.slice(3, 5), 16);
+              const b = parseInt(fillColor!.slice(5, 7), 16);
+              const a = parseInt(fillColor!.slice(7, 9), 16);
+
+              // Iterate over each pixel
+              for (let i = 0; i < data.length; i += 4) {
+                const currentR = data[i];
+                const currentG = data[i + 1];
+                const currentB = data[i + 2];
+                const currentA = data[i + 3];
+
+                // Calculate the brightness of the current pixel
+                const brightness =
+                  0.299 * currentR + 0.587 * currentG + 0.114 * currentB;
+
+                // Check if the brightness is above the threshold
+                if (brightness > 150) {
+                  // Apply the target color while preserving the alpha channel
+                  data[i] = r;
+                  data[i + 1] = g;
+                  data[i + 2] = b;
+                  if (a) {
+                    data[i + 3] = Math.min(currentA, a);
+                  }
+                }
+              }
+            }
+
+            // Apply color-blind transform if needed (after fillColor, on same data)
+            if (needsColorBlind) {
+              applyColorBlindTransform(
+                data,
+                colorBlindMode!,
+                colorBlindSeverity,
+              );
+            }
+
+            // Single putImageData call for both transforms
+            context.putImageData(imageData, 0, 0);
+          }
 
           if (!noCache) {
             canvasCache.set(key, canvas);
