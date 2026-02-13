@@ -239,9 +239,9 @@ export function GamePageClient({
             <h2 className="font-semibold">Settings</h2>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="auto-run">Auto-run overlay</Label>
+                <Label htmlFor="auto-run">Auto-run companion</Label>
                 <p className="text-sm text-muted-foreground">
-                  Automatically launch overlay when game starts
+                  Automatically launch companion when game starts
                 </p>
               </div>
               <Switch
