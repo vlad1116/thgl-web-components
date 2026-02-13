@@ -707,6 +707,55 @@ Follow this guide: [How to get Overwolf logs](https://support.overwolf.com/en/su
     labels: ["Overwolf", "Technical"],
   },
   {
+    id: "overwolf-crash-dumps",
+    headline: "How to get Overwolf crash dumps",
+    question:
+      "The Overwolf app keeps crashing. How do I collect crash dumps for debugging?",
+    answer: `
+If the Overwolf app is crashing repeatedly, crash dumps help us identify the root cause. Follow these steps to enable and collect them.
+
+## Step 1: Enable Crash Dumps
+
+1. **Download** the registry file: [enable_all_overwolf_dumps.reg](/enable_all_overwolf_dumps.reg)
+2. **Double-click** the downloaded file
+3. **Approve** the Windows UAC prompt and the Registry Editor confirmation
+4. This tells Windows to save crash dumps whenever an Overwolf process crashes
+
+## Step 2: Reproduce the Crash
+
+1. Launch Overwolf and the in-game app
+2. Play the game as usual until the crash occurs
+3. The crash dump will be saved automatically
+
+## Step 3: Find the Crash Dump
+
+Open File Explorer and paste this into the address bar:
+
+\`\`\`
+%localappdata%\\Overwolf\\CrashDumps
+\`\`\`
+
+You should see \`.dmp\` files named after the crashed process (e.g., \`Palia Map.exe.12345.dmp\`).
+
+## Step 4: Share the Crash Dump
+
+Crash dumps are often too large for Discord (50MB+). Use a file sharing service to upload and share the link:
+
+- [Google Drive](https://drive.google.com) (unlimited time)
+- [file.io](https://www.file.io) (free up to 2 GB, deleted after one download)
+- [LimeWire](https://limewire.com) (free file sharing)
+
+Share the download link in your support ticket on Discord.
+
+## What Does the Registry File Do?
+
+It adds a Windows Error Reporting rule that creates mini crash dumps for Overwolf processes. This is a standard Windows feature and does not modify Overwolf or your game. You can remove it later by deleting the registry key at:
+
+\`HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting\\LocalDumps\\Overwolf.exe\`
+    `.trim(),
+    labels: ["Overwolf", "Technical"],
+  },
+  {
     id: "alt-hold-overlay-interaction",
     headline: "Can't interact with overlay while holding ALT",
     question:
