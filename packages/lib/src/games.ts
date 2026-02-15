@@ -407,6 +407,39 @@ export const games: Array<Game> = [
     title: "Satisfactory",
     logo: "https://www.th.gl/global_icons/satisfactory.webp",
     web: "https://satisfactory.th.gl",
+    companion: {
+      baseURL: "/apps/satisfactory",
+      controllerURL: "/apps/satisfactory/controller",
+      desktopURL: "/apps/satisfactory",
+      overlayURL: "/apps/satisfactory/overlay",
+      markerOptions: {
+        radius: 6,
+        playerIcon: "player.webp",
+        imageSprite: true,
+        zPos: {
+          xyMaxDistance: 15000,
+          zDistance: 400,
+        },
+      },
+      games: [
+        {
+          title: "Satisfactory",
+          processNames: [
+            "FactoryGameSteam-Win64-Shipping.exe",
+            "FactoryGameEGS-Win64-Shipping.exe",
+          ],
+        },
+      ],
+      defaultHotkeys: {
+        [HOTKEYS.TOGGLE_APP]: "F6",
+        [HOTKEYS.TOGGLE_LOCK_APP]: "F9",
+        [HOTKEYS.ZOOM_IN_APP]: "F7",
+        [HOTKEYS.ZOOM_OUT_APP]: "F8",
+        [HOTKEYS.DISCOVER_NODE]: "F10",
+        [HOTKEYS.TOGGLE_LIVE_MODE]: "F5",
+        [HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN]: "SHIFT+F9",
+      },
+    },
     overwolf: {
       id: "mgpcocpamehmkagnkjcbabcnnhbebclkiekekhmg",
       title: "Satisfactory Map",
