@@ -276,11 +276,17 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
     fetchInitialState();
   }
 
-  // For client role, fetch window mode directly from C++
+  // For client role, fetch window mode and close action from C++
   if (role === "client") {
     getWindowMode()
       .then((res) => {
         liveState.setWindowMode(res.data);
+      })
+      .catch(console.error);
+
+    getInitialStateFromWebview()
+      .then((res) => {
+        liveState.setCloseAction(res.data.closeAction ?? "ask");
       })
       .catch(console.error);
 
