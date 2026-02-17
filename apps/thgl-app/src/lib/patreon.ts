@@ -221,6 +221,8 @@ export async function getAccount() {
       premiumFeatures: false,
       previewReleaseAccess: false,
     },
+    username: null,
+    avatarUrl: null,
   };
 
   if (userId?.value) {

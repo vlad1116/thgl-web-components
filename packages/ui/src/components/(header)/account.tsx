@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 import {
+  API_FORGE_URL,
   defaultPerks,
   Perks,
   TH_GL_URL,
@@ -32,6 +33,8 @@ export function Account() {
             decryptedUserId: null,
             email: null,
             perks: defaultPerks,
+            username: null,
+            avatarUrl: null,
           });
         }
         return;
@@ -53,6 +56,8 @@ export function Account() {
               decryptedUserId: null,
               email: null,
               perks: defaultPerks,
+              username: null,
+              avatarUrl: null,
             });
           } else if (response.status === 404) {
             state.setAccount({
@@ -60,6 +65,8 @@ export function Account() {
               decryptedUserId: null,
               email: null,
               perks: defaultPerks,
+              username: null,
+              avatarUrl: null,
             });
             Cookies.remove("userId");
           } else if (response.status === 400) {
@@ -68,11 +75,33 @@ export function Account() {
               decryptedUserId: null,
               email: null,
               perks: defaultPerks,
+              username: null,
+              avatarUrl: null,
             });
             Cookies.remove("userId");
           }
         } else {
           console.log(`Patreon successfully activated`, body);
+
+          // Fetch user profile from api-forge
+          let username: string | null = null;
+          let avatarUrl: string | null = null;
+          try {
+            const profileRes = await fetch(
+              `${API_FORGE_URL}/users?userId=${encodeURIComponent(userId!)}`,
+            );
+            if (profileRes.ok) {
+              const profile = (await profileRes.json()) as {
+                username: string | null;
+                avatarUrl: string | null;
+              };
+              username = profile.username;
+              avatarUrl = profile.avatarUrl;
+            }
+          } catch (err) {
+            console.warn("Failed to fetch user profile:", err);
+          }
+
           state.setAccount({
             userId,
             decryptedUserId: body.decryptedUserId,
@@ -83,6 +112,8 @@ export function Account() {
               comments: body.comments,
               premiumFeatures: body.premiumFeatures,
             },
+            username,
+            avatarUrl,
           });
         }
       } catch (err) {
@@ -92,6 +123,8 @@ export function Account() {
           decryptedUserId: null,
           email: null,
           perks: defaultPerks,
+          username: null,
+          avatarUrl: null,
         });
       }
     };

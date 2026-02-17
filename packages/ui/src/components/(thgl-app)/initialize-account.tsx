@@ -15,6 +15,8 @@ export function InitializeAccount({ account }: { account: THGLAccount }) {
         decryptedUserId: null,
         email: null,
         perks: defaultPerks,
+        username: null,
+        avatarUrl: null,
       });
     }
   }, []);

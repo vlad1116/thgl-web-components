@@ -3,6 +3,7 @@ import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { AppSubscriptionCard } from "@/components/app-subscription-card";
+import { ProfileEditor } from "@/components/profile-editor";
 import { Button } from "@repo/ui/controls";
 import { SignOut } from "@/components/sign-out";
 import {
@@ -13,7 +14,9 @@ import {
   getCurrentUser,
 } from "@/lib/patreon";
 import { tiers } from "@/lib/tiers";
-import { games } from "@repo/lib";
+import { games, API_FORGE_URL, type THGLAccount } from "@repo/lib";
+import { getPerks } from "@/lib/patreon";
+import { InitializeAccount } from "@repo/ui/thgl-app";
 
 export const metadata = {
   title: "Account - The Hidden Gaming Lair",
@@ -51,9 +54,37 @@ export default async function SupportMeAccount() {
           !("errors" in currentUserResult)
         ) {
           entitledTierIDs = getCurrentEntitledTiers(currentUserResult);
+          const perks = getPerks(currentUserResult);
+
+          // Fetch user profile from api-forge
+          let username: string | null = null;
+          let avatarUrl: string | null = null;
+          try {
+            const profileRes = await fetch(
+              `${API_FORGE_URL}/users?userId=${encodeURIComponent(userId.value)}`,
+            );
+            if (profileRes.ok) {
+              const profile = await profileRes.json();
+              username = profile.username;
+              avatarUrl = profile.avatarUrl;
+            }
+          } catch {
+            // Profile fetch failed, continue with defaults
+          }
+
+          const account: THGLAccount = {
+            userId: userId.value,
+            decryptedUserId: id,
+            email: currentUserResult.data.attributes.email,
+            perks,
+            username,
+            avatarUrl,
+          };
 
           content = (
             <>
+              <InitializeAccount account={account} />
+              <ProfileEditor />
               <div className="bg-muted/30 rounded-lg p-8 max-w-3xl mx-auto">
                 <h2 className="text-2xl font-bold mb-6 text-center">
                   Account Status

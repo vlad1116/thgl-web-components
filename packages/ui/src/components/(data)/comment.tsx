@@ -21,6 +21,7 @@ export type Comment = {
   text: string;
   username: string;
   user_id: string;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
   upvotes: number;
@@ -57,8 +58,8 @@ export function SingleComment({
     { onSuccess: () => mutate(`/comments/${nodeId}`) },
   );
   const avatarSVG = useMemo(
-    () => toSvg(comment.user_id, 40),
-    [comment.user_id],
+    () => (comment.avatar_url ? null : toSvg(comment.user_id, 40)),
+    [comment.user_id, comment.avatar_url],
   );
 
   const handleDelete = async () => {
@@ -77,7 +78,15 @@ export function SingleComment({
     <HoverCard openDelay={20} closeDelay={20}>
       <HoverCardTrigger asChild>
         <div className="flex text-sm">
-          <div dangerouslySetInnerHTML={{ __html: avatarSVG }} />
+          {comment.avatar_url ? (
+            <img
+              src={comment.avatar_url}
+              alt={comment.username}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: avatarSVG! }} />
+          )}
           <div className="ml-2">
             <span className="text-primary">{comment.username}</span>
             <small className="ml-1 text-xs text-gray-400">

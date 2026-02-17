@@ -152,6 +152,8 @@ async function refreshSubscriberStatus(
             decryptedUserId: null,
             email: null,
             perks: defaultPerks,
+            username: null,
+            avatarUrl: null,
           });
         } else if (response.status === 404) {
           accountStore.setAccount({
@@ -159,6 +161,8 @@ async function refreshSubscriberStatus(
             decryptedUserId: null,
             email: null,
             perks: defaultPerks,
+            username: null,
+            avatarUrl: null,
           });
         }
       } else {
@@ -173,6 +177,8 @@ async function refreshSubscriberStatus(
             comments: body.comments,
             premiumFeatures: body.premiumFeatures,
           },
+          username: null,
+          avatarUrl: null,
         });
 
         // Send hashed email to Overwolf for better ad targeting

@@ -71,6 +71,8 @@ export function AccountDialog() {
                     decryptedUserId: null,
                     email: null,
                     perks: defaultPerks,
+                    username: null,
+                    avatarUrl: null,
                   });
                 }}
               >
@@ -135,6 +137,8 @@ export function AccountDialog() {
                 decryptedUserId: null,
                 email: null,
                 perks: defaultPerks,
+                username: null,
+                avatarUrl: null,
               });
             }}
           >

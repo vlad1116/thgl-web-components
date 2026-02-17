@@ -14,6 +14,8 @@ export type THGLAccount = {
   decryptedUserId: string | null;
   email: string | null;
   perks: Perks;
+  username: string | null;
+  avatarUrl: string | null;
 };
 
 export const defaultPerks: Perks = {
@@ -32,7 +34,10 @@ export const useAccountStore = create(
       decryptedUserId: string | null;
       email: string | null;
       perks: Perks;
+      username: string | null;
+      avatarUrl: string | null;
       setAccount: (account: THGLAccount) => void;
+      setProfile: (username: string | null, avatarUrl: string | null) => void;
       showUserDialog: boolean;
       setShowUserDialog: (showUserDialog: boolean) => void;
     }>(
@@ -54,13 +59,20 @@ export const useAccountStore = create(
           decryptedUserId: null,
           email: null,
           perks: defaultPerks,
+          username: null,
+          avatarUrl: null,
           setAccount: (account) => {
             set({
               userId: account.userId,
               decryptedUserId: account.decryptedUserId,
               email: account.email,
               perks: account.perks,
+              username: account.username,
+              avatarUrl: account.avatarUrl,
             });
+          },
+          setProfile: (username, avatarUrl) => {
+            set({ username, avatarUrl });
           },
           showUserDialog: false,
           setShowUserDialog: (showUserDialog) => {
@@ -75,7 +87,7 @@ export const useAccountStore = create(
             state?.setHasHydrated(true);
           }
         },
-        version: 2,
+        version: 3,
         migrate: (persistedState: any, version) => {
           if (version === 0) {
             persistedState.perks = {
@@ -91,6 +103,11 @@ export const useAccountStore = create(
           if (version <= 1) {
             // Add email field for version 2
             persistedState.email = null;
+          }
+          if (version <= 2) {
+            // Add profile fields for version 3
+            persistedState.username = null;
+            persistedState.avatarUrl = null;
           }
           return persistedState;
         },

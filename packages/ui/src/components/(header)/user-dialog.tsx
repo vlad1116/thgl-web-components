@@ -50,6 +50,8 @@ export function UserDialog() {
             decryptedUserId: null,
             email: null,
             perks: defaultPerks,
+            username: null,
+            avatarUrl: null,
           });
           toast("User is not a subscriber");
         } else if (response.status === 404) {
@@ -58,6 +60,8 @@ export function UserDialog() {
             decryptedUserId: null,
             email: null,
             perks: defaultPerks,
+            username: null,
+            avatarUrl: null,
           });
           toast("Invalid secret");
         } else if ("error" in body && typeof body.error === "string") {
@@ -75,6 +79,8 @@ export function UserDialog() {
             comments: body.comments,
             premiumFeatures: body.premiumFeatures,
           },
+          username: null,
+          avatarUrl: null,
         });
         toast("Subscription enabled");
       }
@@ -121,6 +127,8 @@ export function UserDialog() {
                   decryptedUserId: null,
                   email: null,
                   perks: defaultPerks,
+                  username: null,
+                  avatarUrl: null,
                 });
               }}
             >
