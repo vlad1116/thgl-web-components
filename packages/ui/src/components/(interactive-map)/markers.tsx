@@ -848,6 +848,7 @@ function MarkersContent({
     labelTextSize,
     shouldShowLabel,
     t,
+    spawns,
   ]);
 
   useEffect(() => {
