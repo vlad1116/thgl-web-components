@@ -294,6 +294,12 @@ function MarkersContent({
     (state) => state.colorBlindSeverity,
   );
   const highContrastMode = useSettingsStore((state) => state.highContrastMode);
+  const highContrastColor = useSettingsStore(
+    (state) => state.highContrastColor,
+  );
+  const highContrastThickness = useSettingsStore(
+    (state) => state.highContrastThickness,
+  );
   const tempPrivateNodeId = useSettingsStore(
     (state) => state.tempPrivateNode?.id,
   );
@@ -495,6 +501,8 @@ function MarkersContent({
         colorBlindMode,
         colorBlindSeverity,
         highContrastMode,
+        highContrastColor,
+        highContrastThickness,
         pane: "tooltipPane",
       });
       marker.on({
@@ -906,15 +914,19 @@ function MarkersContent({
     });
   }, [colorBlindMode, colorBlindSeverity]);
 
-  // Update markers when high contrast mode changes
+  // Update markers when high contrast settings change
   useEffect(() => {
     clearCanvasCache();
     existingSpawnIds.current?.forEach((marker) => {
       try {
-        marker.setHighContrastMode(highContrastMode);
+        marker.setHighContrastSettings(
+          highContrastMode,
+          highContrastColor,
+          highContrastThickness,
+        );
       } catch (e) {}
     });
-  }, [highContrastMode]);
+  }, [highContrastMode, highContrastColor, highContrastThickness]);
 
   useEffect(() => {
     if (!fitBoundsOnChange || liveMode || spawns.length === 0 || !map) {

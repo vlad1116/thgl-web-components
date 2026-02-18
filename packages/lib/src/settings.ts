@@ -100,6 +100,8 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   colorBlindMode: "none",
   colorBlindSeverity: 1,
   highContrastMode: false,
+  highContrastColor: "#FFFFFFCC",
+  highContrastThickness: 2,
   transforms: {},
   mapTransform: null,
   mapFilter: "none",
@@ -162,6 +164,8 @@ export type ProfileSettings = {
   colorBlindMode: ColorBlindMode;
   colorBlindSeverity: number;
   highContrastMode: boolean;
+  highContrastColor: string;
+  highContrastThickness: number;
   transforms: Record<string, string>;
   mapTransform: MapTransform | null;
   mapFilter: string;
@@ -228,6 +232,8 @@ export interface ProfileActions {
   setColorBlindMode: (mode: ColorBlindMode) => void;
   setColorBlindSeverity: (severity: number) => void;
   toggleHighContrastMode: () => void;
+  setHighContrastColor: (color: string) => void;
+  setHighContrastThickness: (thickness: number) => void;
   setTransform: (id: string, transform: string) => void;
   setMapTransform: (mapTransform: MapTransform | null) => void;
   setMapFilter: (mapFilter: string) => void;
@@ -562,6 +568,16 @@ export const useSettingsStore = create(
           const state = get();
           updateSettings({
             highContrastMode: !state.highContrastMode,
+          });
+        },
+
+        setHighContrastColor: (color: string) => {
+          updateSettings({ highContrastColor: color });
+        },
+
+        setHighContrastThickness: (thickness: number) => {
+          updateSettings({
+            highContrastThickness: Math.max(1, Math.min(6, thickness)),
           });
         },
 

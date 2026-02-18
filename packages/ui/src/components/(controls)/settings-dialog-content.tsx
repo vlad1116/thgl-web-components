@@ -287,6 +287,39 @@ export function SettingsDialogContent({
               onCheckedChange={settingsStore.toggleHighContrastMode}
             />
           </div>
+          {profileSettings.highContrastMode && (
+            <>
+              <div className="flex items-center gap-2 justify-between">
+                <Label htmlFor="high-contrast-color">Outline Color</Label>
+                <ColorPicker
+                  id="high-contrast-color"
+                  value={profileSettings.highContrastColor}
+                  onChange={settingsStore.setHighContrastColor}
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-between">
+                <Label htmlFor="high-contrast-thickness">
+                  Outline Thickness
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    id="high-contrast-thickness"
+                    className="w-28 h-8 p-0"
+                    min={1}
+                    max={6}
+                    step={1}
+                    value={[profileSettings.highContrastThickness]}
+                    onValueChange={(values) => {
+                      settingsStore.setHighContrastThickness(values[0]);
+                    }}
+                  />
+                  <span className="text-xs text-muted-foreground w-10 text-right">
+                    {profileSettings.highContrastThickness}px
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
           {hideAppSettings ? (
             <IconSizes filters={filters} />
           ) : (

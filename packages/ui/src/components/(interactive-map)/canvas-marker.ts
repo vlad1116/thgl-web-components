@@ -29,7 +29,9 @@ leaflet.Canvas.include({
       return;
     }
     const p = layer._point.round();
-    const hcPadding = layer.options.highContrastMode ? 2 : 0;
+    const hcPadding = layer.options.highContrastMode
+      ? (layer.options.highContrastThickness ?? 2)
+      : 0;
     const dx = p.x - radius - hcPadding;
     const dy = p.y - radius - hcPadding;
 
@@ -64,7 +66,9 @@ leaflet.Canvas.include({
           zPos || "",
           colorBlindMode,
           severityKey,
-          layer.options.highContrastMode ? "hc" : "",
+          layer.options.highContrastMode
+            ? `hc:${layer.options.highContrastColor ?? "#FFFFFFCC"}:${layer.options.highContrastThickness ?? 2}`
+            : "",
         ];
         const key = keyParts.join(":");
         const cachedCanvas = canvasCache.get(key);
@@ -122,9 +126,16 @@ leaflet.Canvas.include({
                 imageSize,
               );
             }
-            // Convert to solid white silhouette
+            // Convert to solid color silhouette
             silCtx.globalCompositeOperation = "source-in";
-            silCtx.fillStyle = "white";
+            const hcHex = layer.options.highContrastColor ?? "#FFFFFFCC";
+            const hcR = parseInt(hcHex.slice(1, 3), 16);
+            const hcG = parseInt(hcHex.slice(3, 5), 16);
+            const hcB = parseInt(hcHex.slice(5, 7), 16);
+            const hcA = hcHex.length >= 9
+              ? parseInt(hcHex.slice(7, 9), 16) / 255
+              : 1;
+            silCtx.fillStyle = `rgba(${hcR},${hcG},${hcB},${hcA})`;
             silCtx.fillRect(0, 0, silhouette.width, silhouette.height);
             // Draw at 8 offsets to create a solid outline
             const d = hcPadding;
@@ -325,6 +336,8 @@ export type CanvasMarkerOptions = {
   colorBlindMode?: ColorBlindMode;
   colorBlindSeverity?: number;
   highContrastMode?: boolean;
+  highContrastColor?: string;
+  highContrastThickness?: number;
 };
 
 export const canvasMarkerImgs: Record<string, HTMLImageElement> = {};
@@ -484,6 +497,24 @@ class CanvasMarker extends CircleMarker {
     if (this.options.highContrastMode === enabled) return;
     this.options.highContrastMode = enabled;
     if (!skipUpdate) this.update();
+  }
+
+  setHighContrastSettings(
+    enabled: boolean,
+    color: string,
+    thickness: number,
+  ) {
+    const t = Math.max(1, Math.min(6, thickness));
+    const modeChanged = this.options.highContrastMode !== enabled;
+    const colorChanged = this.options.highContrastColor !== color;
+    const thicknessChanged = this.options.highContrastThickness !== t;
+
+    if (!modeChanged && !colorChanged && !thicknessChanged) return;
+
+    this.options.highContrastMode = enabled;
+    this.options.highContrastColor = color;
+    this.options.highContrastThickness = t;
+    this.update();
   }
 
   setColorBlindSeverity(severity: number, skipUpdate = false) {
