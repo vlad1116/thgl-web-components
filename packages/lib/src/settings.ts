@@ -475,20 +475,38 @@ export const useSettingsStore = create(
         exportProfile: (profileId: string) => {
           const state = get();
           const profile = state.profiles.find((p) => p.id === profileId);
-          return profile || null;
+          if (!profile) return null;
+
+          // If exporting the current profile, sync flat state into the
+          // profile to guard against any desync between root and array.
+          if (profileId === state.currentProfileId) {
+            const synced: Partial<ProfileSettings> = {};
+            for (const key of Object.keys(DEFAULT_PROFILE_SETTINGS)) {
+              if (key in state) {
+                (synced as any)[key] = (state as any)[key];
+              }
+            }
+            return {
+              ...profile,
+              settings: { ...profile.settings, ...synced },
+            };
+          }
+
+          return profile;
         },
 
         importProfile: (profile: Profile) => {
-          set((state) => {
-            // Check if profile with same ID already exists
-            const exists = state.profiles.some((p) => p.id === profile.id);
-            if (exists) {
-              // Generate new ID
-              profile.id = ProfileManager.createProfileId();
-            }
-            return {
-              profiles: [...state.profiles, profile],
-            };
+          const state = get();
+          // Check if profile with same ID already exists
+          const exists = state.profiles.some((p) => p.id === profile.id);
+          if (exists) {
+            // Generate new ID
+            profile.id = ProfileManager.createProfileId();
+          }
+          set({
+            profiles: [...state.profiles, profile],
+            currentProfileId: profile.id,
+            ...profile.settings, // Flatten imported profile settings to root
           });
         },
 
