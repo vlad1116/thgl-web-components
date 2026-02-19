@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Shield, Monitor, X, ShieldCheck } from "lucide-react";
 import { Button } from "@repo/ui/controls";
 import { postWebviewMessage } from "@repo/lib/thgl-app";
+import { useT } from "@repo/ui/providers";
 import { Suspense } from "react";
 import Image from "next/image";
 
@@ -11,6 +12,7 @@ function ElevationPromptContent() {
   const searchParams = useSearchParams();
   const gameId = searchParams.get("gameId") || "unknown";
   const gameName = searchParams.get("gameName") || "this game";
+  const t = useT();
 
   const handleRelaunch = () => {
     postWebviewMessage({ action: "relaunchAsAdmin", payload: {} });
@@ -74,11 +76,10 @@ function ElevationPromptContent() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-semibold text-zinc-100 leading-tight">
-              Administrator Required
+              {t("elevation.title")}
             </h1>
             <p className="text-sm text-zinc-400 mt-0.5">
-              For overlay on{" "}
-              <span className="text-zinc-300 font-medium">{gameName}</span>
+              {t("elevation.subtitle", { vars: { gameName } })}
             </p>
           </div>
         </div>
@@ -86,12 +87,10 @@ function ElevationPromptContent() {
         {/* Description */}
         <div className="mt-4 space-y-2 text-sm text-zinc-400 leading-relaxed">
           <p>
-            This game is running with elevated privileges. Windows security
-            prevents the overlay from displaying above it without matching
-            permissions.
+            {t("elevation.description")}
           </p>
           <p className="text-zinc-500 text-xs">
-            Restarting as administrator will allow the overlay to work properly.
+            {t("elevation.hint")}
           </p>
         </div>
 
@@ -105,7 +104,7 @@ function ElevationPromptContent() {
             className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors"
           >
             <ShieldCheck className="w-4 h-4 mr-2" />
-            Relaunch as Administrator
+            {t("elevation.relaunch")}
           </Button>
 
           <Button
@@ -114,7 +113,7 @@ function ElevationPromptContent() {
             className="w-full h-9 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300"
           >
             <Shield className="w-4 h-4 mr-2 text-zinc-500" />
-            Always Run as Administrator
+            {t("elevation.alwaysRelaunch")}
           </Button>
 
           <div className="flex gap-2 pt-1">
@@ -124,7 +123,7 @@ function ElevationPromptContent() {
               className="flex-1 h-8 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 text-xs"
             >
               <Monitor className="w-3.5 h-3.5 mr-1.5" />
-              Desktop Mode
+              {t("elevation.desktopMode")}
             </Button>
 
             <Button
@@ -133,7 +132,7 @@ function ElevationPromptContent() {
               className="flex-1 h-8 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 text-xs"
             >
               <X className="w-3.5 h-3.5 mr-1.5" />
-              Close Overlay
+              {t("elevation.closeOverlay")}
             </Button>
           </div>
         </div>

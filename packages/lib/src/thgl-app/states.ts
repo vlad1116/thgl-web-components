@@ -42,6 +42,8 @@ export const useLiveState = create<{
   setCloseAction: (action: CloseAction) => void;
   alwaysRunAsAdmin: boolean;
   setAlwaysRunAsAdmin: (always: boolean) => void;
+  locale: string;
+  setLocale: (locale: string) => void;
 }>((set) => ({
   isTaskInstalled: null,
   setIsTaskInstalled: (isTaskInstalled) => set({ isTaskInstalled }),
@@ -61,6 +63,8 @@ export const useLiveState = create<{
   setCloseAction: (action) => set({ closeAction: action }),
   alwaysRunAsAdmin: false,
   setAlwaysRunAsAdmin: (always) => set({ alwaysRunAsAdmin: always }),
+  locale: "en",
+  setLocale: (locale) => set({ locale }),
 }));
 
 export const useTHGLAppState = create(

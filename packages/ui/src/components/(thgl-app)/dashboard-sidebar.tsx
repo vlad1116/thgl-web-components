@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, games, useAccountStore } from "@repo/lib";
+import { cn, games, localizePath, useAccountStore } from "@repo/lib";
 import {
   openInBrowser,
   useLiveState,
@@ -22,6 +22,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../(controls)";
+import { useLocale, useT } from "../(providers)";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -32,7 +33,9 @@ export function DashboardSidebar() {
   const setIsExpanded = useTHGLAppState((state) => state.setSidebarExpanded);
   const account = useAccountStore();
   const pathname = usePathname();
+  const locale = useLocale();
   const runningGames = useLiveState((state) => state.runningGames);
+  const t = useT();
 
   // Separate companion games and web-only games
   const companionGames = games.filter((game) => game.companion);
@@ -65,24 +68,24 @@ export function DashboardSidebar() {
           size={isExpanded ? "sm" : "icon"}
           variant="outline"
           className={cn("w-full", isExpanded ? "justify-start" : "justify-center")}
-          aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label={isExpanded ? t("sidebar.collapse") : "Expand sidebar"}
         >
           <ChevronLeft
             className={cn("h-4 w-4 transition-transform", {
               "rotate-180": !isExpanded,
             })}
           />
-          {isExpanded && <span className="ml-2 text-xs">Collapse</span>}
+          {isExpanded && <span className="ml-2 text-xs">{t("sidebar.collapse")}</span>}
         </Button>
       </div>
 
       {/* Home Link */}
       <div className="p-2 border-b">
         <NavItem
-          href="/dashboard"
+          href={localizePath("/dashboard", locale)}
           icon={<Home className="h-4 w-4" />}
-          label="Home"
-          isActive={pathname === "/dashboard"}
+          label={t("sidebar.home")}
+          isActive={pathname === localizePath("/dashboard", locale)}
           isExpanded={isExpanded}
         />
       </div>
@@ -91,31 +94,31 @@ export function DashboardSidebar() {
       <div className="p-2 border-b space-y-1">
         {isExpanded && (
           <span className="px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Resources
+            {t("sidebar.resources")}
           </span>
         )}
         <ExternalNavItem
           url="https://www.th.gl/faq"
           icon={<HelpCircle className="h-4 w-4" />}
-          label="FAQ"
+          label={t("sidebar.faq")}
           isExpanded={isExpanded}
         />
         <ExternalNavItem
           url="https://www.th.gl/suggestions-issues"
           icon={<Lightbulb className="h-4 w-4" />}
-          label="Suggestions"
+          label={t("sidebar.suggestions")}
           isExpanded={isExpanded}
         />
         <ExternalNavItem
           url="https://www.th.gl/blog"
           icon={<BookOpen className="h-4 w-4" />}
-          label="Blog"
+          label={t("sidebar.blog")}
           isExpanded={isExpanded}
         />
         <ExternalNavItem
           url="https://th.gl/discord"
           icon={<MessageCircle className="h-4 w-4" />}
-          label="Discord"
+          label={t("sidebar.discord")}
           isExpanded={isExpanded}
         />
       </div>
@@ -125,17 +128,18 @@ export function DashboardSidebar() {
         <div className="p-2 space-y-1">
           {isExpanded && (
             <span className="px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Games
+              {t("sidebar.games")}
             </span>
           )}
           {companionGames.map((game) => {
-            const isActive = pathname === `/dashboard/games/${game.id}`;
+            const gameHref = localizePath(`/dashboard/games/${game.id}`, locale);
+            const isActive = pathname === gameHref;
             const isRunning = isGameRunning(game.id);
 
             return (
               <NavItem
                 key={game.id}
-                href={`/dashboard/games/${game.id}`}
+                href={gameHref}
                 icon={
                   <div className="relative">
                     <Image
@@ -162,16 +166,17 @@ export function DashboardSidebar() {
             <>
               {isExpanded && (
                 <span className="px-2 pt-3 text-xs font-medium text-muted-foreground uppercase tracking-wider block">
-                  Web Only
+                  {t("sidebar.webOnly")}
                 </span>
               )}
               {webOnlyGames.map((game) => {
-                const isActive = pathname === `/dashboard/games/${game.id}`;
+                const gameHref = localizePath(`/dashboard/games/${game.id}`, locale);
+                const isActive = pathname === gameHref;
 
                 return (
                   <NavItem
                     key={game.id}
-                    href={`/dashboard/games/${game.id}`}
+                    href={gameHref}
                     icon={
                       <div className="relative">
                         <Image
@@ -198,10 +203,10 @@ export function DashboardSidebar() {
       {/* Bottom Actions */}
       <div className="p-2 border-t space-y-1">
         <NavItem
-          href="/dashboard/settings"
+          href={localizePath("/dashboard/settings", locale)}
           icon={<Settings className="h-4 w-4" />}
-          label="Settings"
-          isActive={pathname === "/dashboard/settings"}
+          label={t("sidebar.settings")}
+          isActive={pathname === localizePath("/dashboard/settings", locale)}
           isExpanded={isExpanded}
         />
         {isExpanded ? (
@@ -213,7 +218,7 @@ export function DashboardSidebar() {
           >
             <User className="h-4 w-4 mr-2" />
             <span className="truncate text-xs">
-              {account?.decryptedUserId ? account.decryptedUserId : "Sign in"}
+              {account?.decryptedUserId ? account.decryptedUserId : t("sidebar.signIn")}
             </span>
           </Button>
         ) : (
@@ -230,7 +235,7 @@ export function DashboardSidebar() {
             </TooltipTrigger>
             <TooltipContent side="right">
               <p>
-                {account?.decryptedUserId ? account.decryptedUserId : "Sign in"}
+                {account?.decryptedUserId ? account.decryptedUserId : t("sidebar.signIn")}
               </p>
             </TooltipContent>
           </Tooltip>

@@ -1,14 +1,15 @@
 import "@/styles/globals.css";
 import "@repo/ui/styles/globals.css";
 
-import { cn, Dict } from "@repo/lib";
+import { cn, DEFAULT_LOCALE } from "@repo/lib";
 import { Inter as FontSans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { PlausibleTracker } from "@repo/ui/header";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { Toaster } from "@repo/ui/controls";
-import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
+import { getGlobalDictionary, getAppDictionary, isValidLocale } from "@repo/ui/dicts";
 import { getCurrentVersion } from "@/version";
+import { notFound } from "next/navigation";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -26,23 +27,32 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale?: string }>;
 }) {
-  const version = await getCurrentVersion();
+  const { locale = DEFAULT_LOCALE } = await params;
+  if (locale !== DEFAULT_LOCALE && !isValidLocale(locale)) {
+    notFound();
+  }
 
-  const enDictMerged = {
-    ...enDictGlobal,
-  } as Dict;
+  const [version, globalDict, appDict] = await Promise.all([
+    getCurrentVersion(),
+    getGlobalDictionary(locale),
+    getAppDictionary("thgl-app", locale),
+  ]);
+  const dict = { ...globalDict, ...appDict };
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={cn(
           "font-sans dark h-dscreen bg-transparent text-white antialiased select-none overflow-hidden flex",
           fontSans.variable,
         )}
       >
-        <I18NProvider dict={enDictMerged}>
+        <I18NProvider dict={dict} locale={locale}>
           <TooltipProvider>{children}</TooltipProvider>
         </I18NProvider>
         <PlausibleTracker

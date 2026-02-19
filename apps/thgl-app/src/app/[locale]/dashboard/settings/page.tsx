@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, ChevronDown, ChevronUp, AlertTriangle, Shield } from "lucide-react";
+import { Settings, ChevronDown, ChevronUp, AlertTriangle, Shield, Globe } from "lucide-react";
 import {
   ScrollArea,
   Label,
@@ -28,64 +28,53 @@ import {
   GpuFlag,
   CloseAction,
 } from "@repo/lib/thgl-app";
+import { localizePath } from "@repo/lib";
+import { useLocale, useT } from "@repo/ui/providers";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
-// GPU flag options with descriptions
-const gpuFlagOptions: {
-  value: GpuFlag;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "none",
-    label: "Default (Hardware Acceleration)",
-    description: "Full GPU acceleration. Best performance for interactive maps.",
-  },
-  {
-    value: "disable-direct-composition-video",
-    label: "Disable Video Overlays",
-    description:
-      "Only disables DirectComposition for video content. Try this first if you experience screen flickering.",
-  },
-  {
-    value: "disable-gpu-compositing",
-    label: "Disable GPU Compositing",
-    description:
-      "Disables GPU-based compositing. May help with multi-monitor flickering issues.",
-  },
-  {
-    value: "disable-gpu",
-    label: "Software Rendering",
-    description:
-      "Completely disables GPU. Slowest option, use only as a last resort.",
-  },
+const LOCALE_OPTIONS: { value: string; label: string }[] = [
+  { value: "en", label: "English" },
+  { value: "de", label: "Deutsch" },
+  { value: "es", label: "Español" },
+  { value: "es-MX", label: "Español (México)" },
+  { value: "fr", label: "Français" },
+  { value: "it", label: "Italiano" },
+  { value: "ja", label: "日本語" },
+  { value: "ko", label: "한국어" },
+  { value: "pl", label: "Polski" },
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "ru", label: "Русский" },
+  { value: "th", label: "ไทย" },
+  { value: "tr", label: "Türkçe" },
+  { value: "uk", label: "Українська" },
+  { value: "zh-CN", label: "简体中文" },
+  { value: "zh-TW", label: "繁體中文" },
 ];
 
-const closeActionOptions: {
-  value: CloseAction;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "ask",
-    label: "Ask every time",
-    description: "Show a dialog asking what to do when you close a window.",
-  },
-  {
-    value: "minimizeToTray",
-    label: "Minimize to tray",
-    description: "Hide the window and keep the app running in the background.",
-  },
-  {
-    value: "exit",
-    label: "Exit application",
-    description: "Quit the entire app when you close a window.",
-  },
-];
+const GPU_FLAG_KEYS: Record<GpuFlag, { label: string; desc: string }> = {
+  none: { label: "settings.gpu.default", desc: "settings.gpu.defaultDesc" },
+  "disable-direct-composition-video": { label: "settings.gpu.disableVideo", desc: "settings.gpu.disableVideoDesc" },
+  "disable-gpu-compositing": { label: "settings.gpu.disableCompositing", desc: "settings.gpu.disableCompositingDesc" },
+  "disable-gpu": { label: "settings.gpu.software", desc: "settings.gpu.softwareDesc" },
+};
+
+const CLOSE_ACTION_KEYS: Record<CloseAction, { label: string; desc: string }> = {
+  ask: { label: "settings.closeAction.ask", desc: "settings.closeAction.askDesc" },
+  minimizeToTray: { label: "settings.closeAction.minimize", desc: "settings.closeAction.minimizeDesc" },
+  exit: { label: "settings.closeAction.exit", desc: "settings.closeAction.exitDesc" },
+};
+
+const GPU_FLAGS: GpuFlag[] = ["none", "disable-direct-composition-video", "disable-gpu-compositing", "disable-gpu"];
+const CLOSE_ACTIONS: CloseAction[] = ["ask", "minimizeToTray", "exit"];
 
 export default function SettingsPage() {
   const [showDevTools, setShowDevTools] = useState(false);
   const [initialGpuFlag, setInitialGpuFlag] = useState<GpuFlag | null>(null);
+  const t = useT();
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
   const openDashboardOnStart = useTHGLAppState(
     (state) => state.openDashboardOnStart,
   );
@@ -151,16 +140,16 @@ export default function SettingsPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Settings</h2>
+            <h2 className="text-lg font-semibold">{t("settings.title")}</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Configure your companion app preferences
+            {t("settings.description")}
           </p>
         </div>
 
         {/* Startup Preferences */}
         <div className="rounded-lg border bg-card p-4 space-y-4">
-          <h3 className="text-sm font-semibold">Startup</h3>
+          <h3 className="text-sm font-semibold">{t("settings.startup")}</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -168,10 +157,10 @@ export default function SettingsPage() {
                   htmlFor="open-app-on-start"
                   className="text-sm font-normal cursor-pointer"
                 >
-                  Launch on Windows startup
+                  {t("settings.launchOnStartup")}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Start the companion app when Windows boots
+                  {t("settings.launchOnStartupDesc")}
                 </p>
               </div>
               <Switch
@@ -194,10 +183,10 @@ export default function SettingsPage() {
                   htmlFor="open-dashboard-on-start"
                   className="text-sm font-normal cursor-pointer"
                 >
-                  Open dashboard on launch
+                  {t("settings.openDashboard")}
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Show this window when the app starts
+                  {t("settings.openDashboardDesc")}
                 </p>
               </div>
               <Switch
@@ -214,17 +203,17 @@ export default function SettingsPage() {
                     htmlFor="always-run-as-admin"
                     className="text-sm font-normal cursor-pointer"
                   >
-                    Always run as administrator
+                    {t("settings.alwaysAdmin")}
                   </Label>
                   {isRunningAsAdmin && (
                     <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
                       <Shield className="w-3 h-3" />
-                      Active
+                      {t("settings.alwaysAdminActive")}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Required for overlays on games running as admin
+                  {t("settings.alwaysAdminDesc")}
                 </p>
               </div>
               <Switch
@@ -241,7 +230,7 @@ export default function SettingsPage() {
             <div className="border-t" />
             <div className="space-y-2">
               <Label htmlFor="close-action" className="text-sm font-normal">
-                Close button behavior
+                {t("settings.closeAction")}
               </Label>
               <Select
                 value={closeAction}
@@ -250,58 +239,97 @@ export default function SettingsPage() {
                 }
               >
                 <SelectTrigger id="close-action" className="w-full">
-                  <SelectValue placeholder="Select close behavior" />
+                  <SelectValue placeholder={t("settings.closeActionPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {closeActionOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {CLOSE_ACTIONS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(CLOSE_ACTION_KEYS[value].label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {closeActionOptions.find((o) => o.value === closeAction)
-                  ?.description}
+                {closeAction && t(CLOSE_ACTION_KEYS[closeAction]?.desc)}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Language */}
+        <div className="rounded-lg border bg-card p-4 space-y-4">
+          <h3 className="text-sm font-semibold">{t("settings.language")}</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="language" className="text-sm font-normal">
+                {t("settings.displayLanguage")}
+              </Label>
+            </div>
+            <Select
+              value={locale}
+              onValueChange={(value) => {
+                // Strip current locale prefix from pathname, then localize with new locale
+                const segments = pathname.split("/").filter(Boolean);
+                const currentIsLocale = LOCALE_OPTIONS.some(
+                  (o) => o.value === segments[0],
+                );
+                const basePath = currentIsLocale
+                  ? "/" + segments.slice(1).join("/")
+                  : pathname;
+                const newPath = localizePath(basePath, value);
+                router.push(newPath);
+              }}
+            >
+              <SelectTrigger id="language" className="w-full">
+                <SelectValue placeholder={t("settings.languagePlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {LOCALE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.languageDesc")}
+            </p>
           </div>
         </div>
 
         {/* Info Note */}
         <div className="rounded-lg border bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
-            Game-specific auto-run settings can be configured on each
-            game&apos;s page in the sidebar. App settings like hotkeys can be
-            configured in the overlay or desktop windows.
+            {t("settings.infoNote")}
           </p>
         </div>
 
         {/* GPU / Display Settings */}
         <div className="rounded-lg border bg-card p-4 space-y-4">
-          <h3 className="text-sm font-semibold">Display</h3>
+          <h3 className="text-sm font-semibold">{t("settings.display")}</h3>
           <div className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="gpu-flag" className="text-sm font-normal">
-                GPU Acceleration
+                {t("settings.gpuAcceleration")}
               </Label>
               <Select
                 value={gpuFlag}
                 onValueChange={(value) => handleGpuFlagChange(value as GpuFlag)}
               >
                 <SelectTrigger id="gpu-flag" className="w-full">
-                  <SelectValue placeholder="Select GPU mode" />
+                  <SelectValue placeholder={t("settings.gpuPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {gpuFlagOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {GPU_FLAGS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(GPU_FLAG_KEYS[value].label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {gpuFlagOptions.find((o) => o.value === gpuFlag)?.description}
+                {gpuFlag && t(GPU_FLAG_KEYS[gpuFlag]?.desc)}
               </p>
             </div>
             {gpuFlagChanged && (
@@ -309,7 +337,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
                   <p className="text-xs text-amber-500">
-                    Restart required to apply changes.
+                    {t("settings.restartRequired")}
                   </p>
                 </div>
                 <Button
@@ -318,7 +346,7 @@ export default function SettingsPage() {
                   className="h-7 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-500"
                   onClick={() => window.chrome.webview.postMessage("restartApp")}
                 >
-                  Restart
+                  {t("settings.restart")}
                 </Button>
               </div>
             )}
@@ -326,8 +354,7 @@ export default function SettingsPage() {
               <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-3">
                 <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 <p className="text-xs text-amber-500">
-                  Non-default GPU settings may reduce map performance. Only use
-                  if experiencing display issues.
+                  {t("settings.gpuWarning")}
                 </p>
               </div>
             )}
@@ -341,7 +368,7 @@ export default function SettingsPage() {
             className="w-full justify-between p-4 h-auto"
             onClick={() => setShowDevTools(!showDevTools)}
           >
-            <span className="text-sm font-semibold">Developer Tools</span>
+            <span className="text-sm font-semibold">{t("settings.devTools")}</span>
             {showDevTools ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -352,13 +379,13 @@ export default function SettingsPage() {
             <div className="px-4 pb-4 space-y-3 text-sm">
               <div className="border-t" />
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Version:</span>
+                <span className="text-muted-foreground">{t("settings.version")}</span>
                 <Tooltip>
                   <TooltipTrigger className="hover:text-foreground">
-                    {version?.buildVersion ?? "Unknown"}
+                    {version?.buildVersion ?? t("settings.versionUnknown")}
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Version: {version?.buildVersion ?? "Unknown"}</p>
+                    <p>Version: {version?.buildVersion ?? t("settings.versionUnknown")}</p>
                     <p>Date: {version?.buildDate}</p>
                     <p>Time: {version?.buildTime}</p>
                   </TooltipContent>
@@ -366,7 +393,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Inspect:</span>
+                  <span className="text-muted-foreground">{t("settings.inspect")}</span>
                   <div className="space-x-2">
                     <Button
                       variant="link"
@@ -378,7 +405,7 @@ export default function SettingsPage() {
                         )
                       }
                     >
-                      controller
+                      {t("settings.inspectController")}
                     </Button>
                     <Button
                       variant="link"
@@ -390,14 +417,14 @@ export default function SettingsPage() {
                         )
                       }
                     >
-                      dashboard
+                      {t("settings.inspectDashboard")}
                     </Button>
                   </div>
                 </div>
                 {/* Game windows (overlays, desktop) */}
                 {connectedClients?.filter((c) => c.role === "client").length ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Game windows:</span>
+                    <span className="text-muted-foreground">{t("settings.gameWindows")}</span>
                     <div className="flex flex-wrap gap-x-2 gap-y-1 justify-end">
                       {connectedClients
                         ?.filter((c) => c.role === "client")

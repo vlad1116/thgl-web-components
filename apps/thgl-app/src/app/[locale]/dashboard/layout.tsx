@@ -7,6 +7,7 @@ import {
   NavigationButtons,
 } from "@repo/ui/thgl-app";
 import { THGLDashboardAds } from "@repo/ui/ads";
+import { LocaleSync } from "./locale-sync";
 import Image from "next/image";
 
 export default function DashboardLayout({
@@ -17,6 +18,7 @@ export default function DashboardLayout({
   return (
     <>
       <InitializeApp role="dashboard" />
+      <LocaleSync />
       <div className="flex h-full flex-col w-full">
         <AppHeader>
           <div className="flex items-center gap-2 text-xl font-extrabold tracking-tight">

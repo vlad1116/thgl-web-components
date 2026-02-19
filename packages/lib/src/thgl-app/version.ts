@@ -19,6 +19,7 @@ export type InitialState = {
   isRunningAsAdmin: boolean;
   alwaysRunAsAdmin: boolean;
   closeAction: CloseAction;
+  locale: string;
 };
 
 export function getVersionFromWebview() {
@@ -71,4 +72,8 @@ export function setAlwaysRunAsAdmin(always: boolean) {
 
 export function setCloseAction(closeAction: CloseAction) {
   return postWebviewMessage({ action: "setCloseAction", payload: { closeAction } });
+}
+
+export function setLocaleOnNative(locale: string) {
+  return postWebviewMessage({ action: "setLocale", payload: { locale } });
 }

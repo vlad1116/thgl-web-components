@@ -244,6 +244,12 @@ export type WEBVIEW_SEND_MESSAGE =
       payload: {
         closeAction: CloseAction;
       };
+    }
+  | {
+      action: "setLocale";
+      payload: {
+        locale: string;
+      };
     };
 
 // GPU acceleration flags for WebView2

@@ -1,6 +1,6 @@
 "use client";
 
-import { games, Game, DiscordMessageData } from "@repo/lib";
+import { games, Game, DiscordMessageData, localizePath } from "@repo/lib";
 import {
   openDesktopWebView,
   openInBrowser,
@@ -9,6 +9,7 @@ import {
   useLiveState,
   useTHGLAppState,
 } from "@repo/lib/thgl-app";
+import { useLocale, useT } from "@repo/ui/providers";
 import { ScrollArea } from "@repo/ui/controls";
 import { DiscordMessage, PreviewImage, Subtitle } from "@repo/ui/content";
 import { Badge } from "@repo/ui/controls";
@@ -67,6 +68,8 @@ export function GamePageClient({
   game: Game;
   updateMessages: DiscordMessageData[];
 }) {
+  const locale = useLocale();
+  const t = useT();
   const runningGames = useLiveState((state) => state.runningGames);
   const gameSessions = useTHGLAppState((state) => state.gameSessions);
   const autoRunGames = useTHGLAppState((state) => state.autoRunGames);
@@ -120,7 +123,7 @@ export function GamePageClient({
       await setWindowModeNative(newMode).catch(console.error);
     }
 
-    openOverlayWebView(game.companion.overlayURL, `${game.title} Overlay`);
+    openOverlayWebView(localizePath(game.companion.overlayURL, locale), `${game.title} Overlay`);
   };
 
   const handleOpenDesktop = async () => {
@@ -142,7 +145,7 @@ export function GamePageClient({
       await setWindowModeNative(newMode).catch(console.error);
     }
 
-    openDesktopWebView(game.companion.desktopURL, `${game.title} Desktop`);
+    openDesktopWebView(localizePath(game.companion.desktopURL, locale), `${game.title} Desktop`);
   };
 
   return (
@@ -162,7 +165,7 @@ export function GamePageClient({
               <h1 className="text-2xl font-bold">{game.title}</h1>
               {isRunning && (
                 <Badge variant="default" className="bg-green-600">
-                  Running
+                  {t("game.running")}
                 </Badge>
               )}
             </div>
@@ -170,13 +173,13 @@ export function GamePageClient({
               {game.companion && (
                 <Badge variant="secondary">
                   <Monitor className="h-3 w-3 mr-1" />
-                  Companion
+                  {t("game.companion")}
                 </Badge>
               )}
               {game.web && (
                 <Badge variant="outline">
                   <Globe className="h-3 w-3 mr-1" />
-                  Web
+                  {t("game.web")}
                 </Badge>
               )}
             </div>
@@ -192,7 +195,7 @@ export function GamePageClient({
               className="gap-2"
             >
               <Play className="h-4 w-4" />
-              Open Overlay
+              {t("game.openOverlay")}
             </Button>
           )}
 
@@ -203,7 +206,7 @@ export function GamePageClient({
               className="gap-2"
             >
               <Monitor className="h-4 w-4" />
-              Open Desktop
+              {t("game.openDesktop")}
             </Button>
           )}
 
@@ -214,34 +217,32 @@ export function GamePageClient({
               onClick={() => openInBrowser(game.web!)}
             >
               <ExternalLink className="h-4 w-4 mr-1" />
-              Open in Browser
+              {t("game.openInBrowser")}
             </Button>
           )}
         </div>
 
         {!isRunning && game.companion?.overlayURL && (
           <p className="text-sm text-muted-foreground">
-            Start the game to enable the overlay. Desktop mode is always
-            available.
+            {t("game.overlayHint")}
           </p>
         )}
 
         {!game.companion && game.web && (
           <p className="text-sm text-muted-foreground">
-            This game only has web-based maps available. Companion app support
-            with overlays and position tracking is not available yet.
+            {t("game.webOnlyHint")}
           </p>
         )}
 
         {/* Settings - only show for games with companion support */}
         {game.companion && (
           <div className="rounded-lg border bg-card p-4 space-y-4">
-            <h2 className="font-semibold">Settings</h2>
+            <h2 className="font-semibold">{t("game.settings")}</h2>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="auto-run">Auto-run companion</Label>
+                <Label htmlFor="auto-run">{t("game.autoRun")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Automatically launch companion when game starts
+                  {t("game.autoRunDesc")}
                 </p>
               </div>
               <Switch
@@ -259,13 +260,13 @@ export function GamePageClient({
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Activity className="h-4 w-4" />
-                Session Log
+                {t("game.sessionLog")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {gameSessionsForGame.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No sessions recorded yet. Start the game to see session activity.
+                  {t("game.noSessions")}
                 </p>
               ) : (
                 gameSessionsForGame.map((session) => (
@@ -308,11 +309,11 @@ export function GamePageClient({
                     <div className="flex items-center gap-2">
                       {session.detectorInitialized ? (
                         <Badge variant="secondary" className="text-xs">
-                          Detector Ready
+                          {t("game.detectorReady")}
                         </Badge>
                       ) : session.status === "connecting" ? (
                         <Badge variant="outline" className="text-xs">
-                          Initializing...
+                          {t("game.initializing")}
                         </Badge>
                       ) : null}
                       {session.lastError && (
@@ -332,10 +333,10 @@ export function GamePageClient({
 
         {/* Release Notes */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Release Notes</h2>
+          <h2 className="text-lg font-semibold">{t("game.releaseNotes")}</h2>
           {updateMessages.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              No release notes available.
+              {t("game.noReleaseNotes")}
             </p>
           ) : (
             <div className="space-y-8">

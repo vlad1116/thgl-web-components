@@ -54,6 +54,28 @@ const appDictionaries = {
     "zh-CN": () => import("./palia.zh-CN.json").then((mod) => mod.default),
     "zh-TW": () => import("./palia.zh-TW.json").then((mod) => mod.default),
   },
+  "thgl-app": {
+    en: () => import("./thgl-app.en.json").then((mod) => mod.default),
+    de: () => import("./thgl-app.de.json").then((mod) => mod.default),
+    es: () => import("./thgl-app.es.json").then((mod) => mod.default),
+    "es-MX": () =>
+      import("./thgl-app.es-MX.json").then((mod) => mod.default),
+    fr: () => import("./thgl-app.fr.json").then((mod) => mod.default),
+    it: () => import("./thgl-app.it.json").then((mod) => mod.default),
+    ja: () => import("./thgl-app.ja.json").then((mod) => mod.default),
+    ko: () => import("./thgl-app.ko.json").then((mod) => mod.default),
+    pl: () => import("./thgl-app.pl.json").then((mod) => mod.default),
+    "pt-BR": () =>
+      import("./thgl-app.pt-BR.json").then((mod) => mod.default),
+    ru: () => import("./thgl-app.ru.json").then((mod) => mod.default),
+    th: () => import("./thgl-app.th.json").then((mod) => mod.default),
+    tr: () => import("./thgl-app.tr.json").then((mod) => mod.default),
+    uk: () => import("./thgl-app.uk.json").then((mod) => mod.default),
+    "zh-CN": () =>
+      import("./thgl-app.zh-CN.json").then((mod) => mod.default),
+    "zh-TW": () =>
+      import("./thgl-app.zh-TW.json").then((mod) => mod.default),
+  },
 } satisfies Record<
   string,
   Record<string, () => Promise<Record<string, string>>>

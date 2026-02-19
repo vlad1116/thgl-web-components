@@ -1,12 +1,16 @@
-import { fetchDict, fetchVersion, games, Dict } from "@repo/lib";
+import { fetchDict, fetchVersion, games, Dict, DEFAULT_LOCALE } from "@repo/lib";
 import { AdditionalContent } from "@repo/ui/content";
-import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
+import { getGlobalDictionary } from "@repo/ui/dicts";
 import { App } from "@repo/ui/thgl-app";
 import { notFound } from "next/navigation";
 
 export function createAppPage(isOverlay: boolean) {
-  return async function ({ params }: { params: Promise<{ id: string }> }) {
-    const id = (await params).id;
+  return async function ({
+    params,
+  }: {
+    params: Promise<{ id: string; locale?: string }>;
+  }) {
+    const { id, locale = DEFAULT_LOCALE } = await params;
     const game = games.find((game) => game.id === id);
     if (!game) {
       notFound();
@@ -16,11 +20,12 @@ export function createAppPage(isOverlay: boolean) {
       notFound();
     }
 
-    const [version, enDict] = await Promise.all([
+    const [version, dynamicDict, globalDict] = await Promise.all([
       fetchVersion(game.id),
-      fetchDict(game.id),
+      fetchDict(game.id, locale).catch(() => fetchDict(game.id, DEFAULT_LOCALE)),
+      getGlobalDictionary(locale),
     ]);
-    const enDictMerged = { ...enDictGlobal, ...enDict } as Dict;
+    const dict = { ...globalDict, ...dynamicDict } as Dict;
     const domain = game.web ? new URL(game.web).host.split(".")[0] : "";
     return (
       <App
@@ -32,7 +37,7 @@ export function createAppPage(isOverlay: boolean) {
           markerOptions: companion.markerOptions,
           defaultHotkeys: companion.defaultHotkeys,
         }}
-        dict={enDictMerged}
+        dict={dict}
         filters={version.data.filters}
         regions={version.data.regions}
         tiles={version.data.tiles}

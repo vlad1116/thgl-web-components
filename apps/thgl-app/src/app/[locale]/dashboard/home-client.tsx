@@ -1,7 +1,8 @@
 "use client";
 
-import { games, ForumPost } from "@repo/lib";
+import { games, ForumPost, localizePath } from "@repo/lib";
 import { openInBrowser, useLiveState } from "@repo/lib/thgl-app";
+import { useLocale, useT } from "@repo/ui/providers";
 import { ScrollArea } from "@repo/ui/controls";
 import { WhatsNew, UpdateItem } from "@repo/ui/content";
 import {
@@ -43,6 +44,8 @@ export function HomePageClient({
   updates: UpdateItem[];
   suggestions: ForumPost[];
 }) {
+  const locale = useLocale();
+  const t = useT();
   const runningGames = useLiveState((state) => state.runningGames);
 
   const companionGames = games.filter((game) => game.companion);
@@ -67,17 +70,17 @@ export function HomePageClient({
       <div className="p-6 pb-20 space-y-6 max-w-4xl">
         {/* On This Page Navigation */}
         <div className="flex items-center gap-2 text-sm flex-wrap">
-          <span className="text-muted-foreground">On this page:</span>
+          <span className="text-muted-foreground">{t("home.onThisPage")}</span>
           <a href="#whats-new" className="hover:text-primary hover:underline">
-            What&apos;s New
+            {t("home.whatsNew")}
           </a>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">&bull;</span>
           <a href="#suggestions" className="hover:text-primary hover:underline">
-            Suggestions
+            {t("home.suggestions")}
           </a>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">&bull;</span>
           <a href="#blog" className="hover:text-primary hover:underline">
-            Blog
+            {t("home.blog")}
           </a>
         </div>
 
@@ -87,13 +90,13 @@ export function HomePageClient({
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Circle className="h-3 w-3 fill-green-500 text-green-500" />
-                Running Now
+                {t("home.runningNow")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {runningGamesList.map((game) => (
-                  <Link key={game.id} href={`/dashboard/games/${game.id}`}>
+                  <Link key={game.id} href={localizePath(`/dashboard/games/${game.id}`, locale)}>
                     <Badge
                       variant="secondary"
                       className="gap-2 py-1.5 px-3 hover:bg-primary/10 cursor-pointer"
@@ -130,7 +133,7 @@ export function HomePageClient({
           <div id="suggestions" className="space-y-3 scroll-mt-6">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Community Suggestions</h2>
+              <h2 className="text-lg font-semibold">{t("home.communitySuggestions")}</h2>
             </div>
 
             <div className="space-y-3">
@@ -181,14 +184,18 @@ export function HomePageClient({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Join the{" "}
-              <button
-                onClick={() => openInBrowser("https://th.gl/discord")}
-                className="text-primary hover:underline"
-              >
-                Discord server
-              </button>{" "}
-              to share your own suggestions!
+              {t.rich("home.discordJoin", {
+                components: {
+                  discord: (
+                    <button
+                      onClick={() => openInBrowser("https://th.gl/discord")}
+                      className="text-primary hover:underline"
+                    >
+                      {t("home.discordServer")}
+                    </button>
+                  ),
+                },
+              })}
             </p>
           </div>
         )}
@@ -197,7 +204,7 @@ export function HomePageClient({
         <div id="blog" className="space-y-3 scroll-mt-6">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">From the Blog</h2>
+            <h2 className="text-lg font-semibold">{t("home.fromTheBlog")}</h2>
           </div>
 
           <div className="space-y-3">
@@ -218,7 +225,7 @@ export function HomePageClient({
                       {entry.description}
                     </p>
                     <span className="text-xs text-primary hover:underline">
-                      Read more →
+                      {t("home.readMore")}
                     </span>
                   </div>
                 </CardContent>
