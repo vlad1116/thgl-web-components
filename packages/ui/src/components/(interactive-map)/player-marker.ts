@@ -52,9 +52,9 @@ export class PlayerMarker extends leaflet.Marker {
       return;
     }
     // Set transition only once, not on every position update
-    // 500ms duration matches map pan duration for synchronized smooth movement
+    // Duration matches the map pan interval so player icon and map move in sync
     if (!this._icon.style.transition) {
-      this._icon.style.transition = "transform 0.5s linear";
+      this._icon.style.transition = "transform 0.2s linear";
       this._icon.style.transformOrigin = "center";
     }
 

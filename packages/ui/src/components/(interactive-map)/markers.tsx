@@ -314,6 +314,15 @@ function MarkersContent({
   // Audio alert tracking - tracks if we've already alerted for current in-range spawns
   const hasAlertedRef = useRef<boolean>(false);
 
+  // Track markers that have been modified (z-pos/labels) for efficient distant-markers reset
+  const activatedMarkersRef = useRef<Set<CanvasMarker>>(new Set());
+  // Track previous label settings to detect when a full sweep is needed
+  const prevLabelSettingsRef = useRef<{
+    labelModeByFilter: Record<string, LabelMode>;
+    showLabelsActive: boolean;
+    labelTextSize: number;
+  } | null>(null);
+
   // Hotkey state for showing all labels temporarily (set by MapHotkeys in Overwolf/THGL apps)
   const showLabelsActive = useGameState((state) => state.showLabelsActive);
 
@@ -356,6 +365,35 @@ function MarkersContent({
       },
     };
   }, [map, map?._rotationDegrees, map?._rotationCenter]);
+
+  // Lightweight effect for live actor position updates.
+  // Runs when actors change, but only updates existing marker positions (O(actors) not O(allMarkers)).
+  // Full spawn reconciliation (creating/removing markers) is handled by the main spawns effect.
+  const actors = useGameState((state) => state.actors);
+  useEffect(() => {
+    if (!existingSpawnIds.current || !actors.length || !liveMode) return;
+
+    for (const actor of actors) {
+      const marker = existingSpawnIds.current.get(actor.address);
+      if (!marker) continue;
+
+      let pos: [number, number] | [number, number, number] =
+        actor.z != null ? [actor.x, actor.y, actor.z] : [actor.x, actor.y];
+      if (rotationCache) {
+        const rotated = rotationCache.getRotated(actor.x, actor.y);
+        pos =
+          actor.z != null ? [rotated[0], rotated[1], actor.z] : rotated;
+      }
+
+      if (!marker.getLatLng().equals(pos)) {
+        marker.setLatLng(pos);
+        // Update position in spatial grid for proximity queries
+        if (spatialGridRef.current) {
+          spatialGridRef.current.update(marker, pos[0], pos[1]);
+        }
+      }
+    }
+  }, [actors, rotationCache, liveMode]);
 
   // Determine the cell size for spatial grid based on max range we need to check
   const spatialCellSize = useMemo(() => {
@@ -713,20 +751,35 @@ function MarkersContent({
     const zDistance = hasZPos ? markerOptions.zPos!.zDistance : 0;
 
     // Pre-calculate constants for audio/label range checks
-    const audioRangeSq = audioAlertRange * audioAlertRange;
     const checkAudio = audioAlertsEnabled;
     const checkLabels = hasPreviewAccess;
+    // Only compute audio range when audio or labels are active
+    const needsAudioRange = checkAudio || checkLabels;
+    const audioRangeSq = needsAudioRange
+      ? audioAlertRange * audioAlertRange
+      : 0;
 
     // Track if any audio-enabled spawn is in range (for audio alert)
     let anyAudioInRange = false;
 
     // Determine max query distance for spatial grid
-    const maxQueryDist = Math.max(audioAlertRange, zPosMaxDist);
+    // Only include audioAlertRange when features that use it are enabled
+    const maxQueryDist = needsAudioRange
+      ? Math.max(audioAlertRange, zPosMaxDist)
+      : zPosMaxDist;
+
+    // Skip entirely if nothing needs proximity checks
+    if (maxQueryDist === 0 && activatedMarkersRef.current.size === 0) {
+      return;
+    }
     const useSpatialGrid =
       spatialGridRef.current && spatialGridRef.current.size > 100;
 
     // Track which markers we've processed (for resetting distant markers)
     const processedMarkers = useSpatialGrid ? new Set<CanvasMarker>() : null;
+
+    // Track markers that are currently activated (have z-pos or text set)
+    const newActivatedMarkers = new Set<CanvasMarker>();
 
     // Get nearby markers from spatial grid if available and beneficial
     const markersToCheck = useSpatialGrid
@@ -766,6 +819,9 @@ function MarkersContent({
         if (marker.options.zPos !== newZPos) {
           marker.setZPos(newZPos);
         }
+        if (marker.options.zPos !== null) {
+          newActivatedMarkers.add(marker);
+        }
       }
 
       // --- Audio Alert Check ---
@@ -793,27 +849,42 @@ function MarkersContent({
           ) {
             marker.setText(newText, labelTextSize);
           }
+          if (marker.options.text !== undefined) {
+            newActivatedMarkers.add(marker);
+          }
         }
       }
     }
 
-    // If using spatial grid, process distant markers to reset z-pos and handle always/hotkey labels
-    if (useSpatialGrid && processedMarkers) {
-      for (const marker of existingSpawnIds.current.values()) {
-        if (processedMarkers.has(marker)) continue;
-        if (!marker.options || !marker.options.id) continue;
+    // If using spatial grid, reset previously-activated distant markers
+    if (useSpatialGrid) {
+      // Detect if label settings changed (requires full sweep for always/hotkey modes)
+      const prev = prevLabelSettingsRef.current;
+      const needsFullLabelSweep =
+        checkLabels &&
+        prev !== null &&
+        (prev.labelModeByFilter !== labelModeByFilter ||
+          prev.showLabelsActive !== showLabelsActive ||
+          prev.labelTextSize !== labelTextSize);
+      prevLabelSettingsRef.current = {
+        labelModeByFilter,
+        showLabelsActive,
+        labelTextSize,
+      };
 
-        // Reset z-position for distant markers
-        if (hasZPos && marker.options.zPos !== null) {
-          marker.setZPos(null);
-        }
+      if (needsFullLabelSweep) {
+        // Full sweep only when label settings change (rare)
+        for (const marker of existingSpawnIds.current.values()) {
+          if (processedMarkers!.has(marker)) continue;
+          if (!marker.options || !marker.options.id) continue;
 
-        // Handle labels for distant markers (only "always" and "hotkey" modes apply)
-        if (checkLabels) {
+          if (hasZPos && marker.options.zPos !== null) {
+            marker.setZPos(null);
+          }
+
           const typeId = marker.options.typeId as string;
           if (typeId) {
             const labelMode = labelModeByFilter[typeId];
-            // For distant markers, isInRange is always false
             const showLabel = shouldShowLabel(typeId, labelMode, false);
             const newText = showLabel
               ? t(typeId, { fallback: typeId })
@@ -825,9 +896,47 @@ function MarkersContent({
             ) {
               marker.setText(newText, labelTextSize);
             }
+            if (newText !== undefined) {
+              newActivatedMarkers.add(marker);
+            }
+          }
+        }
+      } else {
+        // Targeted sweep: only check previously-activated markers that are no longer nearby
+        for (const marker of activatedMarkersRef.current) {
+          if (processedMarkers!.has(marker)) continue;
+          if (!marker.options || !marker.options.id) continue;
+
+          // Reset z-position for distant markers
+          if (hasZPos && marker.options.zPos !== null) {
+            marker.setZPos(null);
+          }
+
+          // Handle labels for distant markers
+          if (checkLabels) {
+            const typeId = marker.options.typeId as string;
+            if (typeId) {
+              const labelMode = labelModeByFilter[typeId];
+              const showLabel = shouldShowLabel(typeId, labelMode, false);
+              const newText = showLabel
+                ? t(typeId, { fallback: typeId })
+                : undefined;
+
+              if (
+                marker.options.text !== newText ||
+                marker.options.textScale !== labelTextSize
+              ) {
+                marker.setText(newText, labelTextSize);
+              }
+              if (newText !== undefined) {
+                newActivatedMarkers.add(marker);
+              }
+            }
           }
         }
       }
+
+      activatedMarkersRef.current = newActivatedMarkers;
     }
 
     // Handle audio alert after loop completes

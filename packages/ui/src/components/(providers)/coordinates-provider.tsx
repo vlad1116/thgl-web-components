@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Fuse from "fuse.js";
@@ -504,7 +505,12 @@ export function CoordinatesProvider({
     });
   }, [typesIdMap, actors]);
 
+  // Only rebuild the expensive Fuse.js search index when user is actively searching.
+  // When not searching, return null to avoid O(n) index construction on every actor update.
   const searchIndex = useMemo(() => {
+    if (!search) {
+      return null;
+    }
     const nodeSpawns = nodes.flatMap((node) =>
       node.spawns.map((spawn) => ({
         id: spawn.id ?? node.type,
@@ -562,7 +568,7 @@ export function CoordinatesProvider({
       includeScore: true,
       threshold: 0.3,
     });
-  }, [nodes, initialStaticNodes, mapName, t]);
+  }, [search, nodes, initialStaticNodes, mapName, t]);
 
   const icons = useMemo(
     () =>
@@ -576,13 +582,37 @@ export function CoordinatesProvider({
 
   const [spawns, setSpawns] = useState<Spawns>([]);
 
+  // Use ref for nodes to break the dependency chain:
+  // actors → nodes → refreshSpawns → useEffect → setSpawns → markers teardown
+  // With the ref, refreshSpawns is stable and only re-runs on structural changes.
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
+
+  // Structural fingerprint: detects when the SET of spawns changes (new/removed),
+  // ignoring position changes (which are handled by live position updates in markers.tsx).
+  // Uses type + mapName + spawn count + address sum per category for accurate change detection.
+  const nodesFingerprint = useMemo(() => {
+    let fp = "";
+    for (const node of nodes) {
+      let addrSum = 0;
+      for (const s of node.spawns) {
+        addrSum += (s as any).address ?? 0;
+      }
+      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum};`;
+    }
+    return fp;
+  }, [nodes]);
+
   const refreshSpawns = useCallback(
     (state: UserStoreState) => {
+      // Read nodes from ref (always latest) instead of closure dependency.
+      // This prevents refreshSpawns from being recreated on every nodes change.
+      const currentNodes = nodesRef.current;
       let newSpawns: (Spawns[number] & { score?: number })[] = [];
       // Deduplication map: key = "x:y" coordinates
       const spawnsByCoordinate = new Map<string, Spawn>();
       if (state.search) {
-        if (state.search.length < 3) {
+        if (state.search.length < 3 || !searchIndex) {
           setSpawns(newSpawns);
           return;
         }
@@ -613,7 +643,7 @@ export function CoordinatesProvider({
       } else {
         const debug = isDebug();
 
-        nodes.forEach((node) => {
+        currentNodes.forEach((node) => {
           if (node.mapName && node.mapName !== state.mapName) {
             return;
           }
@@ -666,7 +696,7 @@ export function CoordinatesProvider({
 
       setSpawns(newSpawns);
     },
-    [nodes, searchIndex, publicSearchSpawns],
+    [searchIndex, publicSearchSpawns],
   );
 
   useEffect(() => {
@@ -708,7 +738,7 @@ export function CoordinatesProvider({
       unsubscribeGlobalFilters();
       unsubscribeMapName();
     };
-  }, [isHydrated, refreshSpawns, mapName]);
+  }, [isHydrated, refreshSpawns, mapName, nodesFingerprint]);
 
   return (
     <Context.Provider

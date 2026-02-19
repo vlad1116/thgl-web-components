@@ -19,6 +19,7 @@ export function listenToGEP(
 
   let firstPlayerData = false;
   let lastPlayerError = "";
+  let prevPlayer: ActorPlayer | null = null;
 
   async function refreshPlayerState() {
     try {
@@ -37,7 +38,17 @@ export function listenToGEP(
         lastPlayerError = "";
         window.gameEventBus.trigger(MESSAGES.PLAYER_ERROR, null);
       }
-      window.gameEventBus.trigger(MESSAGES.PLAYER, player);
+      if (
+        !prevPlayer ||
+        player.x !== prevPlayer.x ||
+        player.y !== prevPlayer.y ||
+        player.z !== prevPlayer.z ||
+        player.r !== prevPlayer.r ||
+        player.mapName !== prevPlayer.mapName
+      ) {
+        prevPlayer = player;
+        window.gameEventBus.trigger(MESSAGES.PLAYER, player);
+      }
       setTimeout(refreshPlayerState, 50);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : (err as string);

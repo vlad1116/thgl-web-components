@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
-import leaflet, { Circle, PointExpression } from "leaflet";
+import leaflet, { PointExpression } from "leaflet";
 import { rotateCoordinate } from "./rotation";
 import type { ActorPlayer } from "@repo/lib/overwolf";
 import {
@@ -16,7 +16,7 @@ import { useSettingsStore } from "@repo/lib";
 import { useT } from "../(providers)";
 import { applyColorBlindTransform } from "./color-blind";
 import type { ColorBlindMode } from "@repo/lib";
-import { useThrottledEffect } from "../ui/useThrottleEffect";
+
 
 export function Player({
   appName,
@@ -33,7 +33,8 @@ export function Player({
 }): JSX.Element {
   const map = useMap();
   const marker = useRef<PlayerMarker | null>(null);
-  const rangeCircle = useRef<Circle | null>(null);
+  const rangeCircle = useRef<leaflet.Marker | null>(null);
+  const rangeCircleVisualRef = useRef<HTMLElement | null>(null);
   const followPlayerPosition = useSettingsStore((state) => state.followPlayer);
   const setMapName = useUserStore((state) => state.setMapName);
   const t = useT();
@@ -217,50 +218,87 @@ export function Player({
     run();
   }, [iconUrl, iconSize, colorBlindMode, colorBlindSeverity]);
 
-  useThrottledEffect(
-    () => {
-      if (!map?.mapName || !player || !marker.current) {
-        return;
-      }
+  // Use rAF to coalesce position updates into a single frame update.
+  // This prevents effects from piling up when multiple player positions
+  // arrive within the same animation frame.
+  const latestPlayerRef = useRef(player);
+  const rafRef = useRef<number>(0);
+  const lastPanTimeRef = useRef<number>(0);
+  latestPlayerRef.current = player;
+
+  // Interval between panTo calls. Each panTo animation runs for this duration,
+  // ensuring it completes before the next one starts. During animation, Leaflet
+  // moves the canvas via CSS (GPU-accelerated) without redrawing markers.
+  // Canvas markers only redraw once on moveend (~5 redraws/sec instead of ~60).
+  const PAN_INTERVAL = 200;
+
+  useEffect(() => {
+    if (!map?.mapName || !player || !marker.current) {
+      return;
+    }
+
+    // Cancel any pending rAF to prevent piling up
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      // Always read the latest player position (coalesces multiple updates)
+      const p = latestPlayerRef.current;
+      if (!p || !marker.current) return;
 
       // Apply rotation to player position if configured
-      let playerPosition: [number, number] = [player.x, player.y];
+      let playerPosition: [number, number] = [p.x, p.y];
       const rotationDegrees = map._rotationDegrees;
       const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
         playerPosition = rotateCoordinate(
-          [player.x, player.y],
+          [p.x, p.y],
           rotationDegrees,
           rotationCenter,
         );
       }
 
+      // Always update player marker position (DOM marker with CSS transition, cheap)
       marker.current.updatePosition({
-        ...player,
+        ...p,
         x: playerPosition[0],
         y: playerPosition[1],
       });
 
-      const isOnMap = !player.mapName || player.mapName === map.mapName;
+      const isOnMap = !p.mapName || p.mapName === map.mapName;
       if (!isOnMap) {
         return;
       }
 
-      if (followPlayerPosition) {
-        // Use Leaflet's built-in smooth panning
-        // panTo() internally stops previous animations with proper canvas clearing
-        // Duration of 0.5s provides smooth movement while allowing overlapping animations
+      const now = performance.now();
+      const shouldPan =
+        followPlayerPosition &&
+        now - lastPanTimeRef.current >= PAN_INTERVAL;
+
+      // Always update range circle position (DOM-based with CSS transition, no canvas redraws)
+      if (rangeCircle.current) {
+        rangeCircle.current.setLatLng(playerPosition);
+      }
+
+      if (shouldPan) {
+        lastPanTimeRef.current = now;
         map.panTo(playerPosition, {
           animate: true,
-          duration: 0.5,
+          duration: PAN_INTERVAL / 1000,
           easeLinearity: 1,
           noMoveStart: true,
         });
       }
-    },
-    [map?.mapName, player, followPlayerPosition],
-    50,
-  );
+    });
+
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+  }, [map?.mapName, player, followPlayerPosition]);
 
   useEffect(() => {
     if (!player?.mapName || !map) {
@@ -279,62 +317,82 @@ export function Player({
     }
   }, [player?.mapName]);
 
-  // Audio alert range circle
+  // Audio alert range circle — DOM-based marker with CSS transition for smooth movement.
+  // Uses a DivIcon styled as a circle instead of Leaflet Circle (vector layer) so that
+  // setLatLng only updates CSS transform (no canvas redraws) and the CSS transition
+  // smoothly interpolates position, matching the player marker's movement.
   useEffect(() => {
-    if (!map) return;
-
-    const shouldShow = showAudioAlertRange;
-
-    if (!shouldShow) {
+    if (!map || !showAudioAlertRange) {
       if (rangeCircle.current) {
         rangeCircle.current.remove();
         rangeCircle.current = null;
+        rangeCircleVisualRef.current = null;
       }
       return;
     }
 
-    // Apply rotation to player position if configured
-    let playerPosition: [number, number] = [player.x, player.y];
-    const rotationDegrees = map._rotationDegrees;
-    const rotationCenter = map._rotationCenter;
-    if (rotationDegrees && rotationCenter) {
-      playerPosition = rotateCoordinate(
-        [player.x, player.y],
-        rotationDegrees,
-        rotationCenter,
+    // Calculate pixel radius from game-unit radius at current zoom
+    const updateSize = () => {
+      const visual = rangeCircleVisualRef.current;
+      if (!visual || !map || !rangeCircle.current) return;
+      const latlng = rangeCircle.current.getLatLng();
+      const centerPx = map.latLngToLayerPoint(latlng);
+      const edgePx = map.latLngToLayerPoint(
+        leaflet.latLng(latlng.lat + audioAlertRange, latlng.lng),
       );
-    }
+      const pixelRadius = Math.abs(centerPx.y - edgePx.y);
+      const size = pixelRadius * 2;
+      visual.style.width = `${size}px`;
+      visual.style.height = `${size}px`;
+    };
 
     if (!rangeCircle.current) {
-      rangeCircle.current = leaflet.circle(playerPosition, {
-        radius: audioAlertRange,
-        color: "#22c55e",
-        weight: 2,
-        opacity: 0.8,
-        fillColor: "#22c55e",
-        fillOpacity: 0.1,
-        dashArray: "8, 8",
+      // Apply rotation to player position if configured
+      let playerPosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        playerPosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter,
+        );
+      }
+
+      rangeCircle.current = leaflet.marker(playerPosition, {
+        icon: leaflet.divIcon({
+          className: "",
+          iconSize: [0, 0],
+          html: `<div class="range-circle-visual" style="position:absolute;border-radius:50%;border:2px dashed rgba(34,197,94,0.8);background:rgba(34,197,94,0.1);box-sizing:border-box;pointer-events:none;transform:translate(-50%,-50%)"></div>`,
+        }),
         interactive: false,
+        pane: "overlayPane",
       });
       rangeCircle.current.addTo(map);
-    } else {
-      rangeCircle.current.setLatLng(playerPosition);
-      rangeCircle.current.setRadius(audioAlertRange);
+
+      // CSS transition for smooth movement matching player marker (0.2s linear)
+      const el = rangeCircle.current.getElement();
+      if (el) {
+        el.style.transition = "transform 0.2s linear";
+      }
+      rangeCircleVisualRef.current = el?.querySelector(
+        ".range-circle-visual",
+      ) as HTMLElement;
     }
 
+    // Update size for current zoom and when audioAlertRange changes
+    updateSize();
+    map.on("zoomend", updateSize);
+
     return () => {
+      map.off("zoomend", updateSize);
       if (rangeCircle.current) {
         rangeCircle.current.remove();
         rangeCircle.current = null;
+        rangeCircleVisualRef.current = null;
       }
     };
-  }, [
-    map,
-    player.x,
-    player.y,
-    showAudioAlertRange,
-    audioAlertRange,
-  ]);
+  }, [map, showAudioAlertRange, audioAlertRange]);
 
   return <></>;
 }

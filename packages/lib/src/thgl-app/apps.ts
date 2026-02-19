@@ -158,6 +158,32 @@ export function setWindowMode(mode: WindowMode) {
 }
 
 let initialized = false;
+let prevPlayer: { x: number; y: number; z: number; r: number | null; mapName?: string } | null = null;
+let prevActors: { address: number; x: number; y: number; z: number; hidden?: boolean }[] = [];
+let lastActorUpdateTime = 0;
+const ACTOR_THROTTLE_MS = 200;
+
+function actorsChanged(
+  prev: { address: number; x: number; y: number; z: number; hidden?: boolean }[],
+  next: { address: number; x: number; y: number; z: number; hidden?: boolean }[],
+): boolean {
+  if (prev.length !== next.length) return true;
+  for (let i = 0; i < prev.length; i++) {
+    const a = prev[i];
+    const b = next[i];
+    if (
+      a.address !== b.address ||
+      a.x !== b.x ||
+      a.y !== b.y ||
+      a.z !== b.z ||
+      a.hidden !== b.hidden
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function initializeApp(role: "client" | "dashboard" = "client") {
   if (initialized) {
     return;
@@ -176,13 +202,33 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           // Client (Overlay/Desktop) specific handlers
           if (role === "client") {
             if (message.action === "player") {
-              gameState.setPlayer({
-                ...message.payload,
-                address: 0,
-                type: "player",
-              });
+              const p = message.payload;
+              if (
+                !prevPlayer ||
+                p.x !== prevPlayer.x ||
+                p.y !== prevPlayer.y ||
+                p.z !== prevPlayer.z ||
+                p.r !== prevPlayer.r ||
+                p.mapName !== prevPlayer.mapName
+              ) {
+                prevPlayer = p;
+                gameState.setPlayer({
+                  ...p,
+                  address: 0,
+                  type: "player",
+                });
+              }
             } else if (message.action === "actors") {
-              gameState.setActors(message.payload);
+              const now = performance.now();
+              const actors = message.payload;
+              if (
+                now - lastActorUpdateTime >= ACTOR_THROTTLE_MS &&
+                actorsChanged(prevActors, actors)
+              ) {
+                prevActors = actors;
+                lastActorUpdateTime = now;
+                gameState.setActors(actors);
+              }
             } else if (message.action === "characterData") {
               gameState.setCharacter(message.payload);
             } else if (message.action === "windowModeChanged") {
