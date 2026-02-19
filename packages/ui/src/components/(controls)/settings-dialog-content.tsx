@@ -10,7 +10,6 @@ import {
   writeFileOverwolf,
   saveFile,
   useSettingsStore,
-  useAccountStore,
   openFileOrFiles,
   FiltersConfig,
 } from "@repo/lib";
@@ -52,10 +51,6 @@ export function SettingsDialogContent({
 }) {
   const settingsStore = useSettingsStore();
   const profileSettings = useSettingsStore((state) => state);
-  const hasPreviewAccess = useAccountStore(
-    (state) => state.perks.previewReleaseAccess,
-  );
-
   return (
     <DialogContent
       onMouseDown={(e) => e.stopPropagation()}
@@ -510,20 +505,6 @@ export function SettingsDialogContent({
                 Configure per-filter using the settings icon next to each
                 filter.
               </p>
-              {!hasPreviewAccess && (
-                <p className="text-amber-500 text-xs">
-                  This feature requires{" "}
-                  <a
-                    href="https://www.th.gl/support-me"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-amber-400"
-                  >
-                    Preview Release
-                  </a>{" "}
-                  access.
-                </p>
-              )}
               <div className="flex items-center gap-2 justify-between">
                 <Label htmlFor="label-text-size">Label Text Size</Label>
                 <div className="flex items-center gap-2">
@@ -537,7 +518,6 @@ export function SettingsDialogContent({
                     onValueChange={(values) => {
                       settingsStore.setLabelTextSize(values[0]);
                     }}
-                    disabled={!hasPreviewAccess}
                   />
                   <span className="text-xs text-muted-foreground w-10 text-right">
                     {profileSettings.labelTextSize.toFixed(1)}x

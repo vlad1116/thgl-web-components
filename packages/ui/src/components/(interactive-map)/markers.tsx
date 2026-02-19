@@ -19,7 +19,6 @@ import {
   getNodeId,
   MarkerOptions,
   Spawn,
-  useAccountStore,
   useConnectionStore,
   useGameState,
   useSettingsStore,
@@ -256,9 +255,6 @@ function MarkersContent({
     (state) => state.labelModeByFilter,
   );
   const labelTextSize = useSettingsStore((state) => state.labelTextSize);
-  const hasPreviewAccess = useAccountStore(
-    (state) => state.perks.previewReleaseAccess,
-  );
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
   const typeToGroup = useMemo(() => {
     const mapTypeToGroup = new Map<string, string>();
@@ -752,7 +748,7 @@ function MarkersContent({
 
     // Pre-calculate constants for audio/label range checks
     const checkAudio = audioAlertsEnabled;
-    const checkLabels = hasPreviewAccess;
+    const checkLabels = Object.keys(labelModeByFilter).length > 0;
     // Only compute audio range when audio or labels are active
     const needsAudioRange = checkAudio || checkLabels;
     const audioRangeSq = needsAudioRange
@@ -960,7 +956,6 @@ function MarkersContent({
     audioAlertByFilter,
     audioAlertSound,
     audioAlertVolume,
-    hasPreviewAccess,
     labelModeByFilter,
     labelTextSize,
     shouldShowLabel,

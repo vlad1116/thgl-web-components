@@ -6,7 +6,7 @@ import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
-import { useSettingsStore, useAccountStore, type LabelMode } from "@repo/lib";
+import { useSettingsStore, type LabelMode } from "@repo/lib";
 import { useMemo, useState } from "react";
 import { FilterTooltip } from "./filter-tooltip";
 import {
@@ -54,10 +54,6 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const labelModeByFilter = useSettingsStore((s) => s.labelModeByFilter);
   const setLabelModeByFilter = useSettingsStore((s) => s.setLabelModeByFilter);
   const setLabelModeByFilters = useSettingsStore((s) => s.setLabelModeByFilters);
-  const hasPreviewAccess = useAccountStore(
-    (s) => s.perks.previewReleaseAccess,
-  );
-
   // For groups, calculate if all/some/none have audio enabled
   const groupAudioState = useMemo(() => {
     if (!isGroup) return null;
@@ -208,7 +204,6 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
                 setLabelModeByFilter(props.filterId, value);
               }
             }}
-            disabled={!hasPreviewAccess}
           >
             <SelectTrigger className="w-24 h-7 text-xs">
               <SelectValue
@@ -226,22 +221,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
           </Select>
         </div>
 
-        {!hasPreviewAccess && (
-          <p className="text-xs text-muted-foreground">
-            Labels require{" "}
-            <a
-              href="https://www.th.gl/support-me"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground"
-            >
-              Preview Release
-            </a>{" "}
-            access.
-          </p>
-        )}
-
-        {isGroup && groupLabelMode === "mixed" && hasPreviewAccess && (
+        {isGroup && groupLabelMode === "mixed" && (
           <p className="text-xs text-muted-foreground">
             Filters have different label settings.
           </p>
