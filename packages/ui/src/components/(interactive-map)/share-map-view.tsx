@@ -13,7 +13,7 @@ import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import { toast } from "sonner";
 import { useMap } from "./store";
-import { useCoordinates } from "../(providers)";
+import { useCoordinates, useI18n } from "../(providers)";
 import { mapArrayValues, useUserStore } from "@repo/lib";
 
 export function ShareMapView({
@@ -30,6 +30,7 @@ export function ShareMapView({
   domain: string;
 }) {
   const map = useMap();
+  const { dict } = useI18n();
 
   const [withCenter, setWithCenter] = useState(true);
   const [withClickCenter, setWithClickCenter] = useState(true);
@@ -40,7 +41,10 @@ export function ShareMapView({
   const { filters, globalFilters } = useUserStore();
 
   const url = useMemo(() => {
-    let url = `${location.protocol}//${location.host}${location.pathname}?map=${mapName}`;
+    const pathname = location.pathname.includes("/maps/")
+      ? location.pathname
+      : `/maps/${encodeURIComponent(dict[mapName] || mapName)}`;
+    let url = `https://${domain}.th.gl${pathname}?map=${mapName}`;
     if (!map) {
       return url;
     }
@@ -73,6 +77,8 @@ export function ShareMapView({
     map,
     mapName,
     center,
+    domain,
+    dict,
     withCenter,
     withClickCenter,
     withZoom,
