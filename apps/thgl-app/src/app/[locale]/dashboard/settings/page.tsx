@@ -61,12 +61,12 @@ const GPU_FLAG_KEYS: Record<GpuFlag, { label: string; desc: string }> = {
 
 const CLOSE_ACTION_KEYS: Record<CloseAction, { label: string; desc: string }> = {
   ask: { label: "settings.closeAction.ask", desc: "settings.closeAction.askDesc" },
-  minimizeToTray: { label: "settings.closeAction.minimize", desc: "settings.closeAction.minimizeDesc" },
+  closeWindow: { label: "settings.closeAction.closeWindow", desc: "settings.closeAction.closeWindowDesc" },
   exit: { label: "settings.closeAction.exit", desc: "settings.closeAction.exitDesc" },
 };
 
 const GPU_FLAGS: GpuFlag[] = ["none", "disable-direct-composition-video", "disable-gpu-compositing", "disable-gpu"];
-const CLOSE_ACTIONS: CloseAction[] = ["ask", "minimizeToTray", "exit"];
+const CLOSE_ACTIONS: CloseAction[] = ["ask", "closeWindow", "exit"];
 
 export default function SettingsPage() {
   const [showDevTools, setShowDevTools] = useState(false);
@@ -430,9 +430,21 @@ export default function SettingsPage() {
                         ?.filter((c) => c.role === "client")
                         .map((client) => {
                           // Extract a friendly name from the URL
-                          const url = new URL(client.href);
-                          const pathParts = url.pathname.split("/").filter(Boolean);
-                          const name = pathParts[pathParts.length - 1] || "window";
+                          // e.g., /apps/palia → "palia", /apps/palia/overlay → "palia (overlay)"
+                          let name = "window";
+                          try {
+                            const url = new URL(client.href);
+                            const appsIdx = url.pathname.indexOf("/apps/");
+                            if (appsIdx !== -1) {
+                              const appParts = url.pathname.substring(appsIdx + 6).split("/").filter(Boolean);
+                              name = appParts[0] || "window";
+                              if (appParts[1]) {
+                                name += ` (${appParts[1]})`;
+                              }
+                            }
+                          } catch {
+                            // Invalid URL, keep default name
+                          }
                           return (
                             <Button
                               key={client.id}

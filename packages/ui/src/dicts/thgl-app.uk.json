@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Оберіть поведінку закриття",
     "settings.closeAction.ask": "Запитувати щоразу",
     "settings.closeAction.askDesc": "Показувати діалог із запитанням, що робити при закритті вікна.",
-    "settings.closeAction.minimize": "Згорнути в трей",
-    "settings.closeAction.minimizeDesc": "Сховати вікно та залишити додаток працювати у фоновому режимі.",
+    "settings.closeAction.closeWindow": "Згорнути в трей",
+    "settings.closeAction.closeWindowDesc": "Сховати вікно та залишити додаток працювати у фоновому режимі.",
     "settings.closeAction.exit": "Закрити додаток",
     "settings.closeAction.exitDesc": "Повністю завершити роботу додатка при закритті вікна.",
 

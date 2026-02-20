@@ -12,7 +12,6 @@ import {
   closeWebViews,
   openDesktopWebView,
   openDevToolsForUrl,
-  setWindowMode as setWindowModeNative,
   useLiveState,
   useTHGLAppState,
 } from "@repo/lib/thgl-app";
@@ -27,8 +26,6 @@ export function AppCard({ game }: { game: Game }) {
     (state) => state.toggleDisabledApp,
   );
   const connectedClients = useLiveState((state) => state.connectedClients);
-  const windowMode = useLiveState((state) => state.windowMode);
-  const setWindowMode = useLiveState((state) => state.setWindowMode);
   const isDisabled = disabledApps.includes(game.id);
   const companion = game.companion;
   if (!companion) {
@@ -97,24 +94,8 @@ export function AppCard({ game }: { game: Game }) {
           size="sm"
           className="w-full"
           variant={isRunning ? "secondary" : "default"}
-          onClick={async () => {
-            // Determine new mode based on what's currently open
-            let newMode: "overlay" | "desktop" | "both";
-            if (hasOverlayOpen) {
-              // Overlay is open, adding desktop → both
-              newMode = "both";
-            } else {
-              // Nothing or only desktop open → desktop
-              newMode = "desktop";
-            }
-
-            // Update mode if desktop isn't already open
-            if (!hasDesktopOpen) {
-              setWindowMode(newMode);
-              await setWindowModeNative(newMode).catch(console.error);
-            }
-
-            // Open desktop window
+          onClick={() => {
+            // Open desktop window (C++ handler updates window mode automatically)
             openDesktopWebView(companion.desktopURL, game.title);
           }}
         >

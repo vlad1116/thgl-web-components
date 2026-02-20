@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "เลือกพฤติกรรมการปิด",
     "settings.closeAction.ask": "ถามทุกครั้ง",
     "settings.closeAction.askDesc": "แสดงกล่องโต้ตอบถามว่าจะทำอย่างไรเมื่อคุณปิดหน้าต่าง",
-    "settings.closeAction.minimize": "ย่อเล็กสุดไปที่ถาดระบบ",
-    "settings.closeAction.minimizeDesc": "ซ่อนหน้าต่างและให้แอปทำงานอยู่เบื้องหลัง",
+    "settings.closeAction.closeWindow": "ย่อเล็กสุดไปที่ถาดระบบ",
+    "settings.closeAction.closeWindowDesc": "ซ่อนหน้าต่างและให้แอปทำงานอยู่เบื้องหลัง",
     "settings.closeAction.exit": "ออกจากแอปพลิเคชัน",
     "settings.closeAction.exitDesc": "ปิดแอปทั้งหมดเมื่อคุณปิดหน้าต่าง",
 

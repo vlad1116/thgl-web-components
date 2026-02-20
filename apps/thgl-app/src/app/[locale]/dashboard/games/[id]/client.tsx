@@ -4,8 +4,7 @@ import { games, Game, DiscordMessageData, localizePath } from "@repo/lib";
 import {
   openDesktopWebView,
   openInBrowser,
-  openOverlayWebView,
-  setWindowMode as setWindowModeNative,
+  showOverlay,
   useLiveState,
   useTHGLAppState,
 } from "@repo/lib/thgl-app";
@@ -91,7 +90,6 @@ export function GamePageClient({
   );
 
   const connectedClients = useLiveState((state) => state.connectedClients);
-  const setWindowMode = useLiveState((state) => state.setWindowMode);
 
   // Check what windows are currently open for this game
   const baseURL = game.companion?.baseURL ?? "";
@@ -104,47 +102,14 @@ export function GamePageClient({
   const hasOverlayOpen = openClients.some((client) => client.href.includes("/overlay"));
   const hasDesktopOpen = openClients.some((client) => !client.href.includes("/overlay"));
 
-  const handleOpenOverlay = async () => {
-    if (!game.companion?.overlayURL) return;
-
-    // Determine new mode based on what's currently open
-    let newMode: "overlay" | "desktop" | "both";
-    if (hasDesktopOpen) {
-      // Desktop is open, adding overlay → both
-      newMode = "both";
-    } else {
-      // Nothing or only overlay open → overlay
-      newMode = "overlay";
-    }
-
-    // Update mode if it needs to change
-    if (!hasOverlayOpen) {
-      setWindowMode(newMode);
-      await setWindowModeNative(newMode).catch(console.error);
-    }
-
-    openOverlayWebView(localizePath(game.companion.overlayURL, locale), `${game.title} Overlay`);
+  const handleOpenOverlay = () => {
+    // C++ handler shows the overlay and updates window mode automatically
+    showOverlay();
   };
 
-  const handleOpenDesktop = async () => {
+  const handleOpenDesktop = () => {
     if (!game.companion?.desktopURL) return;
-
-    // Determine new mode based on what's currently open
-    let newMode: "overlay" | "desktop" | "both";
-    if (hasOverlayOpen) {
-      // Overlay is open, adding desktop → both
-      newMode = "both";
-    } else {
-      // Nothing or only desktop open → desktop
-      newMode = "desktop";
-    }
-
-    // Update mode if it needs to change
-    if (!hasDesktopOpen) {
-      setWindowMode(newMode);
-      await setWindowModeNative(newMode).catch(console.error);
-    }
-
+    // C++ handler updates window mode automatically
     openDesktopWebView(localizePath(game.companion.desktopURL, locale), `${game.title} Desktop`);
   };
 

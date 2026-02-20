@@ -78,23 +78,23 @@ export function AppHeader({
       setIsCloseDialogOpen(true);
       return;
     }
-    if (closeAction === "minimizeToTray") {
-      window.chrome.webview.postMessage("minimizeToTray");
+    if (closeAction === "closeWindow") {
+      window.chrome.webview.postMessage("closeWindow");
     } else {
       window.chrome.webview.postMessage("exitApp");
     }
   };
 
-  const handleCloseChoice = (choice: "minimizeToTray" | "exit") => {
+  const handleCloseChoice = (choice: "closeWindow" | "exit") => {
     if (rememberChoice) {
-      const action: CloseAction = choice === "minimizeToTray" ? "minimizeToTray" : "exit";
+      const action: CloseAction = choice === "closeWindow" ? "closeWindow" : "exit";
       setCloseActionApi(action)
         .then(() => setCloseAction(action))
         .catch(console.error);
     }
     setIsCloseDialogOpen(false);
-    if (choice === "minimizeToTray") {
-      window.chrome.webview.postMessage("minimizeToTray");
+    if (choice === "closeWindow") {
+      window.chrome.webview.postMessage("closeWindow");
     } else {
       window.chrome.webview.postMessage("exitApp");
     }
@@ -381,13 +381,13 @@ export function AppHeader({
             <button
               type="button"
               className="flex items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent transition-colors"
-              onClick={() => handleCloseChoice("minimizeToTray")}
+              onClick={() => handleCloseChoice("closeWindow")}
             >
               <Minus className="h-5 w-5 shrink-0 text-muted-foreground" />
               <div>
-                <div className="text-sm font-medium">Minimize to tray</div>
+                <div className="text-sm font-medium">Close this window</div>
                 <div className="text-xs text-muted-foreground">
-                  Keep running in the background
+                  Close the window, app keeps running in background
                 </div>
               </div>
             </button>

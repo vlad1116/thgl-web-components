@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "選擇關閉行為",
     "settings.closeAction.ask": "每次詢問",
     "settings.closeAction.askDesc": "關閉視窗時顯示對話方塊詢問要執行的動作。",
-    "settings.closeAction.minimize": "最小化至系統匣",
-    "settings.closeAction.minimizeDesc": "隱藏視窗並讓應用程式在背景繼續執行。",
+    "settings.closeAction.closeWindow": "最小化至系統匣",
+    "settings.closeAction.closeWindowDesc": "隱藏視窗並讓應用程式在背景繼續執行。",
     "settings.closeAction.exit": "結束應用程式",
     "settings.closeAction.exitDesc": "關閉視窗時完全結束應用程式。",
 

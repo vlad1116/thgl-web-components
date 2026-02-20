@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Kapatma davran\u0131\u015f\u0131n\u0131 se\u00e7in",
     "settings.closeAction.ask": "Her seferinde sor",
     "settings.closeAction.askDesc": "Bir pencereyi kapatt\u0131\u011f\u0131n\u0131zda ne yap\u0131laca\u011f\u0131n\u0131 soran bir ileti\u015fim kutusu g\u00f6sterin.",
-    "settings.closeAction.minimize": "Sistem tepsisine k\u00fc\u00e7\u00fclt",
-    "settings.closeAction.minimizeDesc": "Pencereyi gizle ve uygulamay\u0131 arka planda \u00e7al\u0131\u015fmaya devam ettir.",
+    "settings.closeAction.closeWindow": "Sistem tepsisine k\u00fc\u00e7\u00fclt",
+    "settings.closeAction.closeWindowDesc": "Pencereyi gizle ve uygulamay\u0131 arka planda \u00e7al\u0131\u015fmaya devam ettir.",
     "settings.closeAction.exit": "Uygulamadan \u00e7\u0131k",
     "settings.closeAction.exitDesc": "Bir pencereyi kapatt\u0131\u011f\u0131n\u0131zda uygulaman\u0131n tamam\u0131ndan \u00e7\u0131k\u0131n.",
 

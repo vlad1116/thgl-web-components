@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Select close behavior",
     "settings.closeAction.ask": "Ask every time",
     "settings.closeAction.askDesc": "Show a dialog asking what to do when you close a window.",
-    "settings.closeAction.minimize": "Minimize to tray",
-    "settings.closeAction.minimizeDesc": "Hide the window and keep the app running in the background.",
+    "settings.closeAction.closeWindow": "Close this window",
+    "settings.closeAction.closeWindowDesc": "Close the window. The app keeps running in the background.",
     "settings.closeAction.exit": "Exit application",
     "settings.closeAction.exitDesc": "Quit the entire app when you close a window.",
 

@@ -250,6 +250,14 @@ export type WEBVIEW_SEND_MESSAGE =
       payload: {
         locale: string;
       };
+    }
+  | {
+      action: "showOverlay";
+      payload: {};
+    }
+  | {
+      action: "hideOverlay";
+      payload: {};
     };
 
 // GPU acceleration flags for WebView2
@@ -263,7 +271,7 @@ export type GpuFlag =
 // Close button behavior
 export type CloseAction =
   | "ask" // Show dialog asking user (default)
-  | "minimizeToTray" // Minimize to system tray
+  | "closeWindow" // Close this window (destroy it, app keeps running)
   | "exit"; // Exit the application
 
 export function onWebviewMessage(

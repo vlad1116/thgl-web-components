@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Sélectionner le comportement de fermeture",
     "settings.closeAction.ask": "Demander à chaque fois",
     "settings.closeAction.askDesc": "Afficher une boîte de dialogue demandant quoi faire lorsque vous fermez une fenêtre.",
-    "settings.closeAction.minimize": "Réduire dans la zone de notification",
-    "settings.closeAction.minimizeDesc": "Masquer la fenêtre et garder l'application en arrière-plan.",
+    "settings.closeAction.closeWindow": "Réduire dans la zone de notification",
+    "settings.closeAction.closeWindowDesc": "Masquer la fenêtre et garder l'application en arrière-plan.",
     "settings.closeAction.exit": "Quitter l'application",
     "settings.closeAction.exitDesc": "Fermer complètement l'application lorsque vous fermez une fenêtre.",
 

@@ -26,6 +26,18 @@ export function openOverlayWebView(url: string, title: string) {
     },
   });
 }
+export function showOverlay() {
+  return postWebviewMessage({
+    action: "showOverlay",
+    payload: {},
+  });
+}
+export function hideOverlay() {
+  return postWebviewMessage({
+    action: "hideOverlay",
+    payload: {},
+  });
+}
 export function updateHotkeys(hotkeys: Record<string, string>) {
   return postWebviewMessage({
     action: "updateHotkeys",

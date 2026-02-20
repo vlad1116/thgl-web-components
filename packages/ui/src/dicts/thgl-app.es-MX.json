@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Seleccionar comportamiento al cerrar",
     "settings.closeAction.ask": "Preguntar siempre",
     "settings.closeAction.askDesc": "Mostrar un diálogo preguntando qué hacer al cerrar una ventana.",
-    "settings.closeAction.minimize": "Minimizar a la bandeja",
-    "settings.closeAction.minimizeDesc": "Ocultar la ventana y mantener la aplicación en segundo plano.",
+    "settings.closeAction.closeWindow": "Minimizar a la bandeja",
+    "settings.closeAction.closeWindowDesc": "Ocultar la ventana y mantener la aplicación en segundo plano.",
     "settings.closeAction.exit": "Salir de la aplicación",
     "settings.closeAction.exitDesc": "Cerrar completamente la aplicación al cerrar una ventana.",
 

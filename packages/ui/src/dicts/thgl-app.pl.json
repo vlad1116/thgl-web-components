@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Wybierz działanie zamknięcia",
     "settings.closeAction.ask": "Pytaj za każdym razem",
     "settings.closeAction.askDesc": "Pokaż okno dialogowe z pytaniem, co zrobić po zamknięciu okna.",
-    "settings.closeAction.minimize": "Minimalizuj do zasobnika",
-    "settings.closeAction.minimizeDesc": "Ukryj okno i pozostaw aplikację działającą w tle.",
+    "settings.closeAction.closeWindow": "Minimalizuj do zasobnika",
+    "settings.closeAction.closeWindowDesc": "Ukryj okno i pozostaw aplikację działającą w tle.",
     "settings.closeAction.exit": "Zamknij aplikację",
     "settings.closeAction.exitDesc": "Zakończ całą aplikację po zamknięciu okna.",
 

@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "閉じる動作を選択",
     "settings.closeAction.ask": "毎回確認する",
     "settings.closeAction.askDesc": "ウィンドウを閉じるときに動作を確認するダイアログを表示します。",
-    "settings.closeAction.minimize": "トレイに最小化",
-    "settings.closeAction.minimizeDesc": "ウィンドウを非表示にし、バックグラウンドでアプリを実行し続けます。",
+    "settings.closeAction.closeWindow": "トレイに最小化",
+    "settings.closeAction.closeWindowDesc": "ウィンドウを非表示にし、バックグラウンドでアプリを実行し続けます。",
     "settings.closeAction.exit": "アプリケーションを終了",
     "settings.closeAction.exitDesc": "ウィンドウを閉じるとアプリ全体を終了します。",
 

@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Schließverhalten auswählen",
     "settings.closeAction.ask": "Jedes Mal fragen",
     "settings.closeAction.askDesc": "Zeigt einen Dialog, der fragt, was beim Schließen eines Fensters passieren soll.",
-    "settings.closeAction.minimize": "In den Infobereich minimieren",
-    "settings.closeAction.minimizeDesc": "Fenster ausblenden und die App im Hintergrund weiterlaufen lassen.",
+    "settings.closeAction.closeWindow": "In den Infobereich minimieren",
+    "settings.closeAction.closeWindowDesc": "Fenster ausblenden und die App im Hintergrund weiterlaufen lassen.",
     "settings.closeAction.exit": "Anwendung beenden",
     "settings.closeAction.exitDesc": "Die gesamte App beim Schließen eines Fensters beenden.",
 

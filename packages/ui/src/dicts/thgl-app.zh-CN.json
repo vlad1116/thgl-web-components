@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "选择关闭行为",
     "settings.closeAction.ask": "每次询问",
     "settings.closeAction.askDesc": "关闭窗口时弹出对话框询问如何操作。",
-    "settings.closeAction.minimize": "最小化到托盘",
-    "settings.closeAction.minimizeDesc": "隐藏窗口并在后台继续运行应用。",
+    "settings.closeAction.closeWindow": "最小化到托盘",
+    "settings.closeAction.closeWindowDesc": "隐藏窗口并在后台继续运行应用。",
     "settings.closeAction.exit": "退出应用",
     "settings.closeAction.exitDesc": "关闭窗口时退出整个应用。",
 

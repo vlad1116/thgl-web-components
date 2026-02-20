@@ -25,8 +25,8 @@
     "settings.closeActionPlaceholder": "Seleziona il comportamento di chiusura",
     "settings.closeAction.ask": "Chiedi ogni volta",
     "settings.closeAction.askDesc": "Mostra una finestra di dialogo che chiede cosa fare quando chiudi una finestra.",
-    "settings.closeAction.minimize": "Riduci nell'area di notifica",
-    "settings.closeAction.minimizeDesc": "Nascondi la finestra e mantieni l'app in esecuzione in background.",
+    "settings.closeAction.closeWindow": "Riduci nell'area di notifica",
+    "settings.closeAction.closeWindowDesc": "Nascondi la finestra e mantieni l'app in esecuzione in background.",
     "settings.closeAction.exit": "Esci dall'applicazione",
     "settings.closeAction.exitDesc": "Chiudi completamente l'app quando chiudi una finestra.",
 
