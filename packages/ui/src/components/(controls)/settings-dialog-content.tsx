@@ -33,6 +33,8 @@ import { Slider } from "../ui/slider";
 import { ProfileManager } from "./profile-manager";
 import { Play } from "lucide-react";
 import { playAlertSound, ALERT_SOUND_OPTIONS } from "./audio-alert";
+import { UploadFilter } from "../(interactive-map)/upload-filter";
+import { AddSharedFilter } from "../(interactive-map)/add-shared-filter";
 
 export function SettingsDialogContent({
   activeApp,
@@ -230,6 +232,10 @@ export function SettingsDialogContent({
             >
               Reset
             </Button>
+          </div>
+          <div className="flex items-center space-x-2">
+            <UploadFilter />
+            <AddSharedFilter />
           </div>
           <Separator />
           <h4 className="text-md font-semibold">User Interface</h4>

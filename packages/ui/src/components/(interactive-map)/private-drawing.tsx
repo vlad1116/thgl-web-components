@@ -1433,8 +1433,17 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         </form>
         <Separator className="my-2" />
         <div className="flex items-center space-x-2 mt-2">
-          <UploadFilter />
-          <AddSharedFilter />
+          <UploadFilter
+            mapName={mapName}
+            onUploaded={(name) =>
+              setFilters([...filters.filter((f) => f !== name), name])
+            }
+          />
+          <AddSharedFilter
+            onFilterAdded={(name) =>
+              setFilters([...filters.filter((f) => f !== name), name])
+            }
+          />
         </div>
       </PopoverContent>
     </Popover>

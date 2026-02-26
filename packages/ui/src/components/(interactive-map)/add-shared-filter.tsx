@@ -15,19 +15,23 @@ import {
   getSharedFilterByCode,
   type DrawingsAndNodes,
   useSettingsStore,
-  useUserStore,
 } from "@repo/lib";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
-export function AddSharedFilter() {
+export function AddSharedFilter({
+  onFilterAdded,
+}: { onFilterAdded?: (filterName: string) => void } = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [shareCode, setShareCode] = useState("");
   const addMyFilter = useSettingsStore((state) => state.addMyFilter);
   const [open, setOpen] = useState(false);
-  const filters = useUserStore((state) => state.filters);
-  const setFilters = useUserStore((state) => state.setFilters);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,7 +44,7 @@ export function AddSharedFilter() {
       const data = (await response.json()) as DrawingsAndNodes;
       addMyFilter({ ...data, url: blob.url });
       toast.success("Shared filter added successfully");
-      setFilters([...filters.filter((f) => f !== data.name), data.name]);
+      onFilterAdded?.(data.name);
 
       setOpen(false);
     } catch (error) {
@@ -70,16 +74,18 @@ export function AddSharedFilter() {
         <DialogHeader>
           <DialogTitle>Add Shared Filter</DialogTitle>
           <div className="text-xs text-muted-foreground">
-            <Tooltip delayDuration={200} disableHoverableContent>
-              <TooltipTrigger asChild>
-                <span className="underline cursor-help">What is this?</span>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-[360px]">
-                The code for the shared filters is available in the menu next to
-                the filter. Other users can import the filters including all
-                nodes and drawings by entering the code.
-              </TooltipContent>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip delayDuration={200} disableHoverableContent>
+                <TooltipTrigger asChild>
+                  <span className="underline cursor-help">What is this?</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[360px]">
+                  The code for the shared filters is available in the menu next
+                  to the filter. Other users can import the filters including
+                  all nodes and drawings by entering the code.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </DialogHeader>
         <section className="space-y-4 overflow-hidden">

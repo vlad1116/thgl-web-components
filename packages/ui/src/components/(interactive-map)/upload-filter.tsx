@@ -2,16 +2,16 @@ import {
   type DrawingsAndNodes,
   openFileOrFiles,
   useSettingsStore,
-  useUserStore,
 } from "@repo/lib";
 import { Button } from "../ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
-export function UploadFilter() {
+export function UploadFilter({
+  mapName = "",
+  onUploaded,
+}: { mapName?: string; onUploaded?: (filterName: string) => void } = {}) {
   const addMyFilter = useSettingsStore((state) => state.addMyFilter);
-  const mapName = useUserStore((state) => state.mapName);
-  const toggleFilter = useUserStore((state) => state.toggleFilter);
 
   return (
     <Button
@@ -82,7 +82,7 @@ export function UploadFilter() {
             }
 
             addMyFilter(myFilter);
-            toggleFilter(myFilter.name);
+            onUploaded?.(myFilter.name);
             toast(
               `Imported filter: ${myFilter.name
                 .replace("private_", "")
