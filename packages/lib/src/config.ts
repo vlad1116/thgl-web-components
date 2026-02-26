@@ -330,7 +330,9 @@ export const fetchDict = conditionalCache(
       `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
     );
     if (!res.ok) {
-      throw new Error(`Failed to fetch dict ${appName}/${locale}: ${res.status}`);
+      throw new Error(
+        `Failed to fetch dict ${appName}/${locale}: ${res.status}`,
+      );
     }
     return res.json();
   },
