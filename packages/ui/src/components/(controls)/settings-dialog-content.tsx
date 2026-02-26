@@ -167,75 +167,83 @@ export function SettingsDialogContent({
           <p className="text-muted-foreground text-xs">
             You have {settingsStore.myFilters.length} filters.
           </p>
-          <div className="flex items-center space-x-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                const fileName = `${activeApp}_My_Filters_${Date.now()}.json`;
-                if (typeof overwolf === "undefined") {
-                  const blob = new Blob(
-                    [JSON.stringify(settingsStore.myFilters)],
-                    {
-                      type: "text/json",
-                    },
-                  );
-                  saveFile(blob, fileName);
-                } else {
-                  writeFileOverwolf(
-                    JSON.stringify(settingsStore.myFilters),
-                    overwolf.io.paths.documents + "\\the-hidden-gaming-lair",
-                    fileName,
-                  );
-                }
-              }}
-            >
-              Backup
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={async () => {
-                const file = await openFileOrFiles();
-                if (!file) {
-                  return;
-                }
-                const reader = new FileReader();
-                reader.addEventListener("load", (loadEvent) => {
-                  const text = loadEvent.target?.result;
-                  if (!text || typeof text !== "string") {
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              Backup &amp; Restore
+            </p>
+            <div className="flex items-center space-x-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  const fileName = `${activeApp}_My_Filters_${Date.now()}.json`;
+                  if (typeof overwolf === "undefined") {
+                    const blob = new Blob(
+                      [JSON.stringify(settingsStore.myFilters)],
+                      {
+                        type: "text/json",
+                      },
+                    );
+                    saveFile(blob, fileName);
+                  } else {
+                    writeFileOverwolf(
+                      JSON.stringify(settingsStore.myFilters),
+                      overwolf.io.paths.documents + "\\the-hidden-gaming-lair",
+                      fileName,
+                    );
+                  }
+                }}
+              >
+                Export All
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  const file = await openFileOrFiles();
+                  if (!file) {
                     return;
                   }
-                  try {
-                    let myFilters = JSON.parse(text);
-                    if (!Array.isArray(myFilters)) {
-                      myFilters = [];
+                  const reader = new FileReader();
+                  reader.addEventListener("load", (loadEvent) => {
+                    const text = loadEvent.target?.result;
+                    if (!text || typeof text !== "string") {
+                      return;
                     }
+                    try {
+                      let myFilters = JSON.parse(text);
+                      if (!Array.isArray(myFilters)) {
+                        myFilters = [];
+                      }
 
-                    settingsStore.setMyFilters(myFilters);
-                    toast.success("My filters restored");
-                  } catch (error) {
-                    // Do nothing
-                  }
-                });
-                reader.readAsText(file);
-              }}
-            >
-              Restore
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                settingsStore.setMyFilters([]);
-                toast.warning("My filters reset");
-              }}
-            >
-              Reset
-            </Button>
-          </div>
-          <div className="flex items-center space-x-2">
-            <UploadFilter />
-            <AddSharedFilter />
+                      settingsStore.setMyFilters(myFilters);
+                      toast.success("My filters restored");
+                    } catch (error) {
+                      // Do nothing
+                    }
+                  });
+                  reader.readAsText(file);
+                }}
+              >
+                Import All
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  settingsStore.setMyFilters([]);
+                  toast.warning("My filters reset");
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">
+              Add Filter
+            </p>
+            <div className="flex items-center space-x-2">
+              <UploadFilter />
+              <AddSharedFilter />
+            </div>
           </div>
           <Separator />
           <h4 className="text-md font-semibold">User Interface</h4>
