@@ -75,6 +75,10 @@ function parseItemCoords(
     if (!isNaN(z)) return [x, y, z];
   }
 
+  // Preserve z from fallback when ID doesn't include it
+  if (fallback.length === 3) {
+    return [x, y, fallback[2]];
+  }
   return [x, y];
 }
 
