@@ -349,13 +349,29 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
       })
       .catch(console.error);
 
-    // Sync initial hotkeys to C++ and subscribe to changes
-    syncHotkeysToNative();
+    // Sync hotkeys to C++ after store hydration and on changes.
+    // Uses a delayed confirmation re-sync to handle WebView2 IPC timing.
     let prevHotkeys = useSettingsStore.getState().hotkeys;
+    let hasSynced = false;
+    let confirmTimer: ReturnType<typeof setTimeout> | null = null;
+    const syncWithConfirm = () => {
+      syncHotkeysToNative();
+      if (confirmTimer) clearTimeout(confirmTimer);
+      confirmTimer = setTimeout(syncHotkeysToNative, 300);
+    };
+    const trySyncInitial = () => {
+      if (!hasSynced && useSettingsStore.getState()._hasHydrated) {
+        hasSynced = true;
+        prevHotkeys = useSettingsStore.getState().hotkeys;
+        syncWithConfirm();
+      }
+    };
+    trySyncInitial();
     useSettingsStore.subscribe((state) => {
-      if (state.hotkeys !== prevHotkeys) {
+      trySyncInitial();
+      if (hasSynced && state.hotkeys !== prevHotkeys) {
         prevHotkeys = state.hotkeys;
-        syncHotkeysToNative();
+        syncWithConfirm();
       }
     });
   }
