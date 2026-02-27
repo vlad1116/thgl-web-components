@@ -9,6 +9,23 @@ function getAudioContext(): AudioContext {
   return audioContext;
 }
 
+function playSound(ctx: AudioContext, sound: AudioAlertSound, volume: number) {
+  switch (sound) {
+    case "chime":
+      playChime(ctx, volume);
+      break;
+    case "ping":
+      playPing(ctx, volume);
+      break;
+    case "beacon":
+      playBeacon(ctx, volume);
+      break;
+    case "soft":
+      playSoft(ctx, volume);
+      break;
+  }
+}
+
 export function playAlertSound(
   sound: AudioAlertSound,
   volume: number = 0.5,
@@ -16,24 +33,12 @@ export function playAlertSound(
   try {
     const ctx = getAudioContext();
 
-    // Resume context if suspended (browser autoplay policy)
     if (ctx.state === "suspended") {
-      ctx.resume();
-    }
-
-    switch (sound) {
-      case "chime":
-        playChime(ctx, volume);
-        break;
-      case "ping":
-        playPing(ctx, volume);
-        break;
-      case "beacon":
-        playBeacon(ctx, volume);
-        break;
-      case "soft":
-        playSoft(ctx, volume);
-        break;
+      // Wait for the context to actually resume before scheduling oscillators,
+      // otherwise the sound is lost because nodes are scheduled on a paused clock.
+      ctx.resume().then(() => playSound(ctx, sound, volume));
+    } else {
+      playSound(ctx, sound, volume);
     }
   } catch {
     // Audio not supported
