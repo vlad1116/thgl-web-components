@@ -446,23 +446,31 @@ export function SettingsDialogContent({
               <Separator />
               <h4 className="text-md font-semibold">Audio Alerts</h4>
               <p className="text-muted-foreground text-xs">
-                Play a sound when tracked items appear within range.
+                Play a sound when tracked items appear within range. Enable
+                per-filter using the settings icon next to each filter.
               </p>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="audio-alerts-enabled">Enable Audio Alerts</Label>
-                <Switch
-                  id="audio-alerts-enabled"
-                  checked={profileSettings.audioAlertsEnabled}
-                  onCheckedChange={settingsStore.setAudioAlertsEnabled}
-                />
-              </div>
+              {Object.values(profileSettings.audioAlertByFilter).filter(Boolean)
+                .length > 0 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={settingsStore.disableAllAudioAlerts}
+                >
+                  Disable all (
+                  {
+                    Object.values(profileSettings.audioAlertByFilter).filter(
+                      Boolean,
+                    ).length
+                  }{" "}
+                  active)
+                </Button>
+              )}
               <div className="flex items-center gap-2 justify-between">
                 <Label htmlFor="audio-alert-sound">Alert Sound</Label>
                 <div className="flex items-center gap-2">
                   <Select
                     value={profileSettings.audioAlertSound}
                     onValueChange={settingsStore.setAudioAlertSound}
-                    disabled={!profileSettings.audioAlertsEnabled}
                   >
                     <SelectTrigger className="w-28 h-8">
                       <SelectValue />
@@ -485,7 +493,6 @@ export function SettingsDialogContent({
                         profileSettings.audioAlertVolume,
                       )
                     }
-                    disabled={!profileSettings.audioAlertsEnabled}
                     title="Preview sound"
                   >
                     <Play className="h-3.5 w-3.5" />
@@ -505,7 +512,6 @@ export function SettingsDialogContent({
                     onValueChange={(values) => {
                       settingsStore.setAudioAlertVolume(values[0]);
                     }}
-                    disabled={!profileSettings.audioAlertsEnabled}
                   />
                   <span className="text-xs text-muted-foreground w-10 text-right">
                     {Math.round(profileSettings.audioAlertVolume * 100)}%

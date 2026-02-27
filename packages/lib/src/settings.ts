@@ -114,7 +114,6 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   traceLineLength: 100,
   traceLineRate: 5,
   traceLineColor: "#1ccdd1B3",
-  audioAlertsEnabled: false,
   audioAlertRange: 1000,
   audioAlertSound: "chime" as const,
   audioAlertVolume: 0.5,
@@ -178,7 +177,6 @@ export type ProfileSettings = {
   traceLineLength: number;
   traceLineRate: number;
   traceLineColor: string;
-  audioAlertsEnabled: boolean;
   audioAlertRange: number;
   audioAlertSound: "chime" | "ping" | "beacon" | "soft";
   audioAlertVolume: number;
@@ -250,7 +248,7 @@ export interface ProfileActions {
   setTraceLineLength: (traceLineLength: number) => void;
   setTraceLineRate: (traceLineRate: number) => void;
   setTraceLineColor: (traceLineColor: string) => void;
-  setAudioAlertsEnabled: (enabled: boolean) => void;
+  disableAllAudioAlerts: () => void;
   setAudioAlertRange: (range: number) => void;
   setAudioAlertSound: (sound: "chime" | "ping" | "beacon" | "soft") => void;
   setAudioAlertVolume: (volume: number) => void;
@@ -788,8 +786,16 @@ export const useSettingsStore = create(
           updateSettings({ traceLineColor });
         },
 
-        setAudioAlertsEnabled: (enabled: boolean) => {
-          updateSettings({ audioAlertsEnabled: enabled });
+        disableAllAudioAlerts: () => {
+          const state = get();
+          const cleared = Object.keys(state.audioAlertByFilter).reduce(
+            (acc, id) => {
+              acc[id] = false;
+              return acc;
+            },
+            {} as Record<string, boolean>,
+          );
+          updateSettings({ audioAlertByFilter: cleared });
         },
 
         setAudioAlertRange: (range: number) => {

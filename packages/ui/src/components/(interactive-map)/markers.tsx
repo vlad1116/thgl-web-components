@@ -242,9 +242,6 @@ function MarkersContent({
   const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
   const sharedMyFilters = useConnectionStore((state) => state.myFilters);
   const liveMode = useSettingsStore((state) => state.liveMode);
-  const audioAlertsEnabled = useSettingsStore(
-    (state) => state.audioAlertsEnabled,
-  );
   const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
   const audioAlertByFilter = useSettingsStore(
     (state) => state.audioAlertByFilter,
@@ -747,7 +744,7 @@ function MarkersContent({
     const zDistance = hasZPos ? markerOptions.zPos!.zDistance : 0;
 
     // Pre-calculate constants for audio/label range checks
-    const checkAudio = audioAlertsEnabled;
+    const checkAudio = Object.values(audioAlertByFilter).some(Boolean);
     const checkLabels = Object.keys(labelModeByFilter).length > 0;
     // Only compute audio range when audio or labels are active
     const needsAudioRange = checkAudio || checkLabels;
@@ -951,7 +948,6 @@ function MarkersContent({
     player?.mapName,
     map?.mapName,
     markerOptions.zPos,
-    audioAlertsEnabled,
     audioAlertRange,
     audioAlertByFilter,
     audioAlertSound,
