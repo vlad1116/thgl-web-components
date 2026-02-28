@@ -134,18 +134,6 @@ export function Markers({
     }
   }, [map]);
 
-  // Handle map click to deselect node
-  useEffect(() => {
-    if (!map) return;
-    const handleClick = () => {
-      setSelectedNodeId(null);
-    };
-    map.on("click", handleClick);
-    return () => {
-      map.off("click", handleClick);
-    };
-  }, [map, setSelectedNodeId]);
-
   return (
     <>
       <MarkersContent
@@ -208,7 +196,7 @@ function MarkersContent({
     items: TooltipItems;
   }) => void;
   onTooltipOpen: (open: boolean) => void;
-  onClick: (id: string) => void;
+  onClick: (id: string | null) => void;
 }) {
   const map = useMap();
   const { spawns, icons, filters } = useCoordinates();
@@ -864,13 +852,16 @@ function MarkersContent({
     // Update spawn map ref
     spawnMapRef.current = newSpawnMap;
 
-    // Handle map click to close tooltip
+    // Handle map click to close tooltip and deselect node
+    // When a marker is clicked, justClickedMarkerRef is set to prevent
+    // the generic map click from undoing the selection.
     const handleMapClick = () => {
       if (justClickedMarkerRef.current) {
         justClickedMarkerRef.current = false;
         return;
       }
       onTooltipOpen(false);
+      onClick(null);
     };
     map.on("click", handleMapClick);
 
