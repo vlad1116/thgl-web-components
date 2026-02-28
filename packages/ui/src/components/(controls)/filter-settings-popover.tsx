@@ -50,6 +50,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const setAudioAlertByFilters = useSettingsStore(
     (s) => s.setAudioAlertByFilters,
   );
+  const audioAlertsMuted = useSettingsStore((s) => s.audioAlertsMuted);
   const labelModeByFilter = useSettingsStore((s) => s.labelModeByFilter);
   const setLabelModeByFilter = useSettingsStore((s) => s.setLabelModeByFilter);
   const setLabelModeByFilters = useSettingsStore((s) => s.setLabelModeByFilters);
@@ -175,6 +176,12 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
         {isGroup && groupAudioState === "some" && (
           <p className="text-xs text-muted-foreground">
             Some filters in this group have audio alerts enabled.
+          </p>
+        )}
+
+        {audioAlertsMuted && (
+          <p className="text-xs text-muted-foreground">
+            Audio alerts are muted in Settings.
           </p>
         )}
 

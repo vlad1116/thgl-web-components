@@ -449,22 +449,14 @@ export function SettingsDialogContent({
                 Play a sound when tracked items appear within range. Enable
                 per-filter using the settings icon next to each filter.
               </p>
-              {Object.values(profileSettings.audioAlertByFilter).filter(Boolean)
-                .length > 0 && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={settingsStore.disableAllAudioAlerts}
-                >
-                  Disable all (
-                  {
-                    Object.values(profileSettings.audioAlertByFilter).filter(
-                      Boolean,
-                    ).length
-                  }{" "}
-                  active)
-                </Button>
-              )}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="mute-audio-alerts">Mute All</Label>
+                <Switch
+                  id="mute-audio-alerts"
+                  checked={profileSettings.audioAlertsMuted}
+                  onCheckedChange={settingsStore.toggleAudioAlertsMuted}
+                />
+              </div>
               <div className="flex items-center gap-2 justify-between">
                 <Label htmlFor="audio-alert-sound">Alert Sound</Label>
                 <div className="flex items-center gap-2">
