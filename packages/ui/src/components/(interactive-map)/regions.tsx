@@ -1,9 +1,113 @@
 "use client";
 
-// Regions overlay is currently disabled - requires WebMap polygon/text layer implementation
-// TODO: Implement WebMap-native regions using a custom polygon drawing layer
+import { useEffect, useRef } from "react";
+import { useMap } from "./store";
+import { rotateCoordinate } from "./rotation";
+import { useSettingsStore, useUserStore } from "@repo/lib";
+import { REGION_FILTERS, useCoordinates, useT } from "../(providers)";
+import { DrawingLayer } from "@repo/lib/web-map";
+
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
 
 export function Regions(): JSX.Element {
-  // No-op for now - regions feature requires WebMap polygon drawing support
+  const map = useMap();
+  const t = useT();
+  const { regions } = useCoordinates();
+  const filters = useUserStore((state) => state.filters);
+  const baseIconSize = useSettingsStore((state) => state.baseIconSize);
+  const layerRef = useRef<DrawingLayer | null>(null);
+
+  const showBorders = filters.includes("region_borders");
+  const showNames = filters.includes("region_names");
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (!showBorders && !showNames) {
+      // Remove layer if it exists
+      if (layerRef.current) {
+        layerRef.current.clearShapes();
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+      return;
+    }
+
+    // Create layer if needed
+    if (!layerRef.current) {
+      layerRef.current = new DrawingLayer({ interactive: false });
+      map.addLayer(layerRef.current, { zIndex: 20 });
+    }
+
+    const layer = layerRef.current;
+    layer.clearShapes();
+
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+
+    const applyRotation = (
+      point: [number, number],
+    ): [number, number] => {
+      if (rotationDegrees && rotationCenter) {
+        return rotateCoordinate(point, rotationDegrees, rotationCenter);
+      }
+      return point;
+    };
+
+    const filteredRegions = regions.filter(
+      (r) => !r.mapName || r.mapName === map.mapName,
+    );
+
+    for (let i = 0; i < filteredRegions.length; i++) {
+      const region = filteredRegions[i];
+      const hue = (i * 360) / filteredRegions.length;
+
+      if (showBorders && region.border.length >= 3) {
+        const positions = region.border.map(applyRotation);
+        layer.addShape({
+          id: `region_${region.id}`,
+          type: "polygon",
+          positions,
+          color: hslToHex(hue, 60, 50),
+          size: 3,
+          mapName: map.mapName,
+        });
+      }
+
+      if (showNames) {
+        const center = applyRotation(region.center);
+        layer.addShape({
+          id: `region_label_${region.id}`,
+          type: "text",
+          center,
+          text: t(region.id),
+          size: 10 * baseIconSize,
+          color: `hsl(${hue} 60% 70%)`,
+          mapName: map.mapName,
+        });
+      }
+    }
+
+    return () => {
+      if (layerRef.current) {
+        layerRef.current.clearShapes();
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+    };
+  }, [map, regions, showBorders, showNames, baseIconSize, t]);
+
   return <></>;
 }

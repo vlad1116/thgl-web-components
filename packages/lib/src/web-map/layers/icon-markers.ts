@@ -63,6 +63,8 @@ const float MAX_NEEDLE_WORLD = 20.0;
 
 out vec2 v_uv;
 out vec2 v_localUv;  // local UV for overlays (0..1 across the entire quad)
+out vec2 v_uvMin;    // UV min bounds for atlas sub-rect
+out vec2 v_uvMax;    // UV max bounds for atlas sub-rect
 out float v_disc;
 out vec2 v_flags;
 out float v_count;
@@ -122,6 +124,8 @@ void main(){
       gl_Position = vec4(screenPos.xy, 0.0, 1.0);
     }
     v_uv = a_uv.xy + a_pos * a_uv.zw;
+    v_uvMin = a_uv.xy;
+    v_uvMax = a_uv.xy + a_uv.zw;
   } else {
     // Render needle/pin stem
     vec2 center = a_offset + 0.5 * a_size;
@@ -158,8 +162,13 @@ precision highp float;
 uniform sampler2D u_tex;
 uniform int u_cb_mode; // 0 none, 1 prot, 2 deut, 3 trit
 uniform float u_cb_sev; // 0..1
+uniform int u_hc_mode; // 0=off, 1=on
+uniform vec4 u_hc_color; // outline RGBA
+uniform float u_hc_thickness; // outline thickness in texels (1-6)
 in vec2 v_uv;
 in vec2 v_localUv;  // 0..1 across entire quad
+in vec2 v_uvMin;    // UV min bounds for atlas sub-rect
+in vec2 v_uvMax;    // UV max bounds for atlas sub-rect
 in float v_disc;
 in vec2 v_flags;
 in float v_count;
@@ -252,6 +261,25 @@ void main(){
   vec4 c = texture(u_tex, v_uv);
   // Apply tint color (multiply RGB, use tint alpha to blend)
   c.rgb = mix(c.rgb, c.rgb * v_tint.rgb, v_tint.a);
+  // High contrast outline: sample 8 neighbors and draw outline where current pixel is transparent but neighbor is opaque
+  if (u_hc_mode == 1) {
+    vec2 texSize = vec2(textureSize(u_tex, 0));
+    vec2 uvSpan = v_uvMax - v_uvMin;
+    float px = u_hc_thickness / (uvSpan.x * texSize.x);
+    float py = u_hc_thickness / (uvSpan.y * texSize.y);
+    float neighborAlpha = 0.0;
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, 0), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, 0), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(0, py), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(0, -py), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, py), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, -py), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, -py), v_uvMin, v_uvMax)).a);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, py), v_uvMin, v_uvMax)).a);
+    if (c.a < 0.1 && neighborAlpha > 0.1) {
+      c = u_hc_color;
+    }
+  }
   if (v_disc > 0.5) {
     float g = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
     c = vec4(vec3(g), c.a * 0.5);
@@ -395,6 +423,12 @@ export class IconMarkerLayer implements Layer {
   private hidden?: Set<string>;
   private colorBlindMode: ColorBlindMode = "none";
   private colorBlindSeverity: number = 1;
+  private highContrastMode: boolean = false;
+  private highContrastColor: [number, number, number, number] = [0, 0, 0, 1];
+  private highContrastThickness: number = 2;
+  private u_hc_mode_loc: WebGLUniformLocation | null = null;
+  private u_hc_color_loc: WebGLUniformLocation | null = null;
+  private u_hc_thickness_loc: WebGLUniformLocation | null = null;
 
   addSheet(name: string, source: string | HTMLImageElement) {
     const isNew = !this.sheetImages.has(name);
@@ -520,6 +554,23 @@ export class IconMarkerLayer implements Layer {
 
   setColorBlindSeverity(severity: number) {
     this.colorBlindSeverity = Math.max(0, Math.min(1, severity));
+  }
+
+  setHighContrastMode(enabled: boolean) {
+    this.highContrastMode = enabled;
+  }
+
+  setHighContrastColor(color: string) {
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+    const a = hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
+    this.highContrastColor = [r, g, b, a];
+  }
+
+  setHighContrastThickness(thickness: number) {
+    this.highContrastThickness = Math.max(1, Math.min(6, thickness));
   }
 
   private cbModeToInt(mode: ColorBlindMode): number {
@@ -726,6 +777,9 @@ export class IconMarkerLayer implements Layer {
     this.u_zoom_loc = gl.getUniformLocation(this.program!, "u_zoom");
     this.u_cb_mode_loc = gl.getUniformLocation(this.program!, "u_cb_mode");
     this.u_cb_sev_loc = gl.getUniformLocation(this.program!, "u_cb_sev");
+    this.u_hc_mode_loc = gl.getUniformLocation(this.program!, "u_hc_mode");
+    this.u_hc_color_loc = gl.getUniformLocation(this.program!, "u_hc_color");
+    this.u_hc_thickness_loc = gl.getUniformLocation(this.program!, "u_hc_thickness");
   }
 
   onRemove(): void {
@@ -891,6 +945,11 @@ export class IconMarkerLayer implements Layer {
     // Set color-blind simulation uniforms
     gl.uniform1i(this.u_cb_mode_loc, this.cbModeToInt(this.colorBlindMode));
     gl.uniform1f(this.u_cb_sev_loc, this.colorBlindSeverity);
+
+    // Set high contrast uniforms
+    gl.uniform1i(this.u_hc_mode_loc, this.highContrastMode ? 1 : 0);
+    gl.uniform4fv(this.u_hc_color_loc, this.highContrastColor);
+    gl.uniform1f(this.u_hc_thickness_loc, this.highContrastThickness);
 
     // Use the EXACT same view matrix as the webmap to prevent positioning drift
     // This ensures icons are perfectly anchored during rotation and perspective changes

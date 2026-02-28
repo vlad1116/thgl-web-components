@@ -18,7 +18,7 @@ import {
   useUserStore,
   devLog,
 } from "@repo/lib";
-import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
+import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET, DrawingLayer } from "@repo/lib/web-map";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
 import { AdditionalTooltipType } from "../(content)";
@@ -247,6 +247,53 @@ function MarkersContent({
   // Counter to trigger re-render when images finish loading
   const [iconLoadVersion, setIconLoadVersion] = useState(0);
 
+
+  // Spatial grid for efficient proximity queries (audio alerts, z-position)
+  const spatialGridRef = useRef<SpatialGrid<{ id: string; spawn: Spawn; latLng: [number, number] }>>();
+
+  // Audio alert tracking - tracks if we've already alerted for current in-range spawns
+  const hasAlertedRef = useRef<boolean>(false);
+
+  // Hotkey state for showing all labels temporarily (set by MapHotkeys in Overwolf/THGL apps)
+  const showLabelsActive = useGameState((state) => state.showLabelsActive);
+
+  // Label layer for rendering per-marker text labels
+  const labelLayerRef = useRef<DrawingLayer | null>(null);
+
+  // Helper function to determine if label should show for a marker
+  const shouldShowLabel = useCallback(
+    (
+      typeId: string,
+      labelMode: LabelMode | undefined,
+      isInRange: boolean,
+    ): boolean => {
+      if (!labelMode || labelMode === "off") return false;
+      if (labelMode === "always") return true;
+      if (labelMode === "inRange") return isInRange;
+      if (labelMode === "hotkey") return showLabelsActive;
+      return false;
+    },
+    [showLabelsActive],
+  );
+
+  const appIconsByName = useMemo(() => {
+    const map = new Map<
+      string,
+      { x: number; y: number; width: number; height: number }
+    >();
+    for (const filter of filters) {
+      for (const value of filter.values) {
+        if (typeof value.icon !== "string") {
+          const name = t(value.id);
+          if (!map.has(name)) {
+            map.set(name, value.icon);
+          }
+        }
+      }
+    }
+    return map;
+  }, [filters, t]);
+
   // Helper to extract RGB (without alpha) from color string
   const getRgbFromColor = (colorStr: string): string => {
     if (colorStr.length === 9 && colorStr.startsWith("#")) {
@@ -447,6 +494,12 @@ function MarkersContent({
     // Set color blind mode
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
+
+
+    // Set high contrast mode
+    markerLayer.setHighContrastMode(highContrastMode);
+    markerLayer.setHighContrastColor(highContrastColor);
+    markerLayer.setHighContrastThickness(highContrastThickness);
 
     const baseRadius = 12;
     const dpr = window.devicePixelRatio || 1;
@@ -974,6 +1027,126 @@ function MarkersContent({
     audioAlertSound,
     audioAlertVolume,
     rotationCache,
+  ]);
+
+
+  // Label rendering using DrawingLayer text shapes
+  // Tracks which labels are currently shown for "inRange" mode
+  const activeLabelsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Check if any filter has a label mode set
+    const hasAnyLabels = Object.values(labelModeByFilter).some(
+      (m) => m && m !== "off",
+    );
+    if (!hasAnyLabels) {
+      // Clean up label layer if no labels needed
+      if (labelLayerRef.current) {
+        labelLayerRef.current.clearShapes();
+        map.removeLayer(labelLayerRef.current);
+        labelLayerRef.current = null;
+      }
+      activeLabelsRef.current.clear();
+      return;
+    }
+
+    // Create label layer if needed
+    if (!labelLayerRef.current) {
+      labelLayerRef.current = new DrawingLayer({ interactive: false });
+      map.addLayer(labelLayerRef.current, { zIndex: 150 });
+    }
+
+    const layer = labelLayerRef.current;
+    layer.clearShapes();
+    activeLabelsRef.current.clear();
+
+    const fontSize = 12 * labelTextSize;
+
+    // Add "always" and "hotkey" mode labels
+    for (const [id, spawn] of spawnMapRef.current) {
+      const mode = labelModeByFilter[spawn.type];
+      if (!mode || mode === "off" || mode === "inRange") continue;
+
+      if (mode === "hotkey" && !showLabelsActive) continue;
+
+      // Compute position with rotation
+      let pos: [number, number] = [spawn.p[0], spawn.p[1]];
+      if (rotationCache) {
+        pos = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+      }
+
+      layer.addShape({
+        id: `label_${id}`,
+        type: "text",
+        center: pos,
+        text: t(spawn.type),
+        size: fontSize,
+        color: "#FFFFFFEE",
+        mapName: map.mapName,
+      });
+      activeLabelsRef.current.add(id);
+    }
+
+    // For "inRange" mode, add labels for markers near the player
+    if (rotatedPlayer) {
+      const playerX = rotatedPlayer.x;
+      const playerY = rotatedPlayer.y;
+      const rangeSq = audioAlertRange * audioAlertRange;
+
+      const useSpatialGrid =
+        spatialGridRef.current && spatialGridRef.current.size > 100;
+
+      const itemsToCheck = useSpatialGrid
+        ? spatialGridRef.current!.getNearby(playerX, playerY, audioAlertRange)
+        : Array.from(spawnMapRef.current.entries()).map(([id, spawn]) => {
+            let latLng: [number, number] = [spawn.p[0], spawn.p[1]];
+            if (rotationCache) {
+              latLng = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+            }
+            return { id, spawn, latLng };
+          });
+
+      for (const item of itemsToCheck) {
+        const mode = labelModeByFilter[item.spawn.type];
+        if (mode !== "inRange") continue;
+
+        const dx = playerX - item.latLng[0];
+        const dy = playerY - item.latLng[1];
+        if (dx * dx + dy * dy <= rangeSq) {
+          layer.addShape({
+            id: `label_${item.id}`,
+            type: "text",
+            center: item.latLng,
+            text: t(item.spawn.type),
+            size: fontSize,
+            color: "#FFFFFFEE",
+            mapName: map.mapName,
+          });
+          activeLabelsRef.current.add(item.id);
+        }
+      }
+    }
+
+    return () => {
+      if (labelLayerRef.current) {
+        labelLayerRef.current.clearShapes();
+        map.removeLayer(labelLayerRef.current);
+        labelLayerRef.current = null;
+      }
+      activeLabelsRef.current.clear();
+    };
+  }, [
+    map,
+    spawns,
+    labelModeByFilter,
+    labelTextSize,
+    showLabelsActive,
+    rotatedPlayer,
+    audioAlertRange,
+    rotationCache,
+    t,
   ]);
 
   // Fit bounds when spawns change

@@ -15,6 +15,7 @@ import { useSettingsStore } from "@repo/lib";
 import { useT } from "../(providers)";
 import { applyColorBlindTransform } from "./color-blind";
 import type { ColorBlindMode } from "@repo/lib";
+import { DrawingLayer } from "@repo/lib/web-map";
 
 
 export function Player({
@@ -281,7 +282,82 @@ export function Player({
     }
   }, [player?.mapName]);
 
-  // TODO: Add audio alert range circle visualization for WebGL map
+  // Audio alert range circle
+  const showAudioAlertRange = useSettingsStore(
+    (state) => state.showAudioAlertRange,
+  );
+  const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
+  const audioAlertsMuted = useSettingsStore((state) => state.audioAlertsMuted);
+  const alertCircleLayerRef = useRef<DrawingLayer | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const shouldShow = showAudioAlertRange && !audioAlertsMuted;
+
+    if (!shouldShow) {
+      // Remove circle if it exists
+      if (alertCircleLayerRef.current) {
+        alertCircleLayerRef.current.clearShapes();
+        map.removeLayer(alertCircleLayerRef.current);
+        alertCircleLayerRef.current = null;
+      }
+      return;
+    }
+
+    // Create layer if needed
+    if (!alertCircleLayerRef.current) {
+      alertCircleLayerRef.current = new DrawingLayer({ interactive: false });
+      map.addLayer(alertCircleLayerRef.current, { zIndex: 90 });
+    }
+
+    // Apply rotation to player position if configured
+    let playerPosition: [number, number] = [player.x, player.y];
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      playerPosition = rotateCoordinate(
+        [player.x, player.y],
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+
+    const isOnMap = !player.mapName || player.mapName === map.mapName;
+    if (!isOnMap) return;
+
+    const existing = alertCircleLayerRef.current.getShape("audio-alert-range");
+    if (existing) {
+      alertCircleLayerRef.current.updateShape("audio-alert-range", {
+        center: playerPosition,
+        radius: audioAlertRange,
+      });
+    } else {
+      alertCircleLayerRef.current.addShape({
+        id: "audio-alert-range",
+        type: "circle",
+        center: playerPosition,
+        radius: audioAlertRange,
+        color: "#00FF0066",
+        size: 2,
+        mapName: map.mapName,
+      });
+    }
+
+    return () => {
+      if (alertCircleLayerRef.current) {
+        alertCircleLayerRef.current.clearShapes();
+        map.removeLayer(alertCircleLayerRef.current);
+        alertCircleLayerRef.current = null;
+      }
+    };
+  }, [
+    map,
+    player,
+    showAudioAlertRange,
+    audioAlertRange,
+    audioAlertsMuted,
+  ]);
 
   return <></>;
 }
