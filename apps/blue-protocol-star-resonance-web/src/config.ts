@@ -113,6 +113,18 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore the Underground District Map",
     },
     {
+      title: "Stray Starway Map",
+      description:
+        "Navigate Blue Protocol: Star Resonance's Stray Starway with our interactive maps.",
+      href: "/maps/Stray%20Starway",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl(
+        "blue-protocol-star-resonance",
+        "stray_starway",
+      ),
+      linkText: "Explore the Stray Starway Map",
+    },
+    {
       title: "Skimmer's Lair Map",
       description:
         "Navigate Blue Protocol: Star Resonance's Skimmer's Lair with our interactive maps.",
