@@ -67,7 +67,7 @@ Currently supporting 20+ games including:
 3. OR install Overwolf app for alternative overlay experience
 
 **Technical Implementation:**
-- Web apps serve interactive Leaflet-based maps with real-time data
+- Web apps serve interactive WebGL2-based maps with real-time data
 - Companion app reads game memory for position tracking (read-only, no modifications)
 - Memory addresses discovered through reverse engineering per game
 - APIs provide location data, filters, and real-time actor positions

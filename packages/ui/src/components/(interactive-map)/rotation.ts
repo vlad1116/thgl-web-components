@@ -5,7 +5,7 @@
  * Only marker positions (spawns, player, teammates) are rotated.
  */
 
-import type { LeafletMap } from "./store";
+import type { GameMap } from "./store";
 
 /**
  * Rotate a coordinate around a center point
@@ -59,7 +59,7 @@ export function inverseRotateCoordinate(
  * Store rotation info on map instance for easy access
  */
 export function setupMapRotation(
-  map: LeafletMap,
+  map: GameMap,
   rotation: { angle: number; center: [number, number] },
 ) {
   map.rotationDegrees = rotation.angle;

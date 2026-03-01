@@ -754,7 +754,7 @@ export class WebMap {
     return { lat: this.center[0], lng: this.center[1] };
   }
 
-  // Leaflet-compatible getCenter for easier migration
+  // Get center as LatLng tuple
   getCenterLatLng(): LatLng {
     return this.center;
   }
@@ -775,7 +775,7 @@ export class WebMap {
 
   /**
    * Force the map to re-check its container size.
-   * Leaflet-compatible method for easier migration.
+   * Triggers a re-render on the next animation frame.
    */
   invalidateSize() {
     // Force canvas size update on next frame
@@ -809,7 +809,7 @@ export class WebMap {
     clientX: number,
     clientY: number,
   ): { x: number; y: number } {
-    // Use CSS pixels for view matrix (like Leaflet) to ensure consistent zoom behavior
+    // Use CSS pixels for view matrix to ensure consistent zoom behavior
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
     const view = this.computeView(w, h);
@@ -941,7 +941,7 @@ export class WebMap {
   private recenterOnPivot() {
     if (!this.rotationPivot) return;
 
-    // Use CSS pixels for view calculations (like Leaflet)
+    // Use CSS pixels for view calculations
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
 
@@ -985,7 +985,7 @@ export class WebMap {
     const s = Math.pow(2, zoom);
     const minPx = { x: s * (tf.a * minX + tf.b), y: s * (tf.c * minY + tf.d) };
     const maxPx = { x: s * (tf.a * maxX + tf.b), y: s * (tf.c * maxY + tf.d) };
-    // Use CSS pixels for view calculations (like Leaflet)
+    // Use CSS pixels for view calculations
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
     const halfW = w / 2,
@@ -1057,7 +1057,7 @@ export class WebMap {
         // Calculate where the anchor point is now in world space at new zoom
         const anchorWorld = this.projectAt(anchorLL, this.zoom);
 
-        // Calculate offset from screen center to anchor in CSS pixels (like Leaflet)
+        // Calculate offset from screen center to anchor in CSS pixels
         const w = this.canvas.clientWidth || this.canvas.width;
         const h = this.canvas.clientHeight || this.canvas.height;
 
@@ -1110,7 +1110,7 @@ export class WebMap {
       }
     }
 
-    // Use CSS pixels for view matrix (like Leaflet) to ensure consistent zoom behavior across DPR
+    // Use CSS pixels for view matrix to ensure consistent zoom behavior across DPR
     const cssW = this.canvas.clientWidth || w;
     const cssH = this.canvas.clientHeight || h;
     const view = this.computeView(cssW, cssH);

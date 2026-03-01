@@ -69,7 +69,7 @@ export function SimpleWebMap({
     const minZoom = mapTileOptions.minZoom ?? 0;
     const maxZoom = mapTileOptions.maxZoom ?? 10;
 
-    // Helper to calculate zoom that fits bounds in container (matches Leaflet's getBoundsZoom)
+    // Helper to calculate zoom that fits bounds in container
     const calculateFitZoom = (
       bounds: [[number, number], [number, number]],
       containerWidth: number,
@@ -83,7 +83,7 @@ export function SimpleWebMap({
         }),
       };
 
-      // Use a reference zoom to project bounds (like Leaflet does)
+      // Use a reference zoom to project bounds
       const refZoom = 0;
 
       // Project bounds corners at reference zoom
@@ -99,7 +99,7 @@ export function SimpleWebMap({
       }
 
       // Calculate scale ratios (container size / bounds size)
-      // Use CSS pixels like Leaflet does - WebMap handles DPR internally
+      // Use CSS pixels - WebMap handles DPR internally
       const scaleX = containerWidth / boundsWidth;
       const scaleY = containerHeight / boundsHeight;
 

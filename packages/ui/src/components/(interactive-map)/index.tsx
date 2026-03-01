@@ -11,6 +11,6 @@ export { Regions } from "./regions";
 export { SimpleWebMap, type SimpleWebMapRef } from "./simple-webmap";
 export { SimpleWebMarkers } from "./simple-webmap-markers";
 export { TraceLine } from "./trace-line";
-export type { LeafletMap, GameMap, GameMapExtensions } from "./store";
+export type { GameMap, GameMapExtensions } from "./store";
 export { useMapStore, useMap } from "./store";
 export { LiveTeammates } from "./live-teammates";

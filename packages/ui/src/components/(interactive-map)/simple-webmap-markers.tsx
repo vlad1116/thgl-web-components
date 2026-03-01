@@ -218,7 +218,7 @@ export function SimpleWebMarkers({
       const rawIcon = spawn.icon;
       // Multiply by DPR to maintain consistent visual size across devices
       // Apply per-filter icon size multiplier if available
-      // Multiply by 1.5 to match Leaflet's zoom-based scaling at typical zoom levels
+      // Multiply by 1.5 for consistent visual sizing at typical zoom levels
       const filterMultiplier = spawn.type ? (iconSizeByFilter[spawn.type] ?? 1) : 1;
       const size = baseRadius * 2 * 1.5 * baseIconSize * filterMultiplier * dpr;
 

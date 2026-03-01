@@ -476,7 +476,7 @@ function cbModeToInt(mode: ColorBlindMode): number {
   }
 }
 
-// Bounds are in [lat, lng] format (Leaflet convention), so first element is lat (Y), second is lng (X)
+// Bounds are in [lat, lng] format, so first element is lat (Y), second is lng (X)
 function pixelAt([lat, lng]: [number,number], z: number, tf: AffineTransform){
   const scale = Math.pow(2, z);
   return { x: scale * (tf.a * lng + tf.b), y: scale * (tf.c * lat + tf.d) };

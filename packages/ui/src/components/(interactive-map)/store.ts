@@ -12,7 +12,7 @@ export interface GameMapExtensions {
   rotationCenter?: [number, number];
   // Marker layer reference for use by Markers component
   markerLayer?: IconMarkerLayer;
-  // Legacy aliases for backward compatibility during migration
+  // Underscore-prefixed aliases (used throughout components)
   _rotationRadians?: number;
   _rotationDegrees?: number;
   _rotationCenter?: [number, number];
@@ -21,9 +21,6 @@ export interface GameMapExtensions {
 
 // Combined type: WebMap + game-specific properties
 export type GameMap = WebMap & GameMapExtensions;
-
-// Legacy alias for compatibility during migration
-export type LeafletMap = GameMap;
 
 export const useMapStore = create<{
   map: GameMap | null;
