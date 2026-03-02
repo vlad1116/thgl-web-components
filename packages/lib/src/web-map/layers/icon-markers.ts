@@ -34,6 +34,7 @@ export interface IconMarkerInstance {
   rotation?: number; // radians
   keepUpright?: boolean; // do not rotate with map bearing
   tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
+  isStacked?: boolean; // show indicator for multiple spawns at same location
 }
 
 type SheetTex = { name: string; tex: WebGLTexture; w: number; h: number };
@@ -48,7 +49,7 @@ in vec2 a_size;     // size in px
 in vec4 a_uv;       // uv origin (xy) and size (zw)
 in float a_disc;    // per-instance discovered flag (0/1)
 in vec2 a_flags;    // x: normalized height, y: zpos(-1/0/1)
-in float a_count;   // stacked count (>=1)
+in float a_count;   // 1=single, 2=stacked (multiple spawns at same location)
 in float a_angle;   // rotation in radians
 in float a_renderMode; // 0=icon, 1=height stem
 in float a_keepUpright; // 1=billboard mode, 0=use own rotation
@@ -293,7 +294,7 @@ void main(){
   // Track overlay coverage to ensure alpha shows overlays even if base is transparent
   float overlayAlpha = 0.0;
 
-  // No cluster indicator anymore; show all candidates in hover UI instead
+  // Stacked spawn indicator is rendered via v_count below
 
   // Relative-Z small triangle arrow with outline/shadow, placed just outside icon area (top/bottom)
   float zMag = clamp(v_flags.x, 0.0, 1.0); // 0..1 magnitude (scales size)
@@ -346,7 +347,30 @@ void main(){
     overlayAlpha = max(overlayAlpha, max(stroke, fill));
   }
 
-  // (disabled) count badge rendering
+  // Stacked spawns indicator (top-left corner)
+  if (v_count > 1.5) {
+    vec2 ctr = vec2(0.22, 0.22);
+    float arm = 0.14;
+    float hw = 0.035;
+    float dx = abs(uv.x - ctr.x);
+    float dy = abs(uv.y - ctr.y);
+    float hBar = step(dx, arm) * step(dy, hw);
+    float vBar = step(dx, hw) * step(dy, arm);
+    float cross = max(hBar, vBar);
+    // Shadow (larger spread for visibility)
+    vec2 sOfs = vec2(0.018, 0.018);
+    float sArm = arm + 0.02;
+    float sHw = hw + 0.02;
+    float sdx = abs(uv.x - sOfs.x - ctr.x);
+    float sdy = abs(uv.y - sOfs.y - ctr.y);
+    float sH = step(sdx, sArm) * step(sdy, sHw);
+    float sV = step(sdx, sHw) * step(sdy, sArm);
+    float shadow = max(sH, sV);
+    draw = mix(draw, vec3(0.0), shadow * 0.7);
+    overlayAlpha = max(overlayAlpha, shadow * 0.7);
+    draw = mix(draw, vec3(1.0), cross);
+    overlayAlpha = max(overlayAlpha, cross);
+  }
 
   // Apply color-blind simulation (only to non-discovered icons to avoid double-greyscale)
   if(u_cb_mode != 0 && v_disc < 0.5){
@@ -1024,7 +1048,7 @@ export class IconMarkerLayer implements Layer {
         else if (m.zPos === "bottom") direction = -1;
         flags[i * 2 + 0] = normalizedHeight;
         flags[i * 2 + 1] = direction;
-        counts[i] = 1; // Not used, but kept for shader compatibility
+        counts[i] = m.isStacked ? 2 : 1;
         // For upright icons, we need to counter-rotate in world space
         // The view matrix will apply the map rotation, so we pre-rotate the opposite way
         const angle = m.rotation ?? 0;
@@ -1224,7 +1248,7 @@ export class IconMarkerLayer implements Layer {
     return null;
   }
 
-  // Return all markers clustered near the hovered point, grouped around the nearest hit
+  // Return all markers stacked near the hovered point, grouped around the nearest hit
   pickAll(
     state: RenderState,
     screen: { x: number; y: number },

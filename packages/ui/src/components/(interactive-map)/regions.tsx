@@ -93,8 +93,8 @@ export function Regions(): JSX.Element {
           type: "text",
           center,
           text: t(region.id),
-          size: 10 * baseIconSize,
-          color: `hsl(${hue} 60% 70%)`,
+          size: 16 * baseIconSize,
+          color: "#e6e5e3",
           mapName: map.mapName,
         });
       }

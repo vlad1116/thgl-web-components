@@ -514,11 +514,11 @@ function MarkersContent({
         return;
       }
 
-      const isCluster = Boolean(spawn.cluster && spawn.cluster.length > 0);
+      const isStacked = Boolean(spawn.cluster && spawn.cluster.length > 0);
       const nodeId = getNodeId(spawn);
       let isDiscovered = checkNodeDiscovered(nodeId, discoveryLookup);
 
-      if (isCluster && isDiscovered) {
+      if (isStacked && isDiscovered) {
         if (
           spawn.cluster!.some(
             (a) =>
@@ -538,7 +538,7 @@ function MarkersContent({
         return;
       }
 
-      const id = String(spawn.address ?? (isCluster ? `${nodeId}:${isCluster}` : nodeId));
+      const id = String(spawn.address ?? (isStacked ? `${nodeId}:${isStacked}` : nodeId));
       newSpawnMap.set(id, spawn);
 
       const isHighlighted =
@@ -549,8 +549,8 @@ function MarkersContent({
       const groupId = typeToGroup.get(spawn.type);
       const groupMultiplier = groupId ? (iconSizeByGroup[groupId] ?? 1) : 1;
       const typeMultiplier = iconSizeByFilter[spawn.type] ?? 1;
-      const spawnRadius = spawn.radius ?? markerOptions.radius * iconBaseSize * (isCluster ? 1.5 : 1);
-      const size = spawnRadius * 2 * baseIconSize * groupMultiplier * typeMultiplier * dpr;
+      const spawnRadius = spawn.radius ?? markerOptions.radius * iconBaseSize;
+      const size = (spawnRadius * 4 - 1) * baseIconSize * groupMultiplier * typeMultiplier * dpr;
 
       // Get icon from filter config (NOT resolved to URL yet - we need the raw icon data)
       const markerIcon =
@@ -746,6 +746,7 @@ function MarkersContent({
         // Apply tint color for private nodes with icons only when using fallback (unprocessed) icon
         // When using processed icon, the glow effect already has the color baked in
         tint: spawn.isPrivate && markerIcon && !useProcessedIcon ? spawn.color : undefined,
+        isStacked,
       };
 
       markerInstances.push(instance);
@@ -835,7 +836,7 @@ function MarkersContent({
           filter.values.some((v) => v.id === s.type)
         );
         const nodeId = getNodeId(s);
-        const isCluster = Boolean(s.cluster && s.cluster.length > 0);
+        const isStacked = Boolean(s.cluster && s.cluster.length > 0);
 
         const items: TooltipItems = [
           {
@@ -850,17 +851,17 @@ function MarkersContent({
           },
         ];
 
-        if (isCluster) {
+        if (isStacked) {
           items.push(
-            ...s.cluster!.map((clusterSpawn) => ({
-              id: clusterSpawn.id,
-              termId: (clusterSpawn.name ?? clusterSpawn.id ?? clusterSpawn.type).replace(/my_\d+_/, ""),
-              description: clusterSpawn.description,
-              type: clusterSpawn.type,
+            ...s.cluster!.map((stackedSpawn) => ({
+              id: stackedSpawn.id,
+              termId: (stackedSpawn.name ?? stackedSpawn.id ?? stackedSpawn.type).replace(/my_\d+_/, ""),
+              description: stackedSpawn.description,
+              type: stackedSpawn.type,
               group: filter?.group,
-              isPrivate: clusterSpawn.isPrivate,
-              isLive: Boolean(clusterSpawn.address),
-              data: clusterSpawn.data,
+              isPrivate: stackedSpawn.isPrivate,
+              isLive: Boolean(stackedSpawn.address),
+              data: stackedSpawn.data,
             }))
           );
         }
@@ -891,11 +892,11 @@ function MarkersContent({
         const s = newSpawnMap.get(m.id);
         if (!s) return;
         const nodeId = getNodeId(s);
-        const isCluster = Boolean(s.cluster && s.cluster.length > 0);
+        const isStacked = Boolean(s.cluster && s.cluster.length > 0);
         const wasDiscovered = checkNodeDiscovered(nodeId, discoveryLookupRef.current);
-        if (isCluster) {
-          s.cluster!.forEach((clusterSpawn) => {
-            setDiscoverNode(getNodeId(clusterSpawn), !wasDiscovered);
+        if (isStacked) {
+          s.cluster!.forEach((stackedSpawn) => {
+            setDiscoverNode(getNodeId(stackedSpawn), !wasDiscovered);
           });
         }
         setDiscoverNode(nodeId, !wasDiscovered);

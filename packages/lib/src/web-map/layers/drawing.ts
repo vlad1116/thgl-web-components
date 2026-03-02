@@ -788,8 +788,8 @@ export class DrawingLayer implements Layer {
     element.style.cssText = `
       position: absolute;
       font-size: ${shape.size}px;
-      font-family: system-ui, sans-serif;
-      font-weight: 600;
+      font-family: Arial, system-ui, sans-serif;
+      font-weight: 700;
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
@@ -797,6 +797,7 @@ export class DrawingLayer implements Layer {
       -webkit-font-smoothing: antialiased;
       left: 0px;
       top: 0px;
+      text-shadow: -1px -1px 0 #594f42, 1px -1px 0 #594f42, -1px 1px 0 #594f42, 1px 1px 0 #594f42, 0 -1px 0 #594f42, 0 1px 0 #594f42, -1px 0 0 #594f42, 1px 0 0 #594f42;
     `;
     element.style.setProperty('color', shape.color, 'important');
 
