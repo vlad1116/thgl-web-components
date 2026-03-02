@@ -747,7 +747,10 @@ export class DrawingLayer implements Layer {
 
     // Enable blending for alpha transparency
     this.gl.enable(this.gl.BLEND);
-    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.blendFuncSeparate(
+      this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA,
+      this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA
+    );
 
     // Bind index buffer
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);

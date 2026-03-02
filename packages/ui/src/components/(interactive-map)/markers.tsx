@@ -401,6 +401,43 @@ function MarkersContent({
     return { img, width: outputWidth, height: outputHeight };
   };
 
+  // Helper to process a sprite sheet icon using canvas 2D.
+  // Isolates each icon from the atlas to prevent cross-icon bleeding in WebGL,
+  // and applies a subtle shadow like the old Leaflet canvas-marker approach.
+  // Returns a canvas element directly (no data URL conversion needed).
+  // Padding accommodates shadow blur (2px) + max high contrast outline (6px).
+  const ICON_PADDING = 8;
+  const processedIconCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
+  const processSheetIcon = (
+    sourceImg: HTMLImageElement,
+    rect: { x: number; y: number; width: number; height: number },
+  ): { canvas: HTMLCanvasElement; width: number; height: number } => {
+    const canvasW = rect.width + ICON_PADDING * 2;
+    const canvasH = rect.height + ICON_PADDING * 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasW;
+    canvas.height = canvasH;
+    const ctx = canvas.getContext("2d")!;
+
+    // Apply subtle shadow like old Leaflet canvas-marker.ts
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowColor = "black";
+    ctx.shadowBlur = 1;
+
+    // Draw icon cropped from sprite sheet at full resolution.
+    // This isolates the icon from the atlas, preventing WebGL bilinear
+    // filtering from bleeding adjacent icon pixels across boundaries.
+    ctx.drawImage(
+      sourceImg,
+      rect.x, rect.y, rect.width, rect.height,
+      ICON_PADDING, ICON_PADDING,
+      rect.width, rect.height,
+    );
+
+    return { canvas, width: canvasW, height: canvasH };
+  };
+
   // Helper to create a colored circle image for private nodes
   const createColoredCircleImage = (color: string): HTMLImageElement => {
     const cacheKey = `__circle_${color}__`;
@@ -491,6 +528,20 @@ function MarkersContent({
     const iconUrl = getIconsUrl(appName, "icons.webp", iconsPath);
     markerLayer.addSheet("icons", iconUrl);
 
+    // Load sprite sheet source image for CPU-side icon processing.
+    // When loaded, each icon is individually processed using canvas 2D's
+    // high-quality downsampling (replicating the old Leaflet canvas approach).
+    const spriteSheetSource = getSourceImage(iconUrl);
+    if (!spriteSheetSource) {
+      const spriteImg = new Image();
+      spriteImg.crossOrigin = "anonymous";
+      spriteImg.onload = () => {
+        setSourceImage(iconUrl, spriteImg);
+        setIconLoadVersion((v) => v + 1);
+      };
+      spriteImg.src = iconUrl;
+    }
+
     // Set color blind mode
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
@@ -550,7 +601,7 @@ function MarkersContent({
       const groupMultiplier = groupId ? (iconSizeByGroup[groupId] ?? 1) : 1;
       const typeMultiplier = iconSizeByFilter[spawn.type] ?? 1;
       const spawnRadius = spawn.radius ?? markerOptions.radius * iconBaseSize;
-      const size = (spawnRadius * 4 - 1) * baseIconSize * groupMultiplier * typeMultiplier * dpr;
+      let size = (spawnRadius * 4 - 1) * baseIconSize * groupMultiplier * typeMultiplier * dpr;
 
       // Get icon from filter config (NOT resolved to URL yet - we need the raw icon data)
       const markerIcon =
@@ -693,6 +744,29 @@ function MarkersContent({
           sheet,
           rect,
         });
+      }
+
+      // Pre-process sprite sheet icons using canvas 2D.
+      // This isolates each icon from the atlas (preventing cross-icon bleeding
+      // in WebGL bilinear filtering) and applies a subtle shadow.
+      if (sheet === "icons" && !useProcessedIcon && spriteSheetSource) {
+        const processedKey = `__processed_icon_${rect.x}_${rect.y}_${rect.width}_${rect.height}__`;
+        const cached = processedIconCache.current.get(processedKey);
+        if (cached) {
+          // Scale size up to compensate for padding so icon appears at correct visual size
+          size *= cached.width / rect.width;
+          sheet = processedKey;
+          markerLayer.setSheet(sheet, cached.canvas);
+          rect = { x: 0, y: 0, width: cached.width, height: cached.height };
+        } else {
+          const processed = processSheetIcon(spriteSheetSource, rect);
+          processedIconCache.current.set(processedKey, processed);
+          // Scale size up to compensate for padding so icon appears at correct visual size
+          size *= processed.width / rect.width;
+          sheet = processedKey;
+          markerLayer.setSheet(sheet, processed.canvas);
+          rect = { x: 0, y: 0, width: processed.width, height: processed.height };
+        }
       }
 
       // Apply rotation if map has rotation configured

@@ -263,20 +263,30 @@ void main(){
   // Apply tint color (multiply RGB, use tint alpha to blend)
   c.rgb = mix(c.rgb, c.rgb * v_tint.rgb, v_tint.a);
   // High contrast outline: sample 8 neighbors and draw outline where current pixel is transparent but neighbor is opaque
+  // Out-of-bounds samples (outside icon sub-rect) are treated as transparent to avoid rect-edge artifacts
   if (u_hc_mode == 1) {
     vec2 texSize = vec2(textureSize(u_tex, 0));
     vec2 uvSpan = v_uvMax - v_uvMin;
     float px = u_hc_thickness / (uvSpan.x * texSize.x);
     float py = u_hc_thickness / (uvSpan.y * texSize.y);
     float neighborAlpha = 0.0;
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, 0), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, 0), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(0, py), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(0, -py), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, py), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, -py), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(px, -py), v_uvMin, v_uvMax)).a);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, clamp(v_uv + vec2(-px, py), v_uvMin, v_uvMax)).a);
+    vec2 s; float ib;
+    s = v_uv + vec2(px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(0, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(0, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
     if (c.a < 0.1 && neighborAlpha > 0.1) {
       c = u_hc_color;
     }
@@ -390,7 +400,7 @@ export class IconMarkerLayer implements Layer {
   private vao: WebGLVertexArrayObject | null = null;
   private quad: WebGLBuffer | null = null;
   private sheets: Map<string, SheetTex> = new Map();
-  private sheetImages: Map<string, HTMLImageElement> = new Map();
+  private sheetImages: Map<string, HTMLImageElement | HTMLCanvasElement> = new Map();
   private instances: IconMarkerInstance[] = [];
   private instancesById: Map<string, number> = new Map(); // Track index by ID to prevent duplicates
   private iconMap: Map<string, { sheet: string; rect: IconRect }> = new Map();
@@ -454,9 +464,9 @@ export class IconMarkerLayer implements Layer {
   private u_hc_color_loc: WebGLUniformLocation | null = null;
   private u_hc_thickness_loc: WebGLUniformLocation | null = null;
 
-  addSheet(name: string, source: string | HTMLImageElement) {
+  addSheet(name: string, source: string | HTMLImageElement | HTMLCanvasElement) {
     const isNew = !this.sheetImages.has(name);
-    if (source instanceof HTMLImageElement) {
+    if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) {
       this.sheetImages.set(name, source);
     } else {
       this.sheetImages.set(name, this.createImage(source));
@@ -464,14 +474,14 @@ export class IconMarkerLayer implements Layer {
     if (isNew) {
       devLog.info("IconMarkerLayer", "addSheet", {
         sheetName: name,
-        sourceType: source instanceof HTMLImageElement ? "HTMLImageElement" : "URL",
+        sourceType: source instanceof HTMLCanvasElement ? "HTMLCanvasElement" : source instanceof HTMLImageElement ? "HTMLImageElement" : "URL",
         totalSheetImages: this.sheetImages.size,
       });
     }
   }
   // Alias for addSheet (for consistency with simple-webmap-markers)
   // Also invalidates the cached WebGL texture so it gets recreated
-  setSheet(name: string, source: HTMLImageElement) {
+  setSheet(name: string, source: HTMLImageElement | HTMLCanvasElement) {
     this.sheetImages.set(name, source);
     // Delete cached WebGL texture so ensureSheet recreates it with new image
     this.sheets.delete(name);
@@ -890,7 +900,10 @@ export class IconMarkerLayer implements Layer {
       });
       return null;
     }
-    if (!img.complete || img.naturalWidth === 0) {
+
+    // Canvas elements are always ready; HTMLImageElements need to be loaded
+    const isCanvas = img instanceof HTMLCanvasElement;
+    if (!isCanvas && (!img.complete || img.naturalWidth === 0)) {
       devLog.debug("IconMarkerLayer", "ensureSheet: image not ready", {
         sheetName: name,
         complete: img.complete,
@@ -900,24 +913,24 @@ export class IconMarkerLayer implements Layer {
       return null;
     }
 
+    const w = isCanvas ? img.width : img.naturalWidth;
+    const h = isCanvas ? img.height : img.naturalHeight;
+
     devLog.info("IconMarkerLayer", "Creating WebGL texture", {
       sheetName: name,
-      imageSize: { w: img.naturalWidth, h: img.naturalHeight },
+      imageSize: { w, h },
       totalSheets: this.sheets.size + 1,
     });
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    // Use trilinear filtering with mipmaps for better quality when scaling down
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    // Generate mipmaps for better downscaling quality
-    gl.generateMipmap(gl.TEXTURE_2D);
-    const entry = { name, tex, w: img.naturalWidth, h: img.naturalHeight };
+    const entry = { name, tex, w, h };
     this.sheets.set(name, entry);
     return entry;
   }
@@ -955,6 +968,14 @@ export class IconMarkerLayer implements Layer {
 
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
+
+    // Use separate blend for alpha to prevent framebuffer alpha from dropping below 1.0
+    // when rendering semi-transparent pixels on opaque map tiles.
+    // Without this, premultipliedAlpha:true canvas compositing causes page background bleed-through.
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,  // RGB: standard alpha blend
+      gl.ONE, gl.ONE_MINUS_SRC_ALPHA          // Alpha: preserves opaque background
+    );
 
     // Pass pitch and bearing for 3D height effect
     gl.uniform1f(this.u_pitch_loc, state.pitch);
@@ -1168,6 +1189,12 @@ export class IconMarkerLayer implements Layer {
     }
 
     gl.bindVertexArray(null);
+
+    // Restore global blend state
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,
+      gl.ONE, gl.ONE_MINUS_SRC_ALPHA
+    );
   }
 
   private createImage(url: string) {
@@ -1198,15 +1225,12 @@ export class IconMarkerLayer implements Layer {
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    // Use trilinear filtering with mipmaps for better quality when scaling down
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-    // Generate mipmaps for better downscaling quality
-    gl.generateMipmap(gl.TEXTURE_2D);
 
     const entry = { name: DEFAULT_CIRCLE_SHEET, tex, w: size, h: size };
     this.sheets.set(DEFAULT_CIRCLE_SHEET, entry);
