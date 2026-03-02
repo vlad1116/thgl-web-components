@@ -1120,6 +1120,8 @@ export class WebMap {
       height: h,
       worldScale: 1, // pixels/world-pixel at current zoom
       zoom: this.zoom,
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom,
       bearing: this.bearing,
       pitch: this.pitch,
       center: this.center,

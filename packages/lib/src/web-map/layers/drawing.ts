@@ -827,6 +827,11 @@ export class DrawingLayer implements Layer {
     const c = view[3], d = view[4];
     const tx = view[6], ty = view[7];
 
+    // Adaptive zoom sizing for text (matching icon marker scaling)
+    const zoomRange = state.maxZoom - state.minZoom;
+    const zoomFactor = zoomRange > 0 ? Math.max(0, Math.min(1, (state.zoom - state.minZoom) / zoomRange)) : 0.5;
+    const zoomSizeScale = 0.25 + 2.25 * zoomFactor;
+
     for (const [id, element] of this.textElements) {
       const shape = this.shapes.get(id);
       if (!shape || !shape.center) continue;
@@ -840,6 +845,7 @@ export class DrawingLayer implements Layer {
 
       element.style.left = `${x}px`;
       element.style.top = `${y}px`;
+      element.style.fontSize = `${shape.size * zoomSizeScale}px`;
     }
   }
 

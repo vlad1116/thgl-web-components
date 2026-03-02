@@ -59,6 +59,8 @@ uniform float u_pitch; // camera pitch for 3D effect
 uniform float u_bearing; // camera bearing for perspective direction
 uniform vec2 u_screen; // screen dimensions for billboard scaling
 uniform float u_zoom; // zoom level
+uniform float u_minZoom;
+uniform float u_maxZoom;
 const float MIN_NEEDLE_WORLD = 0.0;
 const float MAX_NEEDLE_WORLD = 20.0;
 
@@ -88,8 +90,12 @@ void main(){
 
   if (a_renderMode < 0.5) {
     // Icon rendering with conditional billboard behavior
+    // Adaptive zoom sizing: icons scale from 0.25x at min zoom to 2.5x at max zoom
+    float zoomRange = u_maxZoom - u_minZoom;
+    float zoomFactor = zoomRange > 0.0 ? clamp((u_zoom - u_minZoom) / zoomRange, 0.0, 1.0) : 0.5;
+    float zoomSizeScale = 0.25 + 2.25 * zoomFactor;
     vec2 center = a_offset + 0.5 * a_size;
-    vec2 local = (a_pos - 0.5) * a_size;
+    vec2 local = (a_pos - 0.5) * a_size * zoomSizeScale;
 
     if (a_keepUpright > 0.5) {
       // Billboard mode: icon always faces the camera
@@ -452,6 +458,8 @@ export class IconMarkerLayer implements Layer {
   private u_bearing_loc: WebGLUniformLocation | null = null;
   private u_screen_loc: WebGLUniformLocation | null = null;
   private u_zoom_loc: WebGLUniformLocation | null = null;
+  private u_minZoom_loc: WebGLUniformLocation | null = null;
+  private u_maxZoom_loc: WebGLUniformLocation | null = null;
   private u_cb_mode_loc: WebGLUniformLocation | null = null;
   private u_cb_sev_loc: WebGLUniformLocation | null = null;
   private hidden?: Set<string>;
@@ -809,6 +817,8 @@ export class IconMarkerLayer implements Layer {
     this.u_bearing_loc = gl.getUniformLocation(this.program!, "u_bearing");
     this.u_screen_loc = gl.getUniformLocation(this.program!, "u_screen");
     this.u_zoom_loc = gl.getUniformLocation(this.program!, "u_zoom");
+    this.u_minZoom_loc = gl.getUniformLocation(this.program!, "u_minZoom");
+    this.u_maxZoom_loc = gl.getUniformLocation(this.program!, "u_maxZoom");
     this.u_cb_mode_loc = gl.getUniformLocation(this.program!, "u_cb_mode");
     this.u_cb_sev_loc = gl.getUniformLocation(this.program!, "u_cb_sev");
     this.u_hc_mode_loc = gl.getUniformLocation(this.program!, "u_hc_mode");
@@ -984,8 +994,10 @@ export class IconMarkerLayer implements Layer {
     // Pass screen dimensions for billboard scaling
     gl.uniform2f(this.u_screen_loc, state.width, state.height);
 
-    // Pass zoom level for world-space needle scaling
+    // Pass zoom level for world-space needle scaling and adaptive icon sizing
     gl.uniform1f(this.u_zoom_loc, state.zoom);
+    gl.uniform1f(this.u_minZoom_loc, state.minZoom);
+    gl.uniform1f(this.u_maxZoom_loc, state.maxZoom);
 
     // Set color-blind simulation uniforms
     gl.uniform1i(this.u_cb_mode_loc, this.cbModeToInt(this.colorBlindMode));
@@ -1237,6 +1249,13 @@ export class IconMarkerLayer implements Layer {
     return entry;
   }
 
+  // Compute zoom-dependent size scale matching the vertex shader formula
+  private getZoomSizeScale(state: RenderState): number {
+    const zoomRange = state.maxZoom - state.minZoom;
+    const zoomFactor = zoomRange > 0 ? Math.max(0, Math.min(1, (state.zoom - state.minZoom) / zoomRange)) : 0.5;
+    return 0.25 + 2.25 * zoomFactor;
+  }
+
   // Hit test: approximate icon as a circle using half of effective size
   pick(state: RenderState, screen: { x: number; y: number }): unknown | null {
     const view = state.viewMatrix!;
@@ -1253,13 +1272,14 @@ export class IconMarkerLayer implements Layer {
       const sy = (1 - (cy * 0.5 + 0.5)) * state.height; // Invert Y for screen coords
       return { x: sx, y: sy };
     };
+    const zoomScale = this.getZoomSizeScale(state);
     for (let i = this.instances.length - 1; i >= 0; i--) {
       const m = this.instances[i];
       if (m === null) continue; // Skip null entries
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
-      let eff = m.size;
+      let eff = m.size * zoomScale;
       if (m.isHighlighted) eff *= 1.15;
       if (m.isSelected) eff *= 1.3;
       const r = eff / 2;
@@ -1292,6 +1312,7 @@ export class IconMarkerLayer implements Layer {
       const sy = (1 - (cy * 0.5 + 0.5)) * state.height; // Invert Y for screen coords
       return { x: sx, y: sy };
     };
+    const zoomScale = this.getZoomSizeScale(state);
     let bestIdx = -1,
       bestDist2 = Infinity,
       bestR = 0,
@@ -1302,7 +1323,7 @@ export class IconMarkerLayer implements Layer {
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
-      let eff = m.size;
+      let eff = m.size * zoomScale;
       if (m.isHighlighted) eff *= 1.15;
       if (m.isSelected) eff *= 1.3;
       const r = eff / 2;
