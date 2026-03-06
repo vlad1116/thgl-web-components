@@ -8,7 +8,7 @@
   "scripts": {
     "build": "next build",
     "clean": "rimraf .next node_modules",
-    "dev": "next dev -p 48301 --turbopack",
+    "dev": "next dev -p 41000 --turbopack",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "start": "next start"
