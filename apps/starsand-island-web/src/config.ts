@@ -32,19 +32,19 @@ export const APP_CONFIG: AppConfig = {
       iconName: "BookOpen",
     },
     {
-      href: "/guides/chest_island",
+      href: "/guides/Treasure%20Chest",
       title: "Treasure Chests",
       linkText: "Find all Treasure Chests",
       iconName: "BookOpen",
     },
     {
-      href: "/guides/campsite",
+      href: "/guides/Campsite",
       title: "Campsites",
       linkText: "Discover all Campsites",
       iconName: "BookOpen",
     },
     {
-      href: "/guides/elf_stone",
+      href: "/guides/Elf%20Stone",
       title: "Elf Stones",
       linkText: "Locate all Elf Stones",
       iconName: "BookOpen",
