@@ -20,6 +20,7 @@ export const games: Array<Game> = [
       overlayURL: "/apps/starsand-island/overlay",
       markerOptions: {
         radius: 6,
+        playerIcon: "player.webp",
         imageSprite: true,
         zPos: {
           xyMaxDistance: 100,
@@ -277,7 +278,10 @@ export const games: Array<Game> = [
       games: [
         {
           title: "Palworld",
-          processNames: ["Palworld-Win64-Shipping.exe", "Palworld-WinGDK-Shipping.exe"],
+          processNames: [
+            "Palworld-Win64-Shipping.exe",
+            "Palworld-WinGDK-Shipping.exe",
+          ],
         },
       ],
       defaultHotkeys: {

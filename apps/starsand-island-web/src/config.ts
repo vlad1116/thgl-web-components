@@ -6,6 +6,15 @@ export const APP_CONFIG: AppConfig = {
   domain: "starsandisland",
   supportedLocales: ["en", "ja", "zh-CN", "zh-TW"],
   appUrl: null,
+  markerOptions: {
+    radius: 6,
+    playerIcon: "player.webp",
+    imageSprite: true,
+    zPos: {
+      xyMaxDistance: 100,
+      zDistance: 5,
+    },
+  },
   internalLinks: [
     {
       title: "Starsand Island Map",
