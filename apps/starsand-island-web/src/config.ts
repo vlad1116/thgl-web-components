@@ -5,7 +5,7 @@ export const APP_CONFIG: AppConfig = {
   title: "Starsand Island",
   domain: "starsandisland",
   supportedLocales: ["en", "ja", "zh-CN", "zh-TW"],
-  appUrl: null,
+  appUrl: "https://www.th.gl/companion-app",
   markerOptions: {
     radius: 6,
     playerIcon: "player.webp",
