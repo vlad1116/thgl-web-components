@@ -188,4 +188,33 @@ export class PeerMeshUtils {
     delete updated[senderId];
     return updated;
   }
+
+  /**
+   * Evict a stale sender that has the same name as a newly joining sender.
+   * This handles the case where a sender restarts and gets a new data peer ID.
+   * Returns the evicted sender ID if found, or null.
+   */
+  static evictStaleSenderByName(
+    senderIds: Set<string>,
+    senderNames: Record<string, string>,
+    senderConnMap: Map<string, string>,
+    newId: string,
+    newName?: string,
+  ): string | null {
+    if (!newName) return null;
+    for (const [existingId, existingName] of Object.entries(senderNames)) {
+      if (existingName === newName && existingId !== newId) {
+        senderIds.delete(existingId);
+        delete senderNames[existingId];
+        for (const [connPeer, senderId] of senderConnMap.entries()) {
+          if (senderId === existingId) {
+            senderConnMap.delete(connPeer);
+            break;
+          }
+        }
+        return existingId;
+      }
+    }
+    return null;
+  }
 }

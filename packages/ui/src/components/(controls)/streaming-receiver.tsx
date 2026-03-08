@@ -77,6 +77,10 @@ export function StreamingReceiver({
     Record<string, string>
   >({});
   const [receiverCount, setReceiverCount] = useState(0);
+  // Per-sender data connection status: "connecting" | "direct" | "relay" | "failed"
+  const [dataConnStatus, setDataConnStatus] = useState<
+    Record<string, "connecting" | "direct" | "relay" | "failed">
+  >({});
   const manualDisconnectRef = useRef(false);
   const leavingTeamRef = useRef(false);
   const joinPhaseRef = useRef("");
@@ -198,6 +202,130 @@ export function StreamingReceiver({
     liveMode,
   ]);
 
+  function getConnectionType(
+    stats: RTCStatsReport,
+  ): "relay" | "direct" {
+    let result: "relay" | "direct" = "direct";
+    stats.forEach((report: any) => {
+      if (result === "relay") return;
+      if (
+        report.type === "candidate-pair" &&
+        (report.state === "succeeded" || report.selected)
+      ) {
+        const localId = report.localCandidateId;
+        stats.forEach((r: any) => {
+          if (r.id === localId && r.candidateType === "relay") {
+            result = "relay";
+          }
+        });
+      }
+    });
+    return result;
+  }
+
+  function detectConnectionType(
+    conn: DataConnection,
+    peerId: string,
+  ) {
+    try {
+      const pc = conn.peerConnection;
+      if (!pc) return;
+      // Small delay to let ICE settle
+      setTimeout(() => {
+        pc.getStats().then((stats) => {
+          const type = getConnectionType(stats);
+          setDataConnStatus((prev) => ({ ...prev, [peerId]: type }));
+          if (type === "relay") {
+            tryUpgradeToDirectConnection(conn, peerId);
+          }
+        });
+      }, 1000);
+    } catch {
+      // Stats API not available
+    }
+  }
+
+  // When a relay connection is detected, try to establish a direct one
+  // by reconnecting. If direct succeeds, swap it in. Otherwise keep relay.
+  function tryUpgradeToDirectConnection(
+    relayConn: DataConnection,
+    peerId: string,
+  ) {
+    const peer = peerRef.current;
+    if (!peer || peer.disconnected || peer.destroyed) return;
+
+    console.log("Attempting direct upgrade for", peerId);
+    const directConn = peer.connect(peerId);
+    if (!directConn) return;
+
+    const upgradeTimeout = setTimeout(() => {
+      // Direct attempt timed out, keep relay
+      console.log("Direct upgrade timed out for", peerId, "keeping relay");
+      directConn.removeAllListeners();
+      try { directConn.close(); } catch {}
+    }, 8000);
+
+    directConn.on("open", () => {
+      const pc = directConn.peerConnection;
+      if (!pc) {
+        clearTimeout(upgradeTimeout);
+        try { directConn.close(); } catch {}
+        return;
+      }
+      // Wait a moment for ICE to settle, then check if it's direct
+      setTimeout(() => {
+        pc.getStats().then((stats) => {
+          clearTimeout(upgradeTimeout);
+          const type = getConnectionType(stats);
+          if (type === "direct") {
+            console.log("Direct upgrade succeeded for", peerId);
+            // Swap: set up the new direct connection and close the old relay
+            relayConn.removeAllListeners();
+            try { relayConn.close(); } catch {}
+            // Re-initialize with the direct connection
+            connectionsRef.current[peerId] = directConn;
+            setDataConnStatus((prev) => ({ ...prev, [peerId]: "direct" }));
+            directConn.on("data", (data) => {
+              if (typeof data !== "object" || data === null) return;
+              lastDataRef.current[peerId] = data;
+              processIncomingData(peerId, data);
+            });
+            directConn.on("close", () => {
+              delete connectionsRef.current[peerId];
+              delete lastDataRef.current[peerId];
+              peersStoreRemove(peerId);
+              setDataConnStatus((prev) => {
+                const next = { ...prev };
+                delete next[peerId];
+                return next;
+              });
+            });
+            directConn.on("error", () => {
+              delete connectionsRef.current[peerId];
+              delete lastDataRef.current[peerId];
+              peersStoreRemove(peerId);
+              setDataConnStatus((prev) => ({ ...prev, [peerId]: "failed" }));
+            });
+            // Re-send set-me if needed
+            if (meSenderIdRef.current === peerId) {
+              directConn.send({ type: "set-me" });
+            }
+          } else {
+            // Still relay, keep the original
+            console.log("Direct upgrade failed for", peerId, "keeping relay");
+            directConn.removeAllListeners();
+            try { directConn.close(); } catch {}
+          }
+        });
+      }, 1000);
+    });
+
+    directConn.on("error", () => {
+      clearTimeout(upgradeTimeout);
+      // Direct attempt failed, relay stays
+    });
+  }
+
   function processIncomingData(peerId: string, data: any) {
     // Use the ref to get the latest meSenderId value
     const currentMeSenderId = meSenderIdRef.current;
@@ -224,6 +352,7 @@ export function StreamingReceiver({
   function initializeDataConnection(conn: DataConnection) {
     const peerId = conn.peer;
     connectionsRef.current[peerId] = conn;
+    setDataConnStatus((prev) => ({ ...prev, [peerId]: "connecting" }));
 
     // Set a timeout for the connection to open
     const connectionTimeout = setTimeout(() => {
@@ -232,11 +361,26 @@ export function StreamingReceiver({
         conn.removeAllListeners();
         conn.close();
         delete connectionsRef.current[peerId];
+        // Remove stale sender from the list — can't get data from them
+        setPeerSenderIds((prev) => prev.filter((id) => id !== peerId));
+        setPeerSenderNames((prev) => {
+          const next = { ...prev };
+          delete next[peerId];
+          return next;
+        });
+        peersStoreRemove(peerId);
+        setDataConnStatus((prev) => {
+          const next = { ...prev };
+          delete next[peerId];
+          return next;
+        });
       }
     }, 10000); // 10 second timeout
 
     conn.on("open", () => {
       clearTimeout(connectionTimeout);
+      // Detect if using relay (TURN) or direct connection
+      detectConnectionType(conn, peerId);
       // If this sender is already selected as "Me", send set-me message
       if (meSenderIdRef.current === peerId) {
         console.log("Sending set-me to pre-selected sender", peerId);
@@ -260,13 +404,30 @@ export function StreamingReceiver({
       delete connectionsRef.current[peerId];
       delete lastDataRef.current[peerId];
       peersStoreRemove(peerId);
+      setDataConnStatus((prev) => {
+        const next = { ...prev };
+        delete next[peerId];
+        return next;
+      });
     });
     conn.on("error", (error) => {
       clearTimeout(connectionTimeout);
       console.log("Data connection error for", peerId, error);
       delete connectionsRef.current[peerId];
       delete lastDataRef.current[peerId];
+      // Remove stale sender from the list — can't get data from them
+      setPeerSenderIds((prev) => prev.filter((id) => id !== peerId));
+      setPeerSenderNames((prev) => {
+        const next = { ...prev };
+        delete next[peerId];
+        return next;
+      });
       peersStoreRemove(peerId);
+      setDataConnStatus((prev) => {
+        const next = { ...prev };
+        delete next[peerId];
+        return next;
+      });
       // If this was our "Me" sender and it failed, clear selection
       if (meSenderIdRef.current === peerId) {
         setMeSenderId(null);
@@ -293,12 +454,13 @@ export function StreamingReceiver({
         peersStoreClear();
       });
       peerRef.current.on("error", (error) => {
+        // peer-unavailable just means a stale peer ID we tried to connect to is gone — not a real error
+        if (error.type === "peer-unavailable") {
+          console.log("Data peer: stale peer unavailable", error.message);
+          return;
+        }
         console.log("peer error", error, error.name, error.message);
-        // Handle specific error types as per PeerJS API
         switch (error.type) {
-          case "peer-unavailable":
-            setErrorMessage("Peer is not available");
-            break;
           case "network":
             setErrorMessage("Network connection lost");
             break;
@@ -387,6 +549,7 @@ export function StreamingReceiver({
     setPeerSenderIds([]);
     setPeerSenderNames({});
     setReceiverCount(0);
+    setDataConnStatus({});
     // Disable auto-join to prevent immediate reconnection
     setAutoJoinPeer(false);
     // Clear any errors when leaving
@@ -469,6 +632,15 @@ export function StreamingReceiver({
                 const msg = _msg as ControlMsg;
                 if (msg && msg.type === "hello") {
                   if (msg.role === "sender") {
+                    // Evict stale sender with same name (e.g. app restarted)
+                    const evicted = PeerMeshUtils.evictStaleSenderByName(
+                      senderIds, senderNames, senderConnMap, msg.id, msg.name,
+                    );
+                    if (evicted) {
+                      receiverConns.forEach((rc) => {
+                        if (rc.open) rc.send({ type: "peer-left", id: evicted } as ControlMsg);
+                      });
+                    }
                     if (!senderIds.has(msg.id)) {
                       senderIds.add(msg.id);
                       senderConnMap.set(conn.peer, msg.id);
@@ -618,6 +790,15 @@ export function StreamingReceiver({
                 const msg = _msg as ControlMsg;
                 if (msg && msg.type === "hello") {
                   if (msg.role === "sender") {
+                    // Evict stale sender with same name (e.g. app restarted)
+                    const evicted = PeerMeshUtils.evictStaleSenderByName(
+                      senderIds, senderNames, senderConnMap, msg.id, msg.name,
+                    );
+                    if (evicted) {
+                      receiverConns.forEach((rc) => {
+                        if (rc.open) rc.send({ type: "peer-left", id: evicted } as ControlMsg);
+                      });
+                    }
                     if (!senderIds.has(msg.id)) {
                       senderIds.add(msg.id);
                       senderConnMap.set(conn.peer, msg.id);
@@ -760,6 +941,15 @@ export function StreamingReceiver({
               const msg = _msg as ControlMsg;
               if (msg && msg.type === "hello") {
                 if (msg.role === "sender") {
+                  // Evict stale sender with same name (e.g. app restarted)
+                  const evicted = PeerMeshUtils.evictStaleSenderByName(
+                    senderIds, senderNames, senderConnMap, msg.id, msg.name,
+                  );
+                  if (evicted) {
+                    receiverConns.forEach((rc) => {
+                      if (rc.open) rc.send({ type: "peer-left", id: evicted } as ControlMsg);
+                    });
+                  }
                   if (!senderIds.has(msg.id)) {
                     senderIds.add(msg.id);
                     senderConnMap.set(conn.peer, msg.id); // Track which connection belongs to which sender
@@ -1120,7 +1310,28 @@ export function StreamingReceiver({
                             key={id}
                             className="flex items-center justify-between gap-2 py-1 px-2 rounded hover:bg-accent/50"
                           >
-                            <span className="text-sm truncate">
+                            <span className="text-sm truncate flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "w-2 h-2 rounded-full shrink-0",
+                                  dataConnStatus[id] === "direct"
+                                    ? "bg-green-400"
+                                    : dataConnStatus[id] === "relay"
+                                      ? "bg-blue-400"
+                                      : dataConnStatus[id] === "failed"
+                                        ? "bg-red-400"
+                                        : "bg-yellow-400",
+                                )}
+                                title={
+                                  dataConnStatus[id] === "direct"
+                                    ? "Direct connection"
+                                    : dataConnStatus[id] === "relay"
+                                      ? "Relayed connection (TURN)"
+                                      : dataConnStatus[id] === "failed"
+                                        ? "Data connection failed"
+                                        : "Connecting..."
+                                }
+                              />
                               {peerSenderNames[id] || id}
                             </span>
                             <Button

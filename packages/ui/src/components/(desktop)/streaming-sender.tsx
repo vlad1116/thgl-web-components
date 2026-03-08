@@ -279,6 +279,11 @@ export function StreamingSender({
       connectionStore.closeExistingConnections();
     });
     p.on("error", (error: any) => {
+      // peer-unavailable just means a stale peer ID we tried to connect to is gone — not a real error
+      if (error?.type === "peer-unavailable") {
+        console.log("Data peer: stale peer unavailable", error?.message);
+        return;
+      }
       setErrorMessage(
         `Data peer error [${error?.type || "unknown"}]: ${error?.message || "Unknown error"}`,
       );
@@ -452,6 +457,15 @@ export function StreamingSender({
                   }
                 });
               } else if (msg.role === "sender") {
+                // Evict stale sender with same name (e.g. app restarted with new peer ID)
+                const evicted = PeerMeshUtils.evictStaleSenderByName(
+                  senderIds, senderNames, senderConnMap, msg.id, msg.name,
+                );
+                if (evicted) {
+                  controlConns.forEach((rc) => {
+                    if (rc.open) rc.send({ type: "peer-left", id: evicted } as ControlMsg);
+                  });
+                }
                 if (!senderIds.has(msg.id)) {
                   senderIds.add(msg.id);
                   senderConnMap.set(conn.peer, msg.id); // Track which connection belongs to which sender
@@ -616,6 +630,15 @@ export function StreamingSender({
                     }
                   });
                 } else if (msg.role === "sender") {
+                  // Evict stale sender with same name (e.g. app restarted with new peer ID)
+                  const evicted = PeerMeshUtils.evictStaleSenderByName(
+                    senderIds, senderNames, senderConnMap, msg.id, msg.name,
+                  );
+                  if (evicted) {
+                    receiverConns.forEach((rc) => {
+                      if (rc.open) rc.send({ type: "peer-left", id: evicted } as ControlMsg);
+                    });
+                  }
                   if (!senderIds.has(msg.id)) {
                     senderIds.add(msg.id);
                     senderConnMap.set(c.peer, msg.id); // Track which connection belongs to which sender
@@ -637,8 +660,6 @@ export function StreamingSender({
                           name: senderNames[msg.id],
                         } as ControlMsg);
                     });
-                    // Notify all other senders about the new sender
-                    // (Note: We don't have a way to track other sender connections in this scenario)
                   }
                 }
               }
