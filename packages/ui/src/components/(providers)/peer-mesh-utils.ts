@@ -4,12 +4,18 @@ import Peer from "peerjs";
 // Common types for peer mesh communication
 export type ControlMsg =
   | { type: "hello"; role: "sender" | "receiver"; id: string; name?: string }
-  | { type: "peer-list"; senders: string[]; names?: Record<string, string> }
+  | {
+      type: "peer-list";
+      senders: string[];
+      names?: Record<string, string>;
+      receiverCount?: number;
+    }
   | {
       type: "peer-joined";
       role: "sender" | "receiver";
-      id: string;
+      id?: string;
       name?: string;
+      receiverCount?: number;
     }
   | { type: "peer-left"; id: string }
   | { type: "set-me"; senderId: string; receiverId?: string } // Receiver tells sender they selected it as "Me"

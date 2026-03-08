@@ -76,8 +76,10 @@ export function StreamingReceiver({
   const [peerSenderNames, setPeerSenderNames] = useState<
     Record<string, string>
   >({});
+  const [receiverCount, setReceiverCount] = useState(0);
   const manualDisconnectRef = useRef(false);
   const leavingTeamRef = useRef(false);
+  const joinPhaseRef = useRef("");
 
   const peersStoreSetPlayer = usePeersStore((s) => s.setRemotePlayer);
   const peersStoreSetActors = usePeersStore((s) => s.setRemoteActors);
@@ -384,6 +386,7 @@ export function StreamingReceiver({
     setInPeer(false);
     setPeerSenderIds([]);
     setPeerSenderNames({});
+    setReceiverCount(0);
     // Disable auto-join to prevent immediate reconnection
     setAutoJoinPeer(false);
     // Clear any errors when leaving
@@ -417,21 +420,26 @@ export function StreamingReceiver({
     setPeerSenderNames({});
 
     // Add timeout for joining
+    joinPhaseRef.current = "initializing";
     const joinTimeout = setTimeout(() => {
       setJoiningPeer(false);
-      setErrorMessage("Failed to join peer mesh - connection timeout");
+      setErrorMessage(
+        `Connection timeout during: ${joinPhaseRef.current}. The signaling server may be slow or unreachable. Try again in a moment.`,
+      );
       if (controlPeerRef.current) {
         try {
           controlPeerRef.current.destroy();
         } catch {}
         controlPeerRef.current = null;
       }
-    }, 5000);
+    }, 10000);
 
     const rootId = PeerMeshUtils.createRootId(domain, peerCode);
     // Ensure our data peer has an ID before joining, so we can announce to the leader
+    joinPhaseRef.current = "creating data peer";
     ensurePeerReady(() => {
       // Prefer joining as member first; if no leader exists, we'll promote to leader.
+      joinPhaseRef.current = "connecting to leader";
       becomePeerMember(rootId, joinTimeout);
     });
   }
@@ -443,6 +451,7 @@ export function StreamingReceiver({
     const memberPeer = new Peer();
     controlPeerRef.current = memberPeer;
     memberPeer.on("open", () => {
+      joinPhaseRef.current = "joining mesh";
       const conn = memberPeer.connect(rootId);
       controlConnectionRef.current = conn;
       let promoteTimer: ReturnType<typeof setTimeout> | null = setTimeout(
@@ -454,7 +463,7 @@ export function StreamingReceiver({
             const receiverConns = new Map<string, DataConnection>();
             const senderIds = new Set<string>();
             const senderNames: Record<string, string> = {};
-            const senderConnMap = new Map<string, string>(); // Map connection peer ID to sender data ID
+            const senderConnMap = new Map<string, string>();
             leaderPeer.on("connection", (conn) => {
               conn.on("data", (_msg) => {
                 const msg = _msg as ControlMsg;
@@ -462,7 +471,7 @@ export function StreamingReceiver({
                   if (msg.role === "sender") {
                     if (!senderIds.has(msg.id)) {
                       senderIds.add(msg.id);
-                      senderConnMap.set(conn.peer, msg.id); // Track which connection belongs to which sender
+                      senderConnMap.set(conn.peer, msg.id);
                       if (msg.name) {
                         senderNames[msg.id] = msg.name;
                       }
@@ -501,13 +510,23 @@ export function StreamingReceiver({
                       type: "peer-list",
                       senders: Array.from(senderIds),
                       names: senderNames,
+                      receiverCount: receiverConns.size,
                     } as ControlMsg);
+                    receiverConns.forEach((rc, id) => {
+                      if (id !== conn.peer && rc.open) {
+                        rc.send({
+                          type: "peer-joined",
+                          role: "receiver",
+                          receiverCount: receiverConns.size,
+                        } as ControlMsg);
+                      }
+                    });
                   }
                 }
               });
               conn.on("close", () => {
+                const wasReceiver = receiverConns.has(conn.peer);
                 receiverConns.delete(conn.peer);
-                // Check if a sender disconnected
                 const senderId = senderConnMap.get(conn.peer);
                 if (senderId) {
                   senderIds.delete(senderId);
@@ -515,7 +534,6 @@ export function StreamingReceiver({
                   senderConnMap.delete(conn.peer);
                   setPeerSenderIds(Array.from(senderIds));
                   setPeerSenderNames({ ...senderNames });
-                  // Notify all receivers that this sender left
                   receiverConns.forEach((rc) => {
                     if (rc.open) {
                       rc.send({
@@ -524,15 +542,23 @@ export function StreamingReceiver({
                       } as ControlMsg);
                     }
                   });
+                } else if (wasReceiver) {
+                  receiverConns.forEach((rc) => {
+                    if (rc.open) {
+                      rc.send({
+                        type: "peer-left",
+                        role: "receiver",
+                        receiverCount: receiverConns.size,
+                      } as any);
+                    }
+                  });
                 }
               });
             });
             leaderPeer.on("open", () => {
               setErrorMessage("");
               setInPeer(true);
-              // Keep joiningPeer as true since we're still setting up
               setPeerSenderIds(Array.from(senderIds));
-              // Only set joiningPeer to false after setup is complete
               setTimeout(() => setJoiningPeer(false), 100);
               if (joinTimeout) clearTimeout(joinTimeout);
             });
@@ -541,12 +567,16 @@ export function StreamingReceiver({
                 setJoiningPeer(true);
                 becomePeerMember(rootId);
               } else {
-                setErrorMessage(err?.message || "Peer Mesh error");
+                setErrorMessage(
+                  `Leader promotion error [${err?.type || "unknown"}]: ${err?.message || "Unknown error"}`,
+                );
                 setJoiningPeer(false);
               }
             });
           } catch (err: any) {
-            setErrorMessage(err?.message || "Peer Mesh error");
+            setErrorMessage(
+              `Leader promotion failed: ${err?.message || "Unknown error"}`,
+            );
             setJoiningPeer(false);
           }
         },
@@ -582,7 +612,7 @@ export function StreamingReceiver({
             const receiverConns = new Map<string, DataConnection>();
             const senderIds = new Set<string>();
             const senderNames: Record<string, string> = {};
-            const senderConnMap = new Map<string, string>(); // Map connection peer ID to sender data ID
+            const senderConnMap = new Map<string, string>();
             leaderPeer.on("connection", (conn) => {
               conn.on("data", (_msg) => {
                 const msg = _msg as ControlMsg;
@@ -590,7 +620,7 @@ export function StreamingReceiver({
                   if (msg.role === "sender") {
                     if (!senderIds.has(msg.id)) {
                       senderIds.add(msg.id);
-                      senderConnMap.set(conn.peer, msg.id); // Track which connection belongs to which sender
+                      senderConnMap.set(conn.peer, msg.id);
                       if (msg.name) {
                         senderNames[msg.id] = msg.name;
                       }
@@ -629,13 +659,23 @@ export function StreamingReceiver({
                       type: "peer-list",
                       senders: Array.from(senderIds),
                       names: senderNames,
+                      receiverCount: receiverConns.size,
                     } as ControlMsg);
+                    receiverConns.forEach((rc, id) => {
+                      if (id !== conn.peer && rc.open) {
+                        rc.send({
+                          type: "peer-joined",
+                          role: "receiver",
+                          receiverCount: receiverConns.size,
+                        } as ControlMsg);
+                      }
+                    });
                   }
                 }
               });
               conn.on("close", () => {
+                const wasReceiver = receiverConns.has(conn.peer);
                 receiverConns.delete(conn.peer);
-                // Check if a sender disconnected
                 const senderId = senderConnMap.get(conn.peer);
                 if (senderId) {
                   senderIds.delete(senderId);
@@ -643,7 +683,6 @@ export function StreamingReceiver({
                   senderConnMap.delete(conn.peer);
                   setPeerSenderIds(Array.from(senderIds));
                   setPeerSenderNames({ ...senderNames });
-                  // Notify all receivers that this sender left
                   receiverConns.forEach((rc) => {
                     if (rc.open) {
                       rc.send({
@@ -652,15 +691,23 @@ export function StreamingReceiver({
                       } as ControlMsg);
                     }
                   });
+                } else if (wasReceiver) {
+                  receiverConns.forEach((rc) => {
+                    if (rc.open) {
+                      rc.send({
+                        type: "peer-left",
+                        role: "receiver",
+                        receiverCount: receiverConns.size,
+                      } as any);
+                    }
+                  });
                 }
               });
             });
             leaderPeer.on("open", () => {
               setErrorMessage("");
               setInPeer(true);
-              // Keep joiningPeer as true since we're still setting up
               setPeerSenderIds(Array.from(senderIds));
-              // Only set joiningPeer to false after setup is complete
               setTimeout(() => setJoiningPeer(false), 100);
               if (joinTimeout) clearTimeout(joinTimeout);
             });
@@ -670,16 +717,22 @@ export function StreamingReceiver({
                 setJoiningPeer(true);
                 becomePeerMember(rootId);
               } else {
-                setErrorMessage(err?.message || "Peer Mesh error");
+                setErrorMessage(
+                  `Leader error [${err?.type || "unknown"}]: ${err?.message || "Unknown error"}`,
+                );
                 setJoiningPeer(false);
               }
             });
           } catch (err: any) {
-            setErrorMessage(err?.message || "Peer Mesh error");
+            setErrorMessage(
+              `Leader promotion failed: ${err?.message || "Unknown error"}`,
+            );
             setJoiningPeer(false);
           }
         } else {
-          setErrorMessage(e?.message || "Peer Mesh error");
+          setErrorMessage(
+            `Connection error [${e?.type || "unknown"}]: ${e?.message || "Unknown error"}`,
+          );
           setJoiningPeer(false);
         }
         if (promoteTimer) {
@@ -745,11 +798,22 @@ export function StreamingReceiver({
                     type: "peer-list",
                     senders: Array.from(senderIds),
                     names: senderNames,
+                    receiverCount: receiverConns.size,
                   } as ControlMsg);
+                  receiverConns.forEach((rc, id) => {
+                    if (id !== conn.peer && rc.open) {
+                      rc.send({
+                        type: "peer-joined",
+                        role: "receiver",
+                        receiverCount: receiverConns.size,
+                      } as ControlMsg);
+                    }
+                  });
                 }
               }
             });
             conn.on("close", () => {
+              const wasReceiver = receiverConns.has(conn.peer);
               receiverConns.delete(conn.peer);
               // Check if a sender disconnected
               const senderId = senderConnMap.get(conn.peer);
@@ -782,6 +846,16 @@ export function StreamingReceiver({
                   setPlayer(null);
                   setActors([]);
                 }
+              } else if (wasReceiver) {
+                receiverConns.forEach((rc) => {
+                  if (rc.open) {
+                    rc.send({
+                      type: "peer-left",
+                      role: "receiver",
+                      receiverCount: receiverConns.size,
+                    } as any);
+                  }
+                });
               }
             });
           });
@@ -797,12 +871,16 @@ export function StreamingReceiver({
               setJoiningPeer(true);
               becomePeerMember(rootId);
             } else {
-              setErrorMessage(err?.message || "Peer Mesh error");
+              setErrorMessage(
+                `Leader promotion error [${err?.type || "unknown"}]: ${err?.message || "Unknown error"}`,
+              );
               setJoiningPeer(false);
             }
           });
         } catch (err: any) {
-          setErrorMessage(err?.message || "Peer Mesh error");
+          setErrorMessage(
+            `Leader promotion failed: ${err?.message || "Unknown error"}`,
+          );
           setJoiningPeer(false);
         }
       });
@@ -817,6 +895,9 @@ export function StreamingReceiver({
           if (names) {
             setPeerSenderNames(names);
           }
+          if (typeof msg.receiverCount === "number") {
+            setReceiverCount(msg.receiverCount);
+          }
           for (const senderId of msg.senders) {
             if (connectionsRef.current[senderId]) continue;
             ensurePeerReady(() => {
@@ -828,21 +909,34 @@ export function StreamingReceiver({
               initializeDataConnection(c);
             });
           }
-        } else if (msg.type === "peer-joined" && msg.role === "sender") {
+        } else if (msg.type === "peer-joined" && msg.role === "receiver") {
+          const rc = (msg as any).receiverCount;
+          if (typeof rc === "number") setReceiverCount(rc);
+        } else if (
+          msg.type === "peer-joined" &&
+          msg.role === "sender" &&
+          msg.id
+        ) {
+          const senderId = msg.id;
           setPeerSenderIds((prev) =>
-            PeerMeshUtils.addSenderToList(prev, msg.id),
+            PeerMeshUtils.addSenderToList(prev, senderId),
           );
           setPeerSenderNames((prev) =>
-            PeerMeshUtils.updateSenderNames(prev, msg.id, (msg as any).name),
+            PeerMeshUtils.updateSenderNames(prev, senderId, msg.name),
           );
-          if (!connectionsRef.current[msg.id]) {
+          if (!connectionsRef.current[senderId]) {
             ensurePeerReady(() => {
-              if (!peerRef.current || connectionsRef.current[msg.id]) return;
-              const c = peerRef.current.connect(msg.id);
+              if (!peerRef.current || connectionsRef.current[senderId]) return;
+              const c = peerRef.current.connect(senderId);
               initializeDataConnection(c);
             });
           }
         } else if (msg.type === "peer-left") {
+          const rc = (msg as any).receiverCount;
+          if ((msg as any).role === "receiver" && typeof rc === "number") {
+            setReceiverCount(rc);
+            return;
+          }
           const peerId = msg.id;
           const c = connectionsRef.current[peerId];
           if (c) {
@@ -867,8 +961,13 @@ export function StreamingReceiver({
         }
       });
     });
-    memberPeer.on("error", (e) => {
-      setErrorMessage(e?.message || "Peer Mesh error");
+    memberPeer.on("error", (e: any) => {
+      // peer-unavailable is expected when no leader exists yet;
+      // conn.on("error") handles promotion to leader, so ignore it here.
+      if (e?.type === "peer-unavailable") return;
+      setErrorMessage(
+        `Member error [${e?.type || "unknown"}]: ${e?.message || "Unknown error"}`,
+      );
       setJoiningPeer(false);
     });
   }
@@ -1048,6 +1147,17 @@ export function StreamingReceiver({
                 </ScrollArea>
               </div>
             </div>
+            {inPeer && (
+              <div className="rounded-md border p-2 bg-accent/5">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                  <span>
+                    {receiverCount} browser
+                    {receiverCount !== 1 ? "s" : ""} connected
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </DialogContent>
