@@ -30,6 +30,33 @@ export interface PeerMeshState {
   errorMessage: string;
 }
 
+// ICE server configuration for WebRTC NAT traversal
+const iceServers: RTCIceServer[] = [
+  { urls: "stun:stun.relay.metered.ca:80" },
+  {
+    urls: "turn:global.relay.metered.ca:80",
+    username: "e364a6915935d26b3e4f6054",
+    credential: "uIs81tq3PlO2VN9y",
+  },
+  {
+    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+    username: "e364a6915935d26b3e4f6054",
+    credential: "uIs81tq3PlO2VN9y",
+  },
+  {
+    urls: "turn:global.relay.metered.ca:443",
+    username: "e364a6915935d26b3e4f6054",
+    credential: "uIs81tq3PlO2VN9y",
+  },
+  {
+    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+    username: "e364a6915935d26b3e4f6054",
+    credential: "uIs81tq3PlO2VN9y",
+  },
+];
+
+export const peerConfig: RTCConfiguration = { iceServers };
+
 // Utility functions for peer mesh operations
 export class PeerMeshUtils {
   static createRootId(domain: string, peerCode: string): string {
@@ -61,7 +88,7 @@ export class PeerMeshUtils {
     onClose?: () => void,
     onConnection?: (conn: DataConnection) => void,
   ): Peer {
-    const peer = new Peer();
+    const peer = new Peer({ config: peerConfig });
 
     if (onOpen) {
       peer.on("open", onOpen);
