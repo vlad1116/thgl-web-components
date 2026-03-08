@@ -1358,6 +1358,14 @@ export function StreamingReceiver({
                 </ScrollArea>
               </div>
             </div>
+            {inPeer && peerSenderIds.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-400 rounded-full" />direct</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />relay</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />connecting</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-red-400 rounded-full" />failed</span>
+              </div>
+            )}
             {inPeer && (
               <div className="rounded-md border p-2 bg-accent/5">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

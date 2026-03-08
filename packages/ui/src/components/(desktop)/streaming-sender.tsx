@@ -113,6 +113,10 @@ export function StreamingSender({
 
   // Store for data connections to other senders
   const senderDataConnectionsRef = useRef<Record<string, DataConnection>>({});
+  // Track sender-to-sender data connection status
+  const [senderDataConnStatus, setSenderDataConnStatus] = useState<
+    Record<string, "connecting" | "open" | "receiving" | "failed">
+  >({});
 
   // Track which connections need actors (have selected this sender as "Me")
   const connectionsNeedingActorsRef = useRef<Set<string>>(new Set());
@@ -215,6 +219,26 @@ export function StreamingSender({
     senderId: string,
     isIncoming: boolean = false,
   ) {
+    // Guard: if we already have an open connection to this sender, skip
+    const existing = senderDataConnectionsRef.current[senderId];
+    if (existing && existing.open) {
+      console.log(
+        `Already have open connection to ${senderId}, skipping ${isIncoming ? "incoming" : "outbound"}`,
+      );
+      try { conn.close(); } catch {}
+      return;
+    }
+    setSenderDataConnStatus((prev) => ({ ...prev, [senderId]: "connecting" }));
+    // Timeout: if connection doesn't open in 10s, mark as failed
+    const connectionTimeout = setTimeout(() => {
+      if (!conn.open) {
+        console.log("Sender data connection timeout for", senderId);
+        conn.removeAllListeners();
+        try { conn.close(); } catch {}
+        delete senderDataConnectionsRef.current[senderId];
+        setSenderDataConnStatus((prev) => ({ ...prev, [senderId]: "failed" }));
+      }
+    }, 10000);
     conn.on("data", (data) => {
       if (typeof data !== "object" || data === null) {
         return;
@@ -222,10 +246,13 @@ export function StreamingSender({
       // Process data from other senders - only player positions, not actors
       if ("player" in data && data.player) {
         peersStoreSetPlayer(senderId, data.player as RemotePlayer);
+        setSenderDataConnStatus((prev) => ({ ...prev, [senderId]: "receiving" }));
       }
       // Note: actors are not processed from other senders
     });
     conn.on("open", () => {
+      clearTimeout(connectionTimeout);
+      setSenderDataConnStatus((prev) => ({ ...prev, [senderId]: "open" }));
       // When the data connection opens, proactively send our current player state
       if (player && peerRef.current && playerName) {
         const enhancedPlayer = {
@@ -241,12 +268,20 @@ export function StreamingSender({
       }
     });
     conn.on("close", () => {
+      clearTimeout(connectionTimeout);
       delete senderDataConnectionsRef.current[senderId];
       peersStoreRemove(senderId);
+      setSenderDataConnStatus((prev) => {
+        const next = { ...prev };
+        delete next[senderId];
+        return next;
+      });
     });
     conn.on("error", () => {
+      clearTimeout(connectionTimeout);
       delete senderDataConnectionsRef.current[senderId];
       peersStoreRemove(senderId);
+      setSenderDataConnStatus((prev) => ({ ...prev, [senderId]: "failed" }));
     });
     senderDataConnectionsRef.current[senderId] = conn;
   }
@@ -368,6 +403,7 @@ export function StreamingSender({
     setPeerSenderIds([]);
     setPeerSenderNames({});
     setReceiverCount(0);
+    setSenderDataConnStatus({});
     setReceiversNeedingActors(0);
     // Clear any errors when leaving
     setErrorMessage("");
@@ -792,6 +828,11 @@ export function StreamingSender({
               delete senderDataConnectionsRef.current[msg.id];
             }
             peersStoreRemove(msg.id);
+            setSenderDataConnStatus((prev) => {
+              const next = { ...prev };
+              delete next[msg.id];
+              return next;
+            });
           }
         }
       });
@@ -984,7 +1025,27 @@ export function StreamingSender({
                           key={id}
                           className="flex items-center gap-2 py-1 px-2 rounded bg-accent/20"
                         >
-                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <div
+                            className={cn(
+                              "w-2 h-2 rounded-full shrink-0",
+                              senderDataConnStatus[id] === "receiving"
+                                ? "bg-green-400"
+                                : senderDataConnStatus[id] === "open"
+                                  ? "bg-blue-400"
+                                  : senderDataConnStatus[id] === "failed"
+                                    ? "bg-red-400"
+                                    : "bg-yellow-400",
+                            )}
+                            title={
+                              senderDataConnStatus[id] === "receiving"
+                                ? "Receiving data"
+                                : senderDataConnStatus[id] === "open"
+                                  ? "Connected (no data yet)"
+                                  : senderDataConnStatus[id] === "failed"
+                                    ? "Connection failed"
+                                    : "Connecting..."
+                            }
+                          />
                           <span className="text-sm truncate">
                             {peerSenderNames[id] || id}
                           </span>
@@ -1001,6 +1062,15 @@ export function StreamingSender({
                 </ScrollArea>
               </div>
             </div>
+
+            {inPeer && peerSenderIds.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-400 rounded-full" />receiving</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />connected</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />connecting</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-red-400 rounded-full" />failed</span>
+              </div>
+            )}
 
             {/* Connected receivers count */}
             <div className="space-y-2">
