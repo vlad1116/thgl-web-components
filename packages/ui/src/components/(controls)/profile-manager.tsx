@@ -208,12 +208,12 @@ export function ProfileManager({ activeApp }: { activeApp: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-nowrap">
         <Select
           value={settingsStore.currentProfileId}
           onValueChange={handleSwitchProfile}
         >
-          <SelectTrigger className="w-[180px] h-8" id="profile-select">
+          <SelectTrigger className="min-w-0 flex-1 h-8" id="profile-select">
             <SelectValue placeholder="Select profile" />
           </SelectTrigger>
           <SelectContent>

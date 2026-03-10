@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FilterSettingsPopover } from "./filter-settings-popover";
 import { useT } from "../(providers)";
 import { useMemo, useState } from "react";
-import { FoldVertical, UnfoldVertical } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export function CollapsibleFilter({
   appName,
@@ -35,6 +35,9 @@ export function CollapsibleFilter({
     [filter.values],
   );
 
+  const ratio =
+    filter.values.length > 0 ? activeFiltersLength / filter.values.length : 0;
+
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
@@ -45,13 +48,33 @@ export function CollapsibleFilter({
           },
         )}
       >
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "flex items-center gap-1 text-left transition-colors hover:text-primary py-1 px-0.5 truncate grow min-w-0",
+              {
+                "text-muted-foreground": !activeFiltersLength,
+              },
+            )}
+            title={t(filter.group)}
+            type="button"
+          >
+            <ChevronRight
+              className={cn(
+                "h-3 w-3 shrink-0 transition-transform duration-200",
+                open && "rotate-90",
+              )}
+            />
+            <span className="font-semibold truncate">
+              {t(filter.group) || filter.group}
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              {activeFiltersLength}/{filter.values.length}
+            </span>
+          </button>
+        </CollapsibleTrigger>
         <button
-          className={cn(
-            "text-left transition-colors hover:text-primary p-1 truncate grow",
-            {
-              "text-muted-foreground": !activeFiltersLength,
-            },
-          )}
+          className="text-[10px] text-muted-foreground hover:text-primary px-1.5 py-1 transition-colors shrink-0 uppercase tracking-wide"
           onClick={() => {
             const newFilters = activeFiltersLength
               ? filters.filter(
@@ -65,15 +88,10 @@ export function CollapsibleFilter({
                 ];
             setFilters(newFilters);
           }}
-          title={t(filter.group)}
           type="button"
+          title={activeFiltersLength ? "Disable all" : "Enable all"}
         >
-          <span className="font-semibold">
-            {t(filter.group) || filter.group}
-          </span>
-          <span className="ml-1 text-xs text-muted-foreground">
-            ({activeFiltersLength}/{filter.values.length})
-          </span>
+          {activeFiltersLength ? "None" : "All"}
         </button>
         <FilterSettingsPopover
           isGroup
@@ -81,15 +99,13 @@ export function CollapsibleFilter({
           filterIds={filterIds}
           filterLabel={t(filter.group) || filter.group}
         />
-        <CollapsibleTrigger asChild>
-          <button className="hover:text-primary p-2">
-            {open ? (
-              <FoldVertical className="h-4 w-4" />
-            ) : (
-              <UnfoldVertical className="h-4 w-4" />
-            )}
-          </button>
-        </CollapsibleTrigger>
+      </div>
+      {/* Progress bar */}
+      <div className="h-[2px] bg-muted/20 mx-1.5 overflow-hidden rounded-full">
+        <div
+          className="h-full bg-primary/50 transition-all duration-300 rounded-full"
+          style={{ width: `${ratio * 100}%` }}
+        />
       </div>
       <CollapsibleContent className="flex flex-wrap">
         {filter.values
@@ -101,7 +117,10 @@ export function CollapsibleFilter({
           })
 
           .map((f) => (
-            <div key={f.id} className="flex grow items-center md:basis-1/2 pr-2 min-w-0">
+            <div
+              key={f.id}
+              className="flex grow items-center md:basis-1/2 pr-2 min-w-0"
+            >
               <Tooltip delayDuration={300} disableHoverableContent>
                 <TooltipTrigger asChild>
                   <button

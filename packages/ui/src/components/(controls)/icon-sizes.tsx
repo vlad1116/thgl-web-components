@@ -1,17 +1,19 @@
 import { Label } from "@radix-ui/react-label";
 import { Slider } from "../ui/slider";
-import { FiltersConfig, useSettingsStore } from "@repo/lib";
+import { cn, FiltersConfig, useSettingsStore } from "@repo/lib";
 import { useT } from "../(providers)";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { FoldVertical } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 const MIN_ICON_SIZE = 0.1;
 const MAX_ICON_SIZE = 2.5;
 export function IconSizes({ filters }: { filters: FiltersConfig }) {
+  const [open, setOpen] = useState(false);
   const t = useT();
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
   const setBaseIconSize = useSettingsStore((state) => state.setBaseIconSize);
@@ -56,10 +58,19 @@ export function IconSizes({ filters }: { filters: FiltersConfig }) {
         max={MAX_ICON_SIZE}
       />
 
-      <Collapsible className="col-span-3">
-        <CollapsibleTrigger className="flex w-full justify-between hover:text-primary">
+      <Collapsible
+        className="col-span-3"
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <CollapsibleTrigger className="flex w-full items-center gap-1 hover:text-primary">
+          <ChevronRight
+            className={cn(
+              "h-3 w-3 shrink-0 transition-transform duration-200",
+              open && "rotate-90",
+            )}
+          />
           <span>Per-Filter Icon Sizes</span>
-          <FoldVertical className="h-4 w-4" />
         </CollapsibleTrigger>
         <CollapsibleContent className="col-span-3">
           {/* Per-filter icon size sliders */}

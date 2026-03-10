@@ -6,12 +6,12 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { cn, useUserStore } from "@repo/lib";
-import { FoldVertical, Hexagon, UnfoldVertical } from "lucide-react";
+import { ChevronRight, Hexagon } from "lucide-react";
 
 export function RegionFilters() {
   const { regions, staticDrawings } = useCoordinates();
 
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const t = useT();
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
@@ -33,6 +33,10 @@ export function RegionFilters() {
     () => filterNames.filter((filter) => filters.includes(filter)).length,
     [filters, filterNames],
   );
+
+  const ratio =
+    filterNames.length > 0 ? activeFiltersLength / filterNames.length : 0;
+
   if (filterNames.length === 0) {
     return null;
   }
@@ -44,33 +48,49 @@ export function RegionFilters() {
           "text-muted-foreground": !activeFiltersLength,
         })}
       >
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "flex items-center gap-1 text-left transition-colors hover:text-primary py-1 px-0.5 truncate grow min-w-0",
+              {
+                "text-muted-foreground": !activeFiltersLength,
+              },
+            )}
+            title={t("drawings")}
+            type="button"
+          >
+            <ChevronRight
+              className={cn(
+                "h-3 w-3 shrink-0 transition-transform duration-200",
+                open && "rotate-90",
+              )}
+            />
+            <span className="font-semibold truncate">{t("drawings")}</span>
+            <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              {activeFiltersLength}/{filterNames.length}
+            </span>
+          </button>
+        </CollapsibleTrigger>
         <button
-          className={cn(
-            "text-left transition-colors hover:text-primary p-1 truncate grow",
-          )}
+          className="text-[10px] text-muted-foreground hover:text-primary px-1.5 py-1 transition-colors shrink-0 uppercase tracking-wide"
           onClick={() => {
             const newFilters = activeFiltersLength
               ? filters.filter((filter) => !filterNames.includes(filter))
               : [...new Set([...filters, ...filterNames])];
             setFilters(newFilters);
           }}
-          title={t("drawings")}
           type="button"
+          title={activeFiltersLength ? "Disable all" : "Enable all"}
         >
-          <span className="font-semibold">{t("drawings")}</span>
-          <span className="ml-1 text-xs text-muted-foreground">
-            ({activeFiltersLength}/{filterNames.length})
-          </span>
+          {activeFiltersLength ? "None" : "All"}
         </button>
-        <CollapsibleTrigger asChild>
-          <button className="hover:text-primary p-2">
-            {open ? (
-              <FoldVertical className="h-4 w-4" />
-            ) : (
-              <UnfoldVertical className="h-4 w-4" />
-            )}
-          </button>
-        </CollapsibleTrigger>
+      </div>
+      {/* Progress bar */}
+      <div className="h-[2px] bg-muted/20 mx-1.5 overflow-hidden rounded-full">
+        <div
+          className="h-full bg-primary/50 transition-all duration-300 rounded-full"
+          style={{ width: `${ratio * 100}%` }}
+        />
       </div>
       <CollapsibleContent className="flex flex-wrap">
         {regionFilters.map((filter) => (

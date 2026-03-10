@@ -239,6 +239,7 @@ export interface ProfileActions {
   setMapFilter: (mapFilter: string) => void;
   setWindowOpacity: (windowOpacity: number) => void;
   resetTransform: () => void;
+  resetInterface: () => void;
   isDiscoveredNode: (nodeId: string) => boolean;
   toggleDiscoveredNode: (nodeId: string) => void;
   setDiscoverNode: (nodeId: string, discovered: boolean) => void;
@@ -629,6 +630,42 @@ export const useSettingsStore = create(
             baseIconSize: 1,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
+          });
+        },
+
+        resetInterface: () => {
+          updateSettings({
+            // Icon sizes & transforms
+            transforms: {},
+            mapTransform: null,
+            playerIconSize: 1,
+            baseIconSize: 1,
+            iconSizeByFilter: {},
+            iconSizeByGroup: {},
+            // Accessibility
+            colorBlindMode: "none",
+            colorBlindSeverity: 1,
+            highContrastMode: false,
+            highContrastColor: "#FFFFFFCC",
+            highContrastThickness: 2,
+            // Trace line
+            showTraceLine: true,
+            followPlayer: true,
+            traceLineLength: 100,
+            traceLineRate: 5,
+            traceLineColor: "#1ccdd1B3",
+            // Audio alerts
+            audioAlertsMuted: false,
+            audioAlertRange: 1000,
+            audioAlertSound: "chime",
+            audioAlertVolume: 0.5,
+            showAudioAlertRange: false,
+            audioAlertByFilter: {},
+            // Labels
+            labelModeByFilter: {},
+            labelTextSize: 1,
+            // Map behavior
+            fitBoundsOnChange: false,
           });
         },
 

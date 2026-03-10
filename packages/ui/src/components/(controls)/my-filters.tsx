@@ -12,9 +12,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   CaseSensitive,
+  ChevronRight,
   Clipboard,
   Copy,
   Download,
@@ -38,6 +38,7 @@ import { useMemo, useState } from "react";
 import { DeleteFilter } from "./delete-filter";
 
 export function MyFilters() {
+  const [open, setOpen] = useState(false);
   const { filters, setFilters, toggleFilter } = useUserStore();
   const myFilters = useSettingsStore((state) => state.myFilters);
   const addMyFilter = useSettingsStore((state) => state.addMyFilter);
@@ -63,42 +64,63 @@ export function MyFilters() {
     () => filterNames.filter((filter) => filters.includes(filter)).length,
     [filters, filterNames],
   );
+
+  const ratio =
+    filterNames.length > 0 ? activeFiltersLength / filterNames.length : 0;
+
   if (filterNames.length === 0) {
     return <></>;
   }
   return (
-    <Collapsible defaultOpen>
+    <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn("flex items-center transition-colors w-full px-1.5", {
           "text-muted-foreground": !activeFiltersLength,
         })}
       >
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "flex items-center gap-1 text-left transition-colors hover:text-primary py-1 px-0.5 truncate grow min-w-0",
+              {
+                "text-muted-foreground": !activeFiltersLength,
+              },
+            )}
+            title="My Filters"
+            type="button"
+          >
+            <ChevronRight
+              className={cn(
+                "h-3 w-3 shrink-0 transition-transform duration-200",
+                open && "rotate-90",
+              )}
+            />
+            <span className="font-semibold truncate">My Filters</span>
+            <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              {activeFiltersLength}/{filterNames.length}
+            </span>
+          </button>
+        </CollapsibleTrigger>
         <button
-          className={cn(
-            "text-left transition-colors hover:text-primary p-1 truncate grow",
-            {
-              "text-muted-foreground": !activeFiltersLength,
-            },
-          )}
+          className="text-[10px] text-muted-foreground hover:text-primary px-1.5 py-1 transition-colors shrink-0 uppercase tracking-wide"
           onClick={() => {
             const newFilters = activeFiltersLength
               ? filters.filter((filter) => !filterNames.includes(filter))
               : [...new Set([...filters, ...filterNames])];
             setFilters(newFilters);
           }}
-          title="My Filters"
           type="button"
+          title={activeFiltersLength ? "Disable all" : "Enable all"}
         >
-          <span className="font-semibold">My Filters</span>
-          <span className="ml-1 text-xs text-muted-foreground">
-            ({activeFiltersLength}/{filterNames.length})
-          </span>
+          {activeFiltersLength ? "None" : "All"}
         </button>
-        <CollapsibleTrigger asChild>
-          <button className="transition-colors hover:text-primary p-2">
-            <CaretSortIcon className="h-4 w-4" />
-          </button>
-        </CollapsibleTrigger>
+      </div>
+      {/* Progress bar */}
+      <div className="h-[2px] bg-muted/20 mx-1.5 overflow-hidden rounded-full">
+        <div
+          className="h-full bg-primary/50 transition-all duration-300 rounded-full"
+          style={{ width: `${ratio * 100}%` }}
+        />
       </div>
       <CollapsibleContent className="flex flex-wrap w-[200px] md:w-full">
         {myFilters

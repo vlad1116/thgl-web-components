@@ -405,6 +405,7 @@ export type DatabaseConfig<T = Record<string, any>> = {
 
 export type FiltersConfig = {
   group: string;
+  category?: string;
   defaultOpen?: boolean;
   defaultOn?: boolean;
   values: {
