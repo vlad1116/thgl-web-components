@@ -1,3 +1,5 @@
+"use client";
+
 import { Label } from "@radix-ui/react-label";
 import { Slider } from "../ui/slider";
 import { cn, FiltersConfig, useSettingsStore } from "@repo/lib";
@@ -58,11 +60,7 @@ export function IconSizes({ filters }: { filters: FiltersConfig }) {
         max={MAX_ICON_SIZE}
       />
 
-      <Collapsible
-        className="col-span-3"
-        open={open}
-        onOpenChange={setOpen}
-      >
+      <Collapsible className="col-span-3" open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger className="flex w-full items-center gap-1 hover:text-primary">
           <ChevronRight
             className={cn(
