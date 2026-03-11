@@ -103,6 +103,8 @@ void main(){
       // Billboard mode: icon always faces the camera
       // Transform center first, then apply height in SCREEN space (always upward)
       vec3 centerScreen = u_view * vec3(center, 1.0);
+      // Depth from ground position: lower clip Y = closer to viewer = smaller depth
+      float depth = (1.0 + centerScreen.y) * 0.5;
 
       // Apply height offset in screen Y (up direction in screen space)
       // Scale height by view matrix scale to make it zoom-responsive
@@ -117,7 +119,7 @@ void main(){
       // Apply screen-space offset directly (no perspective compression)
       vec2 screenOffset = rot * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
 
-      gl_Position = vec4(centerScreen.xy + screenOffset, 0.0, 1.0);
+      gl_Position = vec4(centerScreen.xy + screenOffset, depth, 1.0);
     } else {
       // Player mode: use world-space rotation (affected by perspective)
       float cs = cos(a_angle), sn = sin(a_angle);
@@ -126,11 +128,13 @@ void main(){
 
       // Apply height effect in SCREEN space after view transform
       vec3 screenPos = u_view * vec3(iconPos, 1.0);
+      // Depth from ground position: lower clip Y = closer to viewer = smaller depth
+      float depth = (1.0 + screenPos.y) * 0.5;
       float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
       float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
       screenPos.y += heightClip * iconDirection;
 
-      gl_Position = vec4(screenPos.xy, 0.0, 1.0);
+      gl_Position = vec4(screenPos.xy, depth, 1.0);
     }
     v_uv = a_uv.xy + a_pos * a_uv.zw;
     v_uvMin = a_uv.xy;
@@ -146,6 +150,7 @@ void main(){
 
     // Transform to screen space first
     vec3 groundPos = u_view * vec3(center, 1.0);
+    float depth = (1.0 + groundPos.y) * 0.5;
 
     // Apply needle in screen Y direction, scaled appropriately
     float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
@@ -153,7 +158,7 @@ void main(){
     vec3 screenPos = groundPos;
     screenPos.y += heightClip * a_pos.x;
 
-    gl_Position = vec4(screenPos.xy, 0.0, 1.0);
+    gl_Position = vec4(screenPos.xy, depth, 1.0);
 
     v_uv = vec2(0.5); // Neutral UV for line
   }
@@ -398,6 +403,8 @@ void main(){
 
   // Ensure overlays are visible even over transparent sprite padding
   alpha = max(alpha, overlayAlpha);
+  // Discard nearly transparent fragments so they don't write to the depth buffer
+  if (alpha < 0.05) discard;
   outColor = vec4(draw, alpha);
 }
 `;
@@ -1004,6 +1011,14 @@ export class IconMarkerLayer implements Layer {
       gl.ONE, gl.ONE_MINUS_SRC_ALPHA          // Alpha: preserves opaque background
     );
 
+    // Enable depth testing when tilted so foreground icons overlap background
+    const usePerspectiveDepth = state.pitch > 0.01;
+    if (usePerspectiveDepth) {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+    }
+
     // Pass pitch and bearing for 3D height effect
     gl.uniform1f(this.u_pitch_loc, state.pitch);
     gl.uniform1f(this.u_bearing_loc, state.bearing);
@@ -1212,12 +1227,23 @@ export class IconMarkerLayer implements Layer {
       for (const m of items) {
         (m.isSelected ? selected : normal).push(m);
       }
-      // Draw non-selected first, then selected to ensure selected are on top
+      // Draw non-selected first, then selected on top (disable depth test for selected)
       drawList(s, normal);
+      if (selected.length > 0 && usePerspectiveDepth) {
+        gl.disable(gl.DEPTH_TEST);
+      }
       drawList(s, selected);
+      if (selected.length > 0 && usePerspectiveDepth) {
+        gl.enable(gl.DEPTH_TEST);
+      }
     }
 
     gl.bindVertexArray(null);
+
+    // Restore depth state
+    if (usePerspectiveDepth) {
+      gl.disable(gl.DEPTH_TEST);
+    }
 
     // Restore global blend state
     gl.blendFuncSeparate(
