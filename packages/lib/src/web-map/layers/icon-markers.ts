@@ -1092,7 +1092,7 @@ export class IconMarkerLayer implements Layer {
               ? 0
               : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
         }
-        // Only show z-arrow when zPos is explicitly set (requires player position)
+        // Show z-arrow when zPos is set (player-relative, selection-relative, or absolute)
         let direction = 0;
         if (m.zPos === "top") direction = 1;
         else if (m.zPos === "bottom") direction = -1;
@@ -1273,6 +1273,28 @@ export class IconMarkerLayer implements Layer {
     return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, 2 / 3)));
   }
 
+  // Compute the screen-space Y offset for a marker's height stem (matching vertex shader)
+  private getHeightScreenOffset(m: IconMarkerInstance, state: RenderState): number {
+    const rawZ = typeof m.z === "number" ? m.z : 0;
+    let heightIntensity = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
+    if (heightIntensity === undefined) {
+      heightIntensity = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+    }
+    let direction = 0;
+    if (m.zPos === "top") direction = 1;
+    else if (m.zPos === "bottom") direction = -1;
+    if (direction === 0 || heightIntensity < 0.01) return 0;
+
+    // Match vertex shader: heightWorld = mix(0, 20, heightIntensity) * abs(sin(pitch)) * 2^zoom * 500
+    const heightWorld = 20 * heightIntensity * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
+    // heightClip = heightWorld * viewScale * (2 / screenHeight)
+    const view = state.viewMatrix!;
+    const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
+    const heightClip = heightWorld * viewScale * (2 / state.height);
+    // Convert clip offset to screen pixels (Y is inverted in screen coords)
+    return -heightClip * direction * state.height / 2;
+  }
+
   // Hit test: approximate icon as a circle using half of effective size
   pick(state: RenderState, screen: { x: number; y: number }): unknown | null {
     const view = state.viewMatrix!;
@@ -1296,6 +1318,8 @@ export class IconMarkerLayer implements Layer {
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
+      // Offset hit test to the elevated icon position (height stem)
+      s.y += this.getHeightScreenOffset(m, state);
       let eff = m.size * zoomScale;
       if (m.isHighlighted) eff *= 1.15;
       if (m.isSelected) eff *= 1.3;
@@ -1340,6 +1364,8 @@ export class IconMarkerLayer implements Layer {
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
+      // Offset hit test to the elevated icon position (height stem)
+      s.y += this.getHeightScreenOffset(m, state);
       let eff = m.size * zoomScale;
       if (m.isHighlighted) eff *= 1.15;
       if (m.isSelected) eff *= 1.3;

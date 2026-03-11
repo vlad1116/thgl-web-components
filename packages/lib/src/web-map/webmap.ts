@@ -79,6 +79,7 @@ export class WebMap {
   private raf = 0;
   private dragging = false;
   private rotating = false; // RMB drag for rotate/tilt
+  private didRotate = false; // whether RMB drag actually moved
   private lastPointer?: { x: number; y: number };
   private downPointer?: { x: number; y: number; t: number };
   private rotationPivot?: { screen: { x: number; y: number }; latLng: LatLng };
@@ -208,6 +209,9 @@ export class WebMap {
     this.canvas.addEventListener("contextmenu", (e: MouseEvent) => {
       e.preventDefault();
 
+      // Don't open context menu after right-click drag
+      if (this.didRotate) return;
+
       // Forward to IconMarkerLayer for contextmenu detection
       const rect = this.canvas.getBoundingClientRect();
       const localX = e.clientX - rect.left;
@@ -297,6 +301,7 @@ export class WebMap {
         if (e.button === 2) {
           // right button: rotate/tilt
           this.rotating = true;
+          this.didRotate = false;
 
           // Use proper perspective-aware screen->world
           const worldPos = this.screenToWorld(localX, localY);
@@ -391,6 +396,7 @@ export class WebMap {
         const dx = e.clientX - this.lastPointer.x;
         const dy = e.clientY - this.lastPointer.y;
         this.lastPointer = { x: e.clientX, y: e.clientY };
+        if (dx !== 0 || dy !== 0) this.didRotate = true;
 
         // Update orientation
         const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
@@ -521,7 +527,7 @@ export class WebMap {
 
     // Hover cursors: pointer over interactive layers, grab over map, grabbing while dragging
     this.canvas.addEventListener("pointermove", (e) => {
-      if (this.dragging) return; // handled in pointerdown/up
+      if (this.dragging || this.rotating) return; // handled in pointerdown/up
       this.updateCursor(e.clientX, e.clientY);
 
       // Fire map mousemove event

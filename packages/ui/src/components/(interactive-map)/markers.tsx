@@ -291,6 +291,7 @@ function MarkersContent({
   // Track which marker IDs this component owns
   const spawnMapRef = useRef<Map<string, Spawn>>(new Map());
   const justClickedMarkerRef = useRef(false);
+  const tooltipDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cache for colored circle images (for private nodes without icons)
   const coloredCircleCache = useRef<Map<string, HTMLImageElement>>(new Map());
@@ -607,6 +608,8 @@ function MarkersContent({
     const dpr = window.devicePixelRatio || 1;
     const markerInstances: IconMarkerInstance[] = [];
     const newSpawnMap = new Map<string, Spawn>();
+    // Track raw Z values for height visualization without player
+    const markerZValues = new Map<number, number>(); // index in markerInstances -> raw Z
 
     const handleSpawn = (spawn: Spawn) => {
       if (spawn.mapName && spawn.mapName !== map.mapName) {
@@ -826,7 +829,7 @@ function MarkersContent({
         markerPosition = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
       }
 
-      // Calculate z position indicator
+      // Calculate z position indicator (player-relative mode)
       let zPos: "top" | "bottom" | null = null;
       let zValue: number | undefined = undefined;
       if (markerOptions.zPos && throttledPlayer && spawn.p[2] !== undefined) {
@@ -875,6 +878,19 @@ function MarkersContent({
       };
 
       markerInstances.push(instance);
+
+
+      // Track raw Z for height visualization without player
+      if (!throttledPlayer && spawn.p[2] !== undefined) {
+        markerZValues.set(markerInstances.length - 1, spawn.p[2]);
+      }
+
+      // Add to spatial grid for proximity queries
+      newSpatialGrid.add(
+        { id, spawn, latLng: markerPosition },
+        markerPosition[0],
+        markerPosition[1],
+      );
     };
 
     // Process all spawns
@@ -908,6 +924,58 @@ function MarkersContent({
       }
     );
     sharedPrivateSpawns.forEach(handleSpawn);
+
+
+    // Height visualization without player: absolute or relative to selected marker
+    if (markerZValues.size > 0) {
+      // Find selected marker's Z for relative mode
+      let referenceZ: number | undefined;
+      if (selectedNodeId) {
+        for (const [idx, z] of markerZValues) {
+          const inst = markerInstances[idx];
+          if (inst.id === selectedNodeId || inst.id === String(selectedNodeId)) {
+            referenceZ = z;
+            break;
+          }
+        }
+      }
+
+      if (referenceZ !== undefined) {
+        // Relative mode: show height relative to selected marker
+        let maxDz = 0;
+        for (const [, z] of markerZValues) {
+          maxDz = Math.max(maxDz, Math.abs(z - referenceZ));
+        }
+        if (maxDz > 0) {
+          for (const [idx, z] of markerZValues) {
+            const dz = z - referenceZ;
+            if (Math.abs(dz) < 0.01 * maxDz) continue; // skip near-zero differences
+            const inst = markerInstances[idx];
+            inst.zPos = dz > 0 ? "top" : "bottom";
+            inst.zMag = Math.abs(dz) / maxDz;
+          }
+        }
+      } else {
+        // Absolute mode: show height proportional to Z value
+        let minZ = Infinity;
+        let maxZ = -Infinity;
+        for (const [, z] of markerZValues) {
+          minZ = Math.min(minZ, z);
+          maxZ = Math.max(maxZ, z);
+        }
+        const zRange = maxZ - minZ;
+        if (zRange > 0) {
+          for (const [idx, z] of markerZValues) {
+            const inst = markerInstances[idx];
+            inst.zPos = "top";
+            inst.zMag = (z - minZ) / zRange;
+          }
+        }
+      }
+    }
+
+    // Update spatial grid ref
+    spatialGridRef.current = newSpatialGrid;
 
     // Compute which markers to add/remove/update
     const oldIds = new Set(spawnMapRef.current.keys());
@@ -954,8 +1022,22 @@ function MarkersContent({
         const view = state.viewMatrix;
         const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
         const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
-        const screenX = (clipX * 0.5 + 0.5) * rect.width;
-        const screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
+        let screenX = (clipX * 0.5 + 0.5) * rect.width;
+        let screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
+
+        // Offset tooltip to elevated icon position when height stem is active
+        if (state.pitch > 0 && m.zPos) {
+          const rawZ = typeof m.z === "number" ? m.z : 0;
+          let hI = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
+          if (hI === undefined) hI = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / 200);
+          let dir = m.zPos === "top" ? 1 : m.zPos === "bottom" ? -1 : 0;
+          if (dir !== 0 && hI >= 0.01) {
+            const heightWorld = 20 * hI * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
+            const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
+            const heightClip = heightWorld * viewScale * (2 / (rect.height * dpr));
+            screenY -= heightClip * dir * rect.height / 2;
+          }
+        }
 
         const filter = filters.find((filter) =>
           filter.values.some((v) => v.id === s.type)
@@ -1001,10 +1083,29 @@ function MarkersContent({
         onTooltipOpen(true);
       };
 
-      markerLayer.registerEventHandler(instance.id, "mouseover", showTooltipForMarker);
-      // Note: mouseout is handled by safe zone tracking in the parent component
+      markerLayer.registerEventHandler(instance.id, "mouseover", (m) => {
+        // Delay tooltip open to avoid interfering with map interactions
+        if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
+        tooltipDelayRef.current = setTimeout(() => {
+          tooltipDelayRef.current = null;
+          showTooltipForMarker(m);
+        }, 200);
+      });
+      // Cancel pending tooltip delay on mouseout
+      markerLayer.registerEventHandler(instance.id, "mouseout", () => {
+        if (tooltipDelayRef.current) {
+          clearTimeout(tooltipDelayRef.current);
+          tooltipDelayRef.current = null;
+        }
+      });
+      // Note: full mouseout closing is handled by safe zone tracking in the parent component
 
       markerLayer.registerEventHandler(instance.id, "click", (m) => {
+        // Cancel any pending hover delay and open immediately on click
+        if (tooltipDelayRef.current) {
+          clearTimeout(tooltipDelayRef.current);
+          tooltipDelayRef.current = null;
+        }
         justClickedMarkerRef.current = true;
         showTooltipForMarker(m);
         const s = newSpawnMap.get(m.id);
