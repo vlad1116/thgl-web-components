@@ -129,6 +129,11 @@ export class WebMap {
   private lastZoom: number = 0;
   // Flag to force a render
   private needsRender = false;
+  // Initial view state for resetView()
+  private initialCenter: LatLng;
+  private initialZoom: number;
+  private initialBearing: number;
+  private initialPitch: number;
 
   constructor(opts: WebMapOptions) {
     this.canvas = opts.canvas;
@@ -151,6 +156,11 @@ export class WebMap {
     // Prevent browser from intercepting touch events for scrolling/zooming
     this.canvas.style.touchAction = "none";
     this.addEventHandlers();
+    // Store initial view for resetView()
+    this.initialCenter = [...this.center] as LatLng;
+    this.initialZoom = this.zoom;
+    this.initialBearing = this.bearing;
+    this.initialPitch = this.pitch;
     this.start();
   }
 
@@ -770,6 +780,20 @@ export class WebMap {
 
   getBearing() {
     return this.bearing;
+  }
+  getPitch() {
+    return this.pitch;
+  }
+  setPitch(rad: number) {
+    this.pitch = Math.max(0, Math.min(1.4, rad));
+    this.cachedPitch = this.pitch;
+    this.cachedCosP = Math.max(1e-4, Math.cos(this.pitch));
+  }
+  resetView() {
+    this.center = [...this.initialCenter] as LatLng;
+    this.setZoom(this.initialZoom);
+    this.setBearing(this.initialBearing);
+    this.setPitch(this.initialPitch);
   }
   getCenter() {
     return { lat: this.center[0], lng: this.center[1] };

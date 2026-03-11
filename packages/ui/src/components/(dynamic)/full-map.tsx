@@ -10,7 +10,7 @@ import {
   PrivateNode,
   PrivateDrawing,
 } from "../(interactive-map)";
-import { Actions } from "../(controls)";
+import { Actions, MapControls } from "../(controls)";
 import { StreamingReceiver, Whiteboard } from "../(peer)";
 import type { AppConfig, MarkerOptions, TilesConfig } from "@repo/lib";
 import { AdditionalTooltipType } from "../(content)";
@@ -76,6 +76,7 @@ export function FullMap({
             ) : null}
             <PrivateNode appName={appConfig.name} iconsPath={iconsPath} />
             <PrivateDrawing />
+            <MapControls />
           </Actions>
         </>
       )}
