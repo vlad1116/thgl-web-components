@@ -1,6 +1,5 @@
-import { Check, ChevronsUpDown, Map } from "lucide-react";
+import { Check, ChevronDown, Map } from "lucide-react";
 import { useLocale, useT } from "../(providers)";
-import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Command,
@@ -31,17 +30,23 @@ export function MapSelect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
+        <button
           role="combobox"
           aria-expanded={open}
-          className="border-none rounded-none min-w-[200px] justify-between"
+          className="flex items-center w-full px-2.5 py-1.5 text-sm transition-colors hover:text-primary group"
+          type="button"
         >
-          <span className="truncate flex items-center">
-            <Map className="mr-2 h-4 w-4" /> {t(mapName) || mapName}
+          <Map className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate font-medium">
+            {t(mapName) || mapName}
           </span>
-          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0" />
-        </Button>
+          <ChevronDown
+            className={cn(
+              "ml-auto h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180",
+            )}
+          />
+        </button>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-full">
         <Command className="w-[200px] md:w-[300px]">

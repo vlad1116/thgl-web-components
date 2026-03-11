@@ -184,9 +184,9 @@ export function MarkersSearch({
         )}
       >
         {lastMapUpdate && (
-          <div className="italic text-xs text-muted-foreground px-2.5 py-1">
+          <div className="text-[10px] text-muted-foreground/60 px-2.5 py-1 uppercase tracking-wide">
             {t("markers.search.update")}{" "}
-            <span>
+            <span className="tabular-nums">
               {new Date(lastMapUpdate).toLocaleDateString("en-US", {
                 month: "2-digit",
                 day: "2-digit",
