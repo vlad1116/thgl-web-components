@@ -6,6 +6,7 @@ export type DrawingMode = 'none' | 'line' | 'rectangle' | 'polygon' | 'circle' |
 
 export interface DrawingManagerOptions {
   defaultColor?: string;
+  defaultFillColor?: string;
   defaultSize?: number;
   textColor?: string;
   textSize?: number;
@@ -44,12 +45,31 @@ export class DrawingManager {
   private currentTextPosition: LatLng | null = null;
   private isFinishingText = false;
   private textInputAnimationFrame?: number;
+  private mouseUpHandler?: (event: MouseEvent) => void;
+  private mouseDownHandler?: (event: { latlng: LatLng; originalEvent: MouseEvent }) => void;
+  private hoveredShape: DrawingShape | null = null;
+  private dragState: {
+    shapeId: string;
+    startLatLng: LatLng;
+    originalPositions?: LatLng[];
+    originalCenter?: LatLng;
+  } | null = null;
+  private editState: {
+    shapeId: string;
+    draggingVertexIndex?: number;
+    draggingType?: 'vertex' | 'midpoint' | 'center' | 'radius';
+    /** For midpoint drag: the index of the midpoint being dragged (inserts between i and i+1) */
+    midpointInsertIndex?: number;
+    /** For circle center drag: original center */
+    originalCenter?: LatLng;
+  } | null = null;
 
   constructor(map: WebMap, options: DrawingManagerOptions = {}) {
     this.map = map;
     this.drawingLayer = new DrawingLayer({ interactive: true });
     this.options = {
       defaultColor: options.defaultColor || '#3388ff',
+      defaultFillColor: options.defaultFillColor || '',
       defaultSize: options.defaultSize || 3,
       textColor: options.textColor || '#000000',
       textSize: options.textSize || 16,
@@ -69,6 +89,7 @@ export class DrawingManager {
     this.dblClickHandler = (event) => this.handleMapDblClick(event);
     this.contextMenuHandler = (event) => this.handleContextMenu(event);
     this.keydownHandler = (event) => this.handleKeyDown(event);
+    this.mouseDownHandler = (event) => this.handleMapMouseDown(event);
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -242,11 +263,9 @@ export class DrawingManager {
       case 'text':
         return 'text';
       case 'edit':
-        return 'pointer';
       case 'drag':
-        return 'move';
       case 'remove':
-        return 'not-allowed';
+        return 'grab';
       default:
         return 'default';
     }
@@ -263,9 +282,17 @@ export class DrawingManager {
       this.map.on('mousemove', this.mouseMoveHandler!);
       this.map.on('dblclick', this.dblClickHandler!);
       this.map.on('contextmenu', this.contextMenuHandler!);
+      this.map.on('mousedown', this.mouseDownHandler!);
       window.addEventListener('keydown', this.keydownHandler!);
+      this.map.lockCursor();
       this.setCursor(this.getCursorForMode(mode));
       this.createCursorTooltip();
+
+      // In edit mode, show vertex markers on all shapes immediately
+      if (mode === 'edit') {
+        this.drawingLayer.setAllShapesActive();
+      }
+
       this.fire('drawing:start', { mode });
     }
   }
@@ -283,6 +310,9 @@ export class DrawingManager {
     if (this.contextMenuHandler) {
       this.map.off('contextmenu', this.contextMenuHandler);
     }
+    if (this.mouseDownHandler) {
+      this.map.off('mousedown', this.mouseDownHandler);
+    }
     if (this.keydownHandler) {
       window.removeEventListener('keydown', this.keydownHandler);
     }
@@ -292,6 +322,12 @@ export class DrawingManager {
       this.finishTextInput();
     }
 
+    if (this.mouseUpHandler) {
+      window.removeEventListener('mouseup', this.mouseUpHandler);
+      this.mouseUpHandler = undefined;
+    }
+
+    this.map.unlockCursor();
     this.resetCursor();
     this.removeCursorTooltip();
     // Clear vertex markers before finishing
@@ -301,14 +337,19 @@ export class DrawingManager {
     this.isDrawing = false;
     this.temporaryPoints = [];
     this.currentShape = null;
+    this.dragState = null;
+    this.editState = null;
+    this.hoveredShape = null;
+    this.map.enableInteractions();
   }
 
   getActiveShape(): DrawingMode {
     return this.currentMode;
   }
 
-  setPathOptions(options: { color?: string; weight?: number }): void {
+  setPathOptions(options: { color?: string; fillColor?: string; weight?: number }): void {
     if (options.color) this.options.defaultColor = options.color;
+    if (options.fillColor !== undefined) this.options.defaultFillColor = options.fillColor;
     if (options.weight) this.options.defaultSize = options.weight;
   }
 
@@ -336,13 +377,44 @@ export class DrawingManager {
       case 'text':
         this.handleTextClick(latlng);
         break;
+      case 'remove':
+        this.handleRemoveClick(latlng);
+        break;
+      // edit and drag are handled via mousedown
       default:
+    }
+  }
+
+  private handleMapMouseDown(event: { latlng: LatLng; originalEvent: MouseEvent }): void {
+    const { latlng, originalEvent } = event;
+
+    if (this.currentMode === 'drag') {
+      this.handleDragMouseDown(latlng, originalEvent);
+    } else if (this.currentMode === 'edit') {
+      this.handleEditMouseDown(latlng, originalEvent);
     }
   }
 
   private handleMapMouseMove(event: { latlng: LatLng; originalEvent: MouseEvent }): void {
     // Always update cursor tooltip position
     this.updateCursorTooltip(event.originalEvent.clientX, event.originalEvent.clientY);
+
+    // Handle drag mode movement
+    if (this.currentMode === 'drag' && this.dragState) {
+      this.handleDragMove(event.latlng);
+      return;
+    }
+
+    // Handle edit mode vertex/center/radius dragging
+    if (this.currentMode === 'edit' && this.editState?.draggingType) {
+      this.handleEditVertexMove(event.latlng);
+      return;
+    }
+
+    // Handle hover cursor for interactive modes
+    if (this.currentMode === 'remove' || this.currentMode === 'drag' || this.currentMode === 'edit') {
+      this.updateHoverCursor(event.latlng);
+    }
 
     if (!this.isDrawing || !this.currentShape) return;
 
@@ -362,6 +434,89 @@ export class DrawingManager {
         this.updateCirclePreview(latlng);
         break;
     }
+  }
+
+  private updateHoverCursor(latlng: LatLng): void {
+    if (this.currentMode === 'edit') {
+      // In edit mode, check what handle we're hovering over
+      const cursor = this.getEditHoverCursor(latlng);
+      if (cursor) {
+        if (!this.hoveredShape) {
+          this.hoveredShape = {} as DrawingShape; // flag that we're hovering something
+        }
+        this.setCursor(cursor);
+      } else if (this.hoveredShape) {
+        this.hoveredShape = null;
+        this.setCursor(this.getCursorForMode(this.currentMode));
+      }
+      return;
+    }
+
+    const shape = this.hitTestShapes(latlng);
+    if (shape && !this.hoveredShape) {
+      this.hoveredShape = shape;
+      if (this.currentMode === 'remove') {
+        this.setCursor('not-allowed');
+      } else if (this.currentMode === 'drag') {
+        this.setCursor('move');
+      }
+    } else if (!shape && this.hoveredShape) {
+      this.hoveredShape = null;
+      this.setCursor(this.getCursorForMode(this.currentMode));
+    }
+  }
+
+  private getEditHoverCursor(latlng: LatLng): string | null {
+    const state = this.map.getRenderState();
+    if (!state) return null;
+
+    const pixelToWorld = this.getPixelToWorldScale(state);
+    const tolerance = 15 * pixelToWorld;
+    const [py, px] = latlng;
+
+    const allShapes = this.drawingLayer.getAllShapes();
+    for (const shape of allShapes) {
+      // Circle: center = move, radius handle = pointer
+      if (shape.type === 'circle' && shape.center && shape.radius) {
+        const [cy, cx] = shape.center;
+        if (Math.sqrt((py - cy) ** 2 + (px - cx) ** 2) <= tolerance) {
+          return 'move';
+        }
+        const radiusHandle: LatLng = [shape.center[0], shape.center[1] + shape.radius];
+        const [ry, rx] = radiusHandle;
+        if (Math.sqrt((py - ry) ** 2 + (px - rx) ** 2) <= tolerance) {
+          return 'pointer';
+        }
+      }
+
+      // Vertex handles
+      if (shape.positions) {
+        for (let i = 0; i < shape.positions.length; i++) {
+          const [vy, vx] = shape.positions[i];
+          if (Math.sqrt((py - vy) ** 2 + (px - vx) ** 2) <= tolerance) {
+            return 'pointer';
+          }
+        }
+
+        // Midpoint handles
+        if (shape.type === 'line' || shape.type === 'polygon') {
+          const closed = shape.type === 'polygon';
+          const n = shape.positions.length;
+          const segments = closed ? n : n - 1;
+          for (let i = 0; i < segments; i++) {
+            const p1 = shape.positions[i];
+            const p2 = shape.positions[(i + 1) % n];
+            const midY = (p1[0] + p2[0]) / 2;
+            const midX = (p1[1] + p2[1]) / 2;
+            if (Math.sqrt((py - midY) ** 2 + (px - midX) ** 2) <= tolerance) {
+              return 'pointer';
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   private handleMapDblClick(event: { latlng: LatLng; originalEvent: MouseEvent }): void {
@@ -446,6 +601,7 @@ export class DrawingManager {
         type: 'rectangle',
         positions: [latlng, latlng],
         color: this.options.defaultColor,
+        fillColor: this.options.defaultFillColor || undefined,
         size: this.options.defaultSize,
         mapName: '',
       };
@@ -468,6 +624,7 @@ export class DrawingManager {
         type: 'polygon',
         positions: [latlng],
         color: this.options.defaultColor,
+        fillColor: this.options.defaultFillColor || undefined,
         size: this.options.defaultSize,
         mapName: '',
       };
@@ -505,6 +662,7 @@ export class DrawingManager {
         center: latlng,
         radius: 0,
         color: this.options.defaultColor,
+        fillColor: this.options.defaultFillColor || undefined,
         size: this.options.defaultSize,
         mapName: '',
       };
@@ -585,7 +743,7 @@ export class DrawingManager {
       font-size: ${this.options.textSize}px;
       font-family: system-ui, sans-serif;
       font-weight: bold;
-      color: ${this.options.textColor};
+      color: transparent;
       background: transparent;
       border: 1px dashed rgba(128, 128, 128, 0.5);
       border-radius: 4px;
@@ -836,6 +994,299 @@ export class DrawingManager {
       default:
         return false;
     }
+  }
+
+  // --- Hit testing ---
+
+  private hitTestShapes(latlng: LatLng): DrawingShape | null {
+    const shapes = this.drawingLayer.getAllShapes();
+    const [py, px] = latlng;
+    const state = this.map.getRenderState();
+    if (!state) return null;
+
+    // Calculate a tolerance in world coordinates (10 pixels)
+    const pixelToWorld = this.getPixelToWorldScale(state);
+    const tolerance = 10 * pixelToWorld;
+    const toleranceSq = tolerance * tolerance;
+
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      const shape = shapes[i];
+
+      switch (shape.type) {
+        case 'circle':
+          if (shape.center && shape.radius) {
+            const [cy, cx] = shape.center;
+            const dist = Math.sqrt((py - cy) ** 2 + (px - cx) ** 2);
+            if (dist <= shape.radius + tolerance) return shape;
+          }
+          break;
+        case 'polygon':
+        case 'rectangle':
+          if (shape.positions && shape.positions.length >= 2) {
+            let positions = shape.positions;
+            if (shape.type === 'rectangle' && positions.length === 2) {
+              const [p1, p2] = positions;
+              positions = [
+                [Math.min(p1[0], p2[0]), Math.min(p1[1], p2[1])],
+                [Math.min(p1[0], p2[0]), Math.max(p1[1], p2[1])],
+                [Math.max(p1[0], p2[0]), Math.max(p1[1], p2[1])],
+                [Math.max(p1[0], p2[0]), Math.min(p1[1], p2[1])],
+              ];
+            }
+            if (this.isPointInPolygon(latlng, positions)) return shape;
+            // Also check edges
+            if (this.isPointNearPolyline(latlng, positions, toleranceSq, true)) return shape;
+          }
+          break;
+        case 'line':
+          if (shape.positions && shape.positions.length >= 2) {
+            if (this.isPointNearPolyline(latlng, shape.positions, toleranceSq, false)) return shape;
+          }
+          break;
+        case 'text':
+          if (shape.center) {
+            const [cy, cx] = shape.center;
+            const dist = Math.sqrt((py - cy) ** 2 + (px - cx) ** 2);
+            // Use a generous text hit area
+            if (dist <= tolerance * 3) return shape;
+          }
+          break;
+      }
+    }
+    return null;
+  }
+
+  private isPointInPolygon(point: LatLng, polygon: LatLng[]): boolean {
+    const [y, x] = point;
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [yi, xi] = polygon[i];
+      const [yj, xj] = polygon[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  private isPointNearPolyline(point: LatLng, positions: LatLng[], toleranceSq: number, closed: boolean): boolean {
+    const [py, px] = point;
+    const n = positions.length;
+    const segments = closed ? n : n - 1;
+    for (let i = 0; i < segments; i++) {
+      const [y1, x1] = positions[i];
+      const [y2, x2] = positions[(i + 1) % n];
+      const distSq = this.pointToSegmentDistSq(px, py, x1, y1, x2, y2);
+      if (distSq <= toleranceSq) return true;
+    }
+    return false;
+  }
+
+  private pointToSegmentDistSq(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return (px - x1) ** 2 + (py - y1) ** 2;
+    let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    return (px - projX) ** 2 + (py - projY) ** 2;
+  }
+
+  private getPixelToWorldScale(state: { viewMatrix?: Float32Array | null; width: number; devicePixelRatio: number }): number {
+    if (!state.viewMatrix) return 0.001;
+    const view = state.viewMatrix;
+    const scaleX = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
+    const screenWidth = state.width / state.devicePixelRatio;
+    return (2 / screenWidth) / scaleX;
+  }
+
+  // --- Remove mode ---
+
+  private handleRemoveClick(latlng: LatLng): void {
+    const shape = this.hitTestShapes(latlng);
+    if (shape) {
+      this.drawingLayer.removeShape(shape.id);
+      this.fire('drawing:remove', { id: shape.id });
+    }
+  }
+
+  // --- Edit mode ---
+
+  private handleEditMouseDown(latlng: LatLng, _originalEvent: MouseEvent): void {
+    const state = this.map.getRenderState();
+    if (!state) return;
+
+    const pixelToWorld = this.getPixelToWorldScale(state);
+    const tolerance = 15 * pixelToWorld;
+    const [py, px] = latlng;
+
+    // Check all shapes for vertex/handle hits
+    const allShapes = this.drawingLayer.getAllShapes();
+    for (const shape of allShapes) {
+      // Circle: check radius handle first (more specific), then center
+      if (shape.type === 'circle' && shape.center && shape.radius) {
+        const radiusHandle: LatLng = [shape.center[0], shape.center[1] + shape.radius];
+        const [ry, rx] = radiusHandle;
+        if (Math.sqrt((py - ry) ** 2 + (px - rx) ** 2) <= tolerance) {
+          this.editState = { shapeId: shape.id, draggingType: 'radius' };
+          this.setCursor('grabbing');
+          this.map.disableInteractions();
+          this.addMouseUpHandler();
+          return;
+        }
+        const [cy, cx] = shape.center;
+        if (Math.sqrt((py - cy) ** 2 + (px - cx) ** 2) <= tolerance) {
+          this.editState = { shapeId: shape.id, draggingType: 'center', originalCenter: [...shape.center] as LatLng };
+          this.setCursor('move');
+          this.map.disableInteractions();
+          this.addMouseUpHandler();
+          return;
+        }
+      }
+
+      // Lines/polygons/rectangles: check vertex handles
+      if (shape.positions) {
+        for (let i = 0; i < shape.positions.length; i++) {
+          const [vy, vx] = shape.positions[i];
+          if (Math.sqrt((py - vy) ** 2 + (px - vx) ** 2) <= tolerance) {
+            this.editState = { shapeId: shape.id, draggingVertexIndex: i, draggingType: 'vertex' };
+            this.setCursor('grabbing');
+            this.map.disableInteractions();
+            this.addMouseUpHandler();
+            return;
+          }
+        }
+
+        // Check midpoint handles (lines and polygons only)
+        if (shape.type === 'line' || shape.type === 'polygon') {
+          const closed = shape.type === 'polygon';
+          const n = shape.positions.length;
+          const segments = closed ? n : n - 1;
+          for (let i = 0; i < segments; i++) {
+            const p1 = shape.positions[i];
+            const p2 = shape.positions[(i + 1) % n];
+            const midY = (p1[0] + p2[0]) / 2;
+            const midX = (p1[1] + p2[1]) / 2;
+            if (Math.sqrt((py - midY) ** 2 + (px - midX) ** 2) <= tolerance) {
+              const newPositions = [...shape.positions];
+              const insertAt = i + 1;
+              newPositions.splice(insertAt, 0, latlng);
+              this.drawingLayer.updateShape(shape.id, { positions: newPositions });
+              this.editState = { shapeId: shape.id, draggingVertexIndex: insertAt, draggingType: 'vertex' };
+              this.setCursor('grabbing');
+              this.map.disableInteractions();
+              this.addMouseUpHandler();
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private handleEditVertexMove(latlng: LatLng): void {
+    if (!this.editState || !this.editState.draggingType) return;
+    const shape = this.drawingLayer.getShape(this.editState.shapeId);
+    if (!shape) return;
+
+    if (this.editState.draggingType === 'center' && shape.center) {
+      // Move circle center
+      this.drawingLayer.updateShape(this.editState.shapeId, { center: latlng });
+      this.fire('drawing:edit', { shape: { ...shape, center: latlng } });
+    } else if (this.editState.draggingType === 'radius' && shape.center) {
+      // Resize circle radius based on distance from center
+      const [cy, cx] = shape.center;
+      const [py, px] = latlng;
+      const newRadius = Math.sqrt((py - cy) ** 2 + (px - cx) ** 2);
+      this.drawingLayer.updateShape(this.editState.shapeId, { radius: newRadius });
+      this.fire('drawing:edit', { shape: { ...shape, radius: newRadius } });
+    } else if (this.editState.draggingType === 'vertex' && this.editState.draggingVertexIndex !== undefined && shape.positions) {
+      // Move vertex
+      const newPositions = [...shape.positions];
+      newPositions[this.editState.draggingVertexIndex] = latlng;
+      this.drawingLayer.updateShape(this.editState.shapeId, { positions: newPositions });
+      this.fire('drawing:edit', { shape: { ...shape, positions: newPositions } });
+    }
+  }
+
+  // --- Drag mode ---
+
+  private handleDragMouseDown(latlng: LatLng, _originalEvent: MouseEvent): void {
+    if (this.dragState) return; // Already dragging
+
+    const shape = this.hitTestShapes(latlng);
+    if (shape) {
+      this.dragState = {
+        shapeId: shape.id,
+        startLatLng: latlng,
+        originalPositions: shape.positions ? shape.positions.map(p => [...p] as LatLng) : undefined,
+        originalCenter: shape.center ? [...shape.center] as LatLng : undefined,
+      };
+      this.setCursor('move');
+      // Disable interactions synchronously - this runs before the map sets this.dragging=true
+      this.map.disableInteractions();
+      this.addMouseUpHandler();
+    }
+  }
+
+  private handleDragMove(latlng: LatLng): void {
+    if (!this.dragState) return;
+
+    const [startLat, startLng] = this.dragState.startLatLng;
+    const [curLat, curLng] = latlng;
+    const dLat = curLat - startLat;
+    const dLng = curLng - startLng;
+
+    const shape = this.drawingLayer.getShape(this.dragState.shapeId);
+    if (!shape) return;
+
+    const updates: Partial<DrawingShape> = {};
+
+    if (this.dragState.originalPositions) {
+      updates.positions = this.dragState.originalPositions.map(
+        ([lat, lng]) => [lat + dLat, lng + dLng] as LatLng
+      );
+    }
+    if (this.dragState.originalCenter) {
+      updates.center = [
+        this.dragState.originalCenter[0] + dLat,
+        this.dragState.originalCenter[1] + dLng,
+      ];
+    }
+
+    this.drawingLayer.updateShape(this.dragState.shapeId, updates);
+  }
+
+  private addMouseUpHandler(): void {
+    if (this.mouseUpHandler) return;
+    this.mouseUpHandler = () => {
+      if (this.dragState) {
+        const shape = this.drawingLayer.getShape(this.dragState.shapeId);
+        if (shape) {
+          this.fire('drawing:edit', { shape });
+        }
+        this.dragState = null;
+      }
+      if (this.editState?.draggingType) {
+        const shape = this.drawingLayer.getShape(this.editState.shapeId);
+        if (shape) {
+          this.fire('drawing:edit', { shape });
+        }
+        this.editState = null;
+        // Re-show all vertex markers after edit completes
+        this.drawingLayer.setAllShapesActive();
+      }
+      this.hoveredShape = null;
+      this.setCursor(this.getCursorForMode(this.currentMode));
+      this.map.enableInteractions();
+      if (this.mouseUpHandler) {
+        window.removeEventListener('mouseup', this.mouseUpHandler);
+        this.mouseUpHandler = undefined;
+      }
+    };
+    window.addEventListener('mouseup', this.mouseUpHandler);
   }
 
   finishLine(): void {

@@ -8,6 +8,7 @@ export interface DrawingShape {
   radius?: number;
   text?: string;
   color: string;
+  fillColor?: string;
   size: number;
   mapName: string;
 }
@@ -201,7 +202,18 @@ export class DrawingLayer implements Layer {
     }
   }
 
-  private createVertexMarkers(shapeId: string, positions: LatLng[], color: string): void {
+  setAllShapesActive(): void {
+    for (const prevId of this.activeShapeIds) {
+      this.removeVertexMarkers(prevId);
+    }
+    this.activeShapeIds.clear();
+
+    for (const id of this.shapes.keys()) {
+      this.activeShapeIds.add(id);
+    }
+  }
+
+  private createVertexMarkers(shapeId: string, positions: LatLng[], color: string, midpoints?: LatLng[]): void {
     this.removeVertexMarkers(shapeId);
 
     const markers: HTMLElement[] = [];
@@ -225,6 +237,31 @@ export class DrawingLayer implements Layer {
       `;
       document.body.appendChild(marker);
       markers.push(marker);
+    }
+    // Add midpoint markers (smaller, semi-transparent)
+    if (midpoints) {
+      for (let i = 0; i < midpoints.length; i++) {
+        const marker = document.createElement('div');
+        marker.setAttribute('data-vertex-id', `${shapeId}-mid-${i}`);
+        marker.style.cssText = `
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: white;
+          border: 2px solid ${color};
+          opacity: 0.5;
+          pointer-events: none;
+          user-select: none;
+          -webkit-user-select: none;
+          z-index: 10001;
+          transform: translate(-50%, -50%);
+          left: 0px;
+          top: 0px;
+        `;
+        document.body.appendChild(marker);
+        markers.push(marker);
+      }
     }
     this.vertexMarkers.set(shapeId, markers);
   }
@@ -329,6 +366,13 @@ export class DrawingLayer implements Layer {
               [maxLat, maxLng],
               [maxLat, minLng],
             ];
+            // Fill
+            if (shape.fillColor) {
+              vertexOffset += this.addFilledPolygon(
+                corners, this.hexToRgba(shape.fillColor),
+                vertexData, indices, vertexOffset, state.projection
+              );
+            }
             vertexOffset += this.addStrokedPolyline(
               corners, halfWidth, color,
               vertexData, indices, vertexOffset,
@@ -338,6 +382,13 @@ export class DrawingLayer implements Layer {
           break;
         case "polygon":
           if (shape.positions && shape.positions.length >= 3) {
+            // Fill
+            if (shape.fillColor) {
+              vertexOffset += this.addFilledPolygon(
+                shape.positions, this.hexToRgba(shape.fillColor),
+                vertexData, indices, vertexOffset, state.projection
+              );
+            }
             vertexOffset += this.addStrokedPolyline(
               shape.positions, halfWidth, color,
               vertexData, indices, vertexOffset,
@@ -356,6 +407,13 @@ export class DrawingLayer implements Layer {
                 lat + Math.cos(angle) * shape.radius,
                 lng + Math.sin(angle) * shape.radius,
               ]);
+            }
+            // Fill
+            if (shape.fillColor) {
+              vertexOffset += this.addFilledPolygon(
+                circlePositions, this.hexToRgba(shape.fillColor),
+                vertexData, indices, vertexOffset, state.projection
+              );
             }
             vertexOffset += this.addStrokedPolyline(
               circlePositions, halfWidth, color,
@@ -598,6 +656,36 @@ export class DrawingLayer implements Layer {
     return vertCount;
   }
 
+  /**
+   * Add a filled polygon using a triangle fan from vertex 0.
+   * Works correctly for convex polygons and reasonably for mildly concave ones.
+   */
+  private addFilledPolygon(
+    positions: LatLng[],
+    color: [number, number, number, number],
+    vertexData: number[],
+    indices: number[],
+    vertexOffset: number,
+    projection: (latlng: LatLng) => { x: number; y: number },
+  ): number {
+    if (positions.length < 3) return 0;
+
+    const worldPositions = positions.map(p => projection(p));
+    const [r, g, b, a] = color;
+
+    // Add all vertices with interleaved color data
+    for (const wp of worldPositions) {
+      vertexData.push(wp.x, wp.y, r, g, b, a);
+    }
+
+    // Triangle fan from vertex 0
+    for (let i = 1; i < worldPositions.length - 1; i++) {
+      indices.push(vertexOffset, vertexOffset + i, vertexOffset + i + 1);
+    }
+
+    return worldPositions.length;
+  }
+
   private getPixelToWorldScale(state: RenderState): number {
     if (!state.viewMatrix) return 0.001;
 
@@ -672,28 +760,55 @@ export class DrawingLayer implements Layer {
     return [1, 0, 0, 1];
   }
 
+  private computeMidpoints(positions: LatLng[], closed: boolean): LatLng[] {
+    const midpoints: LatLng[] = [];
+    const n = positions.length;
+    const segments = closed ? n : n - 1;
+    for (let i = 0; i < segments; i++) {
+      const p1 = positions[i];
+      const p2 = positions[(i + 1) % n];
+      midpoints.push([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]);
+    }
+    return midpoints;
+  }
+
+  private getCircleRadiusHandle(center: LatLng, radius: number): LatLng {
+    // Place handle to the right of center
+    return [center[0], center[1] + radius];
+  }
+
   private updateActiveShapeVertexMarkers(state: RenderState): void {
     for (const shapeId of this.activeShapeIds) {
       const shape = this.shapes.get(shapeId);
       if (!shape) continue;
 
       let positions: LatLng[] | undefined;
-      if (shape.type === 'line' || shape.type === 'polygon') {
+      let midpoints: LatLng[] | undefined;
+
+      if (shape.type === 'line' && shape.positions) {
         positions = shape.positions;
+        midpoints = this.computeMidpoints(positions, false);
+      } else if (shape.type === 'polygon' && shape.positions) {
+        positions = shape.positions;
+        midpoints = this.computeMidpoints(positions, true);
       } else if (shape.type === 'rectangle' && shape.positions && shape.positions.length >= 2) {
         positions = shape.positions;
       } else if (shape.type === 'circle' && shape.center) {
-        positions = [shape.center];
+        const radiusHandle = this.getCircleRadiusHandle(shape.center, shape.radius ?? 0);
+        positions = [shape.center, radiusHandle];
       }
 
       if (!positions || positions.length === 0) continue;
 
+      const totalExpected = positions.length + (midpoints?.length ?? 0);
       const existingMarkers = this.vertexMarkers.get(shapeId);
-      if (!existingMarkers || existingMarkers.length !== positions.length) {
-        this.createVertexMarkers(shapeId, positions, shape.color);
+      if (!existingMarkers || existingMarkers.length !== totalExpected) {
+        this.createVertexMarkers(shapeId, positions, shape.color, midpoints);
       }
 
-      this.updateVertexMarkerPositions(shapeId, positions, state);
+      // Update positions for all markers (vertices + midpoints)
+      const allPositions = midpoints ? [...positions, ...midpoints] : positions;
+      this.updateVertexMarkerPositions(shapeId, allPositions, state);
     }
   }
 

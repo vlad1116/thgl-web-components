@@ -34,12 +34,14 @@ export type Drawing = {
     positions: [number, number][];
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   polygons?: {
     positions: [number, number][];
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   circles?: {
@@ -47,6 +49,7 @@ export type Drawing = {
     radius: number;
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   texts?: {
@@ -128,6 +131,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   tempPrivateNode: null,
   tempPrivateDrawing: null,
   drawingColor: "#FFFFFFAA",
+  drawingFillColor: "#FFFFFF33",
   drawingSize: 4,
   textColor: "#1ccdd1",
   textSize: 20,
@@ -192,6 +196,7 @@ export type ProfileSettings = {
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
   tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null;
   drawingColor: string;
+  drawingFillColor: string;
   drawingSize: number;
   textColor: string;
   textSize: number;
@@ -274,6 +279,7 @@ export interface ProfileActions {
     tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null,
   ) => void;
   setDrawingColor: (drawingColor: string) => void;
+  setDrawingFillColor: (drawingFillColor: string) => void;
   setDrawingSize: (drawingSize: number) => void;
   setTextColor: (textColor: string) => void;
   setTextSize: (textSize: number) => void;
@@ -947,6 +953,10 @@ export const useSettingsStore = create(
 
         setDrawingColor: (drawingColor) => {
           updateSettings({ drawingColor });
+        },
+
+        setDrawingFillColor: (drawingFillColor) => {
+          updateSettings({ drawingFillColor });
         },
 
         setDrawingSize: (drawingSize) => {

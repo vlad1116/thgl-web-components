@@ -103,6 +103,8 @@ export class WebMap {
   private wheelTimer?: number;
   // Interaction control
   private interactionsDisabled = false;
+  // When true, the map will not change the cursor (drawing manager handles it)
+  private _cursorLocked = false;
   // Event system
   private eventHandlers: Map<keyof WebMapEventMap, EventHandler[]> = new Map();
   private projectionBound: (ll: LatLng) => { x: number; y: number };
@@ -315,7 +317,7 @@ export class WebMap {
       // Cancel any existing inertia when user starts dragging
       this.panAnim = undefined;
       // Update cursor to grabbing while dragging
-      this.canvas.style.cursor = "grabbing";
+      if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
     });
     this.canvas.addEventListener("pointermove", (e) => {
       // Update tracked pointer position
@@ -537,7 +539,7 @@ export class WebMap {
       }
     });
     this.canvas.addEventListener("pointerenter", () => {
-      if (!this.dragging) this.canvas.style.cursor = "grab";
+      if (!this.dragging && !this._cursorLocked) this.canvas.style.cursor = "grab";
     });
     this.canvas.addEventListener("pointerleave", () => {
       this.canvas.style.cursor = "default";
@@ -765,12 +767,24 @@ export class WebMap {
   // Interaction control methods
   disableInteractions() {
     this.interactionsDisabled = true;
-    this.canvas.style.cursor = "crosshair";
+    if (!this._cursorLocked) {
+      this.canvas.style.cursor = "crosshair";
+    }
   }
 
   enableInteractions() {
     this.interactionsDisabled = false;
-    this.canvas.style.cursor = "grab";
+    if (!this._cursorLocked) {
+      this.canvas.style.cursor = "grab";
+    }
+  }
+
+  lockCursor() {
+    this._cursorLocked = true;
+  }
+
+  unlockCursor() {
+    this._cursorLocked = false;
   }
 
   /**
@@ -1202,6 +1216,7 @@ export class WebMap {
   }
 
   private updateCursor(clientX: number, clientY: number) {
+    if (this._cursorLocked) return;
     const rect = this.canvas.getBoundingClientRect();
     const state = this.lastState;
     if (!state) return;

@@ -36,6 +36,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
   const map = useMap();
   const drawingColor = useSettingsStore((state) => state.drawingColor);
   const setDrawingColor = useSettingsStore((state) => state.setDrawingColor);
+  const drawingFillColor = useSettingsStore((state) => state.drawingFillColor);
+  const setDrawingFillColor = useSettingsStore(
+    (state) => state.setDrawingFillColor,
+  );
   const drawingSize = useSettingsStore((state) => state.drawingSize);
   const setDrawingSize = useSettingsStore((state) => state.setDrawingSize);
   const textColor = useSettingsStore((state) => state.textColor);
@@ -59,6 +63,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
   const drawingManagerRef = useRef<DrawingManager | null>(null);
   const savedDrawingsLayerRef = useRef<DrawingLayer | null>(null);
+  // Suppress the load effect when tempPrivateDrawing changes due to edit/remove events
+  const suppressReloadRef = useRef(false);
 
   // Convert DrawingShape to stored Drawing format
   const shapeToDrawing = useCallback(
@@ -98,6 +104,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 ),
                 size: shape.size,
                 color: shape.color,
+                fillColor: shape.fillColor,
                 mapName: shape.mapName,
               },
             ],
@@ -111,6 +118,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 ),
                 size: shape.size,
                 color: shape.color,
+                fillColor: shape.fillColor,
                 mapName: shape.mapName,
               },
             ],
@@ -128,6 +136,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 radius: shape.radius ?? 0,
                 size: shape.size,
                 color: shape.color,
+                fillColor: shape.fillColor,
                 mapName: shape.mapName,
               },
             ],
@@ -181,6 +190,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     // Create drawing manager
     const dm = new DrawingManager(map, {
       defaultColor: drawingColor,
+      defaultFillColor: drawingFillColor,
       defaultSize: drawingSize,
       textColor: textColor,
       textSize: textSize,
@@ -236,6 +246,61 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       setTempPrivateDrawing(updatedDrawing);
     });
 
+    // Handle shape removal (from remove mode)
+    dm.on("drawing:remove", () => {
+      const currentDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!currentDrawing) return;
+
+      const remainingShapes = dm.getAllShapes();
+      const updatedDrawing: Partial<Drawing> = { ...currentDrawing };
+      updatedDrawing.polylines = [];
+      updatedDrawing.rectangles = [];
+      updatedDrawing.polygons = [];
+      updatedDrawing.circles = [];
+      updatedDrawing.texts = [];
+
+      for (const shape of remainingShapes) {
+        shape.mapName = mapName;
+        const part = shapeToDrawing(shape);
+        if (part.polylines) updatedDrawing.polylines.push(...part.polylines);
+        if (part.rectangles) updatedDrawing.rectangles.push(...part.rectangles);
+        if (part.polygons) updatedDrawing.polygons.push(...part.polygons);
+        if (part.circles) updatedDrawing.circles.push(...part.circles);
+        if (part.texts) updatedDrawing.texts.push(...part.texts);
+      }
+
+      suppressReloadRef.current = true;
+      setTempPrivateDrawing(updatedDrawing);
+    });
+
+    // Handle shape edit (from edit/drag mode)
+    dm.on("drawing:edit", () => {
+      const currentDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!currentDrawing) return;
+
+      // Rebuild the entire drawing from current shapes
+      const remainingShapes = dm.getAllShapes();
+      const updatedDrawing: Partial<Drawing> = { ...currentDrawing };
+      updatedDrawing.polylines = [];
+      updatedDrawing.rectangles = [];
+      updatedDrawing.polygons = [];
+      updatedDrawing.circles = [];
+      updatedDrawing.texts = [];
+
+      for (const shape of remainingShapes) {
+        shape.mapName = mapName;
+        const part = shapeToDrawing(shape);
+        if (part.polylines) updatedDrawing.polylines.push(...part.polylines);
+        if (part.rectangles) updatedDrawing.rectangles.push(...part.rectangles);
+        if (part.polygons) updatedDrawing.polygons.push(...part.polygons);
+        if (part.circles) updatedDrawing.circles.push(...part.circles);
+        if (part.texts) updatedDrawing.texts.push(...part.texts);
+      }
+
+      suppressReloadRef.current = true;
+      setTempPrivateDrawing(updatedDrawing);
+    });
+
     return () => {
       dm.destroy();
       drawingManagerRef.current = null;
@@ -247,6 +312,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     if (drawingManagerRef.current) {
       drawingManagerRef.current.setPathOptions({
         color: drawingColor,
+        fillColor: drawingFillColor,
         weight: drawingSize,
       });
       drawingManagerRef.current.setTextOptions({
@@ -254,7 +320,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         size: textSize,
       });
     }
-  }, [drawingColor, drawingSize, textColor, textSize]);
+  }, [drawingColor, drawingFillColor, drawingSize, textColor, textSize]);
 
   // Handle mode changes
   useEffect(() => {
@@ -288,6 +354,12 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
   // Load existing drawings when editing starts or filter changes
   useEffect(() => {
     if (!drawingManagerRef.current || !isEditing || !tempPrivateDrawing) return;
+
+    // Skip reload when the change was triggered by edit/remove events
+    if (suppressReloadRef.current) {
+      suppressReloadRef.current = false;
+      return;
+    }
 
     const dm = drawingManagerRef.current;
 
@@ -325,6 +397,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         type: "rectangle",
         positions: rect.positions.map(transformPosition),
         color: rect.color,
+        fillColor: rect.fillColor,
         size: rect.size,
         mapName: rect.mapName,
       });
@@ -338,6 +411,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         type: "polygon",
         positions: poly.positions.map(transformPosition),
         color: poly.color,
+        fillColor: poly.fillColor,
         size: poly.size,
         mapName: poly.mapName,
       });
@@ -352,6 +426,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         center: transformPosition(circle.center),
         radius: circle.radius,
         color: circle.color,
+        fillColor: circle.fillColor,
         size: circle.size,
         mapName: circle.mapName,
       });
@@ -440,6 +515,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           type: "rectangle",
           positions: rect.positions.map(transformPosition),
           color: rect.color,
+          fillColor: rect.fillColor,
           size: rect.size,
           mapName: rect.mapName,
         });
@@ -453,6 +529,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           type: "polygon",
           positions: poly.positions.map(transformPosition),
           color: poly.color,
+          fillColor: poly.fillColor,
           size: poly.size,
           mapName: poly.mapName,
         });
@@ -467,6 +544,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
           center: transformPosition(circle.center),
           radius: circle.radius,
           color: circle.color,
+          fillColor: circle.fillColor,
           size: circle.size,
           mapName: circle.mapName,
         });
@@ -799,6 +877,19 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                   />
                 )}
               </div>
+              {(globalMode === "rectangle" ||
+                globalMode === "polygon" ||
+                globalMode === "circle") && (
+                <div className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor="fillColor">Background</Label>
+                  <ColorPicker
+                    id="fillColor"
+                    className="col-span-2 h-8"
+                    value={drawingFillColor}
+                    onChange={setDrawingFillColor}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-3 items-center gap-4">
                 <Label htmlFor="radius">Size</Label>
                 {globalMode === "text" ? (
