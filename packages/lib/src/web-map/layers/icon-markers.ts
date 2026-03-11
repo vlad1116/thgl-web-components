@@ -90,12 +90,12 @@ void main(){
 
   if (a_renderMode < 0.5) {
     // Icon rendering with conditional billboard behavior
-    // Adaptive zoom sizing: icons scale from 0.25x at min zoom to 2.5x at max zoom
-    // Normalize growth rate by reference range (6 levels) so maps with wider zoom
-    // ranges don't produce oversized icons at mid zoom.
-    float zoomRange = u_maxZoom - u_minZoom;
-    float zoomFactor = zoomRange > 0.0 ? clamp((u_zoom - u_minZoom) / zoomRange, 0.0, 1.0) : 0.5;
-    float zoomSizeScale = 0.25 + 2.25 * pow(zoomFactor, zoomRange / 6.0);
+    // Adaptive zoom sizing based on actual view scale, not linear zoom fraction.
+    // Compute dampened ratio of current view scale to reference (midpoint zoom) scale.
+    // pow(ratio, 2/3) gives consistent growth per zoom level across all maps.
+    float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
+    float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
+    float zoomSizeScale = clamp(pow(viewScale / refScale, 2.0 / 3.0), 0.25, 2.5);
     vec2 center = a_offset + 0.5 * a_size;
     vec2 local = (a_pos - 0.5) * a_size * zoomSizeScale;
 
@@ -1268,9 +1268,9 @@ export class IconMarkerLayer implements Layer {
 
   // Compute zoom-dependent size scale matching the vertex shader formula
   private getZoomSizeScale(state: RenderState): number {
-    const zoomRange = state.maxZoom - state.minZoom;
-    const zoomFactor = zoomRange > 0 ? Math.max(0, Math.min(1, (state.zoom - state.minZoom) / zoomRange)) : 0.5;
-    return 0.25 + 2.25 * Math.pow(zoomFactor, zoomRange / 6.0);
+    const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+    const scaleRatio = Math.pow(2, state.zoom - midZoom);
+    return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, 2 / 3)));
   }
 
   // Hit test: approximate icon as a circle using half of effective size

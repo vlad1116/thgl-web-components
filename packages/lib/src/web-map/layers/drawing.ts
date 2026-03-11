@@ -960,9 +960,9 @@ export class DrawingLayer implements Layer {
     const tx = view[6], ty = view[7];
 
     // Adaptive zoom sizing for text (matching icon marker scaling)
-    const zoomRange = state.maxZoom - state.minZoom;
-    const zoomFactor = zoomRange > 0 ? Math.max(0, Math.min(1, (state.zoom - state.minZoom) / zoomRange)) : 0.5;
-    const zoomSizeScale = 0.25 + 2.25 * Math.pow(zoomFactor, zoomRange / 6.0);
+    const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+    const scaleRatio = Math.pow(2, state.zoom - midZoom);
+    const zoomSizeScale = Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, 2 / 3)));
 
     for (const [id, element] of this.textElements) {
       const shape = this.shapes.get(id);
