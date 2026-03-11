@@ -28,7 +28,7 @@ export interface IconMarkerInstance {
   z?: number; // optional elevation for relative z-arrow logic
   isHighlighted?: boolean;
   isDiscovered?: boolean; // greyscale + alpha reduction
-  zPos?: "top" | "bottom" | null;
+  zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
   zMag?: number; // 0..1 magnitude of relative z (for halo)
   isSelected?: boolean;
   rotation?: number; // radians
@@ -78,7 +78,8 @@ void main(){
 
   float heightIntensity = clamp(a_flags.x, 0.0, 1.0);
   float directionFlag = a_flags.y;
-  float direction = directionFlag > 0.5 ? 1.0 : (directionFlag < -0.5 ? -1.0 : 0.0);
+  // direction: 1=up+arrow, -1=down+arrow, 2=up needle only (no arrow), 0=none
+  float direction = abs(directionFlag) > 1.5 ? sign(directionFlag) : (directionFlag > 0.5 ? 1.0 : (directionFlag < -0.5 ? -1.0 : 0.0));
 
   // Calculate needle height scaled by zoom
   float zoomScale = pow(2.0, u_zoom);
@@ -310,8 +311,10 @@ void main(){
   }
   // Use v_localUv for overlays (0..1 across the entire rendered quad)
   vec2 uv = v_localUv;
-  float zTop = step(0.5, v_flags.y);
-  float zBottom = step(0.5, -v_flags.y);
+  // Suppress arrows in needle-only mode (direction = 2, absolute height vis)
+  float needleOnly = step(1.5, abs(v_flags.y));
+  float zTop = step(0.5, v_flags.y) * (1.0 - needleOnly);
+  float zBottom = step(0.5, -v_flags.y) * (1.0 - needleOnly);
   vec3 draw = c.rgb;
   float alpha = c.a;
   // Track overlay coverage to ensure alpha shows overlays even if base is transparent
@@ -702,7 +705,7 @@ export class IconMarkerLayer implements Layer {
     size: number;
     isHighlighted?: boolean;
     isDiscovered?: boolean;
-    zPos?: "top" | "bottom" | null;
+    zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
     z?: number;
   }) {
     const entry = this.iconMap.get(params.key);
@@ -1107,10 +1110,12 @@ export class IconMarkerLayer implements Layer {
               ? 0
               : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
         }
-        // Show z-arrow when zPos is set (player-relative, selection-relative, or absolute)
+        // direction: 1=up+arrow, -1=down+arrow, 2=up needle only (no arrow)
         let direction = 0;
         if (m.zPos === "top") direction = 1;
         else if (m.zPos === "bottom") direction = -1;
+        else if (m.zPos === "needle") direction = 2;
+        else if (m.zPos === "needle-down") direction = -2;
         flags[i * 2 + 0] = normalizedHeight;
         flags[i * 2 + 1] = direction;
         counts[i] = m.isStacked ? 2 : 1;
@@ -1307,8 +1312,8 @@ export class IconMarkerLayer implements Layer {
       heightIntensity = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
     }
     let direction = 0;
-    if (m.zPos === "top") direction = 1;
-    else if (m.zPos === "bottom") direction = -1;
+    if (m.zPos === "top" || m.zPos === "needle") direction = 1;
+    else if (m.zPos === "bottom" || m.zPos === "needle-down") direction = -1;
     if (direction === 0 || heightIntensity < 0.01) return 0;
 
     // Match vertex shader: heightWorld = mix(0, 20, heightIntensity) * abs(sin(pitch)) * 2^zoom * 500

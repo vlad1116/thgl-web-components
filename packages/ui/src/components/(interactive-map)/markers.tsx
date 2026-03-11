@@ -960,17 +960,16 @@ function MarkersContent({
           const dz = z - referenceZ;
           if (Math.abs(dz) < 0.01 * maxDz) continue; // skip near-zero differences
           const inst = markerInstances[idx];
-          inst.zPos = dz > 0 ? "top" : "bottom";
+          inst.zPos = dz > 0 ? "needle" : "needle-down";
           inst.zMag = Math.min(Math.abs(dz) / maxDz, 1);
         }
       } else {
-        // Absolute mode: show height proportional to Z value
+        // Absolute mode: needle only, no arrows (no reference point)
         const robustRange = p95 - p05;
         if (robustRange > 0) {
           for (const [idx, z] of markerZValues) {
             const inst = markerInstances[idx];
-            inst.zPos = "top";
-            // Clamp outliers to [0, 1] range
+            inst.zPos = "needle";
             inst.zMag = Math.max(0, Math.min(1, (z - p05) / robustRange));
           }
         }
@@ -1033,7 +1032,7 @@ function MarkersContent({
           const rawZ = typeof m.z === "number" ? m.z : 0;
           let hI = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
           if (hI === undefined) hI = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / 200);
-          let dir = m.zPos === "top" ? 1 : m.zPos === "bottom" ? -1 : 0;
+          let dir = (m.zPos === "top" || m.zPos === "needle") ? 1 : (m.zPos === "bottom" || m.zPos === "needle-down") ? -1 : 0;
           if (dir !== 0 && hI >= 0.01) {
             const heightWorld = 20 * hI * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
             const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
