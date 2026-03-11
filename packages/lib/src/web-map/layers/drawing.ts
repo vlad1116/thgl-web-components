@@ -33,6 +33,10 @@ export class DrawingLayer implements Layer {
   private vertexMarkers: Map<string, HTMLElement[]> = new Map();
   private activeShapeIds: Set<string> = new Set();
   private needsBufferUpdate = false;
+  private lastBufferZoom = -1;
+  // Reusable scratch arrays for buffer building (avoids per-frame allocations)
+  private scratchVertexData: number[] = [];
+  private scratchIndices: number[] = [];
   private uniformLocations: {
     view?: WebGLUniformLocation | null;
   } = {};
@@ -330,9 +334,11 @@ export class DrawingLayer implements Layer {
   }
 
   private updateBuffers(state: RenderState): void {
-    // Interleaved data: [x, y, r, g, b, a] per vertex (6 floats)
-    const vertexData: number[] = [];
-    const indices: number[] = [];
+    // Reuse scratch arrays to avoid per-frame allocations
+    const vertexData = this.scratchVertexData;
+    const indices = this.scratchIndices;
+    vertexData.length = 0;
+    indices.length = 0;
     let vertexOffset = 0;
 
     const pixelToWorld = this.getPixelToWorldScale(state);
@@ -425,8 +431,17 @@ export class DrawingLayer implements Layer {
       }
     }
 
-    this.vertexData = new Float32Array(vertexData);
-    this.indices = new Uint16Array(indices);
+    // Reuse TypedArrays if size matches, otherwise allocate new ones
+    if (this.vertexData.length !== vertexData.length) {
+      this.vertexData = new Float32Array(vertexData);
+    } else {
+      this.vertexData.set(vertexData);
+    }
+    if (this.indices.length !== indices.length) {
+      this.indices = new Uint16Array(indices);
+    } else {
+      this.indices.set(indices);
+    }
 
     if (this.gl && this.vertexBuffer && this.indexBuffer) {
       // Update interleaved vertex buffer data
@@ -819,10 +834,12 @@ export class DrawingLayer implements Layer {
     // Update vertex markers for active shapes
     this.updateActiveShapeVertexMarkers(state);
 
-    // Update buffers if needed
-    if (this.needsBufferUpdate || this.shapes.size > 0) {
+    // Update buffers when shapes changed or zoom changed (stroke widths depend on zoom)
+    const zoomChanged = this.shapes.size > 0 && Math.abs(state.zoom - this.lastBufferZoom) > 0.001;
+    if (this.needsBufferUpdate || zoomChanged) {
       this.updateBuffers(state);
       this.needsBufferUpdate = false;
+      this.lastBufferZoom = state.zoom;
     }
 
     if (!this.gl || !this.program || this.indices.length === 0) {

@@ -165,7 +165,12 @@ export class WebMap {
     );
   }
 
+  // AbortController for cleaning up all canvas event listeners on destroy
+  private eventAbort = new AbortController();
+
   private addEventHandlers() {
+    const signal = this.eventAbort.signal;
+
     // Basic pan/zoom/rotate stubs
     this.canvas.addEventListener(
       "wheel",
@@ -196,11 +201,11 @@ export class WebMap {
           this.wheelTimer = undefined;
         }, 20);
       },
-      { passive: false },
+      { passive: false, signal },
     );
 
     // prevent context menu on RMB drag
-    this.canvas.addEventListener("contextmenu", (e) => {
+    this.canvas.addEventListener("contextmenu", (e: MouseEvent) => {
       e.preventDefault();
 
       // Forward to IconMarkerLayer for contextmenu detection
@@ -224,7 +229,7 @@ export class WebMap {
         layerPoint: { x: localX, y: localY },
         originalEvent: e,
       });
-    });
+    }, { signal });
 
     // Handle double-click
     this.canvas.addEventListener("dblclick", (e) => {
@@ -237,7 +242,7 @@ export class WebMap {
         layerPoint: { x: localX, y: localY },
         originalEvent: e,
       });
-    });
+    }, { signal });
 
     this.canvas.addEventListener("pointerdown", (e) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -318,7 +323,7 @@ export class WebMap {
       this.panAnim = undefined;
       // Update cursor to grabbing while dragging
       if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
-    });
+    }, { signal });
     this.canvas.addEventListener("pointermove", (e) => {
       // Update tracked pointer position
       if (this.activePointers.has(e.pointerId)) {
@@ -443,7 +448,7 @@ export class WebMap {
       const vx = -wx * (1000 / dtMs);
       const vy = -wy * (1000 / dtMs);
       this.panAnim = { vx, vy };
-    });
+    }, { signal });
     this.canvas.addEventListener("pointerup", (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const localX = e.clientX - rect.left;
@@ -512,7 +517,7 @@ export class WebMap {
       }
       // After releasing, update cursor according to hover state
       this.updateCursor(up.x, up.y);
-    });
+    }, { signal });
 
     // Hover cursors: pointer over interactive layers, grab over map, grabbing while dragging
     this.canvas.addEventListener("pointermove", (e) => {
@@ -537,13 +542,13 @@ export class WebMap {
           }
         }
       }
-    });
+    }, { signal });
     this.canvas.addEventListener("pointerenter", () => {
       if (!this.dragging && !this._cursorLocked) this.canvas.style.cursor = "grab";
-    });
+    }, { signal });
     this.canvas.addEventListener("pointerleave", () => {
       this.canvas.style.cursor = "default";
-    });
+    }, { signal });
     // Handle pointer cancel (e.g., incoming call, system gesture)
     this.canvas.addEventListener("pointercancel", (e) => {
       this.activePointers.delete(e.pointerId);
@@ -556,7 +561,7 @@ export class WebMap {
       this.rotating = false;
       this.lastPointer = undefined;
       this.rotationPivot = undefined;
-    });
+    }, { signal });
   }
 
   private start() {
@@ -569,6 +574,14 @@ export class WebMap {
 
   destroy() {
     cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    // Remove all canvas event listeners
+    this.eventAbort.abort();
+    // Clear pending wheel timer
+    if (this.wheelTimer) {
+      clearTimeout(this.wheelTimer);
+      this.wheelTimer = undefined;
+    }
     this.layers.forEach(({ layer }) => layer.onRemove());
     // Clear all event handlers
     this.eventHandlers.clear();

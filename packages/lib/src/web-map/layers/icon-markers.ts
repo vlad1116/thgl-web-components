@@ -878,6 +878,21 @@ export class IconMarkerLayer implements Layer {
           gl.deleteBuffer(this.counts);
         } catch {}
       }
+      if (this.renderModes) {
+        try {
+          gl.deleteBuffer(this.renderModes);
+        } catch {}
+      }
+      if (this.keepUprights) {
+        try {
+          gl.deleteBuffer(this.keepUprights);
+        } catch {}
+      }
+      if (this.tints) {
+        try {
+          gl.deleteBuffer(this.tints);
+        } catch {}
+      }
       if (this.vao) {
         try {
           gl.deleteVertexArray(this.vao);
