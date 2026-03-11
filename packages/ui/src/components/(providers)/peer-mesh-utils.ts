@@ -32,26 +32,21 @@ export interface PeerMeshState {
 
 // ICE server configuration for WebRTC NAT traversal
 const iceServers: RTCIceServer[] = [
-  { urls: "stun:stun.relay.metered.ca:80" },
+  { urls: "stun:turn.th.gl:3478" },
   {
-    urls: "turn:global.relay.metered.ca:80",
-    username: "e364a6915935d26b3e4f6054",
-    credential: "uIs81tq3PlO2VN9y",
+    urls: "turn:turn.th.gl:3478",
+    username: "thgl",
+    credential: "thgl-turn-Kx9mP4vR7nQ2wE8j",
   },
   {
-    urls: "turn:global.relay.metered.ca:80?transport=tcp",
-    username: "e364a6915935d26b3e4f6054",
-    credential: "uIs81tq3PlO2VN9y",
+    urls: "turn:turn.th.gl:3478?transport=tcp",
+    username: "thgl",
+    credential: "thgl-turn-Kx9mP4vR7nQ2wE8j",
   },
   {
-    urls: "turn:global.relay.metered.ca:443",
-    username: "e364a6915935d26b3e4f6054",
-    credential: "uIs81tq3PlO2VN9y",
-  },
-  {
-    urls: "turns:global.relay.metered.ca:443?transport=tcp",
-    username: "e364a6915935d26b3e4f6054",
-    credential: "uIs81tq3PlO2VN9y",
+    urls: "turns:turn.th.gl:5349?transport=tcp",
+    username: "thgl",
+    credential: "thgl-turn-Kx9mP4vR7nQ2wE8j",
   },
 ];
 
