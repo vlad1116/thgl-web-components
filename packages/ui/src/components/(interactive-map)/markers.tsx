@@ -940,35 +940,38 @@ function MarkersContent({
         }
       }
 
+      // Collect all Z values for robust percentile-based normalization
+      const allZ: number[] = [];
+      for (const [, z] of markerZValues) allZ.push(z);
+      allZ.sort((a, b) => a - b);
+
+      // Use 5th/95th percentile to ignore outliers
+      const p05 = allZ[Math.floor(allZ.length * 0.05)] ?? allZ[0]!;
+      const p95 = allZ[Math.ceil(allZ.length * 0.95 - 1)] ?? allZ[allZ.length - 1]!;
+
       if (referenceZ !== undefined) {
         // Relative mode: show height relative to selected marker
-        let maxDz = 0;
-        for (const [, z] of markerZValues) {
-          maxDz = Math.max(maxDz, Math.abs(z - referenceZ));
-        }
-        if (maxDz > 0) {
-          for (const [idx, z] of markerZValues) {
-            const dz = z - referenceZ;
-            if (Math.abs(dz) < 0.01 * maxDz) continue; // skip near-zero differences
-            const inst = markerInstances[idx];
-            inst.zPos = dz > 0 ? "top" : "bottom";
-            inst.zMag = Math.abs(dz) / maxDz;
-          }
+        const maxDz = Math.max(
+          Math.abs(p95 - referenceZ),
+          Math.abs(p05 - referenceZ),
+          1,
+        );
+        for (const [idx, z] of markerZValues) {
+          const dz = z - referenceZ;
+          if (Math.abs(dz) < 0.01 * maxDz) continue; // skip near-zero differences
+          const inst = markerInstances[idx];
+          inst.zPos = dz > 0 ? "top" : "bottom";
+          inst.zMag = Math.min(Math.abs(dz) / maxDz, 1);
         }
       } else {
         // Absolute mode: show height proportional to Z value
-        let minZ = Infinity;
-        let maxZ = -Infinity;
-        for (const [, z] of markerZValues) {
-          minZ = Math.min(minZ, z);
-          maxZ = Math.max(maxZ, z);
-        }
-        const zRange = maxZ - minZ;
-        if (zRange > 0) {
+        const robustRange = p95 - p05;
+        if (robustRange > 0) {
           for (const [idx, z] of markerZValues) {
             const inst = markerInstances[idx];
             inst.zPos = "top";
-            inst.zMag = (z - minZ) / zRange;
+            // Clamp outliers to [0, 1] range
+            inst.zMag = Math.max(0, Math.min(1, (z - p05) / robustRange));
           }
         }
       }
