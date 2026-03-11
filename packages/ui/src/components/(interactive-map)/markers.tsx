@@ -60,6 +60,57 @@ export function Markers({
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const isHoverCardVisible = tooltipIsOpen && !isDrawing;
 
+  // Forward wheel events from tooltip to map canvas for zooming
+  const tooltipWheelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      tooltipRef.current = node;
+      if (!node) return;
+
+      const canvas = map?.getContainer();
+      if (!canvas) return;
+
+      const handleWheel = (e: WheelEvent) => {
+        // Check if the event target is inside a scrollable container
+        let el = e.target as HTMLElement | null;
+        while (el && el !== node) {
+          if (el.scrollHeight > el.clientHeight) {
+            const atTop = el.scrollTop <= 0;
+            const atBottom =
+              el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+            // Let the scroll area handle it if not at boundary
+            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+              return;
+            }
+          }
+          el = el.parentElement;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        canvas.dispatchEvent(
+          new WheelEvent("wheel", {
+            deltaX: e.deltaX,
+            deltaY: e.deltaY,
+            deltaZ: e.deltaZ,
+            deltaMode: e.deltaMode,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            screenX: e.screenX,
+            screenY: e.screenY,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      };
+
+      node.addEventListener("wheel", handleWheel, {
+        passive: false,
+        capture: true,
+      });
+    },
+    [map],
+  );
+
   // Track if mouse is in the "safe zone" (marker, tooltip, or between them)
   useEffect(() => {
     if (!tooltipIsOpen || !tooltipData || !containerRef.current) return;
@@ -147,7 +198,7 @@ export function Markers({
       {containerRef.current && tooltipData && isHoverCardVisible
         ? createPortal(
             <div
-              ref={tooltipRef}
+              ref={tooltipWheelRef}
               className="cursor-default z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none max-w-xs"
               onClick={(event) => event.stopPropagation()}
               onDoubleClick={(event) => event.stopPropagation()}
