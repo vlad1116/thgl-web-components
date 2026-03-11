@@ -18,9 +18,12 @@ export function TraceLine() {
   const positionsRef = useRef<[number, number][]>([]);
   const frameCountRef = useRef(0);
 
-  // Reset positions when settings change or map changes
+  // Reset positions and clear shapes when toggled off or map changes
   useEffect(() => {
     positionsRef.current = [];
+    if (layerRef.current) {
+      layerRef.current.clearShapes();
+    }
   }, [map?.mapName, showTraceLine]);
 
   // Main effect: record positions and render line
