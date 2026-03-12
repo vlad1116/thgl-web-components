@@ -122,6 +122,8 @@ export class WebMap {
   private pinchStartDist?: number;
   private pinchStartZoom?: number;
   private pinchMidpoint?: { x: number; y: number };
+  private pinchStartAngle?: number;
+  private pinchStartBearing?: number;
   // Double-tap to zoom state
   private lastTap?: { x: number; y: number; t: number };
   // Movement tracking for moveend/zoomend events
@@ -273,6 +275,8 @@ export class WebMap {
         const dy = pointers[1].y - pointers[0].y;
         this.pinchStartDist = Math.sqrt(dx * dx + dy * dy);
         this.pinchStartZoom = this.zoom;
+        this.pinchStartAngle = Math.atan2(dy, dx);
+        this.pinchStartBearing = this.bearing;
         this.pinchMidpoint = {
           x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
           y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
@@ -378,9 +382,21 @@ export class WebMap {
         this.zoom = newZoom;
         this.targetZoom = newZoom;
 
-        // Pan to keep the midpoint stationary
+        // Two-finger rotation: change bearing based on angle between fingers
+        if (this.pinchStartAngle !== undefined && this.pinchStartBearing !== undefined) {
+          const currentAngle = Math.atan2(dy, dx);
+          const angleDelta = currentAngle - this.pinchStartAngle;
+          this.bearing = this.pinchStartBearing - angleDelta;
+          this.cachedBearing = this.bearing;
+          this.cachedCos = Math.cos(this.bearing);
+          this.cachedSin = Math.sin(this.bearing);
+        }
+
+        // Compute deltas from previous midpoint before updating
         const midpointDx = newMidpoint.x - this.pinchMidpoint.x;
         const midpointDy = newMidpoint.y - this.pinchMidpoint.y;
+
+        // Pan to keep the midpoint stationary
         if (Math.abs(midpointDx) > 1 || Math.abs(midpointDy) > 1) {
           const dpr = Math.max(1, window.devicePixelRatio || 1);
           const centerPx = this.projectAt(this.center, this.zoom);
@@ -391,8 +407,17 @@ export class WebMap {
           const wy = sin * midpointDx * dpr + (cos / cosP) * midpointDy * dpr;
           const newCenterPx = { x: centerPx.x - wx, y: centerPx.y - wy };
           this.center = this.unprojectAt(newCenterPx, this.zoom);
-          this.pinchMidpoint = newMidpoint;
         }
+
+        // Two-finger tilt: vertical midpoint movement changes pitch
+        if (Math.abs(midpointDy) > 2) {
+          const newPitch = clamp(this.pitch - midpointDy * 0.004, 0, 1.4);
+          this.pitch = newPitch;
+          this.cachedPitch = newPitch;
+          this.cachedCosP = Math.cos(newPitch);
+        }
+
+        this.pinchMidpoint = newMidpoint;
 
         return;
       }
@@ -478,6 +503,8 @@ export class WebMap {
         this.pinchStartDist = undefined;
         this.pinchStartZoom = undefined;
         this.pinchMidpoint = undefined;
+        this.pinchStartAngle = undefined;
+        this.pinchStartBearing = undefined;
       }
 
       // Fire map mouseup event
@@ -572,6 +599,8 @@ export class WebMap {
         this.pinchStartDist = undefined;
         this.pinchStartZoom = undefined;
         this.pinchMidpoint = undefined;
+        this.pinchStartAngle = undefined;
+        this.pinchStartBearing = undefined;
       }
       this.dragging = false;
       this.rotating = false;
