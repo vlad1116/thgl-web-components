@@ -28,7 +28,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Moonlit Forest Map",
       description:
-        "Explore the Moonlit Forest cave with campsites, chests, elf stones, and relics.",
+        "Explore the Moonlit Forest cave with campsites, chests, gravecrystals, and relics.",
       href: "/maps/Moonlit%20Forest",
       iconName: "Map",
       bgImage: getPreviewImageUrl("starsand-island", "MineCave_MainLand"),
@@ -53,9 +53,9 @@ export const APP_CONFIG: AppConfig = {
       iconName: "BookOpen",
     },
     {
-      href: "/guides/Elf%20Stone",
-      title: "Elf Stones",
-      linkText: "Locate all Elf Stones",
+      href: "/guides/Gravecrystal",
+      title: "Gravecrystals",
+      linkText: "Locate all Gravecrystals",
       iconName: "BookOpen",
     },
   ],
@@ -64,7 +64,7 @@ export const APP_CONFIG: AppConfig = {
   keywords: [
     "Treasure Chests",
     "Campsites",
-    "Elf Stones",
+    "Gravecrystals",
     "Fishing Spots",
     "Shops",
     "Resources",
