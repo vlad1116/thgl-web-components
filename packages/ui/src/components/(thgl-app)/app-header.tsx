@@ -180,7 +180,10 @@ export function AppHeader({
         }}
       >
         <nav
-          className={cn("ml-2 grow flex items-center gap-2 text-sm font-bold")}
+          className={cn(
+            "ml-2 grow flex items-center gap-2 text-sm font-bold overflow-hidden",
+            isOverlay ? "pr-[192px]" : "pr-[256px]",
+          )}
         >
           {children}
           {isRunningAsAdmin && (

@@ -118,7 +118,12 @@ function useAdFormat(isOverlay: boolean): AdFormat | null {
   const [hydrated, setHydrated] = useState(false);
 
   // Desktop breakpoints
-  const isSmallHeight = useMediaQuerySafe("(max-height: 699px)");
+  const isSmallHeight = useMediaQuerySafe(
+    "(max-height: 699px) and (min-width: 970px)",
+  );
+  const isSmallWindow = useMediaQuerySafe(
+    "(max-height: 699px) and (max-width: 969px)",
+  );
   const isNarrowTall = useMediaQuerySafe(
     "(max-width: 1679px) and (min-height: 700px)",
   );
@@ -145,6 +150,7 @@ function useAdFormat(isOverlay: boolean): AdFormat | null {
 
     // Desktop mode
     if (isSmallHeight) return DESKTOP_BANNER;
+    if (isSmallWindow) return DESKTOP_SMALL_SIDEBAR;
     if (isNarrowTall) return DESKTOP_SMALL_SIDEBAR;
     if (isWideMedium) return DESKTOP_MEDIUM_SIDEBAR;
     if (isWideTall) return DESKTOP_LARGE_SIDEBAR;
