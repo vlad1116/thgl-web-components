@@ -746,6 +746,12 @@ export class WebMap {
   getMaxZoom() {
     return this.maxZoom;
   }
+  /** Convert CSS pixels to world-space units at the current zoom */
+  pixelsToWorld(px: number): number {
+    const scale = Math.pow(2, this.zoom);
+    const w = this.canvas.clientWidth || this.canvas.width;
+    return (px * 2) / (w * scale);
+  }
 
   /**
    * Fit the map to a bounding box of coordinates

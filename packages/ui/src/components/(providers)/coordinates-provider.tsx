@@ -409,6 +409,7 @@ export function CoordinatesProvider({
             spawnToAdd = {
               id: getNodeId(spawn.id, id, spawn.p[0], spawn.p[1]),
               ...spawn,
+              p: [spawn.p[0], spawn.p[1], actor.z || spawn.p[2]],
               address: actor.address, // Keep actor address for live tracking
             } as Spawn;
             break;

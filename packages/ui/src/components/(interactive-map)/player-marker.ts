@@ -54,6 +54,8 @@ export class PlayerMarker {
   private _iconHeight: number = 36;
   private _targetRotation: number = 0;
   private _displayRotation: number = 0;
+  private _targetLatLng: [number, number] = [0, 0];
+  private _displayLatLng: [number, number] = [0, 0];
   private _animRaf: number = 0;
   private _lastAnimTs: number = 0;
 
@@ -63,6 +65,8 @@ export class PlayerMarker {
   ) {
     this._id = options.id;
     this._latLng = latLng;
+    this._displayLatLng = [...latLng] as [number, number];
+    this._targetLatLng = [...latLng] as [number, number];
     this._rotation = options.rotation;
     this._rotationOffset = options.rotationOffset ?? 0;
     this._displayRotation = options.rotation;
@@ -169,19 +173,14 @@ export class PlayerMarker {
 
       this._targetRotation = playerRotation;
       this._lastRawRotation = r;
-      this._startRotationAnim();
     }
 
-    // Update position
-    const newLatLng: [number, number] = [x, y];
-    if (this._latLng[0] !== newLatLng[0] || this._latLng[1] !== newLatLng[1]) {
-      this._latLng = newLatLng;
-    }
-
-    this._updateMarker();
+    // Update target position
+    this._targetLatLng = [x, y];
+    this._startAnim();
   }
 
-  private _startRotationAnim() {
+  private _startAnim() {
     if (this._animRaf) return; // Already running
     this._lastAnimTs = performance.now();
     const tick = () => {
@@ -189,17 +188,36 @@ export class PlayerMarker {
       const dt = Math.min(100, now - this._lastAnimTs);
       this._lastAnimTs = now;
       const alpha = 1 - Math.exp(-dt / 100); // ~100ms smoothing
-      const diff = this._targetRotation - this._displayRotation;
-      if (Math.abs(diff) < 0.1) {
-        this._displayRotation = this._targetRotation;
-        this._rotation = this._displayRotation;
-        this._animRaf = 0;
-        this._updateMarker();
-        return;
+
+      // Interpolate position
+      const dLat = this._targetLatLng[0] - this._displayLatLng[0];
+      const dLng = this._targetLatLng[1] - this._displayLatLng[1];
+      const posSettled = Math.abs(dLat) < 0.001 && Math.abs(dLng) < 0.001;
+      if (posSettled) {
+        this._displayLatLng = [...this._targetLatLng] as [number, number];
+      } else {
+        this._displayLatLng[0] += dLat * alpha;
+        this._displayLatLng[1] += dLng * alpha;
       }
-      this._displayRotation += diff * alpha;
+
+      // Interpolate rotation
+      const rotDiff = this._targetRotation - this._displayRotation;
+      const rotSettled = Math.abs(rotDiff) < 0.1;
+      if (rotSettled) {
+        this._displayRotation = this._targetRotation;
+      } else {
+        this._displayRotation += rotDiff * alpha;
+      }
+
+      // Apply interpolated values
+      this._latLng = this._displayLatLng;
       this._rotation = this._displayRotation;
       this._updateMarker();
+
+      if (posSettled && rotSettled) {
+        this._animRaf = 0;
+        return;
+      }
       this._animRaf = requestAnimationFrame(tick);
     };
     this._animRaf = requestAnimationFrame(tick);

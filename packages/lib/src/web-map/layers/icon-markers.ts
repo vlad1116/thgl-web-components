@@ -21,7 +21,8 @@ export interface IconRect {
 export interface IconMarkerInstance {
   id: string;
   latLng: LatLng;
-  size: number; // pixel size of the square on screen (before highlight)
+  size: number; // pixel height on screen (before highlight)
+  sizeW?: number; // optional pixel width (defaults to size for square icons)
   sheet: string; // sheet name
   rect: IconRect; // sub-rect in pixels on the sheet image
   key?: string; // type/category key for grouping
@@ -32,6 +33,8 @@ export interface IconMarkerInstance {
   zMag?: number; // 0..1 magnitude of relative z (for halo)
   isSelected?: boolean;
   alwaysOnTop?: boolean; // render above all other markers (e.g. player)
+  noHitTest?: boolean; // skip in pick/pickAll (e.g. labels)
+  screenOffsetY?: number; // screen-space Y offset in world pixels (negative = up)
   rotation?: number; // radians
   keepUpright?: boolean; // do not rotate with map bearing
   tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
@@ -1100,11 +1103,12 @@ export class IconMarkerLayer implements Layer {
         const m = list[i];
         const p = state.projection(m.latLng);
         let size = m.size;
-        if (m.isHighlighted) size *= 1.15;
-        if (m.isSelected) size *= 1.3;
-        offsets[i * 2 + 0] = p.x - size / 2;
-        offsets[i * 2 + 1] = p.y - size / 2;
-        sizes[i * 2 + 0] = size;
+        let sizeW = m.sizeW ?? size;
+        if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
+        if (m.isSelected) { size *= 1.3; sizeW *= 1.3; }
+        offsets[i * 2 + 0] = p.x - sizeW / 2;
+        offsets[i * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
+        sizes[i * 2 + 0] = sizeW;
         sizes[i * 2 + 1] = size;
         const u0 = m.rect.x / s.w;
         const v0 = m.rect.y / s.h;
@@ -1377,18 +1381,19 @@ export class IconMarkerLayer implements Layer {
     for (let i = this.instances.length - 1; i >= 0; i--) {
       const m = this.instances[i];
       if (m === null) continue; // Skip null entries
+      if (m.noHitTest) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
       // Offset hit test to the elevated icon position (height stem)
       s.y += this.getHeightScreenOffset(m, state);
-      let eff = m.size * zoomScale;
-      if (m.isHighlighted) eff *= 1.15;
-      if (m.isSelected) eff *= 1.3;
-      const r = eff / 2;
+      let effH = m.size * zoomScale;
+      let effW = (m.sizeW ?? m.size) * zoomScale;
+      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
+      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
-      if (dx * dx + dy * dy <= r * r) {
+      if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2) {
         return m;
       }
     }
@@ -1423,19 +1428,21 @@ export class IconMarkerLayer implements Layer {
     for (let i = this.instances.length - 1; i >= 0; i--) {
       const m = this.instances[i];
       if (m === null) continue; // Skip null entries
+      if (m.noHitTest) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
       // Offset hit test to the elevated icon position (height stem)
       s.y += this.getHeightScreenOffset(m, state);
-      let eff = m.size * zoomScale;
-      if (m.isHighlighted) eff *= 1.15;
-      if (m.isSelected) eff *= 1.3;
-      const r = eff / 2;
+      let effH = m.size * zoomScale;
+      let effW = (m.sizeW ?? m.size) * zoomScale;
+      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
+      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
+      const r = Math.max(effW, effH) / 2;
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
       const d2 = dx * dx + dy * dy;
-      if (d2 <= r * r && d2 < bestDist2) {
+      if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2 && d2 < bestDist2) {
         bestDist2 = d2;
         bestIdx = i;
         bestR = r;

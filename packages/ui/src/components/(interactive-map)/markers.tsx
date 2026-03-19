@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Spawns, useCoordinates, useT } from "../(providers)";
 import { useMap } from "./store";
@@ -19,7 +19,7 @@ import {
   devLog,
   type LabelMode,
 } from "@repo/lib";
-import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET, DrawingLayer } from "@repo/lib/web-map";
+import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
@@ -62,47 +62,30 @@ export function Markers({
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const isHoverCardVisible = tooltipIsOpen && !isDrawing;
 
-  // Forward wheel events from tooltip to map canvas for zooming
+  // Block wheel events from reaching the map canvas when over the tooltip
   const tooltipWheelRef = useCallback(
     (node: HTMLDivElement | null) => {
       tooltipRef.current = node;
       if (!node) return;
 
-      const canvas = map?.getContainer();
-      if (!canvas) return;
-
       const handleWheel = (e: WheelEvent) => {
-        // Check if the event target is inside a scrollable container
+        // Check if inside a scrollable child that can still scroll
         let el = e.target as HTMLElement | null;
         while (el && el !== node) {
           if (el.scrollHeight > el.clientHeight) {
             const atTop = el.scrollTop <= 0;
-            const atBottom =
-              el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-            // Let the scroll area handle it if not at boundary
+            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
             if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+              // Let the scrollable child handle it, but still block page/map scroll
+              e.stopPropagation();
               return;
             }
           }
           el = el.parentElement;
         }
-
+        // Block both page scroll and map zoom
         e.preventDefault();
         e.stopPropagation();
-        canvas.dispatchEvent(
-          new WheelEvent("wheel", {
-            deltaX: e.deltaX,
-            deltaY: e.deltaY,
-            deltaZ: e.deltaZ,
-            deltaMode: e.deltaMode,
-            clientX: e.clientX,
-            clientY: e.clientY,
-            screenX: e.screenX,
-            screenY: e.screenY,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
       };
 
       node.addEventListener("wheel", handleWheel, {
@@ -110,7 +93,7 @@ export function Markers({
         capture: true,
       });
     },
-    [map],
+    [],
   );
 
   // Track if mouse is in the "safe zone" (marker, tooltip, or between them)
@@ -150,13 +133,29 @@ export function Markers({
       }
 
       // Check if mouse is in the corridor between marker and tooltip
-      // The tooltip is positioned above the marker
-      const tooltipBottom = y - radius - 8; // 8px gap
-      if (mouseY < y && mouseY > tooltipBottom - 10) {
-        // Check if within horizontal bounds (tooltip width centered on x)
-        const corridorHalfWidth = Math.max(radius + 20, 100);
-        if (Math.abs(mouseX - x) <= corridorHalfWidth) {
+      if (tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current!.getBoundingClientRect();
+        const tl = tooltipRect.left - containerRect.left;
+        const tr = tooltipRect.right - containerRect.left;
+        const tt = tooltipRect.top - containerRect.top;
+        const tb = tooltipRect.bottom - containerRect.top;
+
+        // Expanded tooltip rect with small padding for easier hover
+        const pad = 5;
+        if (mouseX >= tl - pad && mouseX <= tr + pad && mouseY >= tt - pad && mouseY <= tb + pad) {
           return true;
+        }
+
+        // Narrow corridor connecting icon center to tooltip edge
+        const corridorHW = radius + 4;
+        // Vertical corridor (tooltip above or below)
+        if (Math.abs(mouseX - x) <= corridorHW) {
+          const minY = Math.min(y - radius, tt);
+          const maxY = Math.max(y + radius, tb);
+          if (mouseY >= minY && mouseY <= maxY) {
+            return true;
+          }
         }
       }
 
@@ -199,18 +198,12 @@ export function Markers({
       />
       {containerRef.current && tooltipData && isHoverCardVisible
         ? createPortal(
-            <div
+            <TooltipPositioner
               ref={tooltipWheelRef}
-              className="cursor-default z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none max-w-xs"
-              onClick={(event) => event.stopPropagation()}
-              onDoubleClick={(event) => event.stopPropagation()}
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                transform: `translate3d(calc(${tooltipData.x}px - 50%), calc(${tooltipData.y}px - 100% - ${tooltipData.radius}px - 8px), 0px)`,
-                pointerEvents: "auto",
-              }}
+              x={tooltipData.x}
+              y={tooltipData.y}
+              radius={tooltipData.radius}
+              containerRef={containerRef}
             >
               <MarkerTooltip
                 appName={appName}
@@ -222,13 +215,90 @@ export function Markers({
                 additionalTooltip={additionalTooltip}
                 coordinateCopyFormat={markerOptions.coordinateCopyFormat}
               />
-            </div>,
+            </TooltipPositioner>,
             containerRef.current
           )
         : null}
     </>
   );
 }
+
+/** Viewport-aware tooltip that repositions if it would overflow */
+const TooltipPositioner = React.forwardRef<
+  HTMLDivElement,
+  {
+    x: number;
+    y: number;
+    radius: number;
+    containerRef: React.RefObject<HTMLElement | null>;
+    children: React.ReactNode;
+  }
+>(function TooltipPositioner({ x, y, radius, containerRef, children }, ref) {
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState({ transform: "" });
+
+  const reposition = useCallback(() => {
+    const el = innerRef.current;
+    const container = containerRef.current;
+    if (!el || !container) return;
+
+    const gap = 2;
+    const rect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    // Default: above, centered
+    let tx = x - w / 2;
+    let ty = y - h - radius - gap;
+
+    // If overflows top, place below
+    if (ty < 0) {
+      ty = y + radius + gap;
+    }
+    // If overflows bottom too, just clamp to top
+    if (ty + h > cRect.height) {
+      ty = Math.max(0, cRect.height - h);
+    }
+    // Clamp horizontal
+    if (tx < 0) tx = 0;
+    if (tx + w > cRect.width) tx = Math.max(0, cRect.width - w);
+
+    setPos({ transform: `translate3d(${tx}px, ${ty}px, 0px)` });
+  }, [x, y, radius, containerRef]);
+
+  // Reposition on mount and when tooltip resizes (e.g. async content loads)
+  useEffect(() => {
+    reposition();
+    const el = innerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(reposition);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [reposition]);
+
+  return (
+    <div
+      ref={(node) => {
+        innerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
+      className="cursor-default z-50 rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
+      onClick={(event) => event.stopPropagation()}
+      onDoubleClick={(event) => event.stopPropagation()}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        pointerEvents: "auto",
+        ...pos,
+      }}
+    >
+      {children}
+    </div>
+  );
+});
 
 function MarkersContent({
   appName,
@@ -322,7 +392,9 @@ function MarkersContent({
   const showLabelsActive = useGameState((state) => state.showLabelsActive);
 
   // Label layer for rendering per-marker text labels
-  const labelLayerRef = useRef<DrawingLayer | null>(null);
+  // Cache for text label canvases (keyed by text content + fontSize)
+  const labelCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
+  const activeLabelIds = useRef<Set<string>>(new Set());
 
   // Helper function to determine if label should show for a marker
   const shouldShowLabel = useCallback(
@@ -1101,10 +1173,18 @@ function MarkersContent({
           );
         }
 
+        // Compute screen-pixel radius by projecting the icon edge
+        const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+        const zoomSizeScale = Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), 2 / 3)));
+        const halfWorld = (m.size * zoomSizeScale) / 2;
+        const edgeClipX = view[0] * (worldPos.x + halfWorld) + view[3] * worldPos.y + view[6];
+        const edgeScreenX = (edgeClipX * 0.5 + 0.5) * rect.width;
+        const screenRadius = Math.abs(edgeScreenX - screenX);
+
         onTooltipData({
           x: screenX,
           y: screenY,
-          radius: m.size / 2 / dpr,
+          radius: screenRadius,
           items,
           latLng: s.p,
         });
@@ -1285,65 +1365,98 @@ function MarkersContent({
   ]);
 
 
-  // Label rendering using DrawingLayer text shapes
-  // Tracks which labels are currently shown for "inRange" mode
-  const activeLabelsRef = useRef<Set<string>>(new Set());
-
+  // Label rendering using canvas-rendered text as WebGL markers on the main marker layer
   useEffect(() => {
-    if (!map) return;
+    const markerLayer = map?.markerLayer;
+    if (!map || !markerLayer) return;
+
+    // Remove previous labels
+    for (const labelId of activeLabelIds.current) {
+      markerLayer.remove(labelId);
+    }
+    activeLabelIds.current.clear();
 
     // Check if any filter has a label mode set
     const hasAnyLabels = Object.values(labelModeByFilter).some(
       (m) => m && m !== "off",
     );
-    if (!hasAnyLabels) {
-      // Clean up label layer if no labels needed
-      if (labelLayerRef.current) {
-        labelLayerRef.current.clearShapes();
-        map.removeLayer(labelLayerRef.current);
-        labelLayerRef.current = null;
+    if (!hasAnyLabels) return;
+
+    const fontSize = Math.round(14 * labelTextSize);
+    const pad = 6;
+    const cache = labelCanvasCache.current;
+
+    // Helper: get or create a canvas with rendered text
+    const getTextCanvas = (text: string) => {
+      const key = `${text}__${fontSize}`;
+      let entry = cache.get(key);
+      if (entry) return entry;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      const font = `700 ${fontSize}px Arial, system-ui, sans-serif`;
+      ctx.font = font;
+      const metrics = ctx.measureText(text);
+      const w = Math.ceil(metrics.width) + pad * 2;
+      const h = fontSize + pad * 2;
+      canvas.width = w;
+      canvas.height = h;
+
+      // Re-set font after resize
+      ctx.font = font;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Text shadow (outline)
+      const shadowColor = "#594f42";
+      for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]]) {
+        ctx.fillStyle = shadowColor;
+        ctx.fillText(text, w / 2 + dx, h / 2 + dy);
       }
-      activeLabelsRef.current.clear();
-      return;
-    }
+      ctx.fillStyle = "#FFFFFFEE";
+      ctx.fillText(text, w / 2, h / 2);
 
-    // Create label layer if needed
-    if (!labelLayerRef.current) {
-      labelLayerRef.current = new DrawingLayer({ interactive: false });
-      map.addLayer(labelLayerRef.current, { zIndex: 150 });
-    }
+      entry = { canvas, width: w, height: h };
+      cache.set(key, entry);
+      return entry;
+    };
 
-    const layer = labelLayerRef.current;
-    layer.clearShapes();
-    activeLabelsRef.current.clear();
+    const dpr = window.devicePixelRatio || 1;
 
-    const fontSize = 12 * labelTextSize;
+    // Helper: add a label marker to the main marker layer
+    const addLabel = (id: string, pos: [number, number], text: string) => {
+      const { canvas, width, height } = getTextCanvas(text);
+      const sheetName = `__label_${text}__${fontSize}`;
+      markerLayer.setSheet(sheetName, canvas);
+      const labelId = `__label_${id}`;
+      // Get the icon marker's size to offset label above it
+      const iconMarker = markerLayer.getMarker(id);
+      const iconSize = iconMarker?.size ?? 40 * dpr;
+      markerLayer.add({
+        id: labelId,
+        latLng: pos,
+        size: height * dpr,
+        sizeW: width * dpr,
+        screenOffsetY: -(iconSize / 2 + height * dpr / 2 + 2),
+        sheet: sheetName,
+        rect: { x: 0, y: 0, width, height },
+        keepUpright: true,
+        noHitTest: true,
+      });
+      activeLabelIds.current.add(labelId);
+    };
 
     // Add "always" and "hotkey" mode labels
     for (const [id, spawn] of spawnMapRef.current) {
       const mode = labelModeByFilter[spawn.type];
       if (!mode || mode === "off" || mode === "inRange") continue;
-
       if (mode === "hotkey" && !showLabelsActive) continue;
 
-      // Compute position with rotation
       let pos: [number, number] = [spawn.p[0], spawn.p[1]];
       if (rotationCache) {
         pos = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
       }
-
-      layer.addShape({
-        id: `label_${id}`,
-        type: "text",
-        center: pos,
-        text: t(spawn.type),
-        size: fontSize,
-        color: "#FFFFFFEE",
-        textAnchor: "bottom",
-        textOffset: [0, -14],
-        mapName: map.mapName,
-      });
-      activeLabelsRef.current.add(id);
+      addLabel(id, pos, t(spawn.type));
     }
 
     // For "inRange" mode, add labels for markers near the player
@@ -1372,29 +1485,19 @@ function MarkersContent({
         const dx = playerX - item.latLng[0];
         const dy = playerY - item.latLng[1];
         if (dx * dx + dy * dy <= rangeSq) {
-          layer.addShape({
-            id: `label_${item.id}`,
-            type: "text",
-            center: item.latLng,
-            text: t(item.spawn.type),
-            size: fontSize,
-            color: "#FFFFFFEE",
-            textAnchor: "bottom",
-            textOffset: [0, -14],
-            mapName: map.mapName,
-          });
-          activeLabelsRef.current.add(item.id);
+          addLabel(item.id, item.latLng, t(item.spawn.type));
         }
       }
     }
 
     return () => {
-      if (labelLayerRef.current) {
-        labelLayerRef.current.clearShapes();
-        map.removeLayer(labelLayerRef.current);
-        labelLayerRef.current = null;
+      // Clean up labels from the main marker layer
+      if (map?.markerLayer) {
+        for (const labelId of activeLabelIds.current) {
+          map.markerLayer.remove(labelId);
+        }
       }
-      activeLabelsRef.current.clear();
+      activeLabelIds.current.clear();
     };
   }, [
     map,

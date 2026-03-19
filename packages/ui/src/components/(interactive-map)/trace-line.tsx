@@ -4,7 +4,21 @@ import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
 import { useSettingsStore, useGameState } from "@repo/lib";
-import { DrawingLayer } from "@repo/lib/web-map";
+import { DrawingLayer, IconMarkerLayer } from "@repo/lib/web-map";
+
+/** Create a solid-color circle canvas (no border) for trace dots */
+function createDotCanvas(color: string): HTMLCanvasElement {
+  const size = 32;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  return canvas;
+}
 
 export function TraceLine() {
   const map = useMap();
@@ -15,20 +29,26 @@ export function TraceLine() {
   const traceLineStyle = useSettingsStore((state) => state.traceLineStyle);
   const player = useGameState((state) => state.player);
 
-  const layerRef = useRef<DrawingLayer | null>(null);
+  // DrawingLayer for line mode
+  const lineLayerRef = useRef<DrawingLayer | null>(null);
+  // IconMarkerLayer for dots mode
+  const dotLayerRef = useRef<IconMarkerLayer | null>(null);
   const positionsRef = useRef<[number, number][]>([]);
   const updateCountRef = useRef(0);
   const lastPlayerPosRef = useRef<string>("");
 
-  // Reset positions and clear shapes when toggled off or map changes
+  // Reset positions and clear when toggled off or map changes
   useEffect(() => {
     positionsRef.current = [];
-    if (layerRef.current) {
-      layerRef.current.clearShapes();
+    if (lineLayerRef.current) {
+      lineLayerRef.current.clearShapes();
+    }
+    if (dotLayerRef.current) {
+      dotLayerRef.current.clear();
     }
   }, [map?.mapName, showTraceLine]);
 
-  // Main effect: record positions and render line
+  // Main effect: record positions and render
   useEffect(() => {
     if (!map || !showTraceLine || !player) return;
 
@@ -65,17 +85,22 @@ export function TraceLine() {
       positions.shift();
     }
 
-    // Create layer if needed
-    if (!layerRef.current) {
-      layerRef.current = new DrawingLayer({ interactive: false });
-      map.addLayer(layerRef.current, { zIndex: 30 });
-    }
-
-    // Update trace shapes
-    layerRef.current.clearShapes();
     if (traceLineStyle === "line") {
+      // Line mode: use DrawingLayer
+      if (!lineLayerRef.current) {
+        lineLayerRef.current = new DrawingLayer({ interactive: false });
+        map.addLayer(lineLayerRef.current, { zIndex: 30 });
+      }
+      // Remove dot layer if switching
+      if (dotLayerRef.current) {
+        dotLayerRef.current.clear();
+        map.removeLayer(dotLayerRef.current);
+        dotLayerRef.current = null;
+      }
+
+      lineLayerRef.current.clearShapes();
       if (positions.length >= 2) {
-        layerRef.current.addShape({
+        lineLayerRef.current.addShape({
           id: "trace-line",
           type: "line",
           positions: [...positions],
@@ -85,31 +110,45 @@ export function TraceLine() {
         });
       }
     } else {
-      // Dots mode — render each position as a small filled circle
-      // Scale radius so dots appear as consistent ~4px circles on screen
-      const dotRadius = 4 / Math.pow(2, map.getZoom());
+      // Dots mode: use IconMarkerLayer with circle sheet
+      if (!dotLayerRef.current) {
+        dotLayerRef.current = new IconMarkerLayer();
+        map.addLayer(dotLayerRef.current, { zIndex: 30 });
+      }
+      // Remove line layer if switching
+      if (lineLayerRef.current) {
+        lineLayerRef.current.clearShapes();
+        map.removeLayer(lineLayerRef.current);
+        lineLayerRef.current = null;
+      }
+
+      dotLayerRef.current.clear();
+      const dotCanvas = createDotCanvas(traceLineColor);
+      dotLayerRef.current.setSheet("__trace_dot__", dotCanvas);
       for (let i = 0; i < positions.length; i++) {
-        layerRef.current.addShape({
+        dotLayerRef.current.add({
           id: `trace-dot-${i}`,
-          type: "circle",
-          center: positions[i],
-          radius: dotRadius,
-          fillColor: traceLineColor,
-          color: traceLineColor,
-          size: 1,
-          mapName: map.mapName,
+          latLng: positions[i],
+          size: 6,
+          sheet: "__trace_dot__",
+          rect: { x: 0, y: 0, width: 32, height: 32 },
         });
       }
     }
   }, [map, player, showTraceLine, traceLineLength, traceLineRate, traceLineColor, traceLineStyle]);
 
-  // Cleanup on unmount or when disabled
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (layerRef.current && map) {
-        layerRef.current.clearShapes();
-        map.removeLayer(layerRef.current);
-        layerRef.current = null;
+      if (lineLayerRef.current && map) {
+        lineLayerRef.current.clearShapes();
+        map.removeLayer(lineLayerRef.current);
+        lineLayerRef.current = null;
+      }
+      if (dotLayerRef.current && map) {
+        dotLayerRef.current.clear();
+        map.removeLayer(dotLayerRef.current);
+        dotLayerRef.current = null;
       }
     };
   }, [map]);
