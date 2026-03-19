@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Spawns, useCoordinates } from "../(providers)";
+import { Spawns, useCoordinates, useT } from "../(providers)";
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
 import {
@@ -17,8 +17,10 @@ import {
   useSettingsStore,
   useUserStore,
   devLog,
+  type LabelMode,
 } from "@repo/lib";
 import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET, DrawingLayer } from "@repo/lib/web-map";
+import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
 import { AdditionalTooltipType } from "../(content)";
@@ -250,6 +252,7 @@ function MarkersContent({
   onClick: (id: string | null) => void;
 }) {
   const map = useMap();
+  const t = useT();
   const { spawns, icons, filters } = useCoordinates();
   const hideDiscoveredNodes = useSettingsStore(
     (state) => state.hideDiscoveredNodes
@@ -280,6 +283,15 @@ function MarkersContent({
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity
   );
+  const highContrastMode = useSettingsStore((state) => state.highContrastMode);
+  const highContrastColor = useSettingsStore((state) => state.highContrastColor);
+  const highContrastThickness = useSettingsStore(
+    (state) => state.highContrastThickness
+  );
+  const labelModeByFilter = useSettingsStore(
+    (state) => state.labelModeByFilter,
+  );
+  const labelTextSize = useSettingsStore((state) => state.labelTextSize);
   const tempPrivateNodeId = useSettingsStore(
     (state) => state.tempPrivateNode?.id
   );
@@ -533,9 +545,6 @@ function MarkersContent({
     return mapTypeToGroup;
   }, [filters]);
 
-  // Audio alert tracking - tracks if we've already alerted for current in-range spawns
-  const hasAlertedRef = useRef<boolean>(false);
-
   // Cache rotated coordinates to avoid recalculating on every render
   const rotationCache = useMemo(() => {
     const rotationDegrees = map?.rotationDegrees ?? map?._rotationDegrees;
@@ -559,6 +568,14 @@ function MarkersContent({
       },
     };
   }, [map, map?.rotationDegrees, map?._rotationDegrees, map?.rotationCenter, map?._rotationCenter]);
+
+  // Memoize rotated player position for label rendering
+  const rotatedPlayer = useMemo(() => {
+    if (!throttledPlayer) return null;
+    if (!rotationCache) return { x: throttledPlayer.x, y: throttledPlayer.y };
+    const rotated = rotationCache.getRotated(throttledPlayer.x, throttledPlayer.y);
+    return { x: rotated[0], y: rotated[1] };
+  }, [throttledPlayer, rotationCache]);
 
   // Track effect runs for debugging
   const effectRunCount = useRef(0);
@@ -610,6 +627,7 @@ function MarkersContent({
     const newSpawnMap = new Map<string, Spawn>();
     // Track raw Z values for height visualization without player
     const markerZValues = new Map<number, number>(); // index in markerInstances -> raw Z
+    const newSpatialGrid = new SpatialGrid<{ id: string; spawn: Spawn; latLng: [number, number] }>(100);
 
     const handleSpawn = (spawn: Spawn) => {
       if (spawn.mapName && spawn.mapName !== map.mapName) {
