@@ -289,75 +289,108 @@ export function Player({
   const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
   const audioAlertsMuted = useSettingsStore((state) => state.audioAlertsMuted);
   const alertCircleLayerRef = useRef<DrawingLayer | null>(null);
+  const alertCircleRafRef = useRef<number>(0);
+  const alertCircleTargetRef = useRef<[number, number] | null>(null);
+  const alertCircleDisplayRef = useRef<[number, number] | null>(null);
 
+  // Set up / tear down range circle layer
   useEffect(() => {
     if (!map) return;
-
     const shouldShow = showAudioAlertRange && !audioAlertsMuted;
-
     if (!shouldShow) {
-      // Remove circle if it exists
       if (alertCircleLayerRef.current) {
         alertCircleLayerRef.current.clearShapes();
         map.removeLayer(alertCircleLayerRef.current);
         alertCircleLayerRef.current = null;
       }
+      if (alertCircleRafRef.current) {
+        cancelAnimationFrame(alertCircleRafRef.current);
+        alertCircleRafRef.current = 0;
+      }
       return;
     }
-
-    // Create layer if needed
     if (!alertCircleLayerRef.current) {
       alertCircleLayerRef.current = new DrawingLayer({ interactive: false });
       map.addLayer(alertCircleLayerRef.current, { zIndex: 90 });
     }
-
-    // Apply rotation to player position if configured
-    let playerPosition: [number, number] = [player.x, player.y];
-    const rotationDegrees = map._rotationDegrees;
-    const rotationCenter = map._rotationCenter;
-    if (rotationDegrees && rotationCenter) {
-      playerPosition = rotateCoordinate(
-        [player.x, player.y],
-        rotationDegrees,
-        rotationCenter,
-      );
-    }
-
-    const isOnMap = !player.mapName || player.mapName === map.mapName;
-    if (!isOnMap) return;
-
-    const existing = alertCircleLayerRef.current.getShape("audio-alert-range");
-    if (existing) {
-      alertCircleLayerRef.current.updateShape("audio-alert-range", {
-        center: playerPosition,
-        radius: audioAlertRange,
-      });
-    } else {
-      alertCircleLayerRef.current.addShape({
-        id: "audio-alert-range",
-        type: "circle",
-        center: playerPosition,
-        radius: audioAlertRange,
-        color: "#00FF0066",
-        size: 2,
-        mapName: map.mapName,
-      });
-    }
-
     return () => {
+      if (alertCircleRafRef.current) {
+        cancelAnimationFrame(alertCircleRafRef.current);
+        alertCircleRafRef.current = 0;
+      }
       if (alertCircleLayerRef.current) {
         alertCircleLayerRef.current.clearShapes();
         map.removeLayer(alertCircleLayerRef.current);
         alertCircleLayerRef.current = null;
       }
     };
-  }, [
-    map,
-    player,
-    showAudioAlertRange,
-    audioAlertRange,
-    audioAlertsMuted,
-  ]);
+  }, [map, showAudioAlertRange, audioAlertsMuted]);
+
+  // Update range circle position with smooth interpolation
+  useEffect(() => {
+    if (!map || !player || !showAudioAlertRange || audioAlertsMuted) return;
+    const isOnMap = !player.mapName || player.mapName === map.mapName;
+    if (!isOnMap) return;
+
+    let pos: [number, number] = [player.x, player.y];
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      pos = rotateCoordinate([player.x, player.y], rotationDegrees, rotationCenter);
+    }
+    alertCircleTargetRef.current = pos;
+    if (!alertCircleDisplayRef.current) {
+      alertCircleDisplayRef.current = [...pos] as [number, number];
+    }
+
+    // Start animation loop if not running
+    if (alertCircleRafRef.current) return;
+    let lastTs = performance.now();
+    const tick = () => {
+      const layer = alertCircleLayerRef.current;
+      const target = alertCircleTargetRef.current;
+      const display = alertCircleDisplayRef.current;
+      if (!layer || !target || !display) { alertCircleRafRef.current = 0; return; }
+
+      const now = performance.now();
+      const dt = Math.min(100, now - lastTs);
+      lastTs = now;
+      const alpha = 1 - Math.exp(-dt / 100);
+
+      const dlat = target[0] - display[0];
+      const dlng = target[1] - display[1];
+      const settled = Math.abs(dlat) < 0.001 && Math.abs(dlng) < 0.001;
+      if (settled) {
+        display[0] = target[0];
+        display[1] = target[1];
+      } else {
+        display[0] += dlat * alpha;
+        display[1] += dlng * alpha;
+      }
+
+      const existing = layer.getShape("audio-alert-range");
+      if (existing) {
+        layer.updateShape("audio-alert-range", { center: [...display] as [number, number] });
+      } else {
+        layer.addShape({
+          id: "audio-alert-range",
+          type: "circle",
+          center: [...display] as [number, number],
+          radius: audioAlertRange,
+          color: "#00FF0066",
+          size: 2,
+          mapName: map.mapName,
+        });
+      }
+
+      if (settled) {
+        alertCircleRafRef.current = 0;
+        return;
+      }
+      alertCircleRafRef.current = requestAnimationFrame(tick);
+    };
+    alertCircleRafRef.current = requestAnimationFrame(tick);
+  }, [map, player, showAudioAlertRange, audioAlertsMuted, audioAlertRange]);
 
   return <></>;
 }

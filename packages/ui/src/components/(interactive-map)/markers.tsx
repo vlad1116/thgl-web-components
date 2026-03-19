@@ -284,7 +284,7 @@ const TooltipPositioner = React.forwardRef<
         if (typeof ref === "function") ref(node);
         else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="cursor-default z-50 rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
+      className="cursor-default z-[600] rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       style={{

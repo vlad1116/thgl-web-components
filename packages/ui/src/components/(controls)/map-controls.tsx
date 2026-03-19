@@ -10,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover";
+import { Button } from "../ui/button";
 
 /** Large interactive compass with draggable bearing ring and tilt slider */
 function CompassPopover({
@@ -291,28 +292,25 @@ export function MapControls() {
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      {/* Compass with popover */}
+    <>
+      {/* Compass */}
       <Popover>
         <Tooltip delayDuration={200} disableHoverableContent>
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "w-9 h-9 rounded-full border border-border/60 bg-background/80 backdrop-blur-sm",
-                  "flex items-center justify-center cursor-pointer",
-                  "transition-shadow hover:bg-accent",
-                  showCompassActive && "ring-1 ring-red-500/40",
-                )}
+              <Button
+                size="icon"
+                variant="outline"
+                className={cn(showCompassActive && "ring-1 ring-red-500/40")}
                 aria-label="Compass"
               >
                 <CompassNeedle bearing={bearing} />
-              </button>
+              </Button>
             </PopoverTrigger>
           </TooltipTrigger>
-          <TooltipContent side="left">Compass</TooltipContent>
+          <TooltipContent side="bottom">Compass</TooltipContent>
         </Tooltip>
-        <PopoverContent side="left" className="w-auto p-3">
+        <PopoverContent side="bottom" className="w-auto p-3">
           <CompassPopover
             bearing={bearing}
             pitch={pitch}
@@ -323,72 +321,53 @@ export function MapControls() {
         </PopoverContent>
       </Popover>
 
-      {/* Control strip */}
-      <div className="flex flex-col rounded-lg border border-border/60 bg-background/80 backdrop-blur-sm overflow-hidden">
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleToggle3D}
-              className={cn(
-                "w-9 h-9 flex items-center justify-center cursor-pointer",
-                "text-xs font-bold transition-colors hover:bg-accent",
-                is3D && "text-primary",
-              )}
-              aria-label={is3D ? "Switch to 2D" : "Switch to 3D"}
-            >
-              {is3D ? "2D" : "3D"}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            {is3D ? "Switch to 2D" : "Switch to 3D"}
-          </TooltipContent>
-        </Tooltip>
+      {/* 3D toggle */}
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={handleToggle3D}
+            className={cn("text-xs font-bold", is3D && "text-primary")}
+            aria-label={is3D ? "Switch to 2D" : "Switch to 3D"}
+          >
+            {is3D ? "2D" : "3D"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {is3D ? "Switch to 2D" : "Switch to 3D"}
+        </TooltipContent>
+      </Tooltip>
 
-        <div className="h-px bg-border/60" />
+      {/* Zoom in */}
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button size="icon" variant="outline" onClick={handleZoomIn} aria-label="Zoom in">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Zoom in</TooltipContent>
+      </Tooltip>
 
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleZoomIn}
-              className="w-9 h-9 flex items-center justify-center cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Zoom in"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Zoom in</TooltipContent>
-        </Tooltip>
+      {/* Zoom out */}
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button size="icon" variant="outline" onClick={handleZoomOut} aria-label="Zoom out">
+            <Minus className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Zoom out</TooltipContent>
+      </Tooltip>
 
-        <div className="h-px bg-border/60" />
-
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleZoomOut}
-              className="w-9 h-9 flex items-center justify-center cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Zoom out"
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Zoom out</TooltipContent>
-        </Tooltip>
-
-        <div className="h-px bg-border/60" />
-
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleResetView}
-              className="w-9 h-9 flex items-center justify-center cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Reset view"
-            >
-              <Home className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Reset view</TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
+      {/* Reset view */}
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button size="icon" variant="outline" onClick={handleResetView} aria-label="Reset view">
+            <Home className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Reset view</TooltipContent>
+      </Tooltip>
+    </>
   );
 }

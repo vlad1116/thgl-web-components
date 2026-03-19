@@ -150,7 +150,6 @@ export function App({
               {lockedWindow ? lockedWindowComponents : null}
               {additionalComponents}
               <Actions>
-                <MapControls />
                 <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
                 <StreamingSender
                   domain={appConfig.domain}
@@ -163,6 +162,7 @@ export function App({
                   iconsPath={version?.more.icons}
                 />
                 <PrivateDrawing hidden={lockedWindow} />
+                <MapControls />
               </Actions>
               <LivePlayer
                 markerOptions={appConfig.markerOptions}
