@@ -451,6 +451,25 @@ export function SettingsDialogContent({
                         onChange={settingsStore.setTraceLineColor}
                       />
                     </div>
+                    <div className="flex items-center gap-2 justify-between">
+                      <Label htmlFor="trace-line-style">Trace Line Style</Label>
+                      <Select
+                        value={profileSettings.traceLineStyle}
+                        onValueChange={(v) =>
+                          settingsStore.setTraceLineStyle(
+                            v as "dots" | "line",
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-24" id="trace-line-style">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dots">Dots</SelectItem>
+                          <SelectItem value="line">Line</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </>
                 )}
               </Section>

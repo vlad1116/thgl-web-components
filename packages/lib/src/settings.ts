@@ -117,6 +117,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   traceLineLength: 100,
   traceLineRate: 5,
   traceLineColor: "#1ccdd1B3",
+  traceLineStyle: "dots" as "dots" | "line",
   audioAlertsMuted: false,
   audioAlertRange: 1000,
   audioAlertSound: "chime" as const,
@@ -182,6 +183,7 @@ export type ProfileSettings = {
   traceLineLength: number;
   traceLineRate: number;
   traceLineColor: string;
+  traceLineStyle: "dots" | "line";
   audioAlertsMuted: boolean;
   audioAlertRange: number;
   audioAlertSound: "chime" | "ping" | "beacon" | "soft";
@@ -256,6 +258,7 @@ export interface ProfileActions {
   setTraceLineLength: (traceLineLength: number) => void;
   setTraceLineRate: (traceLineRate: number) => void;
   setTraceLineColor: (traceLineColor: string) => void;
+  setTraceLineStyle: (style: "dots" | "line") => void;
   toggleAudioAlertsMuted: () => void;
   setAudioAlertRange: (range: number) => void;
   setAudioAlertSound: (sound: "chime" | "ping" | "beacon" | "soft") => void;
@@ -660,6 +663,7 @@ export const useSettingsStore = create(
             traceLineLength: 100,
             traceLineRate: 5,
             traceLineColor: "#1ccdd1B3",
+            traceLineStyle: "dots",
             // Audio alerts
             audioAlertsMuted: false,
             audioAlertRange: 1000,
@@ -829,6 +833,10 @@ export const useSettingsStore = create(
 
         setTraceLineColor: (traceLineColor: string) => {
           updateSettings({ traceLineColor });
+        },
+
+        setTraceLineStyle: (traceLineStyle: "dots" | "line") => {
+          updateSettings({ traceLineStyle });
         },
 
         toggleAudioAlertsMuted: () => {

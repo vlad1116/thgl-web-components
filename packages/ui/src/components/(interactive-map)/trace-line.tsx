@@ -12,6 +12,7 @@ export function TraceLine() {
   const traceLineLength = useSettingsStore((state) => state.traceLineLength);
   const traceLineRate = useSettingsStore((state) => state.traceLineRate);
   const traceLineColor = useSettingsStore((state) => state.traceLineColor);
+  const traceLineStyle = useSettingsStore((state) => state.traceLineStyle);
   const player = useGameState((state) => state.player);
 
   const layerRef = useRef<DrawingLayer | null>(null);
@@ -70,19 +71,37 @@ export function TraceLine() {
       map.addLayer(layerRef.current, { zIndex: 30 });
     }
 
-    // Update the line shape
+    // Update trace shapes
     layerRef.current.clearShapes();
-    if (positions.length >= 2) {
-      layerRef.current.addShape({
-        id: "trace-line",
-        type: "line",
-        positions: [...positions],
-        color: traceLineColor,
-        size: 3,
-        mapName: map.mapName,
-      });
+    if (traceLineStyle === "line") {
+      if (positions.length >= 2) {
+        layerRef.current.addShape({
+          id: "trace-line",
+          type: "line",
+          positions: [...positions],
+          color: traceLineColor,
+          size: 3,
+          mapName: map.mapName,
+        });
+      }
+    } else {
+      // Dots mode — render each position as a small filled circle
+      // Scale radius so dots appear as consistent ~4px circles on screen
+      const dotRadius = 4 / Math.pow(2, map.getZoom());
+      for (let i = 0; i < positions.length; i++) {
+        layerRef.current.addShape({
+          id: `trace-dot-${i}`,
+          type: "circle",
+          center: positions[i],
+          radius: dotRadius,
+          fillColor: traceLineColor,
+          color: traceLineColor,
+          size: 1,
+          mapName: map.mapName,
+        });
+      }
     }
-  }, [map, player, showTraceLine, traceLineLength, traceLineRate, traceLineColor]);
+  }, [map, player, showTraceLine, traceLineLength, traceLineRate, traceLineColor, traceLineStyle]);
 
   // Cleanup on unmount or when disabled
   useEffect(() => {
