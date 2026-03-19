@@ -52,6 +52,10 @@ export class PlayerMarker {
   private _iconSheet?: HTMLCanvasElement;
   private _iconWidth: number = 36;
   private _iconHeight: number = 36;
+  private _targetRotation: number = 0;
+  private _displayRotation: number = 0;
+  private _animRaf: number = 0;
+  private _lastAnimTs: number = 0;
 
   constructor(
     latLng: [number, number],
@@ -61,6 +65,8 @@ export class PlayerMarker {
     this._latLng = latLng;
     this._rotation = options.rotation;
     this._rotationOffset = options.rotationOffset ?? 0;
+    this._displayRotation = options.rotation;
+    this._targetRotation = options.rotation;
     this._size = options.size;
     this._lastRawRotation = options.rotation;
     this._iconUrl = options.iconUrl;
@@ -132,6 +138,10 @@ export class PlayerMarker {
    * Remove this marker from its layer
    */
   remove() {
+    if (this._animRaf) {
+      cancelAnimationFrame(this._animRaf);
+      this._animRaf = 0;
+    }
     if (this._markerLayer) {
       this._markerLayer.remove(this._id);
       this._markerLayer = null;
@@ -147,23 +157,19 @@ export class PlayerMarker {
       // Check if we crossed the 180/-180 boundary
       const diff = r - this._lastRawRotation;
       if (diff > 180) {
-        // Crossed from positive to negative (e.g., 170 -> -170)
         this._accumulatedSpins -= 1;
       } else if (diff < -180) {
-        // Crossed from negative to positive (e.g., -170 -> 170)
         this._accumulatedSpins += 1;
       }
 
-      // Calculate rotation with accumulated spins
       let playerRotation = r + 360 * this._accumulatedSpins;
-
-      // Apply rotation offset if configured
       if (this._rotationOffset) {
         playerRotation += this._rotationOffset;
       }
 
-      this._rotation = playerRotation;
+      this._targetRotation = playerRotation;
       this._lastRawRotation = r;
+      this._startRotationAnim();
     }
 
     // Update position
@@ -173,6 +179,30 @@ export class PlayerMarker {
     }
 
     this._updateMarker();
+  }
+
+  private _startRotationAnim() {
+    if (this._animRaf) return; // Already running
+    this._lastAnimTs = performance.now();
+    const tick = () => {
+      const now = performance.now();
+      const dt = Math.min(100, now - this._lastAnimTs);
+      this._lastAnimTs = now;
+      const alpha = 1 - Math.exp(-dt / 100); // ~100ms smoothing
+      const diff = this._targetRotation - this._displayRotation;
+      if (Math.abs(diff) < 0.1) {
+        this._displayRotation = this._targetRotation;
+        this._rotation = this._displayRotation;
+        this._animRaf = 0;
+        this._updateMarker();
+        return;
+      }
+      this._displayRotation += diff * alpha;
+      this._rotation = this._displayRotation;
+      this._updateMarker();
+      this._animRaf = requestAnimationFrame(tick);
+    };
+    this._animRaf = requestAnimationFrame(tick);
   }
 
   /**

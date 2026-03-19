@@ -1245,23 +1245,33 @@ export class IconMarkerLayer implements Layer {
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     };
 
+    // Collect alwaysOnTop/selected markers for a final pass across all sheets
+    const onTopBySheet = new Map<string, IconMarkerInstance[]>();
+
     for (const [sheet, items] of groups) {
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
       const normal: IconMarkerInstance[] = [];
-      const onTop: IconMarkerInstance[] = [];
       for (const m of items) {
-        (m.isSelected || m.alwaysOnTop ? onTop : normal).push(m);
+        if (m.isSelected || m.alwaysOnTop) {
+          let list = onTopBySheet.get(sheet);
+          if (!list) { list = []; onTopBySheet.set(sheet, list); }
+          list.push(m);
+        } else {
+          normal.push(m);
+        }
       }
-      // Draw normal first, then selected/alwaysOnTop with depth test disabled
       drawList(s, normal);
-      if (onTop.length > 0 && usePerspectiveDepth) {
-        gl.disable(gl.DEPTH_TEST);
+    }
+
+    // Final pass: draw alwaysOnTop/selected markers above everything
+    if (onTopBySheet.size > 0) {
+      if (usePerspectiveDepth) gl.disable(gl.DEPTH_TEST);
+      for (const [sheet, items] of onTopBySheet) {
+        const s = this.sheets.get(sheet);
+        if (s) drawList(s, items);
       }
-      drawList(s, onTop);
-      if (onTop.length > 0 && usePerspectiveDepth) {
-        gl.enable(gl.DEPTH_TEST);
-      }
+      if (usePerspectiveDepth) gl.enable(gl.DEPTH_TEST);
     }
 
     gl.bindVertexArray(null);
