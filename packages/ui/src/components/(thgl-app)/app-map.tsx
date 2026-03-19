@@ -14,6 +14,7 @@ import {
 } from "../(interactive-map)";
 import { Whiteboard } from "../(peer)";
 import { AdditionalTooltipType } from "../(content)";
+import { MapControls } from "../(controls)";
 
 export type AppMapProps = {
   appConfig: THGLAppConfig;
@@ -53,6 +54,7 @@ export function AppMap({
         additionalTooltip={additionalTooltip}
       />
       <div className="fixed top-[40px] right-2 mt-[1px] z-[500] flex gap-2 flex-col sm:flex-row">
+        <MapControls />
         <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
         <StreamingSender
           domain={appConfig.domain}

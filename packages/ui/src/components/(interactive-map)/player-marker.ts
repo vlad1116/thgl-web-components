@@ -189,6 +189,7 @@ export class PlayerMarker {
       rotation: (this._rotation * Math.PI) / 180, // Convert to radians
       keepUpright: true, // Player icon should always face up
       isHighlighted: false,
+      alwaysOnTop: true,
     };
   }
 

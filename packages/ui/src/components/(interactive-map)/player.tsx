@@ -252,8 +252,8 @@ export function Player({
       }
 
       if (followPlayerPosition) {
-        // Pan to player position
-        map.setCenter(playerPosition);
+        // Smoothly pan to player position
+        map.panTo(playerPosition);
       }
     });
 

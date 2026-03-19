@@ -72,6 +72,7 @@ export class WebMap {
   private gl: WebGL2RenderingContext;
   private layers: { layer: Layer; z: number }[] = [];
   private center: LatLng;
+  private targetCenter: LatLng | null = null;
   private zoom: number;
   private targetZoom: number;
   private bearing: number;
@@ -700,6 +701,11 @@ export class WebMap {
 
   setCenter(center: LatLng) {
     this.center = center;
+    this.targetCenter = null;
+  }
+  /** Smoothly animate to a new center position */
+  panTo(center: LatLng) {
+    this.targetCenter = center;
   }
   setZoom(zoom: number) {
     this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
@@ -1126,12 +1132,28 @@ export class WebMap {
     }
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // animation step (zoom smoothing and anchor-preserving center)
+    // animation step (zoom smoothing, pan smoothing, and anchor-preserving center)
     const now = performance.now();
     const dt = Math.min(1000, now - this.lastFrameTs);
     this.lastFrameTs = now;
     // exponential smoothing toward target zoom (controlled by zoomTimeMs)
     const alpha = 1 - Math.exp(-dt / this.zoomTimeMs);
+
+    // Smooth pan to target center
+    if (this.targetCenter && !this.dragging) {
+      const panAlpha = 1 - Math.exp(-dt / 150); // ~150ms smoothing
+      const dlat = this.targetCenter[0] - this.center[0];
+      const dlng = this.targetCenter[1] - this.center[1];
+      if (Math.abs(dlat) < 1e-8 && Math.abs(dlng) < 1e-8) {
+        this.center = this.targetCenter;
+        this.targetCenter = null;
+      } else {
+        this.center = [
+          this.center[0] + dlat * panAlpha,
+          this.center[1] + dlng * panAlpha,
+        ];
+      }
+    }
     if (Math.abs(this.targetZoom - this.zoom) > 1e-3) {
       const prevZoom = this.zoom;
       this.zoom = this.zoom + (this.targetZoom - this.zoom) * alpha;

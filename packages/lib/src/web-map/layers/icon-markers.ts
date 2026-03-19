@@ -31,6 +31,7 @@ export interface IconMarkerInstance {
   zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
   zMag?: number; // 0..1 magnitude of relative z (for halo)
   isSelected?: boolean;
+  alwaysOnTop?: boolean; // render above all other markers (e.g. player)
   rotation?: number; // radians
   keepUpright?: boolean; // do not rotate with map bearing
   tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
@@ -1248,17 +1249,17 @@ export class IconMarkerLayer implements Layer {
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
       const normal: IconMarkerInstance[] = [];
-      const selected: IconMarkerInstance[] = [];
+      const onTop: IconMarkerInstance[] = [];
       for (const m of items) {
-        (m.isSelected ? selected : normal).push(m);
+        (m.isSelected || m.alwaysOnTop ? onTop : normal).push(m);
       }
-      // Draw non-selected first, then selected on top (disable depth test for selected)
+      // Draw normal first, then selected/alwaysOnTop with depth test disabled
       drawList(s, normal);
-      if (selected.length > 0 && usePerspectiveDepth) {
+      if (onTop.length > 0 && usePerspectiveDepth) {
         gl.disable(gl.DEPTH_TEST);
       }
-      drawList(s, selected);
-      if (selected.length > 0 && usePerspectiveDepth) {
+      drawList(s, onTop);
+      if (onTop.length > 0 && usePerspectiveDepth) {
         gl.enable(gl.DEPTH_TEST);
       }
     }
