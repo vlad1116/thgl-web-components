@@ -1339,6 +1339,8 @@ function MarkersContent({
         text: t(spawn.type),
         size: fontSize,
         color: "#FFFFFFEE",
+        textAnchor: "bottom",
+        textOffset: [0, -14],
         mapName: map.mapName,
       });
       activeLabelsRef.current.add(id);
@@ -1377,6 +1379,8 @@ function MarkersContent({
             text: t(item.spawn.type),
             size: fontSize,
             color: "#FFFFFFEE",
+            textAnchor: "bottom",
+            textOffset: [0, -14],
             mapName: map.mapName,
           });
           activeLabelsRef.current.add(item.id);
