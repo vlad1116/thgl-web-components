@@ -50,6 +50,8 @@ export class PlayerMarker {
   private _markerLayer: IconMarkerLayer | null = null;
   private _iconUrl?: string;
   private _iconImage?: HTMLImageElement;
+  private _iconWidth: number = 36;
+  private _iconHeight: number = 36;
 
   constructor(
     latLng: [number, number],
@@ -87,15 +89,32 @@ export class PlayerMarker {
   }
 
   /**
-   * Set the icon image for the player marker
+   * Set the icon image for the player marker.
+   * Adds padding to prevent WebGL bilinear filtering bleed at edges.
    */
   setIcon(image: HTMLImageElement) {
-    this._iconImage = image;
-    if (this._markerLayer) {
-      // Add the player sheet with the icon image
-      this._markerLayer.setSheet("player", image);
+    // Add padding around the icon to prevent texture sampling artifacts
+    const pad = 4;
+    const w = image.naturalWidth || image.width;
+    const h = image.naturalHeight || image.height;
+    const canvas = document.createElement("canvas");
+    canvas.width = w + pad * 2;
+    canvas.height = h + pad * 2;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(image, pad, pad);
     }
-    this._updateMarker();
+    const paddedImage = new Image();
+    paddedImage.onload = () => {
+      this._iconImage = paddedImage;
+      this._iconWidth = w + pad * 2;
+      this._iconHeight = h + pad * 2;
+      if (this._markerLayer) {
+        this._markerLayer.setSheet("player", paddedImage);
+      }
+      this._updateMarker();
+    };
+    paddedImage.src = canvas.toDataURL();
   }
 
   /**
@@ -171,7 +190,7 @@ export class PlayerMarker {
       latLng: this._latLng,
       size: this._size * dpr,
       sheet: "player",
-      rect: { x: 0, y: 0, width: 36, height: 36 }, // Default player icon size
+      rect: { x: 0, y: 0, width: this._iconWidth, height: this._iconHeight },
       rotation: (this._rotation * Math.PI) / 180, // Convert to radians
       keepUpright: true, // Player icon should always face up
       isHighlighted: false,

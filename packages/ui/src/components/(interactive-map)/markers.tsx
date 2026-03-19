@@ -680,12 +680,20 @@ function MarkersContent({
         spawn.icon ||
         (typeof icon?.icon === "string" ? null : icon?.icon) ||
         null;
+      // String icons are direct image filenames (e.g. "sifuu.webp")
+      const stringIcon = !spawn.icon && typeof icon?.icon === "string" ? icon.icon : null;
 
       let rect = { x: 0, y: 0, width: 64, height: 64 };
       let sheet = "icons"; // Default to the main sprite sheet
       let useProcessedIcon = false; // Track if we're using a processed icon (glow already applied)
 
-      if (markerIcon && "url" in markerIcon && markerIcon.url) {
+      if (stringIcon) {
+        // Direct image URL icon (e.g. NPC villager icons)
+        const fullUrl = getIconsUrl(appName, stringIcon, iconsPath);
+        sheet = fullUrl;
+        markerLayer.addSheet(sheet, fullUrl);
+        rect = { x: 0, y: 0, width: 64, height: 64 };
+      } else if (markerIcon && "url" in markerIcon && markerIcon.url) {
         // Custom URL-based icon (from spawn.icon or custom filters)
         const iconUrlStr = markerIcon.url as string;
 
