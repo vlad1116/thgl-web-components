@@ -179,7 +179,7 @@ export function Teammate({
       marker.current?.setSize(size);
     };
     run();
-  }, [baseIconSize, playerIconSize, colorBlindMode]);
+  }, [baseIconSize, playerIconSize, colorBlindMode, colorBlindSeverity]);
 
   useThrottledEffect(
     () => {

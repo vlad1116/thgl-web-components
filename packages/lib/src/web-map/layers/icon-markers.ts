@@ -545,6 +545,11 @@ export class IconMarkerLayer implements Layer {
       this.nullCount++;
       this.instancesVersion++;
 
+      // Clean up per-marker event handlers
+      for (const handlers of Object.values(this.eventHandlers)) {
+        handlers.delete(id);
+      }
+
       // Compact if more than 25% of array is null entries
       if (this.nullCount > this.instances.length * 0.25) {
         this.compact();
@@ -560,6 +565,10 @@ export class IconMarkerLayer implements Layer {
       if (index !== undefined) {
         (this.instances as any)[index] = null;
         this.instancesById.delete(id);
+        // Clean up per-marker event handlers
+        for (const handlers of Object.values(this.eventHandlers)) {
+          handlers.delete(id);
+        }
         removed++;
       }
     }
@@ -919,6 +928,10 @@ export class IconMarkerLayer implements Layer {
       }
     }
     this.gl = undefined;
+    this.preallocatedBuffers = { capacity: 0 };
+    for (const handlers of Object.values(this.eventHandlers)) {
+      handlers.clear();
+    }
   }
 
   private ensureSheet(gl: WebGL2RenderingContext, name: string) {
@@ -1125,17 +1138,24 @@ export class IconMarkerLayer implements Layer {
         angles[i] = angle;
         // Set keepUpright flag: 1 for billboard mode, 0 for player rotation
         keepUprights[i] = m.keepUpright !== false ? 1.0 : 0.0;
-        // Parse tint color (hex string to RGBA)
+        // Parse tint color (hex string to RGBA), cached on the instance
         if (m.tint) {
-          const hex = m.tint.replace("#", "");
-          const r = parseInt(hex.substring(0, 2), 16) / 255;
-          const g = parseInt(hex.substring(2, 4), 16) / 255;
-          const b = parseInt(hex.substring(4, 6), 16) / 255;
-          const a = hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
-          tints[i * 4 + 0] = r;
-          tints[i * 4 + 1] = g;
-          tints[i * 4 + 2] = b;
-          tints[i * 4 + 3] = a;
+          let rgba = (m as any)._tintRGBA as [number, number, number, number] | undefined;
+          if (!rgba || (m as any)._tintSrc !== m.tint) {
+            const hex = m.tint.replace("#", "");
+            rgba = [
+              parseInt(hex.substring(0, 2), 16) / 255,
+              parseInt(hex.substring(2, 4), 16) / 255,
+              parseInt(hex.substring(4, 6), 16) / 255,
+              hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1,
+            ];
+            (m as any)._tintRGBA = rgba;
+            (m as any)._tintSrc = m.tint;
+          }
+          tints[i * 4 + 0] = rgba[0];
+          tints[i * 4 + 1] = rgba[1];
+          tints[i * 4 + 2] = rgba[2];
+          tints[i * 4 + 3] = rgba[3];
         } else {
           // No tint - use white with 0 alpha (no effect)
           tints[i * 4 + 0] = 1;

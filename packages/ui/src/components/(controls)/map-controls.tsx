@@ -244,15 +244,24 @@ export function MapControls() {
   const [pitch, setPitch] = useState(0);
   const rafRef = useRef<number>(0);
 
+  const mapRef = useRef(map);
+  mapRef.current = map;
+
   useEffect(() => {
     if (!map) return;
+    let active = true;
     const update = () => {
-      setBearing(map.getBearing());
-      setPitch(map.getPitch());
+      const m = mapRef.current;
+      if (!active || !m) return;
+      setBearing(m.getBearing());
+      setPitch(m.getPitch());
       rafRef.current = requestAnimationFrame(update);
     };
     rafRef.current = requestAnimationFrame(update);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      active = false;
+      cancelAnimationFrame(rafRef.current);
+    };
   }, [map]);
 
   const handleBearingChange = useCallback(

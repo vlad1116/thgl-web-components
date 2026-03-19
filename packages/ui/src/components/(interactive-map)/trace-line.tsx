@@ -16,7 +16,8 @@ export function TraceLine() {
 
   const layerRef = useRef<DrawingLayer | null>(null);
   const positionsRef = useRef<[number, number][]>([]);
-  const frameCountRef = useRef(0);
+  const updateCountRef = useRef(0);
+  const lastPlayerPosRef = useRef<string>("");
 
   // Reset positions and clear shapes when toggled off or map changes
   useEffect(() => {
@@ -33,10 +34,14 @@ export function TraceLine() {
     const isOnMap = !player.mapName || player.mapName === map.mapName;
     if (!isOnMap) return;
 
-    // Rate limit: only record every N frames
-    frameCountRef.current += 1;
-    if (frameCountRef.current < traceLineRate) return;
-    frameCountRef.current = 0;
+    // Only count actual player position changes for rate limiting
+    const posKey = `${player.x},${player.y}`;
+    if (posKey === lastPlayerPosRef.current) return;
+    lastPlayerPosRef.current = posKey;
+
+    updateCountRef.current += 1;
+    if (updateCountRef.current < traceLineRate) return;
+    updateCountRef.current = 0;
 
     // Apply rotation to player position if configured
     let playerPosition: [number, number] = [player.x, player.y];

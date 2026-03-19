@@ -105,13 +105,16 @@ export class ImageOverlayLayer implements Layer {
     this.gl.bindVertexArray(null);
   }
 
+  private loadingImage?: HTMLImageElement;
+
   private loadImage(): void {
     if (!this.gl) return;
 
     const image = new Image();
+    this.loadingImage = image;
     image.crossOrigin = "anonymous";
     image.onload = () => {
-      if (!this.gl) return;
+      if (!this.gl || this.loadingImage !== image) return;
 
       this.texture = this.gl.createTexture();
       this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
@@ -122,6 +125,12 @@ export class ImageOverlayLayer implements Layer {
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
       this.imageLoaded = true;
+      this.loadingImage = undefined;
+    };
+    image.onerror = () => {
+      if (this.loadingImage === image) {
+        this.loadingImage = undefined;
+      }
     };
     image.src = this.options.url;
   }
@@ -241,5 +250,6 @@ export class ImageOverlayLayer implements Layer {
     this.vao = null;
     this.texture = null;
     this.imageLoaded = false;
+    this.loadingImage = undefined;
   }
 }
