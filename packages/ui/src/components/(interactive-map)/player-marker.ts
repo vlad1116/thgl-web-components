@@ -49,7 +49,7 @@ export class PlayerMarker {
   private _accumulatedSpins: number = 0;
   private _markerLayer: IconMarkerLayer | null = null;
   private _iconUrl?: string;
-  private _iconImage?: HTMLImageElement;
+  private _iconSheet?: HTMLCanvasElement;
   private _iconWidth: number = 36;
   private _iconHeight: number = 36;
 
@@ -93,7 +93,6 @@ export class PlayerMarker {
    * Adds padding to prevent WebGL bilinear filtering bleed at edges.
    */
   setIcon(image: HTMLImageElement) {
-    // Add padding around the icon to prevent texture sampling artifacts
     const pad = 4;
     const w = image.naturalWidth || image.width;
     const h = image.naturalHeight || image.height;
@@ -104,17 +103,13 @@ export class PlayerMarker {
     if (ctx) {
       ctx.drawImage(image, pad, pad);
     }
-    const paddedImage = new Image();
-    paddedImage.onload = () => {
-      this._iconImage = paddedImage;
-      this._iconWidth = w + pad * 2;
-      this._iconHeight = h + pad * 2;
-      if (this._markerLayer) {
-        this._markerLayer.setSheet("player", paddedImage);
-      }
-      this._updateMarker();
-    };
-    paddedImage.src = canvas.toDataURL();
+    this._iconSheet = canvas;
+    this._iconWidth = canvas.width;
+    this._iconHeight = canvas.height;
+    if (this._markerLayer) {
+      this._markerLayer.setSheet("player", canvas);
+    }
+    this._updateMarker();
   }
 
   /**
@@ -123,9 +118,9 @@ export class PlayerMarker {
   addTo(markerLayer: IconMarkerLayer) {
     this._markerLayer = markerLayer;
 
-    // Set up the player icon sheet if we have an image
-    if (this._iconImage) {
-      markerLayer.setSheet("player", this._iconImage);
+    // Set up the player icon sheet if we have one
+    if (this._iconSheet) {
+      markerLayer.setSheet("player", this._iconSheet);
     }
 
     // Add the marker instance
@@ -207,6 +202,7 @@ export class PlayerMarker {
     this._markerLayer.updateMarker(this._id, {
       latLng: this._latLng,
       size: this._size * dpr,
+      rect: { x: 0, y: 0, width: this._iconWidth, height: this._iconHeight },
       rotation: (this._rotation * Math.PI) / 180,
     });
   }
