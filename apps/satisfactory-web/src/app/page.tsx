@@ -34,6 +34,7 @@ export default async function Home() {
       regions={version.data.regions}
       typesIdMap={version.data.typesIdMap}
       nodesPaths={version.more.nodes}
+      staticDrawings={version.data.drawings}
     >
       <HeaderOffset full>
         <PageTitle title={`${APP_CONFIG.title} Interactive Map`} />
@@ -48,10 +49,7 @@ export default async function Home() {
           appName={APP_CONFIG.name}
           iconsPath={version.more.icons}
           mapEnTitles={Object.fromEntries(
-            Object.keys(version.data.tiles).map((k) => [
-              k,
-              translate(dict, k),
-            ]),
+            Object.keys(version.data.tiles).map((k) => [k, translate(dict, k)]),
           )}
         >
           <FloatingAds id={APP_CONFIG.name} />
