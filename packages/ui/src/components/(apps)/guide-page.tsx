@@ -11,6 +11,7 @@ import {
   getTypeFromVersion,
   localizePath,
   SimpleSpawn,
+  getNodeId,
 } from "@repo/lib";
 import { Spawns } from "../(providers)";
 import { HeaderOffset, PageTitle } from "../(header)";
@@ -89,8 +90,6 @@ function getIconFromFilters(filters: FiltersConfig, id: string) {
   );
 }
 
-const DEFAULT_MAP_NAME = "default";
-
 export function createGuidePage(appConfig: AppConfig) {
   return async function GuidePage({ params }: PageProps) {
     const { locale = DEFAULT_LOCALE, type } = await params;
@@ -100,6 +99,7 @@ export function createGuidePage(appConfig: AppConfig) {
     ]);
 
     const t = getT(dict);
+    const defaultMapName = Object.keys(version.data.tiles)[0] || "default";
 
     let url, icon;
     let guideId = getTypeFromVersion(version, type, dict);
@@ -120,7 +120,7 @@ export function createGuidePage(appConfig: AppConfig) {
     const spawns = decodeFromBuffer<Spawns>(new Uint8Array(buffer));
     const maps = spawns
       .reduce((acc, n) => {
-        const mapName = n.mapName || DEFAULT_MAP_NAME;
+        const mapName = n.mapName || defaultMapName;
         if (!acc.includes(mapName) && version.data.tiles[mapName]) {
           acc.push(mapName);
         }
@@ -134,17 +134,18 @@ export function createGuidePage(appConfig: AppConfig) {
 
     if (spawns.length === 0) {
       // Ensure at least one map for UI rendering
-      maps.push(Object.keys(version.data.tiles)[0]);
+      maps.push(defaultMapName);
     }
 
     const simpleSpawns = spawns.map<SimpleSpawn>((s) => ({
-      id: s.id || s.type,
+      id: getNodeId(s),
       p: s.p,
-      mapName: s.mapName || DEFAULT_MAP_NAME,
+      mapName: s.mapName || defaultMapName,
       type: s.type,
       name: dict[s.id ?? s.type] || s.id || s.type,
       icon: s.icon || icon || getIconFromFilters(version.data.filters, s.type),
     }));
+
     return (
       <>
         <JSONLDScript
