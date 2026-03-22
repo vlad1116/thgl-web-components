@@ -646,6 +646,14 @@ export const games: Array<Game> = [
     },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
+  {
+    id: "crimson-desert",
+    discordId: "crimson-desert",
+    title: "Crimson Desert",
+    logo: "https://www.th.gl/global_icons/crimson-desert.webp",
+    web: "https://crimsondesert.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
 ];
 
 export type PartnerApp = {
