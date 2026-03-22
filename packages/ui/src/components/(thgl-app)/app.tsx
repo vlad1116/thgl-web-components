@@ -130,6 +130,14 @@ export function App({
             ) : (
               <AppHeader
                 isOverlay={isOverlay}
+                title={
+                  <h1 className="text-lg md:leading-6 font-extrabold tracking-tight whitespace-nowrap">
+                    <span className="uppercase">{appConfig.domain}</span>
+                    <span className="text-xs text-gray-400 hidden min-[410px]:inline">
+                      .TH.GL
+                    </span>
+                  </h1>
+                }
                 settingsDialogContent={
                   <THGLAppSettingsDialogContent
                     appConfig={appConfig}
@@ -137,12 +145,6 @@ export function App({
                   />
                 }
               >
-                <h1 className="text-lg md:leading-6 font-extrabold tracking-tight whitespace-nowrap">
-                  <span className="uppercase">{appConfig.domain}</span>
-                  <span className="text-xs text-gray-400 hidden min-[410px]:inline">
-                    .TH.GL
-                  </span>
-                </h1>
                 <Button
                   onClick={toggleLockedWindow}
                   size="xs"
@@ -154,8 +156,7 @@ export function App({
 
                 <Tooltip delayDuration={200} disableHoverableContent>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400 hidden md:inline">Mode:</span>
+                    <div className="flex items-center">
                       <div className="flex rounded-md overflow-hidden border border-gray-600">
                         <button
                           className={cn(

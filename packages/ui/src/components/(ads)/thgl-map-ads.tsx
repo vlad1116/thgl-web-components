@@ -90,6 +90,17 @@ const DESKTOP_LARGE_SIDEBAR: AdFormat = {
   variant: "large-sidebar",
 };
 
+const DESKTOP_COMPACT: AdFormat = {
+  // Small window: Width < 970px AND Height < 700px
+  sizes: [
+    ["300", "250"],
+    ["320", "100"],
+  ],
+  width: 300,
+  height: 250,
+  variant: "compact",
+};
+
 // Overlay breakpoints
 const OVERLAY_SMALL: AdFormat = {
   // Width < 1920px
@@ -150,14 +161,14 @@ function useAdFormat(isOverlay: boolean): AdFormat | null {
 
     // Desktop mode
     if (isSmallHeight) return DESKTOP_BANNER;
-    if (isSmallWindow) return DESKTOP_SMALL_SIDEBAR;
+    if (isSmallWindow) return DESKTOP_COMPACT;
     if (isNarrowTall) return DESKTOP_SMALL_SIDEBAR;
     if (isWideMedium) return DESKTOP_MEDIUM_SIDEBAR;
     if (isWideTall) return DESKTOP_LARGE_SIDEBAR;
 
     // Fallback
     return DESKTOP_SMALL_SIDEBAR;
-  }, [hydrated, isOverlay, isSmallHeight, isNarrowTall, isWideMedium, isWideTall, isLargeOverlay]);
+  }, [hydrated, isOverlay, isSmallHeight, isSmallWindow, isNarrowTall, isWideMedium, isWideTall, isLargeOverlay]);
 }
 
 export function THGLMapAds({

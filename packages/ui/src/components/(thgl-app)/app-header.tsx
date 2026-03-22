@@ -15,7 +15,7 @@ import {
   HoverCardTrigger,
   Label,
 } from "../(controls)";
-import { Bug, Info, LogOut, Minus, Settings, Shield, User } from "lucide-react";
+import { Bug, Info, LogOut, Menu, Minus, Settings, Shield, User } from "lucide-react";
 import { ExternalAnchor } from "../(header)";
 import { AccountDialog } from "./account-dialog";
 import {
@@ -29,11 +29,30 @@ import {
 } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 
+const DISCORD_SVG_PATH =
+  "M13.545 2.907a13.227 13.227 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.19 12.19 0 0 0-3.658 0 8.258 8.258 0 0 0-.412-.833.051.051 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.041.041 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032c.001.014.01.028.021.037a13.276 13.276 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019c.308-.42.582-.863.818-1.329a.05.05 0 0 0-.01-.059.051.051 0 0 0-.018-.011 8.875 8.875 0 0 1-1.248-.595.05.05 0 0 1-.02-.066.051.051 0 0 1 .015-.019c.084-.063.168-.129.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.052.052 0 0 1 .053.007c.08.066.164.132.248.195a.051.051 0 0 1-.004.085 8.254 8.254 0 0 1-1.249.594.05.05 0 0 0-.03.03.052.052 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.235 13.235 0 0 0 4.001-2.02.049.049 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.034.034 0 0 0-.02-.019Zm-8.198 7.307c-.789 0-1.438-.724-1.438-1.612 0-.889.637-1.613 1.438-1.613.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612Zm5.316 0c-.788 0-1.438-.724-1.438-1.612 0-.889.637-1.613 1.438-1.613.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612Z";
+
+function DiscordIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      fill="currentColor"
+      height="20"
+      viewBox="0 0 16 16"
+      width="20"
+      className={className}
+    >
+      <path d={DISCORD_SVG_PATH} />
+    </svg>
+  );
+}
+
 export function AppHeader({
+  title,
   children,
   isOverlay,
   settingsDialogContent,
 }: {
+  title?: React.ReactNode;
   children: React.ReactNode;
   isOverlay?: boolean;
   settingsDialogContent?: JSX.Element;
@@ -51,6 +70,8 @@ export function AppHeader({
   const [debugStatus, setDebugStatus] = useState<"idle" | "success" | "error">(
     "idle",
   );
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleSendDebugSnapshot = async () => {
     setIsSendingDebug(true);
@@ -99,6 +120,13 @@ export function AppHeader({
       window.chrome.webview.postMessage("exitApp");
     }
   };
+
+  // Right button count: window controls (close always, min+max if not overlay)
+  // + burger (small) or action buttons (large: discord, settings?, user, bug, info = 4-5)
+  const windowControlCount = isOverlay ? 1 : 3; // close + min + max
+  const actionButtonCount = 4 + (settingsDialogContent ? 1 : 0); // discord, user, bug, info + settings
+  const largeRightPx = (windowControlCount + actionButtonCount) * 32;
+  const smallRightPx = (windowControlCount + 1) * 32; // +1 for burger
 
   return (
     <>
@@ -179,55 +207,80 @@ export function AppHeader({
           }
         }}
       >
-        <nav
-          className={cn(
-            "ml-2 grow flex items-center gap-2 text-sm font-bold overflow-hidden",
-            isOverlay ? "pr-[192px]" : "pr-[256px]",
-          )}
-        >
-          {children}
-          {isRunningAsAdmin && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
-              <Shield className="w-3 h-3" />
-              <span>Admin</span>
+        {title ? (
+          <>
+            {/* Title - always visible */}
+            <div className="ml-2 shrink-0 flex items-center gap-2 text-sm font-bold">
+              {title}
+              {isRunningAsAdmin && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                  <Shield className="w-3 h-3" />
+                  <span>Admin</span>
+                </div>
+              )}
             </div>
-          )}
-          <div
-            className={cn("absolute top-0 right-0 h-[32px]")}
-            onMouseDown={(e) => e.stopPropagation()}
+
+            {/* Inline nav items - large screens only */}
+            <nav
+              className="hidden min-[850px]:flex grow items-center gap-2 ml-2 text-sm font-bold overflow-hidden"
+              style={{ paddingRight: largeRightPx }}
+            >
+              {children}
+            </nav>
+          </>
+        ) : (
+          /* Dashboard-style: all children inline, no burger menu */
+          <nav
+            className="ml-2 grow flex items-center gap-2 text-sm font-bold overflow-hidden"
+            style={{ paddingRight: smallRightPx }}
           >
+            {children}
+            {isRunningAsAdmin && (
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                <Shield className="w-3 h-3" />
+                <span>Admin</span>
+              </div>
+            )}
+          </nav>
+        )}
+
+        {/* Right side buttons */}
+        <div
+          className={cn("absolute top-0 right-0 h-[32px]")}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {/* Burger menu button - small screens only (game windows) */}
+          {title && (
+            <button
+              className="min-[850px]:hidden h-full w-[32px] inline-flex hover:bg-neutral-700"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              type="button"
+            >
+              <Menu className="h-full w-full p-1.5" />
+            </button>
+          )}
+
+          {/* Action buttons - large screens only (or always for dashboard) */}
+          <span className={title ? "hidden min-[850px]:contents" : "contents"}>
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="h-full w-[32px]  hover:text-[#6974f3]"
+              className="h-full w-[32px] hover:text-[#6974f3]"
             >
               <ExternalAnchor href="https://th.gl/discord">
-                <svg
-                  fill="currentColor"
-                  height="20"
-                  viewBox="0 0 16 16"
-                  width="20"
-                  className="h-full w-full p-1.5"
-                >
-                  <path d="M13.545 2.907a13.227 13.227 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.19 12.19 0 0 0-3.658 0 8.258 8.258 0 0 0-.412-.833.051.051 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.041.041 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032c.001.014.01.028.021.037a13.276 13.276 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019c.308-.42.582-.863.818-1.329a.05.05 0 0 0-.01-.059.051.051 0 0 0-.018-.011 8.875 8.875 0 0 1-1.248-.595.05.05 0 0 1-.02-.066.051.051 0 0 1 .015-.019c.084-.063.168-.129.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.052.052 0 0 1 .053.007c.08.066.164.132.248.195a.051.051 0 0 1-.004.085 8.254 8.254 0 0 1-1.249.594.05.05 0 0 0-.03.03.052.052 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.235 13.235 0 0 0 4.001-2.02.049.049 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.034.034 0 0 0-.02-.019Zm-8.198 7.307c-.789 0-1.438-.724-1.438-1.612 0-.889.637-1.613 1.438-1.613.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612Zm5.316 0c-.788 0-1.438-.724-1.438-1.612 0-.889.637-1.613 1.438-1.613.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612Z" />
-                </svg>
+                <DiscordIcon className="h-full w-full p-1.5" />
               </ExternalAnchor>
             </Button>
             {settingsDialogContent && (
-              <Dialog>
-                <Button
-                  asChild
-                  size="icon"
-                  variant="ghost"
-                  className="h-full w-[32px]"
-                >
-                  <DialogTrigger>
-                    <Settings className="h-full w-full p-1.5" />
-                  </DialogTrigger>
-                </Button>
-                {settingsDialogContent}
-              </Dialog>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-full w-[32px]"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <Settings className="h-full w-full p-1.5" />
+              </Button>
             )}
             <Button
               size="icon"
@@ -242,78 +295,14 @@ export function AppHeader({
                 )}
               />
             </Button>
-            <AccountDialog />
-            <Dialog
-              open={isDebugDialogOpen}
-              onOpenChange={setIsDebugDialogOpen}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-full w-[32px]"
+              onClick={() => setIsDebugDialogOpen(true)}
             >
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className="h-full w-[32px]"
-              >
-                <DialogTrigger>
-                  <Bug className="h-full w-full p-1.5" />
-                </DialogTrigger>
-              </Button>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Send Debug Snapshot</DialogTitle>
-                  <DialogDescription>
-                    For bug reports, please join our{" "}
-                    <a
-                      href="https://th.gl/discord"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline hover:no-underline"
-                    >
-                      Discord server
-                    </a>{" "}
-                    and describe your issue there. Only send debug logs if asked
-                    by support.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <Textarea
-                    placeholder="Description provided to support (e.g., 'Standing next to ore that is not detected')"
-                    value={debugContext}
-                    onChange={(e) => setDebugContext(e.target.value)}
-                    rows={5}
-                    disabled={isSendingDebug}
-                  />
-                  {debugStatus === "success" && (
-                    <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-                      ✓ Debug snapshot sent successfully!
-                    </div>
-                  )}
-                  {debugStatus === "error" && (
-                    <div className="text-sm text-red-600 dark:text-red-400 font-medium">
-                      ✗ Failed to send debug snapshot. Check console for
-                      details.
-                    </div>
-                  )}
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsDebugDialogOpen(false);
-                      setDebugStatus("idle");
-                    }}
-                    disabled={isSendingDebug}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSendDebugSnapshot}
-                    disabled={isSendingDebug}
-                  >
-                    {isSendingDebug ? "Sending..." : "Send"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              <Bug className="h-full w-full p-1.5" />
+            </Button>
             <HoverCard openDelay={50} closeDelay={50}>
               <HoverCardTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-full w-[32px]">
@@ -333,45 +322,209 @@ export function AppHeader({
                 </Button>
               </HoverCardContent>
             </HoverCard>
-            {!isOverlay && (
-              <button
-                className="h-full w-[32px] inline-flex hover:bg-neutral-700"
-                onClick={() => {
-                  window.chrome.webview.postMessage("minimize");
-                }}
-                type="button"
-              >
-                <svg className="h-full">
-                  <use xlinkHref="#window-control_minimize" />
-                </svg>
-              </button>
-            )}
-            {!isOverlay && (
-              <button
-                className="h-full w-[32px] inline-flex hover:bg-neutral-700"
-                onClick={() => {
-                  window.chrome.webview.postMessage("maximize");
-                }}
-                type="button"
-              >
-                <svg className="h-full">
-                  <use xlinkHref="#window-control_restore" />
-                </svg>
-              </button>
-            )}
+          </span>
+
+          {/* Window controls - always visible */}
+          {!isOverlay && (
             <button
-              className="h-full w-[32px] inline-flex hover:bg-red-600"
-              id="close"
-              onClick={handleCloseClick}
+              className="h-full w-[32px] inline-flex hover:bg-neutral-700"
+              onClick={() => {
+                window.chrome.webview.postMessage("minimize");
+              }}
               type="button"
             >
               <svg className="h-full">
-                <use xlinkHref="#window-control_close" />
+                <use xlinkHref="#window-control_minimize" />
               </svg>
             </button>
-          </div>
-        </nav>
+          )}
+          {!isOverlay && (
+            <button
+              className="h-full w-[32px] inline-flex hover:bg-neutral-700"
+              onClick={() => {
+                window.chrome.webview.postMessage("maximize");
+              }}
+              type="button"
+            >
+              <svg className="h-full">
+                <use xlinkHref="#window-control_restore" />
+              </svg>
+            </button>
+          )}
+          <button
+            className="h-full w-[32px] inline-flex hover:bg-red-600"
+            id="close"
+            onClick={handleCloseClick}
+            type="button"
+          >
+            <svg className="h-full">
+              <use xlinkHref="#window-control_close" />
+            </svg>
+          </button>
+        </div>
       </header>
+
+      {/* Burger menu panel - small screens only */}
+      {isMenuOpen && (
+        <>
+          <div
+            className="min-[850px]:hidden fixed inset-0 z-[999998]"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div
+            className="min-[850px]:hidden fixed top-[32px] left-0 right-0 bg-zinc-900/95 backdrop-blur-xl border-b border-neutral-800 p-3 flex flex-wrap items-center gap-2 z-[999998] pointer-events-auto"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {children}
+            <div className="flex items-center gap-1 border-l border-neutral-700 pl-2 ml-auto">
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 hover:text-[#6974f3]"
+              >
+                <ExternalAnchor href="https://th.gl/discord">
+                  <DiscordIcon className="h-full w-full p-1.5" />
+                </ExternalAnchor>
+              </Button>
+              {settingsDialogContent && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setIsSettingsOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => {
+                  account.setShowUserDialog(true);
+                  setIsMenuOpen(false);
+                }}
+              >
+                <User
+                  className={cn(
+                    "w-4 h-4",
+                    account.userId && "fill-primary stroke-primary",
+                  )}
+                />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => {
+                  setIsDebugDialogOpen(true);
+                  setIsMenuOpen(false);
+                }}
+              >
+                <Bug className="w-4 h-4" />
+              </Button>
+              <HoverCard openDelay={50} closeDelay={50}>
+                <HoverCardTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-8 w-8">
+                    <Info className="w-4 h-4" />
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" className="w-fit flex flex-col">
+                  <Button asChild variant="link">
+                    <ExternalAnchor href="https://www.th.gl/legal-notice">
+                      Legal Notice
+                    </ExternalAnchor>
+                  </Button>
+                  <Button asChild variant="link">
+                    <ExternalAnchor href="https://www.th.gl/privacy-policy">
+                      Privacy Policy
+                    </ExternalAnchor>
+                  </Button>
+                </HoverCardContent>
+              </HoverCard>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Settings dialog (controlled) */}
+      {settingsDialogContent && (
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          {settingsDialogContent}
+        </Dialog>
+      )}
+
+      {/* Debug snapshot dialog */}
+      <Dialog
+        open={isDebugDialogOpen}
+        onOpenChange={setIsDebugDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Debug Snapshot</DialogTitle>
+            <DialogDescription>
+              For bug reports, please join our{" "}
+              <a
+                href="https://th.gl/discord"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline hover:no-underline"
+              >
+                Discord server
+              </a>{" "}
+              and describe your issue there. Only send debug logs if asked
+              by support.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              placeholder="Description provided to support (e.g., 'Standing next to ore that is not detected')"
+              value={debugContext}
+              onChange={(e) => setDebugContext(e.target.value)}
+              rows={5}
+              disabled={isSendingDebug}
+            />
+            {debugStatus === "success" && (
+              <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                ✓ Debug snapshot sent successfully!
+              </div>
+            )}
+            {debugStatus === "error" && (
+              <div className="text-sm text-red-600 dark:text-red-400 font-medium">
+                ✗ Failed to send debug snapshot. Check console for
+                details.
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDebugDialogOpen(false);
+                setDebugStatus("idle");
+              }}
+              disabled={isSendingDebug}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendDebugSnapshot}
+              disabled={isSendingDebug}
+            >
+              {isSendingDebug ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account dialog */}
+      <AccountDialog />
+
+      {/* Close action dialog */}
       <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
