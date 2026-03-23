@@ -9,6 +9,11 @@ import { AdPlaceholder } from "./ad-placeholder";
 
 const smallMediaQuery = "(min-width: 768px)";
 const bigMediaQuery = "(min-width: 1250px)";
+// Viewport tall enough for a 600px sidebar ad without overlapping map controls
+const tallMediaQuery = "(min-height: 750px)";
+
+type AdVariant = "sidebar-big" | "sidebar-small" | "compact";
+
 export function FloatingBanner({
   id,
   targeting,
@@ -22,24 +27,72 @@ export function FloatingBanner({
 }): JSX.Element {
   const smallMatched = useMediaQuery(smallMediaQuery);
   const bigMatched = useMediaQuery(bigMediaQuery);
+  const tallMatched = useMediaQuery(tallMediaQuery);
 
-  useEffect(() => {
-    if (!smallMatched || isLoading || isBlocked) {
-      return;
-    }
-    try {
-      const sizes = bigMatched
+  if (!smallMatched) {
+    return <></>;
+  }
+
+  const variant: AdVariant = !tallMatched
+    ? "compact"
+    : bigMatched
+      ? "sidebar-big"
+      : "sidebar-small";
+
+  // Key forces remount when variant changes, ensuring clean ad recreation
+  return (
+    <FloatingBannerInner
+      key={variant}
+      id={`${id}-${variant}`}
+      variant={variant}
+      targeting={targeting}
+      isLoading={isLoading}
+      isBlocked={isBlocked}
+    />
+  );
+}
+
+function FloatingBannerInner({
+  id,
+  variant,
+  targeting,
+  isLoading = false,
+  isBlocked = false,
+}: {
+  id: string;
+  variant: AdVariant;
+  targeting?: Record<string, string>;
+  isLoading?: boolean;
+  isBlocked?: boolean;
+}): JSX.Element {
+  const isCompact = variant === "compact";
+  const isBig = variant === "sidebar-big";
+
+  const sizes: [string, string][] =
+    isCompact
+      ? [
+          ["300", "250"],
+          ["320", "100"],
+        ]
+      : isBig
         ? [
             ["300", "600"],
             ["300", "250"],
             ["160", "600"],
           ]
         : [["160", "600"]];
+
+  const width = isCompact ? "w-[300px]" : isBig ? "w-[300px]" : "w-[160px]";
+  const height = isCompact ? "h-[250px]" : "h-[600px]";
+
+  useEffect(() => {
+    if (isLoading || isBlocked) return;
+    try {
       getNitroAds().createAd(id, {
-        targeting, // Custom targeting for reporting filters
+        targeting,
         refreshTime: 30,
         renderVisibleOnly: false,
-        sizes: sizes,
+        sizes,
         mediaQuery: smallMediaQuery,
         debug: "silent",
         demo: IS_DEMO_MODE,
@@ -47,18 +100,14 @@ export function FloatingBanner({
     } catch (error) {
       console.error(`[FloatingBanner] Failed to create ad ${id}:`, error);
     }
-  }, [smallMatched, bigMatched, id, targeting, isLoading, isBlocked]);
-
-  if (!smallMatched) {
-    return <></>;
-  }
+  }, [id, isLoading, isBlocked]);
 
   if (isLoading) {
     return (
       <AdPlaceholder
         type="loading"
-        width={bigMatched ? "w-[300px]" : "w-[160px]"}
-        height="h-[600px]"
+        width={width}
+        height={height}
         className="fixed bottom-2 right-2"
       />
     );
@@ -68,19 +117,20 @@ export function FloatingBanner({
     return (
       <AdPlaceholder
         type="blocked"
-        width={bigMatched ? "w-[300px]" : "w-[160px]"}
-        height="h-[600px]"
+        width={width}
+        height={height}
         className="fixed bottom-2 right-2"
       />
     );
   }
+
   return (
     <AdFreeContainer className="fixed bottom-2 right-2">
       <div
         id={id}
         className={cn(
-          "min-h-[600px]",
-          bigMatched ? "min-w-[300px]" : "min-w-[160px]",
+          isCompact ? "min-h-[250px] min-w-[300px]" : "min-h-[600px]",
+          !isCompact && (isBig ? "min-w-[300px]" : "min-w-[160px]"),
         )}
       />
     </AdFreeContainer>
