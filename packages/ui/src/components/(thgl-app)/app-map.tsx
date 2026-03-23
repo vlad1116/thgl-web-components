@@ -14,6 +14,7 @@ import {
 } from "../(interactive-map)";
 import { Whiteboard } from "../(peer)";
 import { AdditionalTooltipType } from "../(content)";
+import { MapControls } from "../(controls)";
 
 export type AppMapProps = {
   appConfig: THGLAppConfig;
@@ -65,6 +66,7 @@ export function AppMap({
           iconsPath={version?.more.icons}
         />
         <PrivateDrawing hidden={lockedWindow} />
+        <MapControls />
       </div>
 
       <LivePlayer

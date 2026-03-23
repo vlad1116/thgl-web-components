@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useMap } from "./store";
 import { Info, Spline } from "lucide-react";
@@ -8,32 +8,20 @@ import { ColorPicker } from "../(controls)/color-picker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
   putSharedFilters,
-  useConnectionStore,
   useSettingsStore,
   useUserStore,
   type Drawing,
 } from "@repo/lib";
+import {
+  DrawingManager,
+  DrawingLayer,
+  type DrawingShape,
+  type DrawingMode,
+} from "@repo/lib/web-map";
 import { Label } from "../ui/label";
 import { trackEvent } from "../(header)";
-import { useCoordinates } from "../(providers)";
 import { Separator } from "../ui/separator";
 import { Slider } from "../ui/slider";
-import leaflet, {
-  Circle,
-  FeatureGroup,
-  LatLng,
-  LayerGroup,
-  Marker,
-  Polygon,
-  Polyline,
-  Rectangle,
-  circle,
-  marker,
-  polygon,
-  polyline,
-  rectangle,
-  Util,
-} from "leaflet";
 import { FilterSelect } from "../(controls)/filter-select";
 import {
   HoverCard,
@@ -48,15 +36,18 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
   const map = useMap();
   const drawingColor = useSettingsStore((state) => state.drawingColor);
   const setDrawingColor = useSettingsStore((state) => state.setDrawingColor);
+  const drawingFillColor = useSettingsStore((state) => state.drawingFillColor);
+  const setDrawingFillColor = useSettingsStore(
+    (state) => state.setDrawingFillColor,
+  );
   const drawingSize = useSettingsStore((state) => state.drawingSize);
   const setDrawingSize = useSettingsStore((state) => state.setDrawingSize);
   const textColor = useSettingsStore((state) => state.textColor);
   const setTextColor = useSettingsStore((state) => state.setTextColor);
   const textSize = useSettingsStore((state) => state.textSize);
   const setTextSize = useSettingsStore((state) => state.setTextSize);
-  const [globalMode, setGlobalMode] = useState("none");
+  const [globalMode, setGlobalMode] = useState<DrawingMode>("none");
   const myFilters = useSettingsStore((state) => state.myFilters);
-  const { staticDrawings } = useCoordinates();
   const mapName = useUserStore((state) => state.mapName);
   const setMyFilters = useSettingsStore((state) => state.setMyFilters);
   const tempPrivateDrawing = useSettingsStore(
@@ -69,1001 +60,539 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const isEditing = tempPrivateDrawing !== null;
-  const setPolylines = useCallback(
-    (polylineLayers: Polyline[], mapName: string) => {
-      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-      if (!tempPrivateDrawing) {
-        return;
-      }
 
-      const polylines: Drawing["polylines"] = [];
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
+  const drawingManagerRef = useRef<DrawingManager | null>(null);
+  const savedDrawingsLayerRef = useRef<DrawingLayer | null>(null);
+  // Suppress the load effect when tempPrivateDrawing changes due to edit/remove events
+  const suppressReloadRef = useRef(false);
 
-      polylineLayers.forEach((polylineLayer) => {
-        const latLngs = polylineLayer.getLatLngs() as LatLng[];
-        if (latLngs.length === 0) {
-          return;
-        }
-        const layerPositions = latLngs.map((latLng) => {
-          const coord: [number, number] = [latLng.lat, latLng.lng];
-          // Store in original (unrotated) coordinates
+  // Convert DrawingShape to stored Drawing format
+  const shapeToDrawing = useCallback(
+    (shape: DrawingShape): Partial<Drawing> => {
+      const rotationDegrees = map?.rotationDegrees ?? map?._rotationDegrees;
+      const rotationCenter = map?.rotationCenter ?? map?._rotationCenter;
+
+      const transformPositions = (positions: [number, number][]) => {
+        return positions.map((pos) => {
           if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(
-              coord,
-              rotationDegrees,
-              rotationCenter,
-            );
+            return inverseRotateCoordinate(pos, rotationDegrees, rotationCenter);
           }
-          return coord;
+          return pos;
         });
-        polylines.push({
-          positions: layerPositions,
-          size: polylineLayer.options.weight!,
-          color: polylineLayer.options.color!,
-          mapName: mapName,
-        });
-      });
-      const existingPolylines =
-        tempPrivateDrawing.polylines?.filter(
-          (drawing) => drawing.mapName !== mapName,
-        ) ?? [];
-      setTempPrivateDrawing({
-        polylines: [...existingPolylines, ...polylines],
-      });
+      };
+
+      switch (shape.type) {
+        case "line":
+          return {
+            polylines: [
+              {
+                positions: transformPositions(
+                  shape.positions as [number, number][],
+                ),
+                size: shape.size,
+                color: shape.color,
+                mapName: shape.mapName,
+              },
+            ],
+          };
+        case "rectangle":
+          return {
+            rectangles: [
+              {
+                positions: transformPositions(
+                  shape.positions as [number, number][],
+                ),
+                size: shape.size,
+                color: shape.color,
+                fillColor: shape.fillColor,
+                mapName: shape.mapName,
+              },
+            ],
+          };
+        case "polygon":
+          return {
+            polygons: [
+              {
+                positions: transformPositions(
+                  shape.positions as [number, number][],
+                ),
+                size: shape.size,
+                color: shape.color,
+                fillColor: shape.fillColor,
+                mapName: shape.mapName,
+              },
+            ],
+          };
+        case "circle":
+          const center = shape.center as [number, number];
+          const transformedCenter =
+            rotationDegrees && rotationCenter
+              ? inverseRotateCoordinate(center, rotationDegrees, rotationCenter)
+              : center;
+          return {
+            circles: [
+              {
+                center: transformedCenter,
+                radius: shape.radius ?? 0,
+                size: shape.size,
+                color: shape.color,
+                fillColor: shape.fillColor,
+                mapName: shape.mapName,
+              },
+            ],
+          };
+        case "text":
+          const textCenter = shape.center as [number, number];
+          const transformedTextCenter =
+            rotationDegrees && rotationCenter
+              ? inverseRotateCoordinate(
+                  textCenter,
+                  rotationDegrees,
+                  rotationCenter,
+                )
+              : textCenter;
+          return {
+            texts: [
+              {
+                position: transformedTextCenter,
+                text: shape.text ?? "",
+                size: shape.size,
+                color: shape.color,
+                mapName: shape.mapName,
+              },
+            ],
+          };
+        default:
+          return {};
+      }
     },
     [map],
   );
 
+  // Pre-select line mode when editing starts
+  useEffect(() => {
+    if (isEditing) {
+      setGlobalMode("line");
+    }
+  }, [isEditing]);
+
+  // Initialize drawing manager when editing starts
   useEffect(() => {
     if (!map || !isEditing) {
+      // Clean up when not editing
+      if (drawingManagerRef.current) {
+        drawingManagerRef.current.destroy();
+        drawingManagerRef.current = null;
+      }
       return;
     }
-    const tooltipPane = map.getPane("tooltipPane");
-    if (tooltipPane) {
-      tooltipPane.style.pointerEvents = "none";
-    }
-    const popupPane = map.getPane("popupPane");
-    if (popupPane) {
-      popupPane.style.pointerEvents = "none";
-    }
-    return () => {
-      if (tooltipPane) {
-        tooltipPane.style.pointerEvents = "auto";
-      }
-      if (popupPane) {
-        popupPane.style.pointerEvents = "auto";
-      }
-    };
-  }, [isEditing, map]);
 
+    // Create drawing manager
+    const dm = new DrawingManager(map, {
+      defaultColor: drawingColor,
+      defaultFillColor: drawingFillColor,
+      defaultSize: drawingSize,
+      textColor: textColor,
+      textSize: textSize,
+    });
+
+    drawingManagerRef.current = dm;
+
+    // Handle drawing creation
+    dm.on("drawing:create", ({ shape }) => {
+      const currentDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!currentDrawing) return;
+
+      // Update shape with current mapName
+      shape.mapName = mapName;
+
+      // Convert shape to drawing format and merge with existing
+      const newDrawingPart = shapeToDrawing(shape);
+
+      // Merge with existing drawings
+      const updatedDrawing: Partial<Drawing> = { ...currentDrawing };
+
+      if (newDrawingPart.polylines) {
+        updatedDrawing.polylines = [
+          ...(currentDrawing.polylines ?? []),
+          ...newDrawingPart.polylines,
+        ];
+      }
+      if (newDrawingPart.rectangles) {
+        updatedDrawing.rectangles = [
+          ...(currentDrawing.rectangles ?? []),
+          ...newDrawingPart.rectangles,
+        ];
+      }
+      if (newDrawingPart.polygons) {
+        updatedDrawing.polygons = [
+          ...(currentDrawing.polygons ?? []),
+          ...newDrawingPart.polygons,
+        ];
+      }
+      if (newDrawingPart.circles) {
+        updatedDrawing.circles = [
+          ...(currentDrawing.circles ?? []),
+          ...newDrawingPart.circles,
+        ];
+      }
+      if (newDrawingPart.texts) {
+        updatedDrawing.texts = [
+          ...(currentDrawing.texts ?? []),
+          ...newDrawingPart.texts,
+        ];
+      }
+
+      setTempPrivateDrawing(updatedDrawing);
+    });
+
+    // Handle shape removal (from remove mode)
+    dm.on("drawing:remove", () => {
+      const currentDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!currentDrawing) return;
+
+      const remainingShapes = dm.getAllShapes();
+      const updatedDrawing: Partial<Drawing> = { ...currentDrawing };
+      updatedDrawing.polylines = [];
+      updatedDrawing.rectangles = [];
+      updatedDrawing.polygons = [];
+      updatedDrawing.circles = [];
+      updatedDrawing.texts = [];
+
+      for (const shape of remainingShapes) {
+        shape.mapName = mapName;
+        const part = shapeToDrawing(shape);
+        if (part.polylines) updatedDrawing.polylines.push(...part.polylines);
+        if (part.rectangles) updatedDrawing.rectangles.push(...part.rectangles);
+        if (part.polygons) updatedDrawing.polygons.push(...part.polygons);
+        if (part.circles) updatedDrawing.circles.push(...part.circles);
+        if (part.texts) updatedDrawing.texts.push(...part.texts);
+      }
+
+      suppressReloadRef.current = true;
+      setTempPrivateDrawing(updatedDrawing);
+    });
+
+    // Handle shape edit (from edit/drag mode)
+    dm.on("drawing:edit", () => {
+      const currentDrawing = useSettingsStore.getState().tempPrivateDrawing;
+      if (!currentDrawing) return;
+
+      // Rebuild the entire drawing from current shapes
+      const remainingShapes = dm.getAllShapes();
+      const updatedDrawing: Partial<Drawing> = { ...currentDrawing };
+      updatedDrawing.polylines = [];
+      updatedDrawing.rectangles = [];
+      updatedDrawing.polygons = [];
+      updatedDrawing.circles = [];
+      updatedDrawing.texts = [];
+
+      for (const shape of remainingShapes) {
+        shape.mapName = mapName;
+        const part = shapeToDrawing(shape);
+        if (part.polylines) updatedDrawing.polylines.push(...part.polylines);
+        if (part.rectangles) updatedDrawing.rectangles.push(...part.rectangles);
+        if (part.polygons) updatedDrawing.polygons.push(...part.polygons);
+        if (part.circles) updatedDrawing.circles.push(...part.circles);
+        if (part.texts) updatedDrawing.texts.push(...part.texts);
+      }
+
+      suppressReloadRef.current = true;
+      setTempPrivateDrawing(updatedDrawing);
+    });
+
+    return () => {
+      dm.destroy();
+      drawingManagerRef.current = null;
+    };
+  }, [map, isEditing, mapName, shapeToDrawing]);
+
+  // Update drawing manager options when colors/sizes change
   useEffect(() => {
-    if (!map) {
-      return;
+    if (drawingManagerRef.current) {
+      drawingManagerRef.current.setPathOptions({
+        color: drawingColor,
+        fillColor: drawingFillColor,
+        weight: drawingSize,
+      });
+      drawingManagerRef.current.setTextOptions({
+        color: textColor,
+        size: textSize,
+      });
     }
+  }, [drawingColor, drawingFillColor, drawingSize, textColor, textSize]);
+
+  // Handle mode changes
+  useEffect(() => {
+    if (drawingManagerRef.current && globalMode !== "none") {
+      drawingManagerRef.current.enableDraw(globalMode);
+    } else if (drawingManagerRef.current) {
+      drawingManagerRef.current.disableDraw();
+    }
+  }, [globalMode]);
+
+  // Handle Enter key to finish line/polygon
+  useEffect(() => {
+    if (!map) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter") {
-        try {
-          // @ts-expect-error
-          map?.pm.Draw.Line._finishShape();
-        } catch (e) {
-          //
+        if (globalMode === "line") {
+          drawingManagerRef.current?.finishLine();
+        } else if (globalMode === "polygon") {
+          drawingManagerRef.current?.finishPolygon();
         }
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
 
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [map]);
+  }, [map, globalMode]);
 
-  const setRectangles = useCallback(
-    (rectangleLayers: Rectangle[], mapName: string) => {
-      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-      if (!tempPrivateDrawing) {
-        return;
-      }
-
-      const rectangles: Drawing["rectangles"] = [];
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-
-      rectangleLayers.forEach((rectangleLayer) => {
-        const latLngs = rectangleLayer.getLatLngs() as LatLng[][];
-        if (latLngs.length === 0) {
-          return;
-        }
-        const layerPositions = latLngs[0].map((latLng) => {
-          const coord: [number, number] = [latLng.lat, latLng.lng];
-          // Store in original (unrotated) coordinates
-          if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(
-              coord,
-              rotationDegrees,
-              rotationCenter,
-            );
-          }
-          return coord;
-        });
-        rectangles.push({
-          positions: layerPositions,
-          size: rectangleLayer.options.weight!,
-          color: rectangleLayer.options.color!,
-          mapName: mapName,
-        });
-      });
-      const existingRectangles =
-        tempPrivateDrawing.rectangles?.filter(
-          (drawing) => drawing.mapName !== mapName,
-        ) ?? [];
-      setTempPrivateDrawing({
-        rectangles: [...existingRectangles, ...rectangles],
-      });
-    },
-    [map],
-  );
-
-  const setPolygons = useCallback(
-    (polygonLayers: Polygon[], mapName: string) => {
-      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-      if (!tempPrivateDrawing) {
-        return;
-      }
-
-      const polygons: Drawing["polygons"] = [];
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-
-      polygonLayers.forEach((polygonLayer) => {
-        const latLngs = polygonLayer.getLatLngs() as LatLng[][];
-        if (latLngs.length === 0) {
-          return;
-        }
-        const layerPositions = latLngs[0].map((latLng) => {
-          const coord: [number, number] = [latLng.lat, latLng.lng];
-          // Store in original (unrotated) coordinates
-          if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(
-              coord,
-              rotationDegrees,
-              rotationCenter,
-            );
-          }
-          return coord;
-        });
-        polygons.push({
-          positions: layerPositions,
-          size: polygonLayer.options.weight!,
-          color: polygonLayer.options.color!,
-          mapName: mapName,
-        });
-      });
-      const existingPolygons =
-        tempPrivateDrawing.polygons?.filter(
-          (drawing) => drawing.mapName !== mapName,
-        ) ?? [];
-      setTempPrivateDrawing({
-        polygons: [...existingPolygons, ...polygons],
-      });
-    },
-    [map],
-  );
-
-  const setCircles = useCallback(
-    (circleLayers: Circle[], mapName: string) => {
-      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-      if (!tempPrivateDrawing) {
-        return;
-      }
-
-      const circles: Drawing["circles"] = [];
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-
-      circleLayers.forEach((circleLayer) => {
-        const center = circleLayer.getLatLng();
-        const radius = circleLayer.getRadius();
-
-        let storageCenter: [number, number] = [center.lat, center.lng];
-        // Store in original (unrotated) coordinates
-        if (rotationDegrees && rotationCenter) {
-          storageCenter = inverseRotateCoordinate(
-            [center.lat, center.lng],
-            rotationDegrees,
-            rotationCenter,
-          );
-        }
-
-        circles.push({
-          center: storageCenter,
-          radius: radius,
-          size: circleLayer.options.weight!,
-          color: circleLayer.options.color!,
-          mapName: mapName,
-        });
-      });
-      const existingCircles =
-        tempPrivateDrawing.circles?.filter(
-          (drawing) => drawing.mapName !== mapName,
-        ) ?? [];
-      setTempPrivateDrawing({
-        circles: [...existingCircles, ...circles],
-      });
-    },
-    [map],
-  );
-
-  const setTexts = useCallback(
-    (textLayers: Marker[], mapName: string) => {
-      const tempPrivateDrawing = useSettingsStore.getState().tempPrivateDrawing;
-      if (!tempPrivateDrawing) {
-        return;
-      }
-
-      const texts: Drawing["texts"] = [];
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-
-      textLayers.forEach((textLayer) => {
-        const latLngs = textLayer.getLatLng();
-        let storagePosition: [number, number] = [latLngs.lat, latLngs.lng];
-        // Store in original (unrotated) coordinates
-        if (rotationDegrees && rotationCenter) {
-          storagePosition = inverseRotateCoordinate(
-            [latLngs.lat, latLngs.lng],
-            rotationDegrees,
-            rotationCenter,
-          );
-        }
-
-        texts.push({
-          position: storagePosition,
-          text: textLayer.pm.getText(),
-          color: textLayer.pm.getElement().style.color,
-          size: parseInt(textLayer.pm.getElement().style.fontSize),
-          mapName: mapName,
-        });
-      });
-      const existingTexts =
-        tempPrivateDrawing.texts?.filter(
-          (drawing) => drawing.mapName !== mapName,
-        ) ?? [];
-      setTempPrivateDrawing({
-        texts: [...existingTexts, ...texts],
-      });
-    },
-    [map],
-  );
-
+  // Load existing drawings when editing starts or filter changes
   useEffect(() => {
-    if (!map) {
-      return;
-    }
-    const activeShape = map.pm.Draw.getActiveShape();
-    map.pm.setPathOptions({
-      color: drawingColor,
-      weight: drawingSize,
-    });
-    map.pm.setGlobalOptions({
-      templineStyle: {
-        radius: drawingSize,
-        color: drawingColor,
-        weight: drawingSize,
-      },
-      hintlineStyle: {
-        color: drawingColor,
-        weight: drawingSize,
-        dashArray: [5, 5],
-      },
-    });
-    setGlobalMode(activeShape);
-  }, [map, drawingColor, drawingSize]);
+    if (!drawingManagerRef.current || !isEditing || !tempPrivateDrawing) return;
 
-  const sharedTempPrivateDrawing = useConnectionStore(
-    (state) => state.tempPrivateDrawing,
-  );
-  const sharedMyFilters = useConnectionStore((state) => state.myFilters);
-  useEffect(() => {
-    if (!map) {
-      return;
-    }
-    const layerGroup = new LayerGroup();
-    try {
-      layerGroup.addTo(map);
-      layerGroup.setZIndex(1000);
-    } catch (e) {}
-    const sharedPrivateDrawings = sharedMyFilters
-      .map((myFilter) => myFilter.drawing)
-      .filter(Boolean) as Drawing[];
-    const drawings = sharedTempPrivateDrawing
-      ? [sharedTempPrivateDrawing, ...sharedPrivateDrawings]
-      : sharedPrivateDrawings;
-
-    const rotationDegrees = map?._rotationDegrees;
-    const rotationCenter = map?._rotationCenter;
-
-    drawings.forEach((drawing) => {
-      const { polylines, rectangles, polygons, circles, texts } = drawing;
-      polylines?.forEach((polylineData) => {
-        if (polylineData.mapName !== mapName) {
-          return;
-        }
-        // Apply rotation to display stored coordinates correctly
-        const displayPositions = polylineData.positions.map((pos) => {
-          if (rotationDegrees && rotationCenter) {
-            return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-          }
-          return pos;
-        });
-        const polylineLayer = polyline(displayPositions, {
-          pmIgnore: false,
-          stroke: true,
-          color: polylineData.color,
-          weight: polylineData.size,
-        });
-
-        try {
-          polylineLayer.addTo(layerGroup);
-        } catch (e) {}
-      });
-      rectangles?.forEach((rectangleData) => {
-        if (rectangleData.mapName !== mapName) {
-          return;
-        }
-        // Apply rotation to display stored coordinates correctly
-        const displayPositions = rectangleData.positions.map((pos) => {
-          if (rotationDegrees && rotationCenter) {
-            return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-          }
-          return pos;
-        });
-        const rectangleLayer = rectangle(displayPositions, {
-          pmIgnore: false,
-          stroke: true,
-          color: rectangleData.color,
-          weight: rectangleData.size,
-        });
-
-        try {
-          rectangleLayer.addTo(layerGroup);
-        } catch (e) {}
-      });
-      polygons?.forEach((polygonData) => {
-        if (polygonData.mapName !== mapName) {
-          return;
-        }
-        // Apply rotation to display stored coordinates correctly
-        const displayPositions = polygonData.positions.map((pos) => {
-          if (rotationDegrees && rotationCenter) {
-            return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-          }
-          return pos;
-        });
-        const polygonLayer = polygon(displayPositions, {
-          pmIgnore: false,
-          stroke: true,
-          color: polygonData.color,
-          weight: polygonData.size,
-        });
-
-        try {
-          polygonLayer.addTo(layerGroup);
-        } catch (e) {}
-      });
-      circles?.forEach((circleData) => {
-        if (circleData.mapName !== mapName) {
-          return;
-        }
-        // Apply rotation to display stored coordinates correctly
-        let displayCenter = circleData.center;
-        if (rotationDegrees && rotationCenter) {
-          displayCenter = rotateCoordinate(
-            circleData.center,
-            rotationDegrees,
-            rotationCenter,
-          );
-        }
-        const circleLayer = circle(displayCenter, {
-          pmIgnore: false,
-          stroke: true,
-          color: circleData.color,
-          weight: circleData.size,
-          radius: circleData.radius,
-        });
-
-        try {
-          circleLayer.addTo(layerGroup);
-        } catch (e) {}
-      });
-      texts?.forEach((textPositions) => {
-        if (textPositions.mapName !== mapName) {
-          return;
-        }
-        // Apply rotation to display stored coordinates correctly
-        let displayPosition = textPositions.position;
-        if (rotationDegrees && rotationCenter) {
-          displayPosition = rotateCoordinate(
-            textPositions.position,
-            rotationDegrees,
-            rotationCenter,
-          );
-        }
-        const textLayer = marker(displayPosition, {
-          pmIgnore: false,
-          interactive: false,
-          textMarker: true,
-          text: textPositions.text,
-        });
-        try {
-          textLayer.addTo(layerGroup);
-        } catch (e) {}
-        const element = textLayer.pm.getElement() as HTMLTextAreaElement;
-        element.classList.add("protected-text");
-        element.style.setProperty("color", textPositions.color, "important");
-        element.style.fontSize = `${textPositions.size}px`;
-        element.style.width = `100vw`;
-        element.style.height = `fit-content`;
-        element.autocomplete = "off";
-        element.autocapitalize = "off";
-        element.spellcheck = false;
-      });
-    });
-    return () => {
-      try {
-        layerGroup.remove();
-      } catch (e) {}
-    };
-  }, [map, mapName, sharedTempPrivateDrawing, sharedMyFilters]);
-
-  useEffect(() => {
-    if (!isEditing || !map) {
+    // Skip reload when the change was triggered by edit/remove events
+    if (suppressReloadRef.current) {
+      suppressReloadRef.current = false;
       return;
     }
 
-    const polylines: Polyline[] = [];
-    const rectangles: Rectangle[] = [];
-    const polygons: Polygon[] = [];
-    const circles: Circle[] = [];
-    const texts: Marker[] = [];
-    const layerGroup = new LayerGroup();
-    try {
-      layerGroup.addTo(map);
-      layerGroup.setZIndex(1100);
-    } catch (e) {}
+    const dm = drawingManagerRef.current;
 
-    const rotationDegrees = map?._rotationDegrees;
-    const rotationCenter = map?._rotationCenter;
+    // Clear existing shapes before loading new ones (for when filter selection changes)
+    dm.clearShapes();
 
-    tempPrivateDrawing.polylines?.forEach((polylineData) => {
-      if (polylineData.mapName !== mapName) {
-        return;
-      }
-      if (polylineData.positions.length < 2) {
-        return;
-      }
-      // Apply rotation to display stored coordinates correctly
-      const displayPositions = polylineData.positions.map((pos) => {
-        if (rotationDegrees && rotationCenter) {
-          return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-        }
-        return pos;
-      });
-      const polylineLayer = polyline(displayPositions, {
-        pmIgnore: false,
-        stroke: true,
-        color: polylineData.color,
-        weight: polylineData.size,
-      });
-      polylineLayer.on("pm:edit", () => {
-        setPolylines(polylines, mapName);
-        updateGlobalMode();
-      });
-      polylineLayer.on("pm:remove", () => {
-        polylines.splice(polylines.indexOf(polylineLayer), 1);
-        setPolylines(polylines, mapName);
-        updateGlobalMode();
-      });
+    const rotationDegrees = map?.rotationDegrees ?? map?._rotationDegrees;
+    const rotationCenter = map?.rotationCenter ?? map?._rotationCenter;
 
-      polylines.push(polylineLayer);
-      try {
-        polylineLayer.addTo(layerGroup);
-      } catch (e) {}
-      setPolylines(polylines, mapName);
-    });
-    tempPrivateDrawing.rectangles?.forEach((rectangleData) => {
-      if (rectangleData.mapName !== mapName) {
-        return;
-      }
-      if (rectangleData.positions.length < 2) {
-        return;
-      }
-      // Apply rotation to display stored coordinates correctly
-      const displayPositions = rectangleData.positions.map((pos) => {
-        if (rotationDegrees && rotationCenter) {
-          return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-        }
-        return pos;
-      });
-      const rectangleLayer = rectangle(displayPositions, {
-        pmIgnore: false,
-        stroke: true,
-        color: rectangleData.color,
-        weight: rectangleData.size,
-      });
-      rectangleLayer.on("pm:edit", () => {
-        setRectangles(rectangles, mapName);
-        updateGlobalMode();
-      });
-      rectangleLayer.on("pm:remove", () => {
-        rectangles.splice(rectangles.indexOf(rectangleLayer), 1);
-        setRectangles(rectangles, mapName);
-        updateGlobalMode();
-      });
-
-      rectangles.push(rectangleLayer);
-      try {
-        rectangleLayer.addTo(layerGroup);
-      } catch (e) {}
-      setRectangles(rectangles, mapName);
-    });
-    tempPrivateDrawing.circles?.forEach((circleData) => {
-      if (circleData.mapName !== mapName) {
-        return;
-      }
-      // Apply rotation to display stored coordinates correctly
-      let displayCenter = circleData.center;
+    const transformPosition = (pos: [number, number]): [number, number] => {
       if (rotationDegrees && rotationCenter) {
-        displayCenter = rotateCoordinate(
-          circleData.center,
-          rotationDegrees,
-          rotationCenter,
-        );
+        return rotateCoordinate(pos, rotationDegrees, rotationCenter);
       }
-      const circleLayer = circle(displayCenter, {
-        pmIgnore: false,
-        stroke: true,
-        color: circleData.color,
-        weight: circleData.size,
-        radius: circleData.radius,
-      });
-      circleLayer.on("pm:edit", () => {
-        setCircles(circles, mapName);
-        updateGlobalMode();
-      });
-      circleLayer.on("pm:remove", () => {
-        circles.splice(circles.indexOf(circleLayer), 1);
-        setCircles(circles, mapName);
-        updateGlobalMode();
-      });
-
-      circles.push(circleLayer);
-      try {
-        circleLayer.addTo(layerGroup);
-      } catch (e) {}
-      setCircles(circles, mapName);
-    });
-    tempPrivateDrawing.polygons?.forEach((polygonData) => {
-      if (polygonData.mapName !== mapName) {
-        return;
-      }
-      if (polygonData.positions.length < 2) {
-        return;
-      }
-      // Apply rotation to display stored coordinates correctly
-      const displayPositions = polygonData.positions.map((pos) => {
-        if (rotationDegrees && rotationCenter) {
-          return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-        }
-        return pos;
-      });
-      const polygonLayer = polygon(displayPositions, {
-        pmIgnore: false,
-        stroke: true,
-        color: polygonData.color,
-        weight: polygonData.size,
-      });
-      polygonLayer.on("pm:edit", () => {
-        setPolygons(polygons, mapName);
-        updateGlobalMode();
-      });
-      polygonLayer.on("pm:remove", () => {
-        polygons.splice(polygons.indexOf(polygonLayer), 1);
-        setPolygons(polygons, mapName);
-        updateGlobalMode();
-      });
-
-      polygons.push(polygonLayer);
-      try {
-        polygonLayer.addTo(layerGroup);
-      } catch (e) {}
-      setPolygons(polygons, mapName);
-    });
-    tempPrivateDrawing.texts?.forEach((textPositions) => {
-      if (textPositions.mapName !== mapName) {
-        return;
-      }
-
-      // Apply rotation to display stored coordinates correctly
-      let displayPosition = textPositions.position;
-      if (rotationDegrees && rotationCenter) {
-        displayPosition = rotateCoordinate(
-          textPositions.position,
-          rotationDegrees,
-          rotationCenter,
-        );
-      }
-
-      const textLayer = marker(displayPosition, {
-        textMarker: true,
-        text: textPositions.text,
-        pmIgnore: false,
-      });
-      const element = textLayer.pm.getElement() as HTMLTextAreaElement;
-      element.style.setProperty("color", textPositions.color, "important");
-      element.style.fontSize = `${textPositions.size}px`;
-      element.autocomplete = "off";
-      element.autocapitalize = "off";
-      element.spellcheck = false;
-
-      textLayer.on("pm:edit", () => {
-        setTexts(texts, mapName);
-        updateGlobalMode();
-      });
-      textLayer.on("pm:remove", () => {
-        texts.splice(texts.indexOf(textLayer), 1);
-        setTexts(texts, mapName);
-        updateGlobalMode();
-      });
-
-      texts.push(textLayer);
-      try {
-        textLayer.addTo(layerGroup);
-      } catch (e) {}
-      setTexts(texts, mapName);
-    });
-    map.on("pm:drawstart", ({ workingLayer, shape }) => {
-      if (shape === "Line") {
-        workingLayer.on("pm:vertexadded", () => {
-          setPolylines(polylines, mapName);
-        });
-        workingLayer.on("pm:vertexremoved", () => {
-          setPolylines(polylines, mapName);
-        });
-        workingLayer.on("pm:markerdragend", () => {
-          setPolylines(polylines, mapName);
-        });
-        workingLayer.on("pm:edit", () => {
-          setPolylines(polylines, mapName);
-        });
-      } else if (shape === "Rectangle") {
-        workingLayer.on("pm:vertexadded", () => {
-          setRectangles(rectangles, mapName);
-        });
-        workingLayer.on("pm:vertexremoved", () => {
-          setRectangles(rectangles, mapName);
-        });
-        workingLayer.on("pm:markerdragend", () => {
-          setRectangles(rectangles, mapName);
-        });
-        workingLayer.on("pm:edit", () => {
-          setRectangles(rectangles, mapName);
-        });
-      } else if (shape === "Polygon") {
-        workingLayer.on("pm:vertexadded", () => {
-          setPolygons(polygons, mapName);
-        });
-        workingLayer.on("pm:vertexremoved", () => {
-          setPolygons(polygons, mapName);
-        });
-        workingLayer.on("pm:markerdragend", () => {
-          setPolygons(polygons, mapName);
-        });
-        workingLayer.on("pm:edit", () => {
-          setPolygons(polygons, mapName);
-        });
-      } else if (shape === "Circle") {
-        workingLayer.on("pm:centerplaced", () => {
-          setCircles(circles, mapName);
-        });
-        workingLayer.on("pm:markerdragend", () => {
-          setCircles(circles, mapName);
-        });
-        workingLayer.on("pm:edit", () => {
-          setCircles(circles, mapName);
-        });
-      }
-    });
-
-    map.on("pm:drawend", () => {
-      setPolylines(polylines, mapName);
-      setRectangles(rectangles, mapName);
-      setPolygons(polygons, mapName);
-      setCircles(circles, mapName);
-      updateGlobalMode();
-    });
-
-    map.on("pm:create", ({ shape, layer }) => {
-      layer.options.pmIgnore = false;
-      leaflet.PM.reInitLayer(layer);
-
-      if (shape === "Line") {
-        const polylineLayer = layer as Polyline;
-        polylines.push(polylineLayer);
-        polylineLayer.on("pm:edit", (e) => {
-          setPolylines(polylines, mapName);
-        });
-        polylineLayer.on("pm:remove", () => {
-          polylines.splice(polylines.indexOf(polylineLayer), 1);
-          setPolylines(polylines, mapName);
-          updateGlobalMode();
-        });
-      } else if (shape === "Rectangle") {
-        const rectangle = layer as Rectangle;
-        rectangles.push(rectangle);
-        rectangle.on("pm:edit", () => {
-          setRectangles(rectangles, mapName);
-        });
-        rectangle.on("pm:remove", () => {
-          rectangles.splice(rectangles.indexOf(rectangle), 1);
-          setRectangles(rectangles, mapName);
-          updateGlobalMode();
-        });
-      } else if (shape === "Polygon") {
-        const polygon = layer as Polygon;
-        polygons.push(polygon);
-        polygon.on("pm:edit", () => {
-          setPolygons(polygons, mapName);
-        });
-        polygon.on("pm:remove", () => {
-          polygons.splice(polygons.indexOf(polygon), 1);
-          setPolygons(polygons, mapName);
-          updateGlobalMode();
-        });
-      } else if (shape === "Circle") {
-        const circle = layer as Circle;
-        circles.push(circle);
-        circle.on("pm:edit", () => {
-          setCircles(circles, mapName);
-        });
-        circle.on("pm:remove", () => {
-          circles.splice(circles.indexOf(circle), 1);
-          setCircles(circles, mapName);
-          updateGlobalMode();
-        });
-      } else if (shape === "Text") {
-        const textLayer = layer as Marker;
-        texts.push(textLayer);
-        Util.setOptions(layer, {
-          draggable: true,
-        });
-
-        textLayer.pm.enable({});
-        const element = textLayer.pm.getElement() as HTMLTextAreaElement;
-        const { textColor, textSize } = useSettingsStore.getState();
-
-        element.focus();
-        element.style.setProperty("color", textColor, "important");
-        element.style.fontSize = `${textSize}px`;
-        element.autocomplete = "off";
-        element.autocapitalize = "off";
-        element.spellcheck = false;
-
-        layer.on("pm:edit", () => {
-          updateGlobalMode();
-          setTexts(texts, mapName);
-        });
-        layer.on("pm:remove", () => {
-          texts.splice(texts.indexOf(textLayer), 1);
-          setTexts(texts, mapName);
-          updateGlobalMode();
-        });
-      }
-    });
-
-    map.pm.enableDraw("Line");
-    updateGlobalMode();
-
-    return () => {
-      try {
-        map.pm.disableDraw();
-        map.pm.disableGlobalEditMode();
-        map.off("pm:drawstart");
-        map.off("pm:create");
-        map.pm.getGeomanLayers().forEach((layer) => {
-          if (layer instanceof Marker) {
-            const element = layer.getElement();
-            if (element?.children[0]?.classList.contains("protected-text")) {
-              return;
-            }
-          }
-          layer.remove();
-        });
-        layerGroup.remove();
-      } catch (e) {}
+      return pos;
     };
-  }, [isEditing, map, tempPrivateDrawing?.id]);
 
-  const updateGlobalMode = useCallback(() => {
-    if (!map) {
-      return;
-    }
-    if (map.pm.globalRemovalModeEnabled()) {
-      setGlobalMode("Removal");
-    } else if (map.pm.globalEditModeEnabled()) {
-      setGlobalMode("Edit");
-    } else if (map.pm.globalDragModeEnabled()) {
-      setGlobalMode("Drag");
-    } else {
-      const activeShape = map.pm.Draw.getActiveShape();
-      setGlobalMode(activeShape);
-    }
-  }, [map]);
+    // Add existing polylines
+    tempPrivateDrawing.polylines?.forEach((polyline, idx) => {
+      if (polyline.mapName !== mapName) return;
+      dm.addShape({
+        id: `polyline_${idx}`,
+        type: "line",
+        positions: polyline.positions.map(transformPosition),
+        color: polyline.color,
+        size: polyline.size,
+        mapName: polyline.mapName,
+      });
+    });
 
+    // Add existing rectangles
+    tempPrivateDrawing.rectangles?.forEach((rect, idx) => {
+      if (rect.mapName !== mapName) return;
+      dm.addShape({
+        id: `rectangle_${idx}`,
+        type: "rectangle",
+        positions: rect.positions.map(transformPosition),
+        color: rect.color,
+        fillColor: rect.fillColor,
+        size: rect.size,
+        mapName: rect.mapName,
+      });
+    });
+
+    // Add existing polygons
+    tempPrivateDrawing.polygons?.forEach((poly, idx) => {
+      if (poly.mapName !== mapName) return;
+      dm.addShape({
+        id: `polygon_${idx}`,
+        type: "polygon",
+        positions: poly.positions.map(transformPosition),
+        color: poly.color,
+        fillColor: poly.fillColor,
+        size: poly.size,
+        mapName: poly.mapName,
+      });
+    });
+
+    // Add existing circles
+    tempPrivateDrawing.circles?.forEach((circle, idx) => {
+      if (circle.mapName !== mapName) return;
+      dm.addShape({
+        id: `circle_${idx}`,
+        type: "circle",
+        center: transformPosition(circle.center),
+        radius: circle.radius,
+        color: circle.color,
+        fillColor: circle.fillColor,
+        size: circle.size,
+        mapName: circle.mapName,
+      });
+    });
+
+    // Add existing texts
+    tempPrivateDrawing.texts?.forEach((text, idx) => {
+      if (text.mapName !== mapName) return;
+      dm.addShape({
+        id: `text_${idx}`,
+        type: "text",
+        center: transformPosition(text.position),
+        text: text.text,
+        color: text.color,
+        size: text.size,
+        mapName: text.mapName,
+      });
+    });
+  }, [isEditing, tempPrivateDrawing, mapName, map]);
+
+  // Render saved drawings when filters are selected (keep visible during editing)
   useEffect(() => {
     if (!map) {
       return;
     }
-    const featureGroup = new FeatureGroup();
-    try {
-      featureGroup.addTo(map);
-    } catch (e) {}
-    const allFilters = [...myFilters, ...(staticDrawings || [])];
 
-    const rotationDegrees = map?._rotationDegrees;
-    const rotationCenter = map?._rotationCenter;
+    const rotationDegrees = map?.rotationDegrees ?? map?._rotationDegrees;
+    const rotationCenter = map?.rotationCenter ?? map?._rotationCenter;
 
-    allFilters.forEach((myFilter) => {
-      if (
-        !myFilter.drawing ||
-        !filters.includes(myFilter.name) ||
-        tempPrivateDrawing?.id === myFilter.drawing.id
-      ) {
-        return;
+    const transformPosition = (pos: [number, number]): [number, number] => {
+      if (rotationDegrees && rotationCenter) {
+        return rotateCoordinate(pos, rotationDegrees, rotationCenter);
       }
-      myFilter.drawing.polylines?.forEach((polylineData) => {
-        if (polylineData.mapName !== mapName) {
-          return;
-        }
-
-        if (polylineData.positions.length < 2) {
-          return;
-        }
-        try {
-          // Apply rotation to display stored coordinates correctly
-          const displayPositions = polylineData.positions.map((pos) => {
-            if (rotationDegrees && rotationCenter) {
-              return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-            }
-            return pos;
-          });
-          const polylineLayer = polyline(displayPositions, {
-            stroke: true,
-            color: polylineData.color,
-            weight: polylineData.size,
-          });
-
-          polylineLayer.addTo(featureGroup);
-        } catch (e) {}
-      });
-      myFilter.drawing.rectangles?.forEach((rectangleData) => {
-        if (rectangleData.mapName !== mapName) {
-          return;
-        }
-
-        if (rectangleData.positions.length < 2) {
-          return;
-        }
-        try {
-          // Apply rotation to display stored coordinates correctly
-          const displayPositions = rectangleData.positions.map((pos) => {
-            if (rotationDegrees && rotationCenter) {
-              return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-            }
-            return pos;
-          });
-          const rectangleLayer = rectangle(displayPositions, {
-            stroke: true,
-            color: rectangleData.color,
-            weight: rectangleData.size,
-          });
-
-          rectangleLayer.addTo(featureGroup);
-        } catch (e) {}
-      });
-      myFilter.drawing.polygons?.forEach((polygonData) => {
-        if (polygonData.mapName !== mapName) {
-          return;
-        }
-
-        if (polygonData.positions.length < 2) {
-          return;
-        }
-        try {
-          // Apply rotation to display stored coordinates correctly
-          const displayPositions = polygonData.positions.map((pos) => {
-            if (rotationDegrees && rotationCenter) {
-              return rotateCoordinate(pos, rotationDegrees, rotationCenter);
-            }
-            return pos;
-          });
-          const polygonLayer = polygon(displayPositions, {
-            stroke: true,
-            color: polygonData.color,
-            weight: polygonData.size,
-          });
-
-          polygonLayer.addTo(featureGroup);
-        } catch (e) {}
-      });
-      myFilter.drawing.circles?.forEach((circleData) => {
-        if (circleData.mapName !== mapName) {
-          return;
-        }
-
-        try {
-          // Apply rotation to display stored coordinates correctly
-          let displayCenter = circleData.center;
-          if (rotationDegrees && rotationCenter) {
-            displayCenter = rotateCoordinate(
-              circleData.center,
-              rotationDegrees,
-              rotationCenter,
-            );
-          }
-          const circleLayer = circle(displayCenter, {
-            stroke: true,
-            color: circleData.color,
-            weight: circleData.size,
-            radius: circleData.radius,
-          });
-
-          circleLayer.addTo(featureGroup);
-        } catch (e) {}
-      });
-      myFilter.drawing.texts?.forEach((textPositions) => {
-        if (textPositions.mapName !== mapName) {
-          return;
-        }
-        try {
-          // Apply rotation to display stored coordinates correctly
-          let displayPosition = textPositions.position;
-          if (rotationDegrees && rotationCenter) {
-            displayPosition = rotateCoordinate(
-              textPositions.position,
-              rotationDegrees,
-              rotationCenter,
-            );
-          }
-          const textLayer = marker(displayPosition, {
-            pmIgnore: false,
-            interactive: false,
-            textMarker: true,
-            text: textPositions.text,
-          });
-          textLayer.addTo(featureGroup);
-          const element = textLayer.pm.getElement() as HTMLTextAreaElement;
-          element.classList.add("protected-text");
-          element.style.setProperty("color", textPositions.color, "important");
-          element.style.fontSize = `${textPositions.size}px`;
-          element.style.width = `100vw`;
-          element.style.height = `fit-content`;
-          element.autocomplete = "off";
-          element.autocapitalize = "off";
-          element.spellcheck = false;
-        } catch (e) {}
-      });
-    });
-    return () => {
-      try {
-        featureGroup.remove();
-      } catch (e) {}
+      return pos;
     };
-  }, [map, myFilters, filters, tempPrivateDrawing?.id, staticDrawings]);
+
+    // Get selected drawings from myFilters (exclude currently editing drawing)
+    const editingName = isEditing ? tempPrivateDrawing?.name : null;
+    const selectedDrawings = myFilters.filter(
+      (filter) => filters.includes(filter.name) && filter.drawing && filter.name !== editingName
+    );
+
+    if (selectedDrawings.length === 0) {
+      // No drawings to show
+      if (savedDrawingsLayerRef.current) {
+        map?.removeLayer?.(savedDrawingsLayerRef.current);
+        savedDrawingsLayerRef.current.destroy();
+        savedDrawingsLayerRef.current = null;
+      }
+      return;
+    }
+
+    // Create or reuse the drawing layer
+    if (!savedDrawingsLayerRef.current) {
+      savedDrawingsLayerRef.current = new DrawingLayer({ interactive: false });
+      map.addLayer(savedDrawingsLayerRef.current, { zIndex: 40 });
+    }
+
+    const layer = savedDrawingsLayerRef.current;
+    layer.clearShapes();
+
+    // Add all selected drawings
+    let shapeIdx = 0;
+    for (const filter of selectedDrawings) {
+      const drawing = filter.drawing;
+      if (!drawing) continue;
+
+      // Add polylines
+      drawing.polylines?.forEach((polyline) => {
+        if (polyline.mapName !== mapName) return;
+        layer.addShape({
+          id: `saved_polyline_${shapeIdx++}`,
+          type: "line",
+          positions: polyline.positions.map(transformPosition),
+          color: polyline.color,
+          size: polyline.size,
+          mapName: polyline.mapName,
+        });
+      });
+
+      // Add rectangles
+      drawing.rectangles?.forEach((rect) => {
+        if (rect.mapName !== mapName) return;
+        layer.addShape({
+          id: `saved_rectangle_${shapeIdx++}`,
+          type: "rectangle",
+          positions: rect.positions.map(transformPosition),
+          color: rect.color,
+          fillColor: rect.fillColor,
+          size: rect.size,
+          mapName: rect.mapName,
+        });
+      });
+
+      // Add polygons
+      drawing.polygons?.forEach((poly) => {
+        if (poly.mapName !== mapName) return;
+        layer.addShape({
+          id: `saved_polygon_${shapeIdx++}`,
+          type: "polygon",
+          positions: poly.positions.map(transformPosition),
+          color: poly.color,
+          fillColor: poly.fillColor,
+          size: poly.size,
+          mapName: poly.mapName,
+        });
+      });
+
+      // Add circles
+      drawing.circles?.forEach((circle) => {
+        if (circle.mapName !== mapName) return;
+        layer.addShape({
+          id: `saved_circle_${shapeIdx++}`,
+          type: "circle",
+          center: transformPosition(circle.center),
+          radius: circle.radius,
+          color: circle.color,
+          fillColor: circle.fillColor,
+          size: circle.size,
+          mapName: circle.mapName,
+        });
+      });
+
+      // Add texts
+      drawing.texts?.forEach((text) => {
+        if (text.mapName !== mapName) return;
+        layer.addShape({
+          id: `saved_text_${shapeIdx++}`,
+          type: "text",
+          center: transformPosition(text.position),
+          text: text.text,
+          color: text.color,
+          size: text.size,
+          mapName: text.mapName,
+        });
+      });
+    }
+
+    return () => {
+      if (savedDrawingsLayerRef.current) {
+        map?.removeLayer?.(savedDrawingsLayerRef.current);
+        savedDrawingsLayerRef.current.destroy();
+        savedDrawingsLayerRef.current = null;
+      }
+    };
+  }, [map, filters, myFilters, mapName, isEditing, tempPrivateDrawing?.name]);
 
   if (hidden) {
-    return <></>;
+    return null;
   }
+
+  const updateGlobalMode = (mode: DrawingMode) => {
+    if (globalMode === mode) {
+      setGlobalMode("none");
+    } else {
+      setGlobalMode(mode);
+      trackEvent(`drawing_${mode}`);
+    }
+  };
+
+  const isShape =
+    globalMode === "line" ||
+    globalMode === "rectangle" ||
+    globalMode === "polygon" ||
+    globalMode === "circle";
+  const isText = globalMode === "text";
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1071,75 +600,37 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     if (!tempPrivateDrawing?.name) {
       return;
     }
-    const newId = `drawing_${tempPrivateDrawing.name}_${Date.now()}`;
-    const id = tempPrivateDrawing.id ?? newId;
-
-    const drawing: Drawing = {
-      id,
-      polylines: tempPrivateDrawing.polylines,
-      rectangles: tempPrivateDrawing.rectangles,
-      polygons: tempPrivateDrawing.polygons,
-      circles: tempPrivateDrawing.circles,
-      texts: tempPrivateDrawing.texts,
-    };
 
     const newMyFilters = [...myFilters];
     const myFilter = newMyFilters.find(
       (filter) => filter.name === tempPrivateDrawing.name,
     );
-    if (!myFilter) {
-      return;
-    }
 
-    if (tempPrivateDrawing.id) {
-      myFilter.drawing = drawing;
-      trackEvent("Private Drawing: Update", {
-        props: { name: tempPrivateDrawing.name },
-      });
-      setFilters([...filters.filter((f) => f !== id), tempPrivateDrawing.id]);
+    if (myFilter) {
+      // Update existing filter
+      myFilter.drawing = tempPrivateDrawing as Drawing;
     } else {
-      myFilter.drawing = {
-        ...drawing,
-        polylines: [
-          ...(drawing.polylines || []),
-          ...(myFilter.drawing?.polylines || []),
-        ],
-        rectangles: [
-          ...(drawing.rectangles || []),
-          ...(myFilter.drawing?.rectangles || []),
-        ],
-        polygons: [
-          ...(drawing.polygons || []),
-          ...(myFilter.drawing?.polygons || []),
-        ],
-        circles: [
-          ...(drawing.circles || []),
-          ...(myFilter.drawing?.circles || []),
-        ],
-        texts: [...(drawing.texts || []), ...(myFilter.drawing?.texts || [])],
-      };
-
-      trackEvent("Private Drawing: Add", {
-        props: { name: tempPrivateDrawing.name },
+      // Create new filter with drawing
+      newMyFilters.push({
+        name: tempPrivateDrawing.name,
+        drawing: tempPrivateDrawing as Drawing,
       });
-      setFilters([...filters, id]);
     }
 
-    if (myFilter.isShared && myFilter.url) {
+    if (myFilter?.isShared && myFilter.url) {
       putSharedFilters(myFilter.url, myFilter);
     }
+
     setMyFilters(newMyFilters);
     setFilters([
       ...filters.filter((f) => f !== tempPrivateDrawing.name),
       tempPrivateDrawing.name,
     ]);
+    setGlobalMode("none");
     setTempPrivateDrawing(null);
+    trackEvent("drawing_save");
   };
 
-  const isText = globalMode === "Text";
-  const isShape = ["Line", "Rectangle", "Polygon", "Circle"].includes(
-    globalMode,
-  );
   return (
     <Popover
       open={isEditing}
@@ -1157,7 +648,15 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         </TooltipTrigger>
         <TooltipContent side="bottom">Add Drawing</TooltipContent>
       </Tooltip>
-      <PopoverContent onInteractOutside={(e) => e.preventDefault()}>
+      <PopoverContent
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing dialog when in drawing mode - ESC should cancel current action
+          if (globalMode !== "none") {
+            e.preventDefault();
+          }
+        }}
+      >
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4">
             <div className="space-y-2">
@@ -1190,9 +689,30 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                   className="col-span-2 h-8"
                   filter={tempPrivateDrawing?.name}
                   onFilterSelect={(value) => {
-                    setTempPrivateDrawing({
-                      name: value,
-                    });
+                    // Clear current shapes from the drawing manager immediately
+                    drawingManagerRef.current?.clearShapes();
+
+                    // Check if this filter already has a drawing
+                    const existingFilter = myFilters.find(
+                      (f) => f.name === value && f.drawing
+                    );
+                    if (existingFilter?.drawing) {
+                      // Load the existing drawing
+                      setTempPrivateDrawing({
+                        ...existingFilter.drawing,
+                        name: value,
+                      });
+                    } else {
+                      // Create a new drawing - clear any previous drawing data
+                      setTempPrivateDrawing({
+                        name: value,
+                        polylines: [],
+                        rectangles: [],
+                        polygons: [],
+                        circles: [],
+                        texts: [],
+                      });
+                    }
                   }}
                   disabled={tempPrivateDrawing?.id !== undefined}
                 />
@@ -1201,13 +721,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
               <div className="flex items-center space-x-2 flex-wrap">
                 <Button
                   size="icon"
-                  variant={globalMode === "Line" ? "default" : "outline"}
+                  variant={globalMode === "line" ? "default" : "outline"}
                   type="button"
                   title="Draw Line"
-                  onClick={() => {
-                    map?.pm.enableDraw("Line");
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("line")}
                 >
                   <svg
                     width="24"
@@ -1220,13 +737,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={globalMode === "Rectangle" ? "default" : "outline"}
+                  variant={globalMode === "rectangle" ? "default" : "outline"}
                   type="button"
                   title="Draw Rectangle"
-                  onClick={() => {
-                    map?.pm.enableDraw("Rectangle");
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("rectangle")}
                 >
                   <svg
                     width="24"
@@ -1239,13 +753,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={globalMode === "Polygon" ? "default" : "outline"}
+                  variant={globalMode === "polygon" ? "default" : "outline"}
                   type="button"
                   title="Draw Polygon"
-                  onClick={() => {
-                    map?.pm.enableDraw("Polygon");
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("polygon")}
                 >
                   <svg
                     width="24"
@@ -1258,13 +769,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={globalMode === "Circle" ? "default" : "outline"}
+                  variant={globalMode === "circle" ? "default" : "outline"}
                   type="button"
                   title="Draw Circle"
-                  onClick={() => {
-                    map?.pm.enableDraw("Circle");
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("circle")}
                 >
                   <svg
                     width="24"
@@ -1277,13 +785,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={isText ? "default" : "outline"}
+                  variant={globalMode === "text" ? "default" : "outline"}
                   title="Add Text"
                   type="button"
-                  onClick={() => {
-                    map?.pm.enableDraw("Text");
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("text")}
                 >
                   <svg
                     width="24"
@@ -1299,13 +804,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
               <div className="flex items-center space-x-2 flex-wrap">
                 <Button
                   size="icon"
-                  variant={globalMode === "Edit" ? "default" : "outline"}
+                  variant={globalMode === "edit" ? "default" : "outline"}
                   title="Edit Mode"
                   type="button"
-                  onClick={() => {
-                    map?.pm.toggleGlobalEditMode();
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("edit")}
                 >
                   <svg
                     width="24"
@@ -1318,13 +820,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={globalMode === "Drag" ? "default" : "outline"}
-                  title="Drag Text"
+                  variant={globalMode === "drag" ? "default" : "outline"}
+                  title="Drag Mode"
                   type="button"
-                  onClick={() => {
-                    map?.pm.toggleGlobalDragMode();
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("drag")}
                 >
                   <svg
                     width="24"
@@ -1337,13 +836,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                 </Button>
                 <Button
                   size="icon"
-                  variant={globalMode === "Removal" ? "default" : "outline"}
+                  variant={globalMode === "remove" ? "default" : "outline"}
                   title="Remove Layer"
                   type="button"
-                  onClick={() => {
-                    map?.pm.toggleGlobalRemovalMode();
-                    updateGlobalMode();
-                  }}
+                  onClick={() => updateGlobalMode("remove")}
                 >
                   <svg
                     width="24"
@@ -1381,9 +877,22 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                   />
                 )}
               </div>
+              {(globalMode === "rectangle" ||
+                globalMode === "polygon" ||
+                globalMode === "circle") && (
+                <div className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor="fillColor">Background</Label>
+                  <ColorPicker
+                    id="fillColor"
+                    className="col-span-2 h-8"
+                    value={drawingFillColor}
+                    onChange={setDrawingFillColor}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-3 items-center gap-4">
                 <Label htmlFor="radius">Size</Label>
-                {globalMode === "Text" ? (
+                {globalMode === "text" ? (
                   <Slider
                     id="radius"
                     className="col-span-2 h-8 p-0"
@@ -1391,8 +900,8 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                     onValueChange={(values) => {
                       setTextSize(values[0]);
                     }}
-                    min={1}
-                    max={50}
+                    min={8}
+                    max={64}
                   />
                 ) : isShape ? (
                   <Slider
@@ -1402,29 +911,35 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
                     onValueChange={(values) => {
                       setDrawingSize(values[0]);
                     }}
-                    step={0.5}
-                    min={0.5}
+                    min={1}
                     max={20}
                   />
                 ) : (
-                  <Slider id="radius" className="col-span-2 h-8 p-0" disabled />
+                  <Slider
+                    id="radius"
+                    className="col-span-2 h-8 p-0"
+                    disabled
+                    value={[1]}
+                    onValueChange={() => {}}
+                    min={1}
+                    max={10}
+                  />
                 )}
               </div>
               <Separator className="my-2" />
             </div>
           </div>
           <div className="flex items-center space-x-2 mt-2">
-            <Button
-              size="sm"
-              type="submit"
-              disabled={!tempPrivateDrawing?.name}
-            >
+            <Button size="sm" type="submit" disabled={!tempPrivateDrawing?.name}>
               Save
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setTempPrivateDrawing(null)}
+              onClick={() => {
+                setGlobalMode("none");
+                setTempPrivateDrawing(null);
+              }}
               type="button"
             >
               Cancel

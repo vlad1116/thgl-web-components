@@ -370,6 +370,32 @@ export function SettingsDialogContent({
           {/* Icon Sizes & Map Behavior */}
           <Section title="Icon Sizes">
             <IconSizes filters={filters} />
+            <div className="flex items-center justify-between mt-3">
+              <Label htmlFor="dynamic-icon-size">
+                Dynamic icon size (zoom-based)
+              </Label>
+              <Switch
+                id="dynamic-icon-size"
+                checked={profileSettings.dynamicIconSize}
+                onCheckedChange={settingsStore.toggleDynamicIconSize}
+              />
+            </div>
+            {profileSettings.dynamicIconSize && (
+              <div className="flex items-center gap-2 justify-between mt-2">
+                <Label htmlFor="dynamic-icon-factor">Factor</Label>
+                <Slider
+                  id="dynamic-icon-factor"
+                  min={0.1}
+                  max={1}
+                  step={0.05}
+                  value={[profileSettings.dynamicIconSizeFactor]}
+                  onValueChange={([v]) =>
+                    settingsStore.setDynamicIconSizeFactor(v)
+                  }
+                  className="w-32"
+                />
+              </div>
+            )}
           </Section>
 
           {!hideAppSettings && (
@@ -450,6 +476,25 @@ export function SettingsDialogContent({
                         value={profileSettings.traceLineColor}
                         onChange={settingsStore.setTraceLineColor}
                       />
+                    </div>
+                    <div className="flex items-center gap-2 justify-between">
+                      <Label htmlFor="trace-line-style">Trace Line Style</Label>
+                      <Select
+                        value={profileSettings.traceLineStyle}
+                        onValueChange={(v) =>
+                          settingsStore.setTraceLineStyle(
+                            v as "dots" | "line",
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-24" id="trace-line-style">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dots">Dots</SelectItem>
+                          <SelectItem value="line">Line</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}

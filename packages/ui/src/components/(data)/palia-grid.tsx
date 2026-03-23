@@ -1,7 +1,8 @@
 "use client";
 import { useMapStore } from "../(interactive-map)/store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSettingsStore } from "@repo/lib";
+import { GridLayer } from "@repo/lib/web-map";
 
 const villagePadding = ((-68999 - -59999) / 2) * 0.6;
 const villageGrid = [
@@ -27,89 +28,45 @@ const elderwoodGrid = [
   [52008 + elderwoodPadding, 26929 + elderwoodPadding],
 ] as [[number, number], [number, number]];
 
+const gridBoundsMap: Record<string, [[number, number], [number, number]]> = {
+  VillageWorld: villageGrid,
+  AdventureZoneWorld: bayGrid,
+  MajiMarket: fairgroundsGrid,
+  HousingPlot: housingGrid,
+  AZ2_Root: elderwoodGrid,
+};
+
 export function PaliaGrid({ force }: { force?: boolean }) {
-  const { map, leaflet } = useMapStore();
+  const map = useMapStore((state) => state.map);
   const showGrid = force || useSettingsStore((state) => state.showGrid);
+  const gridLayerRef = useRef<GridLayer | null>(null);
 
   useEffect(() => {
-    if (!map || !leaflet || !showGrid) {
+    if (!map || !showGrid) {
       return;
     }
 
-    let grid: [[number, number], [number, number]];
-    if (map.mapName === "VillageWorld") {
-      grid = villageGrid;
-    } else if (map.mapName === "AdventureZoneWorld") {
-      grid = bayGrid;
-    } else if (map.mapName === "MajiMarket") {
-      grid = fairgroundsGrid;
-    } else if (map.mapName === "HousingPlot") {
-      grid = housingGrid;
-    } else if (map.mapName === "AZ2_Root") {
-      grid = elderwoodGrid;
-    } else {
+    const bounds = gridBoundsMap[map.mapName];
+    if (!bounds) {
       return;
     }
 
-    const layerGroup = new leaflet.LayerGroup();
-    try {
-      layerGroup.addTo(map);
+    const gridLayer = new GridLayer({
+      bounds,
+      divisions: 10,
+      color: "#ffffff",
+      opacity: 0.6,
+      showLabels: true,
+      labelOpacity: 0.9,
+    });
 
-      const areas = 10;
-      const offset = 0;
-      const zoneSize = (grid[1][1] - grid[0][1]) / areas;
-
-      for (let i = 0; i < areas; i++) {
-        for (let j = 0; j < areas; j++) {
-          leaflet
-            .rectangle(
-              [
-                [
-                  grid[0][0] + j * zoneSize + offset,
-                  grid[0][1] + i * zoneSize + offset,
-                ],
-                [
-                  grid[0][0] + j * zoneSize + zoneSize + offset,
-                  grid[0][1] + i * zoneSize + zoneSize + offset,
-                ],
-              ],
-              {
-                color: "#fff",
-                fill: false,
-                opacity: 0.2,
-                weight: 1,
-                interactive: false,
-                pane: "shadowPane",
-              },
-            )
-            .addTo(layerGroup);
-          leaflet
-            .marker(
-              [
-                grid[0][0] + j * zoneSize + zoneSize / 2 + offset + 6,
-                grid[0][1] + i * zoneSize + zoneSize / 2 + offset - 6,
-              ],
-              {
-                icon: leaflet.divIcon({
-                  className: "zone-label",
-                  html: `${String.fromCharCode(97 + i)}${j + 1}`.toUpperCase(),
-                }),
-                interactive: false,
-                pane: "shadowPane",
-              },
-            )
-            .addTo(layerGroup);
-        }
-      }
-    } catch (e) {
-      //
-    }
+    map.addLayer(gridLayer, { zIndex: 30 });
+    gridLayerRef.current = gridLayer;
 
     return () => {
-      try {
-        layerGroup.removeFrom(map);
-      } catch (e) {
-        //
+      if (map && gridLayerRef.current) {
+        map.removeLayer(gridLayerRef.current);
+        gridLayerRef.current = null;
       }
     };
   }, [map, showGrid]);

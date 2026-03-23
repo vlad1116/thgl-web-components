@@ -30,7 +30,7 @@ import {
   Regions,
   TraceLine,
 } from "../(interactive-map)";
-import { Actions, Toaster } from "../(controls)";
+import { Actions, MapControls, Toaster } from "../(controls)";
 import { MarkersSearch } from "../(controls)/markers-search";
 import { Whiteboard } from "../(peer)";
 import { MapHotkeys } from "./map-hotkeys";
@@ -162,6 +162,7 @@ export function App({
                   iconsPath={version?.more.icons}
                 />
                 <PrivateDrawing hidden={lockedWindow} />
+                <MapControls />
               </Actions>
               <LivePlayer
                 markerOptions={appConfig.markerOptions}

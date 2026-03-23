@@ -10,7 +10,6 @@ export const TAG_MAPPING: Record<string, string> = {
   "thgl-web-components": "Development",
   monorepo: "Development",
   TurboRepo: "Development",
-  Leaflet: "Development",
   WebGL2: "Development",
   WM_INPUT: "Development",
   PostMessage: "Development",

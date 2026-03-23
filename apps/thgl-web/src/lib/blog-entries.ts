@@ -420,12 +420,10 @@ The codebase is organized as a **TurboRepo monorepo** — each game has its own 
 It's grown organically over the years, and honestly, **I wouldn't structure it this way if I started fresh today**. But it works, and it's what we have.
 
 ### High-Performance Maps
-The current maps are built on **Leaflet** and optimized for performance — even with thousands of markers.
-
-But I'm also working on a **modern replacement with WebGL2 support** (check out the **feat/thgl-map** branch if you're curious). The new renderer will support:
+The maps are built on a **custom WebGL2 engine** optimized for performance — handling thousands of markers with features like:
 - 🔄 **Map rotation**
 - 🎯 **Perspective changes**
-- ✨ **Smoother controls and interactions**
+- ✨ **Smooth controls and interactions**
 
 It's still experimental, but it's coming.
 
@@ -460,7 +458,6 @@ Thanks for being part of this journey.
       "monorepo",
       "TurboRepo",
       "Overwolf",
-      "Leaflet",
       "WebGL2",
       "Claude Code",
       "CLAUDE.md",

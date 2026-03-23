@@ -1,5 +1,5 @@
 export * from "./types";
-export { WebMap } from "./webmap";
+export { WebMap, type WebMapEventMap } from "./webmap";
 export { TileLayer } from "./layers/tiles";
 export {
   IconMarkerLayer,
@@ -7,6 +7,14 @@ export {
   DEFAULT_CIRCLE_SHEET,
 } from "./layers/icon-markers";
 export { GridLayer, type GridLayerOptions } from "./layers/grid";
+export { DrawingLayer, type DrawingShape, type DrawingLayerOptions } from "./layers/drawing";
+export { ImageOverlayLayer, type ImageOverlayOptions } from "./layers/image-overlay";
+export {
+  DrawingManager,
+  type DrawingMode,
+  type DrawingManagerOptions,
+  type DrawingManagerEventMap,
+} from "./drawing/drawing-manager";
 export { createAffineProjection } from "./projections/affine";
 export {
   type ColorBlindMode,

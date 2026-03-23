@@ -9,6 +9,7 @@ export { IconPicker } from "./icon-picker";
 export { IconSizes } from "./icon-sizes";
 export { SettingsDialogContent } from "./settings-dialog-content";
 export { FilterSettingsPopover } from "./filter-settings-popover";
+export { MapControls } from "./map-controls";
 export { playAlertSound, ALERT_SOUND_OPTIONS } from "./audio-alert";
 export type { AudioAlertSound } from "./audio-alert";
 

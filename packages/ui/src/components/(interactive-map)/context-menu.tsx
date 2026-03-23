@@ -24,7 +24,7 @@ export function ContextMenu({
 }) {
   const [openShowMapView, setOpenShowMapView] = useState(false);
   const map = useMap();
-  const mapContainer = map?.getPane("mapPane");
+  const mapContainer = map?.getContainer()?.parentElement;
   const setTempPrivateNode = useSettingsStore(
     (state) => state.setTempPrivateNode,
   );

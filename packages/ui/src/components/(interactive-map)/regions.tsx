@@ -1,66 +1,113 @@
 "use client";
-import { FeatureGroup, Polygon } from "leaflet";
-import { useEffect } from "react";
+
+import { useEffect, useRef } from "react";
+import { useMap } from "./store";
+import { rotateCoordinate } from "./rotation";
 import { useSettingsStore, useUserStore } from "@repo/lib";
 import { REGION_FILTERS, useCoordinates, useT } from "../(providers)";
-import { useMap } from "./store";
-import CanvasMarker from "./canvas-marker";
+import { DrawingLayer } from "@repo/lib/web-map";
+
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
 
 export function Regions(): JSX.Element {
   const map = useMap();
   const t = useT();
   const { regions } = useCoordinates();
-  const mapName = useUserStore((state) => state.mapName);
   const filters = useUserStore((state) => state.filters);
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
+  const layerRef = useRef<DrawingLayer | null>(null);
 
-  const showRegionBorders = filters.includes(REGION_FILTERS[0].id);
-  const showRegionNames = filters.includes(REGION_FILTERS[1].id);
+  const showBorders = filters.includes("region_borders");
+  const showNames = filters.includes("region_names");
 
   useEffect(() => {
-    if (!map || (!showRegionBorders && !showRegionNames)) {
+    if (!map) return;
+
+    if (!showBorders && !showNames) {
+      // Remove layer if it exists
+      if (layerRef.current) {
+        layerRef.current.clearShapes();
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
       return;
     }
-    const featureGroup = new FeatureGroup(undefined, { pane: "shadowPane" });
-    regions.forEach((region, index) => {
-      if ("mapName" in region && region.mapName !== mapName) {
-        return;
+
+    // Create layer if needed
+    if (!layerRef.current) {
+      layerRef.current = new DrawingLayer({ interactive: false });
+      map.addLayer(layerRef.current, { zIndex: 20 });
+    }
+
+    const layer = layerRef.current;
+    layer.clearShapes();
+
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+
+    const applyRotation = (
+      point: [number, number],
+    ): [number, number] => {
+      if (rotationDegrees && rotationCenter) {
+        return rotateCoordinate(point, rotationDegrees, rotationCenter);
+      }
+      return point;
+    };
+
+    const filteredRegions = regions.filter(
+      (r) => !r.mapName || r.mapName === map.mapName,
+    );
+
+    for (let i = 0; i < filteredRegions.length; i++) {
+      const region = filteredRegions[i];
+      const hue = (i * 360) / filteredRegions.length;
+
+      if (showBorders && region.border.length >= 3) {
+        const positions = region.border.map(applyRotation);
+        layer.addShape({
+          id: `region_${region.id}`,
+          type: "polygon",
+          positions,
+          color: hslToHex(hue, 60, 50),
+          size: 3,
+          mapName: map.mapName,
+        });
       }
 
-      const hue = (index * 360) / regions.length;
-      const polygon = new Polygon(region.border, {
-        color: `hsl(${hue} 60% 50%)`,
-        weight: 3,
-        fillOpacity: 0,
-        interactive: false,
-        pane: "shadowPane",
-      });
+      if (showNames) {
+        const center = applyRotation(region.center);
+        layer.addShape({
+          id: `region_label_${region.id}`,
+          type: "text",
+          center,
+          text: t(region.id),
+          size: 16 * baseIconSize,
+          color: "#e6e5e3",
+          mapName: map.mapName,
+        });
+      }
+    }
 
-      try {
-        if (showRegionBorders) {
-          polygon.addTo(featureGroup);
-        }
-        if (showRegionNames) {
-          new CanvasMarker(region.center, {
-            id: region.id,
-            text: t(region.id),
-            interactive: false,
-            baseRadius: 10,
-            radius: 10 * baseIconSize,
-            pane: "markerPane",
-          }).addTo(featureGroup);
-        }
-      } catch (e) {}
-    });
-    try {
-      featureGroup.addTo(map);
-    } catch (e) {}
     return () => {
-      try {
-        featureGroup.remove();
-      } catch (e) {}
+      if (layerRef.current) {
+        layerRef.current.clearShapes();
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
     };
-  }, [map, baseIconSize, showRegionBorders, showRegionNames]);
+  }, [map, regions, showBorders, showNames, baseIconSize, t]);
 
   return <></>;
 }

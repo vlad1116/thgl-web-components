@@ -34,12 +34,14 @@ export type Drawing = {
     positions: [number, number][];
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   polygons?: {
     positions: [number, number][];
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   circles?: {
@@ -47,6 +49,7 @@ export type Drawing = {
     radius: number;
     size: number;
     color: string;
+    fillColor?: string;
     mapName: string;
   }[];
   texts?: {
@@ -114,6 +117,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   traceLineLength: 100,
   traceLineRate: 5,
   traceLineColor: "#1ccdd1B3",
+  traceLineStyle: "dots" as "dots" | "line",
   audioAlertsMuted: false,
   audioAlertRange: 1000,
   audioAlertSound: "chime" as const,
@@ -128,10 +132,13 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   tempPrivateNode: null,
   tempPrivateDrawing: null,
   drawingColor: "#FFFFFFAA",
+  drawingFillColor: "#FFFFFF33",
   drawingSize: 4,
   textColor: "#1ccdd1",
   textSize: 20,
   baseIconSize: 1,
+  dynamicIconSize: true,
+  dynamicIconSizeFactor: 0.67,
   playerIconSize: 1,
   iconSizeByGroup: {},
   iconSizeByFilter: {},
@@ -178,6 +185,7 @@ export type ProfileSettings = {
   traceLineLength: number;
   traceLineRate: number;
   traceLineColor: string;
+  traceLineStyle: "dots" | "line";
   audioAlertsMuted: boolean;
   audioAlertRange: number;
   audioAlertSound: "chime" | "ping" | "beacon" | "soft";
@@ -192,10 +200,13 @@ export type ProfileSettings = {
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
   tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null;
   drawingColor: string;
+  drawingFillColor: string;
   drawingSize: number;
   textColor: string;
   textSize: number;
   baseIconSize: number;
+  dynamicIconSize: boolean;
+  dynamicIconSizeFactor: number;
   playerIconSize: number;
   iconSizeByGroup: Record<string, number>;
   iconSizeByFilter: Record<string, number>;
@@ -251,6 +262,7 @@ export interface ProfileActions {
   setTraceLineLength: (traceLineLength: number) => void;
   setTraceLineRate: (traceLineRate: number) => void;
   setTraceLineColor: (traceLineColor: string) => void;
+  setTraceLineStyle: (style: "dots" | "line") => void;
   toggleAudioAlertsMuted: () => void;
   setAudioAlertRange: (range: number) => void;
   setAudioAlertSound: (sound: "chime" | "ping" | "beacon" | "soft") => void;
@@ -274,10 +286,13 @@ export interface ProfileActions {
     tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null,
   ) => void;
   setDrawingColor: (drawingColor: string) => void;
+  setDrawingFillColor: (drawingFillColor: string) => void;
   setDrawingSize: (drawingSize: number) => void;
   setTextColor: (textColor: string) => void;
   setTextSize: (textSize: number) => void;
   setBaseIconSize: (baseIconSize: number) => void;
+  toggleDynamicIconSize: () => void;
+  setDynamicIconSizeFactor: (factor: number) => void;
   setPlayerIconSize: (playerIconSize: number) => void;
   setIconSizeByGroup: (group: string, size: number) => void;
   setIconSizeByFilter: (id: string, size: number) => void;
@@ -628,6 +643,8 @@ export const useSettingsStore = create(
             mapTransform: null,
             playerIconSize: 1,
             baseIconSize: 1,
+            dynamicIconSize: true,
+            dynamicIconSizeFactor: 0.67,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
           });
@@ -640,6 +657,8 @@ export const useSettingsStore = create(
             mapTransform: null,
             playerIconSize: 1,
             baseIconSize: 1,
+            dynamicIconSize: true,
+            dynamicIconSizeFactor: 0.67,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
             // Accessibility
@@ -654,6 +673,7 @@ export const useSettingsStore = create(
             traceLineLength: 100,
             traceLineRate: 5,
             traceLineColor: "#1ccdd1B3",
+            traceLineStyle: "dots",
             // Audio alerts
             audioAlertsMuted: false,
             audioAlertRange: 1000,
@@ -825,6 +845,10 @@ export const useSettingsStore = create(
           updateSettings({ traceLineColor });
         },
 
+        setTraceLineStyle: (traceLineStyle: "dots" | "line") => {
+          updateSettings({ traceLineStyle });
+        },
+
         toggleAudioAlertsMuted: () => {
           const state = get();
           updateSettings({ audioAlertsMuted: !state.audioAlertsMuted });
@@ -949,6 +973,10 @@ export const useSettingsStore = create(
           updateSettings({ drawingColor });
         },
 
+        setDrawingFillColor: (drawingFillColor) => {
+          updateSettings({ drawingFillColor });
+        },
+
         setDrawingSize: (drawingSize) => {
           updateSettings({ drawingSize });
         },
@@ -963,6 +991,14 @@ export const useSettingsStore = create(
 
         setBaseIconSize: (baseIconSize) => {
           updateSettings({ baseIconSize });
+        },
+
+        toggleDynamicIconSize: () => {
+          updateSettings({ dynamicIconSize: !get().dynamicIconSize });
+        },
+
+        setDynamicIconSizeFactor: (dynamicIconSizeFactor) => {
+          updateSettings({ dynamicIconSizeFactor: Math.max(0, Math.min(1, dynamicIconSizeFactor)) });
         },
 
         setPlayerIconSize: (playerIconSize) => {

@@ -1,6 +1,7 @@
 import type { Layer, LatLng, RenderState } from "../types";
 import { createProgram } from "../utils/gl";
 import { ColorBlindMode } from "../utils/color-blind";
+import { devLog } from "../../dev-log";
 
 // Simple icon marker layer that draws textured quads from one or more sprite sheets.
 // Batches draw calls per sheet texture and uses instancing within each batch.
@@ -20,18 +21,24 @@ export interface IconRect {
 export interface IconMarkerInstance {
   id: string;
   latLng: LatLng;
-  size: number; // pixel size of the square on screen (before highlight)
+  size: number; // pixel height on screen (before highlight)
+  sizeW?: number; // optional pixel width (defaults to size for square icons)
   sheet: string; // sheet name
   rect: IconRect; // sub-rect in pixels on the sheet image
   key?: string; // type/category key for grouping
   z?: number; // optional elevation for relative z-arrow logic
   isHighlighted?: boolean;
   isDiscovered?: boolean; // greyscale + alpha reduction
-  zPos?: "top" | "bottom" | null;
+  zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
   zMag?: number; // 0..1 magnitude of relative z (for halo)
   isSelected?: boolean;
+  alwaysOnTop?: boolean; // render above all other markers (e.g. player)
+  noHitTest?: boolean; // skip in pick/pickAll (e.g. labels)
+  screenOffsetY?: number; // screen-space Y offset in world pixels (negative = up)
   rotation?: number; // radians
   keepUpright?: boolean; // do not rotate with map bearing
+  tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
+  isStacked?: boolean; // show indicator for multiple spawns at same location
 }
 
 type SheetTex = { name: string; tex: WebGLTexture; w: number; h: number };
@@ -46,30 +53,38 @@ in vec2 a_size;     // size in px
 in vec4 a_uv;       // uv origin (xy) and size (zw)
 in float a_disc;    // per-instance discovered flag (0/1)
 in vec2 a_flags;    // x: normalized height, y: zpos(-1/0/1)
-in float a_count;   // stacked count (>=1)
+in float a_count;   // 1=single, 2=stacked (multiple spawns at same location)
 in float a_angle;   // rotation in radians
 in float a_renderMode; // 0=icon, 1=height stem
 in float a_keepUpright; // 1=billboard mode, 0=use own rotation
+in vec4 a_tint;     // RGBA tint color (1,1,1,1 = no tint)
 uniform mat3 u_view; // world->clip
 uniform float u_pitch; // camera pitch for 3D effect
 uniform float u_bearing; // camera bearing for perspective direction
 uniform vec2 u_screen; // screen dimensions for billboard scaling
 uniform float u_zoom; // zoom level
+uniform float u_minZoom;
+uniform float u_maxZoom;
+uniform float u_dynamicSizeFactor; // 0=fixed size, 0.67=default, 1.0=full linear
 const float MIN_NEEDLE_WORLD = 0.0;
 const float MAX_NEEDLE_WORLD = 20.0;
 
 out vec2 v_uv;
 out vec2 v_localUv;  // local UV for overlays (0..1 across the entire quad)
+out vec2 v_uvMin;    // UV min bounds for atlas sub-rect
+out vec2 v_uvMax;    // UV max bounds for atlas sub-rect
 out float v_disc;
 out vec2 v_flags;
 out float v_count;
 out float v_renderMode;
+out vec4 v_tint;
 void main(){
   v_renderMode = a_renderMode;
 
   float heightIntensity = clamp(a_flags.x, 0.0, 1.0);
   float directionFlag = a_flags.y;
-  float direction = directionFlag > 0.5 ? 1.0 : (directionFlag < -0.5 ? -1.0 : 0.0);
+  // direction: 1=up+arrow, -1=down+arrow, 2=up needle only (no arrow), 0=none
+  float direction = abs(directionFlag) > 1.5 ? sign(directionFlag) : (directionFlag > 0.5 ? 1.0 : (directionFlag < -0.5 ? -1.0 : 0.0));
 
   // Calculate needle height scaled by zoom
   float zoomScale = pow(2.0, u_zoom);
@@ -81,13 +96,24 @@ void main(){
 
   if (a_renderMode < 0.5) {
     // Icon rendering with conditional billboard behavior
+    // Adaptive zoom sizing based on actual view scale, not linear zoom fraction.
+    // Compute dampened ratio of current view scale to reference (midpoint zoom) scale.
+    // pow(ratio, 2/3) gives consistent growth per zoom level across all maps.
+    float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
+    float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
+    float ratio = viewScale / refScale;
+    float zoomSizeScale = u_dynamicSizeFactor > 0.001
+      ? clamp(pow(ratio, u_dynamicSizeFactor), 0.25, 2.5)
+      : 1.0;
     vec2 center = a_offset + 0.5 * a_size;
-    vec2 local = (a_pos - 0.5) * a_size;
+    vec2 local = (a_pos - 0.5) * a_size * zoomSizeScale;
 
     if (a_keepUpright > 0.5) {
       // Billboard mode: icon always faces the camera
       // Transform center first, then apply height in SCREEN space (always upward)
       vec3 centerScreen = u_view * vec3(center, 1.0);
+      // Depth from ground position: lower clip Y = closer to viewer = smaller depth
+      float depth = (1.0 + centerScreen.y) * 0.5;
 
       // Apply height offset in screen Y (up direction in screen space)
       // Scale height by view matrix scale to make it zoom-responsive
@@ -102,7 +128,7 @@ void main(){
       // Apply screen-space offset directly (no perspective compression)
       vec2 screenOffset = rot * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
 
-      gl_Position = vec4(centerScreen.xy + screenOffset, 0.0, 1.0);
+      gl_Position = vec4(centerScreen.xy + screenOffset, depth, 1.0);
     } else {
       // Player mode: use world-space rotation (affected by perspective)
       float cs = cos(a_angle), sn = sin(a_angle);
@@ -111,13 +137,17 @@ void main(){
 
       // Apply height effect in SCREEN space after view transform
       vec3 screenPos = u_view * vec3(iconPos, 1.0);
+      // Depth from ground position: lower clip Y = closer to viewer = smaller depth
+      float depth = (1.0 + screenPos.y) * 0.5;
       float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
       float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
       screenPos.y += heightClip * iconDirection;
 
-      gl_Position = vec4(screenPos.xy, 0.0, 1.0);
+      gl_Position = vec4(screenPos.xy, depth, 1.0);
     }
     v_uv = a_uv.xy + a_pos * a_uv.zw;
+    v_uvMin = a_uv.xy;
+    v_uvMax = a_uv.xy + a_uv.zw;
   } else {
     // Render needle/pin stem
     vec2 center = a_offset + 0.5 * a_size;
@@ -129,6 +159,7 @@ void main(){
 
     // Transform to screen space first
     vec3 groundPos = u_view * vec3(center, 1.0);
+    float depth = (1.0 + groundPos.y) * 0.5;
 
     // Apply needle in screen Y direction, scaled appropriately
     float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
@@ -136,7 +167,7 @@ void main(){
     vec3 screenPos = groundPos;
     screenPos.y += heightClip * a_pos.x;
 
-    gl_Position = vec4(screenPos.xy, 0.0, 1.0);
+    gl_Position = vec4(screenPos.xy, depth, 1.0);
 
     v_uv = vec2(0.5); // Neutral UV for line
   }
@@ -145,6 +176,7 @@ void main(){
   v_disc = a_disc;
   v_flags = a_flags;
   v_count = a_count;
+  v_tint = a_tint;
 }
 `;
 
@@ -153,12 +185,18 @@ precision highp float;
 uniform sampler2D u_tex;
 uniform int u_cb_mode; // 0 none, 1 prot, 2 deut, 3 trit
 uniform float u_cb_sev; // 0..1
+uniform int u_hc_mode; // 0=off, 1=on
+uniform vec4 u_hc_color; // outline RGBA
+uniform float u_hc_thickness; // outline thickness in texels (1-6)
 in vec2 v_uv;
 in vec2 v_localUv;  // 0..1 across entire quad
+in vec2 v_uvMin;    // UV min bounds for atlas sub-rect
+in vec2 v_uvMax;    // UV max bounds for atlas sub-rect
 in float v_disc;
 in vec2 v_flags;
 in float v_count;
 in float v_renderMode;
+in vec4 v_tint;
 out vec4 outColor;
 // 7-segment helpers for tiny digit rendering
 float hseg(vec2 uv, float y){
@@ -244,20 +282,53 @@ void main(){
 
   // Normal icon rendering
   vec4 c = texture(u_tex, v_uv);
+  // Apply tint color (multiply RGB, use tint alpha to blend)
+  c.rgb = mix(c.rgb, c.rgb * v_tint.rgb, v_tint.a);
+  // High contrast outline: sample 8 neighbors and draw outline where current pixel is transparent but neighbor is opaque
+  // Out-of-bounds samples (outside icon sub-rect) are treated as transparent to avoid rect-edge artifacts
+  if (u_hc_mode == 1) {
+    vec2 texSize = vec2(textureSize(u_tex, 0));
+    vec2 uvSpan = v_uvMax - v_uvMin;
+    float px = u_hc_thickness / (uvSpan.x * texSize.x);
+    float py = u_hc_thickness / (uvSpan.y * texSize.y);
+    float neighborAlpha = 0.0;
+    vec2 s; float ib;
+    s = v_uv + vec2(px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(0, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(0, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    s = v_uv + vec2(-px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    if (c.a < 0.1 && neighborAlpha > 0.1) {
+      c = u_hc_color;
+    }
+  }
   if (v_disc > 0.5) {
     float g = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
     c = vec4(vec3(g), c.a * 0.5);
   }
   // Use v_localUv for overlays (0..1 across the entire rendered quad)
   vec2 uv = v_localUv;
-  float zTop = step(0.5, v_flags.y);
-  float zBottom = step(0.5, -v_flags.y);
+  // Suppress arrows in needle-only mode (direction = 2, absolute height vis)
+  float needleOnly = step(1.5, abs(v_flags.y));
+  float zTop = step(0.5, v_flags.y) * (1.0 - needleOnly);
+  float zBottom = step(0.5, -v_flags.y) * (1.0 - needleOnly);
   vec3 draw = c.rgb;
   float alpha = c.a;
   // Track overlay coverage to ensure alpha shows overlays even if base is transparent
   float overlayAlpha = 0.0;
 
-  // No cluster indicator anymore; show all candidates in hover UI instead
+  // Stacked spawn indicator is rendered via v_count below
 
   // Relative-Z small triangle arrow with outline/shadow, placed just outside icon area (top/bottom)
   float zMag = clamp(v_flags.x, 0.0, 1.0); // 0..1 magnitude (scales size)
@@ -310,7 +381,30 @@ void main(){
     overlayAlpha = max(overlayAlpha, max(stroke, fill));
   }
 
-  // (disabled) count badge rendering
+  // Stacked spawns indicator (top-left corner)
+  if (v_count > 1.5) {
+    vec2 ctr = vec2(0.22, 0.22);
+    float arm = 0.14;
+    float hw = 0.035;
+    float dx = abs(uv.x - ctr.x);
+    float dy = abs(uv.y - ctr.y);
+    float hBar = step(dx, arm) * step(dy, hw);
+    float vBar = step(dx, hw) * step(dy, arm);
+    float cross = max(hBar, vBar);
+    // Shadow (larger spread for visibility)
+    vec2 sOfs = vec2(0.018, 0.018);
+    float sArm = arm + 0.02;
+    float sHw = hw + 0.02;
+    float sdx = abs(uv.x - sOfs.x - ctr.x);
+    float sdy = abs(uv.y - sOfs.y - ctr.y);
+    float sH = step(sdx, sArm) * step(sdy, sHw);
+    float sV = step(sdx, sHw) * step(sdy, sArm);
+    float shadow = max(sH, sV);
+    draw = mix(draw, vec3(0.0), shadow * 0.7);
+    overlayAlpha = max(overlayAlpha, shadow * 0.7);
+    draw = mix(draw, vec3(1.0), cross);
+    overlayAlpha = max(overlayAlpha, cross);
+  }
 
   // Apply color-blind simulation (only to non-discovered icons to avoid double-greyscale)
   if(u_cb_mode != 0 && v_disc < 0.5){
@@ -320,6 +414,8 @@ void main(){
 
   // Ensure overlays are visible even over transparent sprite padding
   alpha = max(alpha, overlayAlpha);
+  // Discard nearly transparent fragments so they don't write to the depth buffer
+  if (alpha < 0.05) discard;
   outColor = vec4(draw, alpha);
 }
 `;
@@ -330,7 +426,7 @@ export class IconMarkerLayer implements Layer {
   private vao: WebGLVertexArrayObject | null = null;
   private quad: WebGLBuffer | null = null;
   private sheets: Map<string, SheetTex> = new Map();
-  private sheetImages: Map<string, HTMLImageElement> = new Map();
+  private sheetImages: Map<string, HTMLImageElement | HTMLCanvasElement> = new Map();
   private instances: IconMarkerInstance[] = [];
   private instancesById: Map<string, number> = new Map(); // Track index by ID to prevent duplicates
   private iconMap: Map<string, { sheet: string; rect: IconRect }> = new Map();
@@ -361,6 +457,7 @@ export class IconMarkerLayer implements Layer {
     keepUprights?: Float32Array;
     stemModes?: Float32Array;
     iconModes?: Float32Array;
+    tints?: Float32Array;
     capacity: number;
   } = { capacity: 0 };
 
@@ -374,24 +471,65 @@ export class IconMarkerLayer implements Layer {
   private counts!: WebGLBuffer;
   private renderModes!: WebGLBuffer;
   private keepUprights!: WebGLBuffer;
+  private tints!: WebGLBuffer;
   private u_view_loc: WebGLUniformLocation | null = null;
   private u_tex_loc: WebGLUniformLocation | null = null;
   private u_pitch_loc: WebGLUniformLocation | null = null;
   private u_bearing_loc: WebGLUniformLocation | null = null;
   private u_screen_loc: WebGLUniformLocation | null = null;
   private u_zoom_loc: WebGLUniformLocation | null = null;
+  private u_minZoom_loc: WebGLUniformLocation | null = null;
+  private u_maxZoom_loc: WebGLUniformLocation | null = null;
+  private u_dynamicSizeFactor_loc: WebGLUniformLocation | null = null;
+  private dynamicSizeFactor: number = 2 / 3;
   private u_cb_mode_loc: WebGLUniformLocation | null = null;
   private u_cb_sev_loc: WebGLUniformLocation | null = null;
   private hidden?: Set<string>;
   private colorBlindMode: ColorBlindMode = "none";
   private colorBlindSeverity: number = 1;
+  private highContrastMode: boolean = false;
+  private highContrastColor: [number, number, number, number] = [0, 0, 0, 1];
+  private highContrastThickness: number = 2;
+  private u_hc_mode_loc: WebGLUniformLocation | null = null;
+  private u_hc_color_loc: WebGLUniformLocation | null = null;
+  private u_hc_thickness_loc: WebGLUniformLocation | null = null;
 
-  addSheet(name: string, source: string | HTMLImageElement) {
-    if (source instanceof HTMLImageElement) {
+  addSheet(name: string, source: string | HTMLImageElement | HTMLCanvasElement) {
+    const isNew = !this.sheetImages.has(name);
+    if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) {
       this.sheetImages.set(name, source);
     } else {
       this.sheetImages.set(name, this.createImage(source));
     }
+    if (isNew) {
+      devLog.info("IconMarkerLayer", "addSheet", {
+        sheetName: name,
+        sourceType: source instanceof HTMLCanvasElement ? "HTMLCanvasElement" : source instanceof HTMLImageElement ? "HTMLImageElement" : "URL",
+        totalSheetImages: this.sheetImages.size,
+      });
+    }
+  }
+  // Alias for addSheet (for consistency with simple-webmap-markers)
+  // Also invalidates the cached WebGL texture so it gets recreated
+  setSheet(name: string, source: HTMLImageElement | HTMLCanvasElement) {
+    this.sheetImages.set(name, source);
+    // Delete cached WebGL texture so ensureSheet recreates it with new image
+    this.sheets.delete(name);
+  }
+  // Get a marker by ID
+  getMarker(id: string): IconMarkerInstance | undefined {
+    const index = this.instancesById.get(id);
+    if (index === undefined) return undefined;
+    return this.instances[index] ?? undefined;
+  }
+  // Update a marker's properties
+  updateMarker(id: string, updates: Partial<IconMarkerInstance>) {
+    const index = this.instancesById.get(id);
+    if (index === undefined) return;
+    const existing = this.instances[index];
+    if (!existing) return;
+    this.instances[index] = { ...existing, ...updates, id: existing.id };
+    this.instancesVersion++;
   }
   add(m: IconMarkerInstance) {
     // Check if marker already exists by ID
@@ -417,6 +555,11 @@ export class IconMarkerLayer implements Layer {
       this.nullCount++;
       this.instancesVersion++;
 
+      // Clean up per-marker event handlers
+      for (const handlers of Object.values(this.eventHandlers)) {
+        handlers.delete(id);
+      }
+
       // Compact if more than 25% of array is null entries
       if (this.nullCount > this.instances.length * 0.25) {
         this.compact();
@@ -432,6 +575,10 @@ export class IconMarkerLayer implements Layer {
       if (index !== undefined) {
         (this.instances as any)[index] = null;
         this.instancesById.delete(id);
+        // Clean up per-marker event handlers
+        for (const handlers of Object.values(this.eventHandlers)) {
+          handlers.delete(id);
+        }
         removed++;
       }
     }
@@ -480,6 +627,27 @@ export class IconMarkerLayer implements Layer {
 
   setColorBlindSeverity(severity: number) {
     this.colorBlindSeverity = Math.max(0, Math.min(1, severity));
+  }
+
+  setDynamicSizeFactor(factor: number) {
+    this.dynamicSizeFactor = factor;
+  }
+
+  setHighContrastMode(enabled: boolean) {
+    this.highContrastMode = enabled;
+  }
+
+  setHighContrastColor(color: string) {
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+    const a = hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1;
+    this.highContrastColor = [r, g, b, a];
+  }
+
+  setHighContrastThickness(thickness: number) {
+    this.highContrastThickness = Math.max(1, Math.min(6, thickness));
   }
 
   private cbModeToInt(mode: ColorBlindMode): number {
@@ -560,7 +728,7 @@ export class IconMarkerLayer implements Layer {
     size: number;
     isHighlighted?: boolean;
     isDiscovered?: boolean;
-    zPos?: "top" | "bottom" | null;
+    zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
     z?: number;
   }) {
     const entry = this.iconMap.get(params.key);
@@ -668,6 +836,14 @@ export class IconMarkerLayer implements Layer {
     gl.vertexAttribPointer(a_keepUpright, 1, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(a_keepUpright, 1);
 
+    // Tint attribute (RGBA color)
+    this.tints = gl.createBuffer()!;
+    const a_tint = gl.getAttribLocation(this.program!, "a_tint");
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+    gl.enableVertexAttribArray(a_tint);
+    gl.vertexAttribPointer(a_tint, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(a_tint, 1);
+
     gl.bindVertexArray(null);
     // cache uniform locations
     this.u_view_loc = gl.getUniformLocation(this.program!, "u_view");
@@ -676,8 +852,14 @@ export class IconMarkerLayer implements Layer {
     this.u_bearing_loc = gl.getUniformLocation(this.program!, "u_bearing");
     this.u_screen_loc = gl.getUniformLocation(this.program!, "u_screen");
     this.u_zoom_loc = gl.getUniformLocation(this.program!, "u_zoom");
+    this.u_minZoom_loc = gl.getUniformLocation(this.program!, "u_minZoom");
+    this.u_maxZoom_loc = gl.getUniformLocation(this.program!, "u_maxZoom");
+    this.u_dynamicSizeFactor_loc = gl.getUniformLocation(this.program!, "u_dynamicSizeFactor");
     this.u_cb_mode_loc = gl.getUniformLocation(this.program!, "u_cb_mode");
     this.u_cb_sev_loc = gl.getUniformLocation(this.program!, "u_cb_sev");
+    this.u_hc_mode_loc = gl.getUniformLocation(this.program!, "u_hc_mode");
+    this.u_hc_color_loc = gl.getUniformLocation(this.program!, "u_hc_color");
+    this.u_hc_thickness_loc = gl.getUniformLocation(this.program!, "u_hc_thickness");
   }
 
   onRemove(): void {
@@ -732,6 +914,21 @@ export class IconMarkerLayer implements Layer {
           gl.deleteBuffer(this.counts);
         } catch {}
       }
+      if (this.renderModes) {
+        try {
+          gl.deleteBuffer(this.renderModes);
+        } catch {}
+      }
+      if (this.keepUprights) {
+        try {
+          gl.deleteBuffer(this.keepUprights);
+        } catch {}
+      }
+      if (this.tints) {
+        try {
+          gl.deleteBuffer(this.tints);
+        } catch {}
+      }
       if (this.vao) {
         try {
           gl.deleteVertexArray(this.vao);
@@ -746,6 +943,10 @@ export class IconMarkerLayer implements Layer {
       }
     }
     this.gl = undefined;
+    this.preallocatedBuffers = { capacity: 0 };
+    for (const handlers of Object.values(this.eventHandlers)) {
+      handlers.clear();
+    }
   }
 
   private ensureSheet(gl: WebGL2RenderingContext, name: string) {
@@ -757,7 +958,35 @@ export class IconMarkerLayer implements Layer {
     }
 
     const img = this.sheetImages.get(name);
-    if (!img || !img.complete || img.naturalWidth === 0) return null;
+    if (!img) {
+      devLog.debug("IconMarkerLayer", "ensureSheet: no image found", {
+        sheetName: name,
+        availableSheets: Array.from(this.sheetImages.keys()),
+      });
+      return null;
+    }
+
+    // Canvas elements are always ready; HTMLImageElements need to be loaded
+    const isCanvas = img instanceof HTMLCanvasElement;
+    if (!isCanvas && (!img.complete || img.naturalWidth === 0)) {
+      devLog.debug("IconMarkerLayer", "ensureSheet: image not ready", {
+        sheetName: name,
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        src: img.src?.substring(0, 100),
+      });
+      return null;
+    }
+
+    const w = isCanvas ? img.width : img.naturalWidth;
+    const h = isCanvas ? img.height : img.naturalHeight;
+
+    devLog.info("IconMarkerLayer", "Creating WebGL texture", {
+      sheetName: name,
+      imageSize: { w, h },
+      totalSheets: this.sheets.size + 1,
+    });
+
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -766,14 +995,17 @@ export class IconMarkerLayer implements Layer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    const entry = { name, tex, w: img.naturalWidth, h: img.naturalHeight };
+    const entry = { name, tex, w, h };
     this.sheets.set(name, entry);
     return entry;
   }
 
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!this.program || !this.vao) return;
-    if (this.instances.length === 0) return;
+    if (this.instances.length === 0) {
+      devLog.debug("IconMarkerLayer", "render: no instances");
+      return;
+    }
 
     // Group by sheet
     const groups = new Map<string, IconMarkerInstance[]>();
@@ -789,8 +1021,34 @@ export class IconMarkerLayer implements Layer {
       arr.push(m);
     }
 
+    // Log sheets being rendered (only first time or when changed)
+    const sheetKeys = Array.from(groups.keys()).sort().join(",");
+    if ((this as any)._lastSheetKeys !== sheetKeys) {
+      (this as any)._lastSheetKeys = sheetKeys;
+      devLog.info("IconMarkerLayer", "render: sheets", {
+        sheets: Array.from(groups.keys()),
+        totalMarkers: this.instances.filter(m => m !== null).length,
+      });
+    }
+
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
+
+    // Use separate blend for alpha to prevent framebuffer alpha from dropping below 1.0
+    // when rendering semi-transparent pixels on opaque map tiles.
+    // Without this, premultipliedAlpha:true canvas compositing causes page background bleed-through.
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,  // RGB: standard alpha blend
+      gl.ONE, gl.ONE_MINUS_SRC_ALPHA          // Alpha: preserves opaque background
+    );
+
+    // Enable depth testing when tilted so foreground icons overlap background
+    const usePerspectiveDepth = state.pitch > 0.01;
+    if (usePerspectiveDepth) {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+    }
 
     // Pass pitch and bearing for 3D height effect
     gl.uniform1f(this.u_pitch_loc, state.pitch);
@@ -799,12 +1057,20 @@ export class IconMarkerLayer implements Layer {
     // Pass screen dimensions for billboard scaling
     gl.uniform2f(this.u_screen_loc, state.width, state.height);
 
-    // Pass zoom level for world-space needle scaling
+    // Pass zoom level for world-space needle scaling and adaptive icon sizing
     gl.uniform1f(this.u_zoom_loc, state.zoom);
+    gl.uniform1f(this.u_minZoom_loc, state.minZoom);
+    gl.uniform1f(this.u_maxZoom_loc, state.maxZoom);
+    gl.uniform1f(this.u_dynamicSizeFactor_loc, this.dynamicSizeFactor);
 
     // Set color-blind simulation uniforms
     gl.uniform1i(this.u_cb_mode_loc, this.cbModeToInt(this.colorBlindMode));
     gl.uniform1f(this.u_cb_sev_loc, this.colorBlindSeverity);
+
+    // Set high contrast uniforms
+    gl.uniform1i(this.u_hc_mode_loc, this.highContrastMode ? 1 : 0);
+    gl.uniform4fv(this.u_hc_color_loc, this.highContrastColor);
+    gl.uniform1f(this.u_hc_thickness_loc, this.highContrastThickness);
 
     // Use the EXACT same view matrix as the webmap to prevent positioning drift
     // This ensures icons are perfectly anchored during rotation and perspective changes
@@ -831,6 +1097,7 @@ export class IconMarkerLayer implements Layer {
           keepUprights: new Float32Array(newCap),
           stemModes: new Float32Array(newCap),
           iconModes: new Float32Array(newCap),
+          tints: new Float32Array(newCap * 4),
           capacity: newCap,
         };
       }
@@ -843,15 +1110,17 @@ export class IconMarkerLayer implements Layer {
       const counts = this.preallocatedBuffers.counts!;
       const angles = this.preallocatedBuffers.angles!;
       const keepUprights = this.preallocatedBuffers.keepUprights!;
+      const tints = this.preallocatedBuffers.tints!;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         const p = state.projection(m.latLng);
         let size = m.size;
-        if (m.isHighlighted) size *= 1.15;
-        if (m.isSelected) size *= 1.3;
-        offsets[i * 2 + 0] = p.x - size / 2;
-        offsets[i * 2 + 1] = p.y - size / 2;
-        sizes[i * 2 + 0] = size;
+        let sizeW = m.sizeW ?? size;
+        if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
+        if (m.isSelected) { size *= 1.3; sizeW *= 1.3; }
+        offsets[i * 2 + 0] = p.x - sizeW / 2;
+        offsets[i * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
+        sizes[i * 2 + 0] = sizeW;
         sizes[i * 2 + 1] = size;
         const u0 = m.rect.x / s.w;
         const v0 = m.rect.y / s.h;
@@ -871,20 +1140,46 @@ export class IconMarkerLayer implements Layer {
               ? 0
               : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
         }
+        // direction: 1=up+arrow, -1=down+arrow, 2=up needle only (no arrow)
         let direction = 0;
         if (m.zPos === "top") direction = 1;
         else if (m.zPos === "bottom") direction = -1;
-        else if (rawZ > 0) direction = 1;
-        else if (rawZ < 0) direction = -1;
+        else if (m.zPos === "needle") direction = 2;
+        else if (m.zPos === "needle-down") direction = -2;
         flags[i * 2 + 0] = normalizedHeight;
         flags[i * 2 + 1] = direction;
-        counts[i] = 1; // Not used, but kept for shader compatibility
+        counts[i] = m.isStacked ? 2 : 1;
         // For upright icons, we need to counter-rotate in world space
         // The view matrix will apply the map rotation, so we pre-rotate the opposite way
         const angle = m.rotation ?? 0;
         angles[i] = angle;
         // Set keepUpright flag: 1 for billboard mode, 0 for player rotation
         keepUprights[i] = m.keepUpright !== false ? 1.0 : 0.0;
+        // Parse tint color (hex string to RGBA), cached on the instance
+        if (m.tint) {
+          let rgba = (m as any)._tintRGBA as [number, number, number, number] | undefined;
+          if (!rgba || (m as any)._tintSrc !== m.tint) {
+            const hex = m.tint.replace("#", "");
+            rgba = [
+              parseInt(hex.substring(0, 2), 16) / 255,
+              parseInt(hex.substring(2, 4), 16) / 255,
+              parseInt(hex.substring(4, 6), 16) / 255,
+              hex.length >= 8 ? parseInt(hex.substring(6, 8), 16) / 255 : 1,
+            ];
+            (m as any)._tintRGBA = rgba;
+            (m as any)._tintSrc = m.tint;
+          }
+          tints[i * 4 + 0] = rgba[0];
+          tints[i * 4 + 1] = rgba[1];
+          tints[i * 4 + 2] = rgba[2];
+          tints[i * 4 + 3] = rgba[3];
+        } else {
+          // No tint - use white with 0 alpha (no effect)
+          tints[i * 4 + 0] = 1;
+          tints[i * 4 + 1] = 1;
+          tints[i * 4 + 2] = 1;
+          tints[i * 4 + 3] = 0;
+        }
       }
       // Upload all attribute data using subarray views to avoid copies
       const count = list.length;
@@ -932,6 +1227,12 @@ export class IconMarkerLayer implements Layer {
         keepUprights.subarray(0, count),
         gl.DYNAMIC_DRAW,
       );
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        tints.subarray(0, count * 4),
+        gl.DYNAMIC_DRAW,
+      );
 
       // First pass: Draw height stems (render mode = 1)
       // Reuse preallocated buffer and fill it
@@ -960,20 +1261,47 @@ export class IconMarkerLayer implements Layer {
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     };
 
+    // Collect alwaysOnTop/selected markers for a final pass across all sheets
+    const onTopBySheet = new Map<string, IconMarkerInstance[]>();
+
     for (const [sheet, items] of groups) {
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
       const normal: IconMarkerInstance[] = [];
-      const selected: IconMarkerInstance[] = [];
       for (const m of items) {
-        (m.isSelected ? selected : normal).push(m);
+        if (m.isSelected || m.alwaysOnTop) {
+          let list = onTopBySheet.get(sheet);
+          if (!list) { list = []; onTopBySheet.set(sheet, list); }
+          list.push(m);
+        } else {
+          normal.push(m);
+        }
       }
-      // Draw non-selected first, then selected to ensure selected are on top
       drawList(s, normal);
-      drawList(s, selected);
+    }
+
+    // Final pass: draw alwaysOnTop/selected markers above everything
+    if (onTopBySheet.size > 0) {
+      if (usePerspectiveDepth) gl.disable(gl.DEPTH_TEST);
+      for (const [sheet, items] of onTopBySheet) {
+        const s = this.sheets.get(sheet);
+        if (s) drawList(s, items);
+      }
+      if (usePerspectiveDepth) gl.enable(gl.DEPTH_TEST);
     }
 
     gl.bindVertexArray(null);
+
+    // Restore depth state
+    if (usePerspectiveDepth) {
+      gl.disable(gl.DEPTH_TEST);
+    }
+
+    // Restore global blend state
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,
+      gl.ONE, gl.ONE_MINUS_SRC_ALPHA
+    );
   }
 
   private createImage(url: string) {
@@ -1016,6 +1344,36 @@ export class IconMarkerLayer implements Layer {
     return entry;
   }
 
+  // Compute zoom-dependent size scale matching the vertex shader formula
+  private getZoomSizeScale(state: RenderState): number {
+    if (this.dynamicSizeFactor <= 0.001) return 1;
+    const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+    const scaleRatio = Math.pow(2, state.zoom - midZoom);
+    return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, this.dynamicSizeFactor)));
+  }
+
+  // Compute the screen-space Y offset for a marker's height stem (matching vertex shader)
+  private getHeightScreenOffset(m: IconMarkerInstance, state: RenderState): number {
+    const rawZ = typeof m.z === "number" ? m.z : 0;
+    let heightIntensity = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
+    if (heightIntensity === undefined) {
+      heightIntensity = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+    }
+    let direction = 0;
+    if (m.zPos === "top" || m.zPos === "needle") direction = 1;
+    else if (m.zPos === "bottom" || m.zPos === "needle-down") direction = -1;
+    if (direction === 0 || heightIntensity < 0.01) return 0;
+
+    // Match vertex shader: heightWorld = mix(0, 20, heightIntensity) * abs(sin(pitch)) * 2^zoom * 500
+    const heightWorld = 20 * heightIntensity * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
+    // heightClip = heightWorld * viewScale * (2 / screenHeight)
+    const view = state.viewMatrix!;
+    const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
+    const heightClip = heightWorld * viewScale * (2 / state.height);
+    // Convert clip offset to screen pixels (Y is inverted in screen coords)
+    return -heightClip * direction * state.height / 2;
+  }
+
   // Hit test: approximate icon as a circle using half of effective size
   pick(state: RenderState, screen: { x: number; y: number }): unknown | null {
     const view = state.viewMatrix!;
@@ -1032,26 +1390,30 @@ export class IconMarkerLayer implements Layer {
       const sy = (1 - (cy * 0.5 + 0.5)) * state.height; // Invert Y for screen coords
       return { x: sx, y: sy };
     };
+    const zoomScale = this.getZoomSizeScale(state);
     for (let i = this.instances.length - 1; i >= 0; i--) {
       const m = this.instances[i];
       if (m === null) continue; // Skip null entries
+      if (m.noHitTest) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
-      let eff = m.size;
-      if (m.isHighlighted) eff *= 1.15;
-      if (m.isSelected) eff *= 1.3;
-      const r = eff / 2;
+      // Offset hit test to the elevated icon position (height stem)
+      s.y += this.getHeightScreenOffset(m, state);
+      let effH = m.size * zoomScale;
+      let effW = (m.sizeW ?? m.size) * zoomScale;
+      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
+      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
-      if (dx * dx + dy * dy <= r * r) {
+      if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2) {
         return m;
       }
     }
     return null;
   }
 
-  // Return all markers clustered near the hovered point, grouped around the nearest hit
+  // Return all markers stacked near the hovered point, grouped around the nearest hit
   pickAll(
     state: RenderState,
     screen: { x: number; y: number },
@@ -1071,6 +1433,7 @@ export class IconMarkerLayer implements Layer {
       const sy = (1 - (cy * 0.5 + 0.5)) * state.height; // Invert Y for screen coords
       return { x: sx, y: sy };
     };
+    const zoomScale = this.getZoomSizeScale(state);
     let bestIdx = -1,
       bestDist2 = Infinity,
       bestR = 0,
@@ -1078,17 +1441,21 @@ export class IconMarkerLayer implements Layer {
     for (let i = this.instances.length - 1; i >= 0; i--) {
       const m = this.instances[i];
       if (m === null) continue; // Skip null entries
+      if (m.noHitTest) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
-      let eff = m.size;
-      if (m.isHighlighted) eff *= 1.15;
-      if (m.isSelected) eff *= 1.3;
-      const r = eff / 2;
+      // Offset hit test to the elevated icon position (height stem)
+      s.y += this.getHeightScreenOffset(m, state);
+      let effH = m.size * zoomScale;
+      let effW = (m.sizeW ?? m.size) * zoomScale;
+      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
+      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
+      const r = Math.max(effW, effH) / 2;
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
       const d2 = dx * dx + dy * dy;
-      if (d2 <= r * r && d2 < bestDist2) {
+      if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2 && d2 < bestDist2) {
         bestDist2 = d2;
         bestIdx = i;
         bestR = r;

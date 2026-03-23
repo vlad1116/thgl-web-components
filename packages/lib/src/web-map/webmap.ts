@@ -11,9 +11,13 @@ import type {
 // Event system for WebMap
 export interface WebMapEventMap {
   click: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  dblclick: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  contextmenu: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mousemove: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mousedown: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
   mouseup: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  moveend: void;
+  zoomend: void;
 }
 
 type EventHandler<T = any> = (event: T) => void;
@@ -68,6 +72,7 @@ export class WebMap {
   private gl: WebGL2RenderingContext;
   private layers: { layer: Layer; z: number }[] = [];
   private center: LatLng;
+  private targetCenter: LatLng | null = null;
   private zoom: number;
   private targetZoom: number;
   private bearing: number;
@@ -75,6 +80,7 @@ export class WebMap {
   private raf = 0;
   private dragging = false;
   private rotating = false; // RMB drag for rotate/tilt
+  private didRotate = false; // whether RMB drag actually moved
   private lastPointer?: { x: number; y: number };
   private downPointer?: { x: number; y: number; t: number };
   private rotationPivot?: { screen: { x: number; y: number }; latLng: LatLng };
@@ -99,6 +105,8 @@ export class WebMap {
   private wheelTimer?: number;
   // Interaction control
   private interactionsDisabled = false;
+  // When true, the map will not change the cursor (drawing manager handles it)
+  private _cursorLocked = false;
   // Event system
   private eventHandlers: Map<keyof WebMapEventMap, EventHandler[]> = new Map();
   private projectionBound: (ll: LatLng) => { x: number; y: number };
@@ -115,14 +123,27 @@ export class WebMap {
   private pinchStartDist?: number;
   private pinchStartZoom?: number;
   private pinchMidpoint?: { x: number; y: number };
+  private pinchStartAngle?: number;
+  private pinchStartBearing?: number;
   // Double-tap to zoom state
   private lastTap?: { x: number; y: number; t: number };
+  // Movement tracking for moveend/zoomend events
+  private wasMoving = false;
+  private lastZoom: number = 0;
+  // Flag to force a render
+  private needsRender = false;
+  // Initial view state for resetView()
+  private initialCenter: LatLng;
+  private initialZoom: number;
+  private initialBearing: number;
+  private initialPitch: number;
 
   constructor(opts: WebMapOptions) {
     this.canvas = opts.canvas;
     this.center = opts.center;
     this.zoom = opts.zoom;
     this.targetZoom = opts.zoom;
+    this.lastZoom = opts.zoom;
     this.bearing = opts.bearing ?? 0;
     if (opts.pitch !== undefined)
       this.pitch = Math.max(0, Math.min(1.4, opts.pitch));
@@ -138,6 +159,11 @@ export class WebMap {
     // Prevent browser from intercepting touch events for scrolling/zooming
     this.canvas.style.touchAction = "none";
     this.addEventHandlers();
+    // Store initial view for resetView()
+    this.initialCenter = [...this.center] as LatLng;
+    this.initialZoom = this.zoom;
+    this.initialBearing = this.bearing;
+    this.initialPitch = this.pitch;
     this.start();
   }
 
@@ -153,7 +179,12 @@ export class WebMap {
     );
   }
 
+  // AbortController for cleaning up all canvas event listeners on destroy
+  private eventAbort = new AbortController();
+
   private addEventHandlers() {
+    const signal = this.eventAbort.signal;
+
     // Basic pan/zoom/rotate stubs
     this.canvas.addEventListener(
       "wheel",
@@ -184,12 +215,15 @@ export class WebMap {
           this.wheelTimer = undefined;
         }, 20);
       },
-      { passive: false },
+      { passive: false, signal },
     );
 
     // prevent context menu on RMB drag
-    this.canvas.addEventListener("contextmenu", (e) => {
+    this.canvas.addEventListener("contextmenu", (e: MouseEvent) => {
       e.preventDefault();
+
+      // Don't open context menu after right-click drag
+      if (this.didRotate) return;
 
       // Forward to IconMarkerLayer for contextmenu detection
       const rect = this.canvas.getBoundingClientRect();
@@ -204,7 +238,28 @@ export class WebMap {
           (layer as any).handleContextMenu(state, screen);
         }
       }
-    });
+
+      // Fire contextmenu event to regular listeners
+      const latlng = this.screenToLatLng(localX, localY);
+      this.fire("contextmenu", {
+        latlng,
+        layerPoint: { x: localX, y: localY },
+        originalEvent: e,
+      });
+    }, { signal });
+
+    // Handle double-click
+    this.canvas.addEventListener("dblclick", (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const localX = e.clientX - rect.left;
+      const localY = e.clientY - rect.top;
+      const latlng = this.screenToLatLng(localX, localY);
+      this.fire("dblclick", {
+        latlng,
+        layerPoint: { x: localX, y: localY },
+        originalEvent: e,
+      });
+    }, { signal });
 
     this.canvas.addEventListener("pointerdown", (e) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -221,6 +276,8 @@ export class WebMap {
         const dy = pointers[1].y - pointers[0].y;
         this.pinchStartDist = Math.sqrt(dx * dx + dy * dy);
         this.pinchStartZoom = this.zoom;
+        this.pinchStartAngle = Math.atan2(dy, dx);
+        this.pinchStartBearing = this.bearing;
         this.pinchMidpoint = {
           x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
           y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
@@ -259,6 +316,7 @@ export class WebMap {
         if (e.button === 2) {
           // right button: rotate/tilt
           this.rotating = true;
+          this.didRotate = false;
 
           // Use proper perspective-aware screen->world
           const worldPos = this.screenToWorld(localX, localY);
@@ -284,8 +342,8 @@ export class WebMap {
       // Cancel any existing inertia when user starts dragging
       this.panAnim = undefined;
       // Update cursor to grabbing while dragging
-      this.canvas.style.cursor = "grabbing";
-    });
+      if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
+    }, { signal });
     this.canvas.addEventListener("pointermove", (e) => {
       // Update tracked pointer position
       if (this.activePointers.has(e.pointerId)) {
@@ -325,9 +383,21 @@ export class WebMap {
         this.zoom = newZoom;
         this.targetZoom = newZoom;
 
-        // Pan to keep the midpoint stationary
+        // Two-finger rotation: change bearing based on angle between fingers
+        if (this.pinchStartAngle !== undefined && this.pinchStartBearing !== undefined) {
+          const currentAngle = Math.atan2(dy, dx);
+          const angleDelta = currentAngle - this.pinchStartAngle;
+          this.bearing = this.pinchStartBearing - angleDelta;
+          this.cachedBearing = this.bearing;
+          this.cachedCos = Math.cos(this.bearing);
+          this.cachedSin = Math.sin(this.bearing);
+        }
+
+        // Compute deltas from previous midpoint before updating
         const midpointDx = newMidpoint.x - this.pinchMidpoint.x;
         const midpointDy = newMidpoint.y - this.pinchMidpoint.y;
+
+        // Pan to keep the midpoint stationary
         if (Math.abs(midpointDx) > 1 || Math.abs(midpointDy) > 1) {
           const dpr = Math.max(1, window.devicePixelRatio || 1);
           const centerPx = this.projectAt(this.center, this.zoom);
@@ -338,8 +408,17 @@ export class WebMap {
           const wy = sin * midpointDx * dpr + (cos / cosP) * midpointDy * dpr;
           const newCenterPx = { x: centerPx.x - wx, y: centerPx.y - wy };
           this.center = this.unprojectAt(newCenterPx, this.zoom);
-          this.pinchMidpoint = newMidpoint;
         }
+
+        // Two-finger tilt: vertical midpoint movement changes pitch
+        if (Math.abs(midpointDy) > 2) {
+          const newPitch = clamp(this.pitch - midpointDy * 0.004, 0, 1.4);
+          this.pitch = newPitch;
+          this.cachedPitch = newPitch;
+          this.cachedCosP = Math.cos(newPitch);
+        }
+
+        this.pinchMidpoint = newMidpoint;
 
         return;
       }
@@ -353,6 +432,7 @@ export class WebMap {
         const dx = e.clientX - this.lastPointer.x;
         const dy = e.clientY - this.lastPointer.y;
         this.lastPointer = { x: e.clientX, y: e.clientY };
+        if (dx !== 0 || dy !== 0) this.didRotate = true;
 
         // Update orientation
         const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
@@ -410,7 +490,7 @@ export class WebMap {
       const vx = -wx * (1000 / dtMs);
       const vy = -wy * (1000 / dtMs);
       this.panAnim = { vx, vy };
-    });
+    }, { signal });
     this.canvas.addEventListener("pointerup", (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const localX = e.clientX - rect.left;
@@ -424,6 +504,8 @@ export class WebMap {
         this.pinchStartDist = undefined;
         this.pinchStartZoom = undefined;
         this.pinchMidpoint = undefined;
+        this.pinchStartAngle = undefined;
+        this.pinchStartBearing = undefined;
       }
 
       // Fire map mouseup event
@@ -479,11 +561,11 @@ export class WebMap {
       }
       // After releasing, update cursor according to hover state
       this.updateCursor(up.x, up.y);
-    });
+    }, { signal });
 
     // Hover cursors: pointer over interactive layers, grab over map, grabbing while dragging
     this.canvas.addEventListener("pointermove", (e) => {
-      if (this.dragging) return; // handled in pointerdown/up
+      if (this.dragging || this.rotating) return; // handled in pointerdown/up
       this.updateCursor(e.clientX, e.clientY);
 
       // Fire map mousemove event
@@ -504,13 +586,13 @@ export class WebMap {
           }
         }
       }
-    });
+    }, { signal });
     this.canvas.addEventListener("pointerenter", () => {
-      if (!this.dragging) this.canvas.style.cursor = "grab";
-    });
+      if (!this.dragging && !this._cursorLocked) this.canvas.style.cursor = "grab";
+    }, { signal });
     this.canvas.addEventListener("pointerleave", () => {
       this.canvas.style.cursor = "default";
-    });
+    }, { signal });
     // Handle pointer cancel (e.g., incoming call, system gesture)
     this.canvas.addEventListener("pointercancel", (e) => {
       this.activePointers.delete(e.pointerId);
@@ -518,12 +600,14 @@ export class WebMap {
         this.pinchStartDist = undefined;
         this.pinchStartZoom = undefined;
         this.pinchMidpoint = undefined;
+        this.pinchStartAngle = undefined;
+        this.pinchStartBearing = undefined;
       }
       this.dragging = false;
       this.rotating = false;
       this.lastPointer = undefined;
       this.rotationPivot = undefined;
-    });
+    }, { signal });
   }
 
   private start() {
@@ -536,6 +620,14 @@ export class WebMap {
 
   destroy() {
     cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    // Remove all canvas event listeners
+    this.eventAbort.abort();
+    // Clear pending wheel timer
+    if (this.wheelTimer) {
+      clearTimeout(this.wheelTimer);
+      this.wheelTimer = undefined;
+    }
     this.layers.forEach(({ layer }) => layer.onRemove());
     // Clear all event handlers
     this.eventHandlers.clear();
@@ -609,6 +701,11 @@ export class WebMap {
 
   setCenter(center: LatLng) {
     this.center = center;
+    this.targetCenter = null;
+  }
+  /** Smoothly animate to a new center position */
+  panTo(center: LatLng) {
+    this.targetCenter = center;
   }
   setZoom(zoom: number) {
     this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
@@ -631,14 +728,114 @@ export class WebMap {
   getZoom() {
     return this.zoom;
   }
+  /**
+   * Zoom in by one level
+   */
+  zoomIn() {
+    this.targetZoom = Math.min(this.maxZoom, this.zoom + 1);
+  }
+  /**
+   * Zoom out by one level
+   */
+  zoomOut() {
+    this.targetZoom = Math.max(this.minZoom, this.zoom - 1);
+  }
+  getMinZoom() {
+    return this.minZoom;
+  }
+  getMaxZoom() {
+    return this.maxZoom;
+  }
+
+
+  /**
+   * Fit the map to a bounding box of coordinates
+   * @param bounds Array of [lat, lng] points to fit
+   * @param options Optional settings for padding and max zoom
+   */
+  fitBounds(
+    bounds: (readonly [number, number] | [number, number] | [number, number, number])[],
+    options?: { maxZoom?: number; padding?: [number, number]; duration?: number },
+  ) {
+    if (bounds.length === 0) return;
+
+    // Find bounding box
+    let minLat = Infinity,
+      maxLat = -Infinity;
+    let minLng = Infinity,
+      maxLng = -Infinity;
+    for (const [lat, lng] of bounds) {
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+    }
+
+    // Calculate center
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+    this.center = [centerLat, centerLng];
+
+    // Calculate zoom to fit bounds
+    const canvasWidth = this.canvas.clientWidth;
+    const canvasHeight = this.canvas.clientHeight;
+    const padding = options?.padding ?? [50, 50];
+    const effectiveWidth = canvasWidth - padding[0] * 2;
+    const effectiveHeight = canvasHeight - padding[1] * 2;
+
+    if (effectiveWidth <= 0 || effectiveHeight <= 0) return;
+
+    // Project corners at reference zoom to get world coordinates
+    const refZoom = 0;
+    const p1 = this.proj.project([minLat, minLng], refZoom);
+    const p2 = this.proj.project([maxLat, maxLng], refZoom);
+
+    const boundsWidth = Math.abs(p2.x - p1.x);
+    const boundsHeight = Math.abs(p2.y - p1.y);
+
+    if (boundsWidth === 0 && boundsHeight === 0) {
+      // Single point - just center on it
+      const maxZoom = options?.maxZoom ?? this.maxZoom;
+      this.zoom = Math.min(maxZoom, this.maxZoom);
+      this.targetZoom = this.zoom;
+      return;
+    }
+
+    // Calculate zoom that fits the bounds
+    const scaleX = boundsWidth > 0 ? effectiveWidth / boundsWidth : Infinity;
+    const scaleY = boundsHeight > 0 ? effectiveHeight / boundsHeight : Infinity;
+    const scale = Math.min(scaleX, scaleY);
+    let calculatedZoom = refZoom + Math.log2(scale);
+
+    // Apply constraints
+    const maxZoom = options?.maxZoom ?? this.maxZoom;
+    calculatedZoom = Math.max(this.minZoom, Math.min(maxZoom, calculatedZoom));
+    this.zoom = calculatedZoom;
+    this.targetZoom = calculatedZoom;
+  }
+
   getBearing() {
     return this.bearing;
+  }
+  getPitch() {
+    return this.pitch;
+  }
+  setPitch(rad: number) {
+    this.pitch = Math.max(0, Math.min(1.4, rad));
+    this.cachedPitch = this.pitch;
+    this.cachedCosP = Math.max(1e-4, Math.cos(this.pitch));
+  }
+  resetView() {
+    this.center = [...this.initialCenter] as LatLng;
+    this.setZoom(this.initialZoom);
+    this.setBearing(this.initialBearing);
+    this.setPitch(this.initialPitch);
   }
   getCenter() {
     return { lat: this.center[0], lng: this.center[1] };
   }
 
-  // Leaflet-compatible getCenter for easier migration
+  // Get center as LatLng tuple
   getCenterLatLng(): LatLng {
     return this.center;
   }
@@ -649,13 +846,36 @@ export class WebMap {
   // Interaction control methods
   disableInteractions() {
     this.interactionsDisabled = true;
-    this.canvas.style.cursor = "crosshair";
+    if (!this._cursorLocked) {
+      this.canvas.style.cursor = "crosshair";
+    }
   }
 
   enableInteractions() {
     this.interactionsDisabled = false;
-    this.canvas.style.cursor = "grab";
+    if (!this._cursorLocked) {
+      this.canvas.style.cursor = "grab";
+    }
   }
+
+  lockCursor() {
+    this._cursorLocked = true;
+  }
+
+  unlockCursor() {
+    this._cursorLocked = false;
+  }
+
+  /**
+   * Force the map to re-check its container size.
+   * Triggers a re-render on the next animation frame.
+   */
+  invalidateSize() {
+    // Force canvas size update on next frame
+    // The frame() method already handles canvas resize
+    this.needsRender = true;
+  }
+
   getRotationPivot() {
     if (!this.rotationPivot) return null;
 
@@ -682,7 +902,7 @@ export class WebMap {
     clientX: number,
     clientY: number,
   ): { x: number; y: number } {
-    // Use CSS pixels for view matrix (like Leaflet) to ensure consistent zoom behavior
+    // Use CSS pixels for view matrix to ensure consistent zoom behavior
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
     const view = this.computeView(w, h);
@@ -814,7 +1034,7 @@ export class WebMap {
   private recenterOnPivot() {
     if (!this.rotationPivot) return;
 
-    // Use CSS pixels for view calculations (like Leaflet)
+    // Use CSS pixels for view calculations
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
 
@@ -858,7 +1078,7 @@ export class WebMap {
     const s = Math.pow(2, zoom);
     const minPx = { x: s * (tf.a * minX + tf.b), y: s * (tf.c * minY + tf.d) };
     const maxPx = { x: s * (tf.a * maxX + tf.b), y: s * (tf.c * maxY + tf.d) };
-    // Use CSS pixels for view calculations (like Leaflet)
+    // Use CSS pixels for view calculations
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
     const halfW = w / 2,
@@ -913,12 +1133,28 @@ export class WebMap {
     }
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // animation step (zoom smoothing and anchor-preserving center)
+    // animation step (zoom smoothing, pan smoothing, and anchor-preserving center)
     const now = performance.now();
     const dt = Math.min(1000, now - this.lastFrameTs);
     this.lastFrameTs = now;
     // exponential smoothing toward target zoom (controlled by zoomTimeMs)
     const alpha = 1 - Math.exp(-dt / this.zoomTimeMs);
+
+    // Smooth pan to target center
+    if (this.targetCenter && !this.dragging) {
+      const panAlpha = 1 - Math.exp(-dt / 150); // ~150ms smoothing
+      const dlat = this.targetCenter[0] - this.center[0];
+      const dlng = this.targetCenter[1] - this.center[1];
+      if (Math.abs(dlat) < 1e-8 && Math.abs(dlng) < 1e-8) {
+        this.center = this.targetCenter;
+        this.targetCenter = null;
+      } else {
+        this.center = [
+          this.center[0] + dlat * panAlpha,
+          this.center[1] + dlng * panAlpha,
+        ];
+      }
+    }
     if (Math.abs(this.targetZoom - this.zoom) > 1e-3) {
       const prevZoom = this.zoom;
       this.zoom = this.zoom + (this.targetZoom - this.zoom) * alpha;
@@ -930,7 +1166,7 @@ export class WebMap {
         // Calculate where the anchor point is now in world space at new zoom
         const anchorWorld = this.projectAt(anchorLL, this.zoom);
 
-        // Calculate offset from screen center to anchor in CSS pixels (like Leaflet)
+        // Calculate offset from screen center to anchor in CSS pixels
         const w = this.canvas.clientWidth || this.canvas.width;
         const h = this.canvas.clientHeight || this.canvas.height;
 
@@ -983,7 +1219,7 @@ export class WebMap {
       }
     }
 
-    // Use CSS pixels for view matrix (like Leaflet) to ensure consistent zoom behavior across DPR
+    // Use CSS pixels for view matrix to ensure consistent zoom behavior across DPR
     const cssW = this.canvas.clientWidth || w;
     const cssH = this.canvas.clientHeight || h;
     const view = this.computeView(cssW, cssH);
@@ -993,6 +1229,8 @@ export class WebMap {
       height: h,
       worldScale: 1, // pixels/world-pixel at current zoom
       zoom: this.zoom,
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom,
       bearing: this.bearing,
       pitch: this.pitch,
       center: this.center,
@@ -1007,6 +1245,26 @@ export class WebMap {
 
     for (const { layer } of this.layers) {
       layer.render?.(gl, state);
+    }
+
+    // Track movement for moveend/zoomend events
+    const isMoving =
+      this.dragging ||
+      this.rotating ||
+      this.panAnim !== undefined ||
+      this.zoomAnim !== undefined ||
+      Math.abs(this.targetZoom - this.zoom) > 1e-3;
+
+    if (this.wasMoving && !isMoving) {
+      // Movement just stopped
+      this.fire("moveend", undefined as any);
+      if (Math.abs(this.zoom - this.lastZoom) > 0.01) {
+        this.fire("zoomend", undefined as any);
+      }
+    }
+    this.wasMoving = isMoving;
+    if (!isMoving) {
+      this.lastZoom = this.zoom;
     }
   }
 
@@ -1053,6 +1311,7 @@ export class WebMap {
   }
 
   private updateCursor(clientX: number, clientY: number) {
+    if (this._cursorLocked) return;
     const rect = this.canvas.getBoundingClientRect();
     const state = this.lastState;
     if (!state) return;

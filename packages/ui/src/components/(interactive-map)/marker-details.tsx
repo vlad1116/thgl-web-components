@@ -196,14 +196,17 @@ export function MarkerDetails({
             {isLoading ? <Skeleton className="w-2" /> : comments?.length}
           </div>
         )}
-        <ScrollArea
-          type="always"
-          className={cn({
-            "h-48": desc.length > 100,
-          })}
-        >
-          <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
-        </ScrollArea>
+        {desc.length > 100 ? (
+          <ScrollArea type="always" className="h-32">
+            <div className="text-sm">
+              <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="text-sm">
+            <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
+          </div>
+        )}
       </article>
       {!hideDiscovered && (
         <>

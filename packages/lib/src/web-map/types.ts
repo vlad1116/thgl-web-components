@@ -21,6 +21,8 @@ export interface RenderState {
   height: number;
   worldScale: number; // pixels per world unit at current zoom
   zoom: number;
+  minZoom: number;
+  maxZoom: number;
   bearing: number; // radians
   pitch: number; // radians
   center: LatLng;

@@ -1,17 +1,21 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMap } from "./store";
 import { Button } from "../ui/button";
 import {
   type PrivateNode,
-  cn,
   useSettingsStore,
   useConnectionStore,
   putSharedFilters,
   useUserStore,
+  getIconsUrl,
+  devLog,
 } from "@repo/lib";
-import CanvasMarker from "./canvas-marker";
-import type { LeafletMouseEvent } from "leaflet";
+import {
+  DEFAULT_CIRCLE_SHEET,
+  type IconMarkerInstance,
+  type IconMarkerLayer,
+} from "@repo/lib/web-map";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -32,6 +36,17 @@ import { FilterSelect } from "../(controls)/filter-select";
 import { AddSharedFilter } from "./add-shared-filter";
 import { UploadFilter } from "./upload-filter";
 import { inverseRotateCoordinate, rotateCoordinate } from "./rotation";
+import {
+  getSourceImage,
+  setSourceImage,
+  getProcessedImage,
+  setProcessedImage,
+  createProcessedImageKey,
+} from "./icon-cache";
+
+const PRIVATE_NODE_MARKER_ID = "__private_node_preview__";
+const PRIVATE_NODE_ICON_SHEET = "__private_node_icon_sheet__";
+const SHARED_PRIVATE_NODE_MARKER_ID = "__shared_private_node_preview__";
 
 export function PrivateNode({
   appName,
@@ -43,7 +58,6 @@ export function PrivateNode({
   iconsPath: string;
 }) {
   const map = useMap();
-  const canvasMarker = useRef<CanvasMarker | null>(null);
   const mapName = useUserStore((state) => state.mapName);
   const myFilters = useSettingsStore((state) => state.myFilters);
   const setMyFilters = useSettingsStore((state) => state.setMyFilters);
@@ -57,25 +71,155 @@ export function PrivateNode({
   const isEditing = tempPrivateNode !== null;
   const radius = tempPrivateNode?.radius ?? 10;
   const color = tempPrivateNode?.color ?? "#FFFFFFCC";
-  const colorBlindMode = useSettingsStore((state) => state.colorBlindMode);
-  const colorBlindSeverity = useSettingsStore(
-    (state) => state.colorBlindSeverity,
-  );
 
+  // Track current position for WebMap
+  const positionRef = useRef<[number, number] | null>(null);
+
+  // Version counter to trigger visual effect when marker is recreated
+  const [markerVersion, setMarkerVersion] = useState(0);
+
+  // Local cache for colored circle images (not shared, specific to this component)
+  const coloredCircleCache = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  // Helper to create a colored circle image (synchronous via canvas)
+  const createColoredCircleImage = (markerColor: string): HTMLImageElement => {
+    const cacheKey = `__circle_${markerColor}__`;
+    const cached = coloredCircleCache.current.get(cacheKey);
+    if (cached && cached.complete) {
+      return cached;
+    }
+
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+
+    // Draw colored circle
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fillStyle = markerColor;
+    ctx.fill();
+
+    // Add a subtle border
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Create image from canvas - use canvas directly as image source
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    coloredCircleCache.current.set(cacheKey, img);
+    return img;
+  };
+
+  // Helper to extract alpha from color string
+  const getAlphaFromColor = (colorStr: string): number => {
+    if (colorStr.length === 9 && colorStr.startsWith("#")) {
+      return parseInt(colorStr.slice(7, 9), 16) / 255;
+    } else if (colorStr.length === 5 && colorStr.startsWith("#")) {
+      return parseInt(colorStr[4] + colorStr[4], 16) / 255;
+    }
+    return 1;
+  };
+
+  // Helper to extract RGB (without alpha) from color string
+  const getRgbFromColor = (colorStr: string): string => {
+    if (colorStr.length === 9 && colorStr.startsWith("#")) {
+      return colorStr.slice(0, 7); // #RRGGBB from #RRGGBBAA
+    } else if (colorStr.length === 5 && colorStr.startsWith("#")) {
+      return `#${colorStr[1]}${colorStr[1]}${colorStr[2]}${colorStr[2]}${colorStr[3]}${colorStr[3]}`; // Expand #RGBA to #RRGGBB
+    }
+    return colorStr;
+  };
+
+  // Helper to process icon with glow effect (synchronous, for use when source is cached)
+  // Returns the image and its dimensions (since img.width may not be set immediately from data URL)
+  const processIconSync = (
+    sourceImg: HTMLImageElement,
+    iconRect: { x: number; y: number; width: number; height: number } | null,
+    nodeColor: string,
+    isGameIcon: boolean,
+  ): { img: HTMLImageElement; width: number; height: number } => {
+    const width = iconRect?.width ?? sourceImg.naturalWidth;
+    const height = iconRect?.height ?? sourceImg.naturalHeight;
+    const srcX = iconRect?.x ?? 0;
+    const srcY = iconRect?.y ?? 0;
+    const rgbColor = getRgbFromColor(nodeColor);
+    const alpha = getAlphaFromColor(nodeColor);
+
+    const canvas = document.createElement("canvas");
+    const outputCanvas = document.createElement("canvas");
+    let outputWidth: number;
+    let outputHeight: number;
+
+    if (isGameIcon) {
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = rgbColor;
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(sourceImg, srcX, srcY, width, height, 0, 0, width, height);
+      outputCanvas.width = width;
+      outputCanvas.height = height;
+      outputWidth = width;
+      outputHeight = height;
+      const outCtx = outputCanvas.getContext("2d")!;
+      outCtx.globalAlpha = alpha;
+      outCtx.drawImage(canvas, 0, 0);
+    } else {
+      const glowSize = 8;
+      const totalSize = Math.max(width, height) + glowSize * 2;
+      canvas.width = totalSize;
+      canvas.height = totalSize;
+      const ctx = canvas.getContext("2d")!;
+      const iconX = (totalSize - width) / 2;
+      const iconY = (totalSize - height) / 2;
+      const isWhite = rgbColor.toUpperCase() === "#FFFFFF";
+      if (!isWhite) {
+        ctx.shadowColor = rgbColor;
+        ctx.shadowBlur = glowSize;
+        for (let i = 0; i < 3; i++) {
+          ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+        }
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+      }
+      ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+      outputCanvas.width = totalSize;
+      outputCanvas.height = totalSize;
+      outputWidth = totalSize;
+      outputHeight = totalSize;
+      const outCtx = outputCanvas.getContext("2d")!;
+      outCtx.globalAlpha = alpha;
+      outCtx.drawImage(canvas, 0, 0);
+    }
+
+    const img = new Image();
+    img.src = outputCanvas.toDataURL();
+    return { img, width: outputWidth, height: outputHeight };
+  };
+
+  // Main effect: Create marker, setup click handler
+  // Only runs when editing starts - NOT on color/position/icon changes
   useEffect(() => {
     if (!isEditing || !map) {
       return;
     }
 
-    let latLng;
+    const markerLayer = map.markerLayer;
+    if (!markerLayer) {
+      return;
+    }
+
+    // Initialize position
+    let latLng: [number, number];
     if (!tempPrivateNode.p || tempPrivateNode.p.length !== 2) {
-      const mapCenter = map.getCenter();
-      setTempPrivateNode({
-        p: [mapCenter.lat, mapCenter.lng],
-      });
-      latLng = [mapCenter.lat, mapCenter.lng] as [number, number];
+      const center = map.getCenter();
+      latLng = [center.lat, center.lng];
+      setTempPrivateNode({ p: latLng });
     } else {
-      // Apply rotation to display stored coordinates correctly
       const rotationDegrees = map._rotationDegrees;
       const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
@@ -88,33 +232,105 @@ export function PrivateNode({
         latLng = tempPrivateNode.p;
       }
     }
-    const radius = tempPrivateNode.radius ?? 10;
-    const privateNodeMarker = new CanvasMarker(latLng, {
-      id: "private-node",
-      icon: tempPrivateNode.icon || null,
-      baseRadius: 10,
-      radius: radius * baseIconSize,
-      fillColor: color,
-      colorBlindMode,
-      colorBlindSeverity,
-      noCache: true,
-    });
-    let isDragging = false;
-    privateNodeMarker.on("mousedown", (event) => {
-      event.originalEvent.preventDefault();
-      event.originalEvent.stopPropagation();
-      isDragging = true;
-    });
-    const handleMouseMove = (event: LeafletMouseEvent) => {
-      if (!isDragging) {
-        return;
-      }
-      const { lat, lng } = event.latlng;
-      privateNodeMarker.setLatLng([lat, lng]);
 
-      // Store in original (unrotated) coordinates
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
+    positionRef.current = latLng;
+    const dpr = window.devicePixelRatio || 1;
+    const size = radius * 2 * baseIconSize * dpr;
+
+    // Determine initial sheet - use cached icon if available, otherwise colored circle
+    let initialSheet = DEFAULT_CIRCLE_SHEET;
+    let initialRect = { x: 0, y: 0, width: 64, height: 64 };
+
+    const iconUrl = tempPrivateNode?.icon?.url;
+    if (iconUrl) {
+      const fullIconUrl = getIconsUrl(appName, iconUrl, iconsPath);
+      // Compute iconRect first so it can be included in cache key
+      const iconWidth = tempPrivateNode.icon?.width ?? 0;
+      const iconHeight = tempPrivateNode.icon?.height ?? 0;
+      const iconRect =
+        iconWidth > 0 && iconHeight > 0
+          ? {
+              x: tempPrivateNode.icon?.x ?? 0,
+              y: tempPrivateNode.icon?.y ?? 0,
+              width: iconWidth,
+              height: iconHeight,
+            }
+          : null;
+      // Include iconRect in cache key so different icons on same sprite sheet have different cache entries
+      const cacheKey = createProcessedImageKey(fullIconUrl, color, iconRect);
+
+      // First check shared processed image cache (ensures exact same dimensions as markers.tsx)
+      const cachedProcessed = getProcessedImage(cacheKey);
+      if (cachedProcessed) {
+        markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
+        initialSheet = PRIVATE_NODE_ICON_SHEET;
+        initialRect = { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height };
+        devLog.info("PrivateNode", "Using cached processed icon for initial marker", {
+          width: cachedProcessed.width,
+          height: cachedProcessed.height,
+        });
+      } else {
+        // Check if source image is cached
+        const cachedSource = getSourceImage(fullIconUrl);
+        if (cachedSource) {
+          // Process and store in shared cache
+          const isGameIcon = iconUrl.includes("game-icons");
+          const { img: processedImg, width: procWidth, height: procHeight } = processIconSync(cachedSource, iconRect, color, isGameIcon);
+
+          // Store in shared cache so markers.tsx uses exact same entry
+          setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
+
+          markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, processedImg);
+          initialSheet = PRIVATE_NODE_ICON_SHEET;
+          initialRect = { x: 0, y: 0, width: procWidth, height: procHeight };
+          devLog.info("PrivateNode", "Processed and cached icon for initial marker", {
+            width: procWidth,
+            height: procHeight,
+          });
+        } else {
+          // No cached source - use colored circle, visual effect will update when loaded
+          const circleSheetName = `__circle_${color}__`;
+          const circleImg = createColoredCircleImage(color);
+          markerLayer.setSheet(circleSheetName, circleImg);
+          initialSheet = circleSheetName;
+        }
+      }
+    } else {
+      // No icon - use colored circle
+      const circleSheetName = `__circle_${color}__`;
+      const circleImg = createColoredCircleImage(color);
+      markerLayer.setSheet(circleSheetName, circleImg);
+      initialSheet = circleSheetName;
+    }
+
+    const marker: IconMarkerInstance = {
+      id: PRIVATE_NODE_MARKER_ID,
+      latLng,
+      size,
+      sheet: initialSheet,
+      rect: initialRect,
+      key: "private-node-preview",
+      isHighlighted: false, // Keep false to match normal marker size on map (highlighted = 1.15x bigger)
+    };
+    devLog.info("PrivateNode", "Main effect: creating marker", {
+      latLng,
+      size,
+      hasIcon: !!tempPrivateNode?.icon?.url,
+      initialSheet,
+    });
+    markerLayer.add(marker);
+    // Increment version to trigger visual effect (in case color/icon changes later)
+    setMarkerVersion((v) => v + 1);
+
+    // Handle click to reposition (updates marker directly, no state-triggered re-render)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleClick = (e: any) => {
+      const clickLatLng = e.latlng as [number, number];
+      if (!clickLatLng) return;
+      const [lat, lng] = clickLatLng;
+
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
       let storageCoord: [number, number] = [lat, lng];
       if (rotationDegrees && rotationCenter) {
         storageCoord = inverseRotateCoordinate(
@@ -123,98 +339,192 @@ export function PrivateNode({
           rotationCenter,
         );
       }
-      setTempPrivateNode({ p: storageCoord });
-    };
-    map.on("mousemove", handleMouseMove);
-    const handleClick = (event: LeafletMouseEvent) => {
-      isDragging = false;
-      const { lat, lng } = event.latlng;
-      privateNodeMarker.setLatLng([lat, lng]);
 
-      // Store in original (unrotated) coordinates
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-      let storageCoord: [number, number] = [lat, lng];
-      if (rotationDegrees && rotationCenter) {
-        storageCoord = inverseRotateCoordinate(
-          [lat, lng],
-          rotationDegrees,
-          rotationCenter,
-        );
-      }
+      positionRef.current = [lat, lng];
+      // Update marker directly - this is instant
+      markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, { latLng: [lat, lng] });
+      // Update state for persistence (React will re-render but marker already moved)
       setTempPrivateNode({ p: storageCoord });
     };
+
     map.on("click", handleClick);
-    privateNodeMarker.on("mouseup", (event) => {
-      event.originalEvent.preventDefault();
-      event.originalEvent.stopPropagation();
-      isDragging = false;
-    });
 
-    try {
-      privateNodeMarker.addTo(map);
-    } catch (err) {}
-    canvasMarker.current = privateNodeMarker;
     return () => {
-      map.off("mousemove", handleMouseMove);
+      devLog.warn("PrivateNode", "Main effect CLEANUP: removing marker");
       map.off("click", handleClick);
-      privateNodeMarker.off();
-      try {
-        privateNodeMarker.remove();
-      } catch (err) {}
+      markerLayer.remove(PRIVATE_NODE_MARKER_ID);
     };
   }, [isEditing, map]);
 
+  // Unified visual effect: handles icon OR circle based on tempPrivateNode.icon
+  // Uses requestAnimationFrame to ensure marker exists from main effect
   useEffect(() => {
-    if (!isEditing || !canvasMarker.current) {
-      return;
-    }
+    devLog.debug("PrivateNode", "Visual effect triggered", {
+      isEditing,
+      hasMap: !!map,
+      color,
+      iconUrl: tempPrivateNode?.icon?.url,
+    });
 
-    if (canvasMarker.current.options.icon !== tempPrivateNode.icon) {
-      canvasMarker.current.setIcon(tempPrivateNode.icon || null);
-    }
-    if (canvasMarker.current.options.fillColor !== color) {
-      canvasMarker.current.setStyle({ fillColor: color });
-    }
-    const newRadius = radius * baseIconSize;
-    if (canvasMarker.current.options.radius !== newRadius) {
-      canvasMarker.current.setRadius(newRadius);
-    }
-    const latLng = canvasMarker.current.getLatLng();
-    if (tempPrivateNode.p) {
-      // Apply rotation to stored coordinates for comparison and display
-      const rotationDegrees = map?._rotationDegrees;
-      const rotationCenter = map?._rotationCenter;
-      let displayCoord: [number, number] = tempPrivateNode.p;
-      if (rotationDegrees && rotationCenter) {
-        displayCoord = rotateCoordinate(
-          tempPrivateNode.p,
-          rotationDegrees,
-          rotationCenter,
-        );
-      }
+    if (!isEditing || !map) return;
 
-      if (latLng.lat !== displayCoord[0] || latLng.lng !== displayCoord[1]) {
-        canvasMarker.current.setLatLng(displayCoord);
+    const markerLayer = map.markerLayer;
+    if (!markerLayer) return;
+
+    // Use requestAnimationFrame to ensure marker is created by main effect
+    const rafId = requestAnimationFrame(() => {
+      const existingMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
+      devLog.debug("PrivateNode", "RAF callback", {
+        existingMarker: !!existingMarker,
+        iconUrl: tempPrivateNode?.icon?.url,
+      });
+      if (!existingMarker) return;
+
+      const iconUrl = tempPrivateNode?.icon?.url;
+      if (iconUrl) {
+        // Apply icon with glow effect using the shared cache for consistency with markers.tsx
+        const fullIconUrl = getIconsUrl(appName, iconUrl, iconsPath);
+        // Compute iconRect first so it can be included in cache key
+        const iconWidth = tempPrivateNode.icon?.width ?? 0;
+        const iconHeight = tempPrivateNode.icon?.height ?? 0;
+        const iconRect =
+          iconWidth > 0 && iconHeight > 0
+            ? {
+                x: tempPrivateNode.icon?.x ?? 0,
+                y: tempPrivateNode.icon?.y ?? 0,
+                width: iconWidth,
+                height: iconHeight,
+              }
+            : null;
+        // Include iconRect in cache key so different icons on same sprite sheet have different cache entries
+        const cacheKey = createProcessedImageKey(fullIconUrl, color, iconRect);
+        const isGameIcon = iconUrl.includes("game-icons");
+
+        // Check shared processed image cache first (same cache as markers.tsx)
+        const cachedProcessed = getProcessedImage(cacheKey);
+        if (cachedProcessed) {
+          // Use cached processed image with exact same dimensions as markers.tsx
+          devLog.info("PrivateNode", "Using cached processed image from shared cache", {
+            width: cachedProcessed.width,
+            height: cachedProcessed.height,
+            cacheKey,
+          });
+          markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
+          markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
+            sheet: PRIVATE_NODE_ICON_SHEET,
+            rect: { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height },
+          });
+        } else {
+          // Need to process - check source image cache
+          const applyIcon = (sourceImg: HTMLImageElement) => {
+            // Use the same processIconSync function for consistency
+            const { img: processedImg, width: procWidth, height: procHeight } = processIconSync(
+              sourceImg,
+              iconRect,
+              color,
+              isGameIcon,
+            );
+
+            devLog.info("PrivateNode", "Processed icon, storing in shared cache", {
+              procWidth,
+              procHeight,
+              color,
+              isGameIcon,
+              cacheKey,
+            });
+
+            // Store in shared cache so markers.tsx uses the exact same entry
+            setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
+
+            // Wait for the processed image to load before updating the marker
+            const updateMarker = () => {
+              const currentMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
+              if (!currentMarker) {
+                devLog.warn("PrivateNode", "Marker was removed during image load, skipping update");
+                return;
+              }
+              markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, processedImg);
+              markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
+                sheet: PRIVATE_NODE_ICON_SHEET,
+                rect: { x: 0, y: 0, width: procWidth, height: procHeight },
+              });
+            };
+
+            // Check if image is already loaded (data URL should be synchronous in most cases)
+            if (processedImg.complete && processedImg.naturalWidth > 0) {
+              updateMarker();
+            } else {
+              processedImg.onload = updateMarker;
+            }
+          };
+
+          // Check shared source image cache
+          const cachedSource = getSourceImage(fullIconUrl);
+          if (cachedSource) {
+            applyIcon(cachedSource);
+          } else {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              // Check if marker still exists before applying
+              if (!markerLayer.getMarker(PRIVATE_NODE_MARKER_ID)) {
+                devLog.warn("PrivateNode", "Marker removed during source image load");
+                return;
+              }
+              // Store in shared cache for use by markers.tsx
+              setSourceImage(fullIconUrl, img);
+              applyIcon(img);
+            };
+            img.src = fullIconUrl;
+          }
+        }
+      } else {
+        // No icon - apply colored circle
+        const circleSheetName = `__circle_${color}__`;
+        const circleImg = createColoredCircleImage(color);
+        markerLayer.setSheet(circleSheetName, circleImg);
+        markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
+          sheet: circleSheetName,
+          rect: { x: 0, y: 0, width: 64, height: 64 },
+        });
       }
-    }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [
-    color,
-    radius,
-    baseIconSize,
-    tempPrivateNode?.icon,
-    tempPrivateNode?.p,
+    isEditing,
     map,
+    color,
+    appName,
+    iconsPath,
+    markerVersion,
+    tempPrivateNode?.icon?.url,
+    tempPrivateNode?.icon?.x,
+    tempPrivateNode?.icon?.y,
+    tempPrivateNode?.icon?.width,
+    tempPrivateNode?.icon?.height,
   ]);
 
-  // Re-render preview marker when color blind mode changes
+  // Effect for size changes only
   useEffect(() => {
-    if (!isEditing || !canvasMarker.current) return;
-    try {
-      canvasMarker.current.update();
-    } catch (e) {}
-  }, [colorBlindMode, isEditing]);
+    if (!isEditing || !map) return;
 
+    const markerLayer = map.markerLayer;
+    if (!markerLayer) return;
+
+    const rafId = requestAnimationFrame(() => {
+      const existingMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
+      if (!existingMarker) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const size = radius * 2 * baseIconSize * dpr;
+      markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, { size });
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [isEditing, map, radius, baseIconSize]);
+
+  // Shared private node from collaboration
   const sharedTempPrivateNode = useConnectionStore(
     (state) => state.tempPrivateNode,
   );
@@ -230,6 +540,11 @@ export function PrivateNode({
       return;
     }
 
+    const markerLayer = map.markerLayer;
+    if (!markerLayer) {
+      return;
+    }
+
     // Apply rotation to display shared node correctly
     let displayLatLng: [number, number] = latLng;
     const rotationDegrees = map._rotationDegrees;
@@ -238,28 +553,28 @@ export function PrivateNode({
       displayLatLng = rotateCoordinate(latLng, rotationDegrees, rotationCenter);
     }
 
-    const radius = sharedTempPrivateNode.radius ?? 10;
-    const privateNodeMarker = new CanvasMarker(displayLatLng, {
-      id: "shared-private-node",
-      icon: sharedTempPrivateNode.icon,
-      baseRadius: 10,
-      radius: radius * baseIconSize,
-      fillColor: sharedTempPrivateNode.color,
-      colorBlindMode,
-      colorBlindSeverity,
-      noCache: true,
-    });
+    const sharedRadius = sharedTempPrivateNode.radius ?? 10;
+    const dpr = window.devicePixelRatio || 1;
+    const size = sharedRadius * 2 * baseIconSize * dpr;
 
-    try {
-      privateNodeMarker.addTo(map);
-    } catch (err) {}
-    return () => {
-      try {
-        privateNodeMarker.remove();
-      } catch (err) {}
+    const marker: IconMarkerInstance = {
+      id: SHARED_PRIVATE_NODE_MARKER_ID,
+      latLng: displayLatLng,
+      size,
+      sheet: DEFAULT_CIRCLE_SHEET,
+      rect: { x: 0, y: 0, width: 64, height: 64 },
+      key: "shared-private-node-preview",
+      isHighlighted: false, // Keep false to match normal marker size on map (highlighted = 1.15x bigger)
     };
-  }, [sharedTempPrivateNode, baseIconSize, mapName]);
 
+    markerLayer.add(marker);
+
+    return () => {
+      markerLayer.remove(SHARED_PRIVATE_NODE_MARKER_ID);
+    };
+  }, [sharedTempPrivateNode, baseIconSize, mapName, map]);
+
+  // Update mapName when it changes
   useEffect(() => {
     if (tempPrivateNode) {
       setTempPrivateNode({ mapName });
@@ -277,23 +592,11 @@ export function PrivateNode({
       return;
     }
 
-    if (!canvasMarker.current) {
+    // Get coordinates from stored tempPrivateNode.p
+    if (!tempPrivateNode.p) {
       return;
     }
-
-    const latLng = canvasMarker.current.getLatLng();
-
-    // Store coordinates in original (unrotated) system
-    let storageCoord: [number, number] = [latLng.lat, latLng.lng];
-    const rotationDegrees = map?._rotationDegrees;
-    const rotationCenter = map?._rotationCenter;
-    if (rotationDegrees && rotationCenter) {
-      storageCoord = inverseRotateCoordinate(
-        [latLng.lat, latLng.lng],
-        rotationDegrees,
-        rotationCenter,
-      );
-    }
+    const storageCoord = tempPrivateNode.p;
 
     const id = `${tempPrivateNode.filter}_${Date.now()}`;
     const marker: PrivateNode = {
@@ -364,7 +667,7 @@ export function PrivateNode({
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Add Node</h4>
               <p className="text-sm text-muted-foreground">
-                Drag the icon or click on the map to change its position.
+                Click on the map to change the node position.
               </p>
             </div>
             <div className="grid gap-2">
@@ -476,20 +779,6 @@ export function PrivateNode({
                         +e.target.value,
                       ];
                       setTempPrivateNode({ p: newP });
-                      if (!Number.isNaN(newP[0]) && !Number.isNaN(newP[1])) {
-                        // Apply rotation before setting marker position
-                        const rotationDegrees = map?._rotationDegrees;
-                        const rotationCenter = map?._rotationCenter;
-                        let displayCoord = newP;
-                        if (rotationDegrees && rotationCenter) {
-                          displayCoord = rotateCoordinate(
-                            newP,
-                            rotationDegrees,
-                            rotationCenter,
-                          );
-                        }
-                        canvasMarker.current?.setLatLng(displayCoord);
-                      }
                     }}
                   />
                   <Input
@@ -502,20 +791,6 @@ export function PrivateNode({
                         tempPrivateNode?.p?.[1] ?? 0,
                       ];
                       setTempPrivateNode({ p: newP });
-                      if (!Number.isNaN(newP[0]) && !Number.isNaN(newP[1])) {
-                        // Apply rotation before setting marker position
-                        const rotationDegrees = map?._rotationDegrees;
-                        const rotationCenter = map?._rotationCenter;
-                        let displayCoord = newP;
-                        if (rotationDegrees && rotationCenter) {
-                          displayCoord = rotateCoordinate(
-                            newP,
-                            rotationDegrees,
-                            rotationCenter,
-                          );
-                        }
-                        canvasMarker.current?.setLatLng(displayCoord);
-                      }
                     }}
                   />
                 </div>

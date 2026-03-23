@@ -47,7 +47,7 @@ This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specifi
 - **Frameworks**: Next.js (web apps), Vite (Overwolf apps)
 - **UI**: React + TypeScript + Tailwind CSS + Radix UI
 - **State**: Zustand
-- **Maps**: Leaflet for interactive game maps
+- **Maps**: Custom WebGL2 engine for interactive game maps
 
 ### Development Notes
 - All paths must be absolute, not relative
