@@ -990,36 +990,37 @@ export class IconMarkerLayer implements Layer {
     return entry;
   }
 
-  render(gl: WebGL2RenderingContext, state: RenderState): void {
-    if (!this.program || !this.vao) return;
-    if (this.instances.length === 0) {
-      devLog.debug("IconMarkerLayer", "render: no instances");
-      return;
-    }
+  // Cached grouping to avoid per-frame allocation
+  private cachedGroups: Map<string, IconMarkerInstance[]> = new Map();
+  private cachedGroupsVersion = -1;
+  private lastBufferVersion = -1;
+  private lastBufferZoom = -999;
 
-    // Group by sheet
-    const groups = new Map<string, IconMarkerInstance[]>();
+  private rebuildGroups() {
+    this.cachedGroups.clear();
     for (let i = 0; i < this.instances.length; i++) {
       const m = this.instances[i];
-      if (m === null) continue; // Skip null entries (removed markers)
+      if (m === null) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
-      let arr = groups.get(m.sheet);
+      let arr = this.cachedGroups.get(m.sheet);
       if (!arr) {
         arr = [];
-        groups.set(m.sheet, arr);
+        this.cachedGroups.set(m.sheet, arr);
       }
       arr.push(m);
     }
+    this.cachedGroupsVersion = this.instancesVersion;
+  }
 
-    // Log sheets being rendered (only first time or when changed)
-    const sheetKeys = Array.from(groups.keys()).sort().join(",");
-    if ((this as any)._lastSheetKeys !== sheetKeys) {
-      (this as any)._lastSheetKeys = sheetKeys;
-      devLog.info("IconMarkerLayer", "render: sheets", {
-        sheets: Array.from(groups.keys()),
-        totalMarkers: this.instances.filter(m => m !== null).length,
-      });
+  render(gl: WebGL2RenderingContext, state: RenderState): void {
+    if (!this.program || !this.vao) return;
+    if (this.instances.length === 0) return;
+
+    // Rebuild groups only when instances change
+    if (this.cachedGroupsVersion !== this.instancesVersion) {
+      this.rebuildGroups();
     }
+    const groups = this.cachedGroups;
 
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
@@ -1066,6 +1067,14 @@ export class IconMarkerLayer implements Layer {
     // This ensures icons are perfectly anchored during rotation and perspective changes
     gl.uniformMatrix3fv(this.u_view_loc, false, state.viewMatrix!);
 
+    // Only reproject markers when instances or zoom changed
+    const rebuildBuffers =
+      this.lastBufferVersion !== this.instancesVersion ||
+      Math.abs(this.lastBufferZoom - state.zoom) > 0.001;
+    if (rebuildBuffers) {
+      this.lastBufferVersion = this.instancesVersion;
+      this.lastBufferZoom = state.zoom;
+    }
     const drawList = (
       s: { w: number; h: number; tex: WebGLTexture },
       list: IconMarkerInstance[],
@@ -1092,6 +1101,8 @@ export class IconMarkerLayer implements Layer {
         };
       }
 
+      const count = list.length;
+
       const offsets = this.preallocatedBuffers.offsets!;
       const sizes = this.preallocatedBuffers.sizes!;
       const uvs = this.preallocatedBuffers.uvs!;
@@ -1103,7 +1114,16 @@ export class IconMarkerLayer implements Layer {
       const tints = this.preallocatedBuffers.tints!;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
-        const p = state.projection(m.latLng);
+        // Cache projected position per marker — only recompute on zoom change
+        let p: { x: number; y: number };
+        const cached = m as any;
+        if (rebuildBuffers || !cached._projX) {
+          p = state.projection(m.latLng);
+          cached._projX = p.x;
+          cached._projY = p.y;
+        } else {
+          p = { x: cached._projX, y: cached._projY };
+        }
         let size = m.size;
         let sizeW = m.sizeW ?? size;
         if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
@@ -1172,7 +1192,6 @@ export class IconMarkerLayer implements Layer {
         }
       }
       // Upload all attribute data using subarray views to avoid copies
-      const count = list.length;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -1251,31 +1270,32 @@ export class IconMarkerLayer implements Layer {
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     };
 
-    // Collect alwaysOnTop/selected markers for a final pass across all sheets
-    const onTopBySheet = new Map<string, IconMarkerInstance[]>();
+    // Reusable arrays to avoid per-frame allocations
+    const normalList: IconMarkerInstance[] = [];
+    const onTopEntries: { s: { w: number; h: number; tex: WebGLTexture }; items: IconMarkerInstance[] }[] = [];
 
     for (const [sheet, items] of groups) {
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
-      const normal: IconMarkerInstance[] = [];
+      normalList.length = 0;
+      let onTopList: IconMarkerInstance[] | null = null;
       for (const m of items) {
         if (m.isSelected || m.alwaysOnTop) {
-          let list = onTopBySheet.get(sheet);
-          if (!list) { list = []; onTopBySheet.set(sheet, list); }
-          list.push(m);
+          if (!onTopList) onTopList = [];
+          onTopList.push(m);
         } else {
-          normal.push(m);
+          normalList.push(m);
         }
       }
-      drawList(s, normal);
+      drawList(s, normalList);
+      if (onTopList) onTopEntries.push({ s, items: onTopList });
     }
 
     // Final pass: draw alwaysOnTop/selected markers above everything
-    if (onTopBySheet.size > 0) {
+    if (onTopEntries.length > 0) {
       if (usePerspectiveDepth) gl.disable(gl.DEPTH_TEST);
-      for (const [sheet, items] of onTopBySheet) {
-        const s = this.sheets.get(sheet);
-        if (s) drawList(s, items);
+      for (const entry of onTopEntries) {
+        drawList(entry.s, entry.items);
       }
       if (usePerspectiveDepth) gl.enable(gl.DEPTH_TEST);
     }
