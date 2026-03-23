@@ -75,12 +75,16 @@ export function InteractiveMap({
       vars: { title: appTitle, map: t(mapName) },
     });
 
-    // Create canvas element
+    // Create canvas element with correct initial resolution
     const canvas = document.createElement("canvas");
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
     containerRef.current.appendChild(canvas);
+    // Set buffer size immediately to avoid blurry first frame
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(containerRef.current.clientWidth * dpr);
+    canvas.height = Math.floor(containerRef.current.clientHeight * dpr);
     mapRefsRef.current.canvas = canvas;
 
     // Create projection if transformation is specified
