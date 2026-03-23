@@ -9,6 +9,44 @@ export const DEFAULT_PATREON_TIER_IDS = [
 
 export const games: Array<Game> = [
   {
+    id: "crimson-desert",
+    discordId: "crimson-desert",
+    title: "Crimson Desert",
+    logo: "https://www.th.gl/global_icons/crimson-desert.webp",
+    companion: {
+      baseURL: "/apps/crimson-desert",
+      controllerURL: "/apps/crimson-desert/controller",
+      desktopURL: "/apps/crimson-desert",
+      overlayURL: "/apps/crimson-desert/overlay",
+      markerOptions: {
+        radius: 6,
+        playerIcon: "player.webp",
+        imageSprite: true,
+        zPos: {
+          xyMaxDistance: 100,
+          zDistance: 5,
+        },
+      },
+      games: [
+        {
+          title: "Crimson Desert",
+          processNames: ["CrimsonDesert.exe"],
+        },
+      ],
+      defaultHotkeys: {
+        [HOTKEYS.TOGGLE_APP]: "F6",
+        [HOTKEYS.TOGGLE_LOCK_APP]: "F9",
+        [HOTKEYS.ZOOM_IN_APP]: "F7",
+        [HOTKEYS.ZOOM_OUT_APP]: "F8",
+        [HOTKEYS.DISCOVER_NODE]: "F10",
+        [HOTKEYS.TOGGLE_LIVE_MODE]: "F5",
+        [HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN]: "SHIFT+F9",
+      },
+    },
+    web: "https://crimsondesert.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "starsand-island",
     discordId: "starsand-island",
     title: "Starsand Island",
@@ -644,14 +682,6 @@ export const games: Array<Game> = [
       protocol: "thgl-soc",
       url: "https://www.overwolf.com/app/Leon_Machens-SoC.gg",
     },
-    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
-  },
-  {
-    id: "crimson-desert",
-    discordId: "crimson-desert",
-    title: "Crimson Desert",
-    logo: "https://www.th.gl/global_icons/crimson-desert.webp",
-    web: "https://crimsondesert.th.gl",
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
 ];
