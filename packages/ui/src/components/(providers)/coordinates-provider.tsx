@@ -115,6 +115,7 @@ export function CoordinatesProvider({
   appName,
   nodesPaths,
   map,
+  clusterPrecision = 0,
 }: {
   children: React.ReactNode;
   staticNodes?: NodesCoordinates;
@@ -128,6 +129,7 @@ export function CoordinatesProvider({
   appName: string;
   nodesPaths: Record<string, string>;
   map?: string;
+  clusterPrecision?: number;
 }): JSX.Element {
   const { t, dict, locale } = useI18n();
   if (!useUserStore) {
@@ -603,13 +605,25 @@ export function CoordinatesProvider({
     return fp;
   }, [nodes]);
 
+  const clusterKey = useCallback(
+    (p: number[]) => {
+      if (clusterPrecision > 0) {
+        const snap = (v: number) =>
+          Math.round(v / clusterPrecision) * clusterPrecision;
+        return `${snap(p[0])}:${snap(p[1])}`;
+      }
+      return `${p[0]}:${p[1]}`;
+    },
+    [clusterPrecision],
+  );
+
   const refreshSpawns = useCallback(
     (state: UserStoreState) => {
       // Read nodes from ref (always latest) instead of closure dependency.
       // This prevents refreshSpawns from being recreated on every nodes change.
       const currentNodes = nodesRef.current;
       let newSpawns: (Spawns[number] & { score?: number })[] = [];
-      // Deduplication map: key = "x:y" coordinates
+      // Deduplication map: key = "x:y" coordinates (snapped by clusterPrecision)
       const spawnsByCoordinate = new Map<string, Spawn>();
       if (state.search) {
         if (state.search.length < 3 || !searchIndex) {
@@ -633,7 +647,7 @@ export function CoordinatesProvider({
           );
         }
         newSpawns.forEach((spawn) => {
-          const key = `${spawn.p[0]}:${spawn.p[1]}`;
+          const key = clusterKey(spawn.p);
           if (!spawnsByCoordinate.has(key)) {
             spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
           } else {
@@ -667,7 +681,7 @@ export function CoordinatesProvider({
                 }
               }
             }
-            const key = `${spawn.p[0]}:${spawn.p[1]}`;
+            const key = clusterKey(spawn.p);
             if (!spawnsByCoordinate.has(key)) {
               spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
             } else {
@@ -696,7 +710,7 @@ export function CoordinatesProvider({
 
       setSpawns(newSpawns);
     },
-    [searchIndex, publicSearchSpawns],
+    [searchIndex, publicSearchSpawns, clusterKey],
   );
 
   useEffect(() => {

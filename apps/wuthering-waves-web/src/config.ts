@@ -10,6 +10,7 @@ export const APP_CONFIG: AppConfig = {
     radius: 6,
     playerIcon: "player.webp",
     imageSprite: true,
+    clusterPrecision: 50,
     zPos: {
       xyMaxDistance: 15000,
       zDistance: 400,
@@ -18,8 +19,7 @@ export const APP_CONFIG: AppConfig = {
   internalLinks: [
     {
       title: "Lahai-Roi Map",
-      description:
-        "Explore the underground haven beneath the Roya Frostlands.",
+      description: "Explore the underground haven beneath the Roya Frostlands.",
       href: "/maps/Lahai-Roi",
       iconName: "Map",
       bgImage: getPreviewImageUrl("wuthering-waves", "WP_Xueyuan"),

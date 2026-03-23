@@ -111,6 +111,7 @@ export function createMapPage(
         nodesPaths={version.more.nodes}
         globalFilters={version.data.globalFilters}
         map={mapName}
+        clusterPrecision={appConfig.markerOptions?.clusterPrecision}
       >
         <HeaderOffset full>
           <PageTitle

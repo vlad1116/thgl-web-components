@@ -104,6 +104,7 @@ export function App({
             globalFilters={globalFilters}
             useCbor
             nodesPaths={version.more.nodes}
+            clusterPrecision={appConfig.markerOptions.clusterPrecision}
           >
             <AppHeader
               title={appConfig.title}

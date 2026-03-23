@@ -124,6 +124,7 @@ export function App({
             useCbor
             nodesPaths={version.more.nodes}
             staticDrawings={version.data.drawings}
+            clusterPrecision={appConfig.markerOptions.clusterPrecision}
           >
             {lockedWindow ? (
               <UnlockButton onClick={toggleLockedWindow} />
