@@ -358,6 +358,8 @@ function MarkersContent({
   const highContrastThickness = useSettingsStore(
     (state) => state.highContrastThickness
   );
+  const dynamicIconSize = useSettingsStore((state) => state.dynamicIconSize);
+  const dynamicIconSizeFactor = useSettingsStore((state) => state.dynamicIconSizeFactor);
   const labelModeByFilter = useSettingsStore(
     (state) => state.labelModeByFilter,
   );
@@ -687,6 +689,9 @@ function MarkersContent({
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
 
+
+    // Set dynamic icon sizing
+    markerLayer.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
 
     // Set high contrast mode
     markerLayer.setHighContrastMode(highContrastMode);
@@ -1175,7 +1180,10 @@ function MarkersContent({
 
         // Compute screen-pixel radius by projecting the icon edge
         const midZoom = (state.minZoom + state.maxZoom) * 0.5;
-        const zoomSizeScale = Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), 2 / 3)));
+        const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
+        const zoomSizeScale = factor > 0.001
+          ? Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), factor)))
+          : 1;
         const halfWorld = (m.size * zoomSizeScale) / 2;
         const edgeClipX = view[0] * (worldPos.x + halfWorld) + view[3] * worldPos.y + view[6];
         const edgeScreenX = (edgeClipX * 0.5 + 0.5) * rect.width;
@@ -1290,6 +1298,8 @@ function MarkersContent({
     markerOptions.zPos,
     colorBlindMode,
     colorBlindSeverity,
+    dynamicIconSize,
+    dynamicIconSizeFactor,
     iconLoadVersion, // Re-run when images finish loading to apply processed icons
   ]);
 

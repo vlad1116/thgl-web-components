@@ -65,6 +65,7 @@ uniform vec2 u_screen; // screen dimensions for billboard scaling
 uniform float u_zoom; // zoom level
 uniform float u_minZoom;
 uniform float u_maxZoom;
+uniform float u_dynamicSizeFactor; // 0=fixed size, 0.67=default, 1.0=full linear
 const float MIN_NEEDLE_WORLD = 0.0;
 const float MAX_NEEDLE_WORLD = 20.0;
 
@@ -100,7 +101,10 @@ void main(){
     // pow(ratio, 2/3) gives consistent growth per zoom level across all maps.
     float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
     float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
-    float zoomSizeScale = clamp(pow(viewScale / refScale, 2.0 / 3.0), 0.25, 2.5);
+    float ratio = viewScale / refScale;
+    float zoomSizeScale = u_dynamicSizeFactor > 0.001
+      ? clamp(pow(ratio, u_dynamicSizeFactor), 0.25, 2.5)
+      : 1.0;
     vec2 center = a_offset + 0.5 * a_size;
     vec2 local = (a_pos - 0.5) * a_size * zoomSizeScale;
 
@@ -476,6 +480,8 @@ export class IconMarkerLayer implements Layer {
   private u_zoom_loc: WebGLUniformLocation | null = null;
   private u_minZoom_loc: WebGLUniformLocation | null = null;
   private u_maxZoom_loc: WebGLUniformLocation | null = null;
+  private u_dynamicSizeFactor_loc: WebGLUniformLocation | null = null;
+  private dynamicSizeFactor: number = 2 / 3;
   private u_cb_mode_loc: WebGLUniformLocation | null = null;
   private u_cb_sev_loc: WebGLUniformLocation | null = null;
   private hidden?: Set<string>;
@@ -621,6 +627,10 @@ export class IconMarkerLayer implements Layer {
 
   setColorBlindSeverity(severity: number) {
     this.colorBlindSeverity = Math.max(0, Math.min(1, severity));
+  }
+
+  setDynamicSizeFactor(factor: number) {
+    this.dynamicSizeFactor = factor;
   }
 
   setHighContrastMode(enabled: boolean) {
@@ -844,6 +854,7 @@ export class IconMarkerLayer implements Layer {
     this.u_zoom_loc = gl.getUniformLocation(this.program!, "u_zoom");
     this.u_minZoom_loc = gl.getUniformLocation(this.program!, "u_minZoom");
     this.u_maxZoom_loc = gl.getUniformLocation(this.program!, "u_maxZoom");
+    this.u_dynamicSizeFactor_loc = gl.getUniformLocation(this.program!, "u_dynamicSizeFactor");
     this.u_cb_mode_loc = gl.getUniformLocation(this.program!, "u_cb_mode");
     this.u_cb_sev_loc = gl.getUniformLocation(this.program!, "u_cb_sev");
     this.u_hc_mode_loc = gl.getUniformLocation(this.program!, "u_hc_mode");
@@ -1050,6 +1061,7 @@ export class IconMarkerLayer implements Layer {
     gl.uniform1f(this.u_zoom_loc, state.zoom);
     gl.uniform1f(this.u_minZoom_loc, state.minZoom);
     gl.uniform1f(this.u_maxZoom_loc, state.maxZoom);
+    gl.uniform1f(this.u_dynamicSizeFactor_loc, this.dynamicSizeFactor);
 
     // Set color-blind simulation uniforms
     gl.uniform1i(this.u_cb_mode_loc, this.cbModeToInt(this.colorBlindMode));
@@ -1334,9 +1346,10 @@ export class IconMarkerLayer implements Layer {
 
   // Compute zoom-dependent size scale matching the vertex shader formula
   private getZoomSizeScale(state: RenderState): number {
+    if (this.dynamicSizeFactor <= 0.001) return 1;
     const midZoom = (state.minZoom + state.maxZoom) * 0.5;
     const scaleRatio = Math.pow(2, state.zoom - midZoom);
-    return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, 2 / 3)));
+    return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, this.dynamicSizeFactor)));
   }
 
   // Compute the screen-space Y offset for a marker's height stem (matching vertex shader)

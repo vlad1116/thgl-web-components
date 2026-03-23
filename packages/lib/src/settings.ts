@@ -137,6 +137,8 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   textColor: "#1ccdd1",
   textSize: 20,
   baseIconSize: 1,
+  dynamicIconSize: true,
+  dynamicIconSizeFactor: 0.67,
   playerIconSize: 1,
   iconSizeByGroup: {},
   iconSizeByFilter: {},
@@ -203,6 +205,8 @@ export type ProfileSettings = {
   textColor: string;
   textSize: number;
   baseIconSize: number;
+  dynamicIconSize: boolean;
+  dynamicIconSizeFactor: number;
   playerIconSize: number;
   iconSizeByGroup: Record<string, number>;
   iconSizeByFilter: Record<string, number>;
@@ -287,6 +291,8 @@ export interface ProfileActions {
   setTextColor: (textColor: string) => void;
   setTextSize: (textSize: number) => void;
   setBaseIconSize: (baseIconSize: number) => void;
+  toggleDynamicIconSize: () => void;
+  setDynamicIconSizeFactor: (factor: number) => void;
   setPlayerIconSize: (playerIconSize: number) => void;
   setIconSizeByGroup: (group: string, size: number) => void;
   setIconSizeByFilter: (id: string, size: number) => void;
@@ -637,6 +643,8 @@ export const useSettingsStore = create(
             mapTransform: null,
             playerIconSize: 1,
             baseIconSize: 1,
+            dynamicIconSize: true,
+            dynamicIconSizeFactor: 0.67,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
           });
@@ -649,6 +657,8 @@ export const useSettingsStore = create(
             mapTransform: null,
             playerIconSize: 1,
             baseIconSize: 1,
+            dynamicIconSize: true,
+            dynamicIconSizeFactor: 0.67,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
             // Accessibility
@@ -981,6 +991,14 @@ export const useSettingsStore = create(
 
         setBaseIconSize: (baseIconSize) => {
           updateSettings({ baseIconSize });
+        },
+
+        toggleDynamicIconSize: () => {
+          updateSettings({ dynamicIconSize: !get().dynamicIconSize });
+        },
+
+        setDynamicIconSizeFactor: (dynamicIconSizeFactor) => {
+          updateSettings({ dynamicIconSizeFactor: Math.max(0, Math.min(1, dynamicIconSizeFactor)) });
         },
 
         setPlayerIconSize: (playerIconSize) => {

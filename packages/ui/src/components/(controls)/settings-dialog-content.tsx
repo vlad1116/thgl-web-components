@@ -370,6 +370,32 @@ export function SettingsDialogContent({
           {/* Icon Sizes & Map Behavior */}
           <Section title="Icon Sizes">
             <IconSizes filters={filters} />
+            <div className="flex items-center justify-between mt-3">
+              <Label htmlFor="dynamic-icon-size">
+                Dynamic icon size (zoom-based)
+              </Label>
+              <Switch
+                id="dynamic-icon-size"
+                checked={profileSettings.dynamicIconSize}
+                onCheckedChange={settingsStore.toggleDynamicIconSize}
+              />
+            </div>
+            {profileSettings.dynamicIconSize && (
+              <div className="flex items-center gap-2 justify-between mt-2">
+                <Label htmlFor="dynamic-icon-factor">Factor</Label>
+                <Slider
+                  id="dynamic-icon-factor"
+                  min={0.1}
+                  max={1}
+                  step={0.05}
+                  value={[profileSettings.dynamicIconSizeFactor]}
+                  onValueChange={([v]) =>
+                    settingsStore.setDynamicIconSizeFactor(v)
+                  }
+                  className="w-32"
+                />
+              </div>
+            )}
           </Section>
 
           {!hideAppSettings && (
