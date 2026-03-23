@@ -17,7 +17,6 @@ import {
   useSettingsStore,
   useUserStore,
   devLog,
-  type LabelMode,
 } from "@repo/lib";
 import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
@@ -397,40 +396,6 @@ function MarkersContent({
   // Cache for text label canvases (keyed by text content + fontSize)
   const labelCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
   const activeLabelIds = useRef<Set<string>>(new Set());
-
-  // Helper function to determine if label should show for a marker
-  const shouldShowLabel = useCallback(
-    (
-      typeId: string,
-      labelMode: LabelMode | undefined,
-      isInRange: boolean,
-    ): boolean => {
-      if (!labelMode || labelMode === "off") return false;
-      if (labelMode === "always") return true;
-      if (labelMode === "inRange") return isInRange;
-      if (labelMode === "hotkey") return showLabelsActive;
-      return false;
-    },
-    [showLabelsActive],
-  );
-
-  const appIconsByName = useMemo(() => {
-    const map = new Map<
-      string,
-      { x: number; y: number; width: number; height: number }
-    >();
-    for (const filter of filters) {
-      for (const value of filter.values) {
-        if (typeof value.icon !== "string") {
-          const name = t(value.id);
-          if (!map.has(name)) {
-            map.set(name, value.icon);
-          }
-        }
-      }
-    }
-    return map;
-  }, [filters, t]);
 
   // Helper to extract RGB (without alpha) from color string
   const getRgbFromColor = (colorStr: string): string => {

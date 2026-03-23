@@ -11,10 +11,6 @@ export interface DrawingShape {
   fillColor?: string;
   size: number;
   mapName: string;
-  /** Vertical anchor for text: "center" (default) or "bottom" (text above the point) */
-  textAnchor?: "center" | "bottom";
-  /** Pixel offset [x, y] applied after screen projection */
-  textOffset?: [number, number];
 }
 
 export interface DrawingLayerOptions {
@@ -924,7 +920,7 @@ export class DrawingLayer implements Layer {
     const element = document.createElement("div");
     element.textContent = shape.text;
     element.setAttribute('data-text-id', shape.id);
-    const translateY = shape.textAnchor === "bottom" ? "-100%" : "-50%";
+    const translateY = "-50%";
     element.style.cssText = `
       position: absolute;
       font-size: ${shape.size}px;
@@ -977,12 +973,8 @@ export class DrawingLayer implements Layer {
       const clipX = a * worldPos.x + c * worldPos.y + tx;
       const clipY = b * worldPos.x + d * worldPos.y + ty;
 
-      let x = (clipX * 0.5 + 0.5) * cssWidth;
-      let y = (1 - (clipY * 0.5 + 0.5)) * cssHeight;
-      if (shape.textOffset) {
-        x += shape.textOffset[0];
-        y += shape.textOffset[1];
-      }
+      const x = (clipX * 0.5 + 0.5) * cssWidth;
+      const y = (1 - (clipY * 0.5 + 0.5)) * cssHeight;
 
       element.style.left = `${x}px`;
       element.style.top = `${y}px`;
