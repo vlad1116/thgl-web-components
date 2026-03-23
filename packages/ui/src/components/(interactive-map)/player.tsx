@@ -116,7 +116,8 @@ export function Player({
   }
 
   useEffect(() => {
-    if (!map?.mapName || !map.markerLayer) {
+    const playerLayer = map?.liveMarkerLayer ?? map?.markerLayer;
+    if (!map?.mapName || !playerLayer) {
       return;
     }
 
@@ -158,7 +159,7 @@ export function Player({
           size,
         });
         marker.current.setIcon(iconImage);
-        marker.current.addTo(map.markerLayer!);
+        marker.current.addTo(playerLayer);
       } else {
         marker.current.setIcon(iconImage);
         marker.current.setSize(size);

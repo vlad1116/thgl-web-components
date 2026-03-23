@@ -16,7 +16,6 @@ import {
   useGameState,
   useSettingsStore,
   useUserStore,
-  devLog,
 } from "@repo/lib";
 import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
@@ -617,20 +616,13 @@ function MarkersContent({
   }, [throttledPlayer, rotationCache]);
 
   // Track effect runs for debugging
-  const effectRunCount = useRef(0);
+
 
   // Main effect: add/update/remove markers
   useEffect(() => {
     const markerLayer = map?.markerLayer;
+    const liveMarkerLayer = map?.liveMarkerLayer;
     if (!map || !markerLayer) return;
-
-    effectRunCount.current += 1;
-    const runId = effectRunCount.current;
-    devLog.info("Markers", "Effect run started", {
-      runId,
-      spawnCount: spawns.length,
-      hasPlayer: !!throttledPlayer,
-    });
 
     // Load the icon sprite sheet
     const iconUrl = getIconsUrl(appName, "icons.webp", iconsPath);
@@ -654,7 +646,6 @@ function MarkersContent({
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
 
-
     // Set dynamic icon sizing
     markerLayer.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
 
@@ -662,6 +653,16 @@ function MarkersContent({
     markerLayer.setHighContrastMode(highContrastMode);
     markerLayer.setHighContrastColor(highContrastColor);
     markerLayer.setHighContrastThickness(highContrastThickness);
+
+    // Mirror settings to live marker layer
+    if (liveMarkerLayer) {
+      liveMarkerLayer.setColorBlindMode(colorBlindMode);
+      liveMarkerLayer.setColorBlindSeverity(colorBlindSeverity);
+      liveMarkerLayer.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
+      liveMarkerLayer.setHighContrastMode(highContrastMode);
+      liveMarkerLayer.setHighContrastColor(highContrastColor);
+      liveMarkerLayer.setHighContrastThickness(highContrastThickness);
+    }
 
     const baseRadius = 12;
     const dpr = window.devicePixelRatio || 1;
@@ -855,19 +856,6 @@ function MarkersContent({
         rect = { x: 0, y: 0, width: 64, height: 64 };
       }
 
-      // Log custom filter/private nodes for debugging
-      if (spawn.isPrivate) {
-        devLog.info("Markers", "Processing private spawn", {
-          id: spawn.id,
-          type: spawn.type,
-          color: spawn.color,
-          spawnIcon: spawn.icon,
-          markerIcon,
-          sheet,
-          rect,
-        });
-      }
-
       // Pre-process sprite sheet icons using canvas 2D.
       // This isolates each icon from the atlas (preventing cross-icon bleeding
       // in WebGL bilinear filtering) and applies a subtle shadow.
@@ -967,14 +955,6 @@ function MarkersContent({
     // Process shared private spawns
     const sharedPrivateSpawns = sharedMyFilters.flatMap<Spawns[number]>(
       (myFilter) => {
-        devLog.info("Markers", "Processing myFilter", {
-          name: myFilter.name,
-          nodeCount: myFilter.nodes?.length ?? 0,
-          nodes: myFilter.nodes?.map((n) => ({
-            id: n.id,
-            icon: n.icon,
-          })),
-        });
         return (
           myFilter.nodes?.map((node) => ({
             type: myFilter.name,
@@ -1059,21 +1039,38 @@ function MarkersContent({
       }
     }
 
-    // Batch remove old markers and their event handlers
+    // Batch remove old markers and their event handlers from both layers
     if (toRemove.length > 0) {
+      const staticToRemove: string[] = [];
+      const liveToRemove: string[] = [];
       for (const id of toRemove) {
-        markerLayer.unregisterAllEventHandlers(id);
+        const oldSpawn = spawnMapRef.current.get(id);
+        if (oldSpawn?.address && liveMarkerLayer) {
+          liveMarkerLayer.unregisterAllEventHandlers(id);
+          liveToRemove.push(id);
+        } else {
+          markerLayer.unregisterAllEventHandlers(id);
+          staticToRemove.push(id);
+        }
       }
-      markerLayer.removeMany(toRemove);
+      if (staticToRemove.length > 0) markerLayer.removeMany(staticToRemove);
+      if (liveToRemove.length > 0) liveMarkerLayer?.removeMany(liveToRemove);
     }
 
-    // Add or update markers and register event handlers
+    // Share icon sheets with live marker layer so live actors can use the same sprites
+    if (liveMarkerLayer) {
+      markerLayer.copySheets(liveMarkerLayer);
+    }
+
+    // Add or update markers, routing live actors to liveMarkerLayer
     // Note: We always re-register handlers to avoid stale closures from previous renders
     for (const instance of markerInstances) {
-      markerLayer.add(instance); // This handles both add and update
+      const spawn = newSpawnMap.get(instance.id);
+      const isLive = spawn?.address && liveMarkerLayer;
+      const targetLayer = isLive ? liveMarkerLayer : markerLayer;
+      targetLayer.add(instance); // This handles both add and update
 
       // Register event handlers (always, to capture fresh closure)
-      const spawn = newSpawnMap.get(instance.id);
       if (!spawn) continue;
 
       // Helper to show tooltip for a marker
@@ -1164,7 +1161,7 @@ function MarkersContent({
         onTooltipOpen(true);
       };
 
-      markerLayer.registerEventHandler(instance.id, "mouseover", (m) => {
+      targetLayer.registerEventHandler(instance.id, "mouseover", (m) => {
         // Delay tooltip open to avoid interfering with map interactions
         if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
         tooltipDelayRef.current = setTimeout(() => {
@@ -1173,7 +1170,7 @@ function MarkersContent({
         }, 200);
       });
       // Cancel pending tooltip delay on mouseout
-      markerLayer.registerEventHandler(instance.id, "mouseout", () => {
+      targetLayer.registerEventHandler(instance.id, "mouseout", () => {
         if (tooltipDelayRef.current) {
           clearTimeout(tooltipDelayRef.current);
           tooltipDelayRef.current = null;
@@ -1181,7 +1178,7 @@ function MarkersContent({
       });
       // Note: full mouseout closing is handled by safe zone tracking in the parent component
 
-      markerLayer.registerEventHandler(instance.id, "click", (m) => {
+      targetLayer.registerEventHandler(instance.id, "click", (m) => {
         // Cancel any pending hover delay and open immediately on click
         if (tooltipDelayRef.current) {
           clearTimeout(tooltipDelayRef.current);
@@ -1195,7 +1192,7 @@ function MarkersContent({
         }
       });
 
-      markerLayer.registerEventHandler(instance.id, "contextmenu", (m) => {
+      targetLayer.registerEventHandler(instance.id, "contextmenu", (m) => {
         const s = newSpawnMap.get(m.id);
         if (!s) return;
         const nodeId = getNodeId(s);
@@ -1226,23 +1223,22 @@ function MarkersContent({
     };
     map.on("click", handleMapClick);
 
-    devLog.info("Markers", "Effect run completed", {
-      runId,
-      markersAdded: newSpawnMap.size,
-    });
-
     return () => {
-      devLog.info("Markers", "Cleanup running", {
-        runId,
-        markersToRemove: newSpawnMap.size,
-      });
       map.off("click", handleMapClick);
-      // Batch unregister event handlers and remove markers
-      const idsToRemove = Array.from(newSpawnMap.keys());
-      for (const id of idsToRemove) {
-        markerLayer.unregisterAllEventHandlers(id);
+      // Batch unregister event handlers and remove markers from both layers
+      const staticIds: string[] = [];
+      const liveIds: string[] = [];
+      for (const [id, s] of newSpawnMap) {
+        if (s.address && liveMarkerLayer) {
+          liveMarkerLayer.unregisterAllEventHandlers(id);
+          liveIds.push(id);
+        } else {
+          markerLayer.unregisterAllEventHandlers(id);
+          staticIds.push(id);
+        }
       }
-      markerLayer.removeMany(idsToRemove);
+      if (staticIds.length > 0) markerLayer.removeMany(staticIds);
+      if (liveIds.length > 0) liveMarkerLayer?.removeMany(liveIds);
     };
   }, [
     map,

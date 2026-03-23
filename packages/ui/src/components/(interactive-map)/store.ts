@@ -12,6 +12,8 @@ export interface GameMapExtensions {
   rotationCenter?: [number, number];
   // Marker layer reference for use by Markers component
   markerLayer?: IconMarkerLayer;
+  // Separate layer for live actors (frequent updates without invalidating static markers)
+  liveMarkerLayer?: IconMarkerLayer;
   // Underscore-prefixed aliases (used throughout components)
   _rotationRadians?: number;
   _rotationDegrees?: number;

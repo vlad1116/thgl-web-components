@@ -598,10 +598,15 @@ export function CoordinatesProvider({
     let fp = "";
     for (const node of nodes) {
       let addrSum = 0;
+      let posHash = 0;
       for (const s of node.spawns) {
         addrSum += (s as any).address ?? 0;
+        // Include position in fingerprint for live actors so moves trigger refresh
+        if ((s as any).address) {
+          posHash += s.p[0] * 1000 + s.p[1];
+        }
       }
-      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum};`;
+      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum}:${posHash};`;
     }
     return fp;
   }, [nodes]);

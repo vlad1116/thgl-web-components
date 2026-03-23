@@ -167,12 +167,18 @@ export function InteractiveMap({
     });
     mapRefsRef.current.webmap = webmap;
 
-    // Create and add marker layer
+    // Create and add marker layers
     const markerLayer = new IconMarkerLayer();
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
     webmap.addLayer(markerLayer, { zIndex: 100 });
     mapRefsRef.current.markerLayer = markerLayer;
+
+    // Separate layer for live actors (frequent position updates)
+    const liveMarkerLayer = new IconMarkerLayer();
+    liveMarkerLayer.setColorBlindMode(colorBlindMode);
+    liveMarkerLayer.setColorBlindSeverity(colorBlindSeverity);
+    webmap.addLayer(liveMarkerLayer, { zIndex: 101 });
 
     // Create GameMap by extending WebMap with game-specific properties
     const gameMap = webmap as GameMap;
@@ -182,6 +188,7 @@ export function InteractiveMap({
       [0, 0],
     ];
     gameMap.markerLayer = markerLayer;
+    gameMap.liveMarkerLayer = liveMarkerLayer;
 
     // Apply rotation if specified (store on map instance for coordinate transforms)
     if (mapTileOptions.rotation) {
@@ -291,13 +298,17 @@ export function InteractiveMap({
     };
   }, [map, mapTileOptions, colorBlindMode, colorBlindSeverity, isOverlay, mapFilter]);
 
-  // Update color blind mode on marker layer
+  // Update color blind mode on marker layers
   useEffect(() => {
     if (mapRefsRef.current.markerLayer) {
       mapRefsRef.current.markerLayer.setColorBlindMode(colorBlindMode);
       mapRefsRef.current.markerLayer.setColorBlindSeverity(colorBlindSeverity);
     }
-  }, [colorBlindMode, colorBlindSeverity]);
+    if (map?.liveMarkerLayer) {
+      map.liveMarkerLayer.setColorBlindMode(colorBlindMode);
+      map.liveMarkerLayer.setColorBlindSeverity(colorBlindSeverity);
+    }
+  }, [colorBlindMode, colorBlindSeverity, map]);
 
   return (
     <>

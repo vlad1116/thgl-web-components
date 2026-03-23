@@ -85,6 +85,7 @@ export class WebMap {
   private downPointer?: { x: number; y: number; t: number };
   private rotationPivot?: { screen: { x: number; y: number }; latLng: LatLng };
   private lastState?: RenderState;
+  private contextLost = false;
   private minZoom = 0;
   private maxZoom = 24;
   private proj: ProjectionImpl;
@@ -154,6 +155,20 @@ export class WebMap {
     // Bind projection method once to avoid closure allocation per frame
     this.projectionBound = this.projection.bind(this);
     this.setupGL();
+    // Handle WebGL context loss and recovery
+    this.canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      this.contextLost = true;
+    }, { signal: this.eventAbort.signal });
+    this.canvas.addEventListener("webglcontextrestored", () => {
+      this.contextLost = false;
+      this.setupGL();
+      // Re-add all layers to reinitialize GL resources (shaders, textures lost on context loss)
+      for (const { layer } of this.layers) {
+        layer.onRemove();
+        layer.onAdd(this.gl);
+      }
+    }, { signal: this.eventAbort.signal });
     // Default cursor when hovering the map
     this.canvas.style.cursor = "grab";
     // Prevent browser from intercepting touch events for scrolling/zooming
@@ -1130,6 +1145,7 @@ export class WebMap {
   // (removed) legacy unproject helper; use projection-specific unprojectAt instead
 
   private frame() {
+    if (this.contextLost) return;
     const gl = this.gl;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     const w = Math.floor(this.canvas.clientWidth * dpr) || this.canvas.width || 300;

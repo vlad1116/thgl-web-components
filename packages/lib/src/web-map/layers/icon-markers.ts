@@ -1,7 +1,7 @@
 import type { Layer, LatLng, RenderState } from "../types";
 import { createProgram } from "../utils/gl";
 import { ColorBlindMode } from "../utils/color-blind";
-import { devLog } from "../../dev-log";
+
 
 // Simple icon marker layer that draws textured quads from one or more sprite sheets.
 // Batches draw calls per sheet texture and uses instancing within each batch.
@@ -491,14 +491,18 @@ export class IconMarkerLayer implements Layer {
     } else {
       this.sheetImages.set(name, this.createImage(source));
     }
-    if (isNew) {
-      devLog.info("IconMarkerLayer", "addSheet", {
-        sheetName: name,
-        sourceType: source instanceof HTMLCanvasElement ? "HTMLCanvasElement" : source instanceof HTMLImageElement ? "HTMLImageElement" : "URL",
-        totalSheetImages: this.sheetImages.size,
-      });
+
+
+  }
+  /** Copy all sheet images to another layer (for sharing sprites between static/live layers) */
+  copySheets(target: IconMarkerLayer) {
+    for (const [name, img] of this.sheetImages) {
+      if (!target.sheetImages.has(name)) {
+        target.addSheet(name, img);
+      }
     }
   }
+
   // Alias for addSheet (for consistency with simple-webmap-markers)
   // Also invalidates the cached WebGL texture so it gets recreated
   setSheet(name: string, source: HTMLImageElement | HTMLCanvasElement) {
@@ -949,33 +953,22 @@ export class IconMarkerLayer implements Layer {
 
     const img = this.sheetImages.get(name);
     if (!img) {
-      devLog.debug("IconMarkerLayer", "ensureSheet: no image found", {
-        sheetName: name,
-        availableSheets: Array.from(this.sheetImages.keys()),
-      });
+
+
       return null;
     }
 
     // Canvas elements are always ready; HTMLImageElements need to be loaded
     const isCanvas = img instanceof HTMLCanvasElement;
     if (!isCanvas && (!img.complete || img.naturalWidth === 0)) {
-      devLog.debug("IconMarkerLayer", "ensureSheet: image not ready", {
-        sheetName: name,
-        complete: img.complete,
-        naturalWidth: img.naturalWidth,
-        src: img.src?.substring(0, 100),
-      });
+
+
       return null;
     }
 
     const w = isCanvas ? img.width : img.naturalWidth;
     const h = isCanvas ? img.height : img.naturalHeight;
 
-    devLog.info("IconMarkerLayer", "Creating WebGL texture", {
-      sheetName: name,
-      imageSize: { w, h },
-      totalSheets: this.sheets.size + 1,
-    });
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -1075,6 +1068,7 @@ export class IconMarkerLayer implements Layer {
       this.lastBufferVersion = this.instancesVersion;
       this.lastBufferZoom = state.zoom;
     }
+
     const drawList = (
       s: { w: number; h: number; tex: WebGLTexture },
       list: IconMarkerInstance[],
@@ -1114,15 +1108,16 @@ export class IconMarkerLayer implements Layer {
       const tints = this.preallocatedBuffers.tints!;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
+        const c = m as any;
+
         // Cache projected position per marker — only recompute on zoom change
         let p: { x: number; y: number };
-        const cached = m as any;
-        if (rebuildBuffers || !cached._projX) {
+        if (rebuildBuffers || !c._projX) {
           p = state.projection(m.latLng);
-          cached._projX = p.x;
-          cached._projY = p.y;
+          c._projX = p.x;
+          c._projY = p.y;
         } else {
-          p = { x: cached._projX, y: cached._projY };
+          p = { x: c._projX, y: c._projY };
         }
         let size = m.size;
         let sizeW = m.sizeW ?? size;
