@@ -292,23 +292,13 @@ void main(){
     float px = u_hc_thickness / (uvSpan.x * texSize.x);
     float py = u_hc_thickness / (uvSpan.y * texSize.y);
     float neighborAlpha = 0.0;
-    vec2 s; float ib;
-    s = v_uv + vec2(px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(-px, 0); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(0, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(0, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(-px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(px, -py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
-    s = v_uv + vec2(-px, py); ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-    neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    // Sample 16 points in a circle for smoother outline
+    for (int i = 0; i < 16; i++) {
+      float angle = float(i) * 6.2831853 / 16.0;
+      vec2 s = v_uv + vec2(cos(angle) * px, sin(angle) * py);
+      float ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
+      neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+    }
     if (c.a < 0.1 && neighborAlpha > 0.1) {
       c = u_hc_color;
     }
@@ -1566,14 +1556,16 @@ export class IconMarkerLayer implements Layer {
   handleContextMenu(
     state: RenderState,
     screen: { x: number; y: number },
-  ): void {
+  ): boolean {
     const hitMarker = this.pick(state, screen) as IconMarkerInstance | null;
     if (hitMarker) {
       const handler = this.eventHandlers.contextmenu.get(hitMarker.id);
       if (handler) {
         handler(hitMarker);
+        return true;
       }
     }
+    return false;
   }
 
   // Handle click events

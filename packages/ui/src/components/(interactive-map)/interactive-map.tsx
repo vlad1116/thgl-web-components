@@ -82,9 +82,10 @@ export function InteractiveMap({
     canvas.style.display = "block";
     containerRef.current.appendChild(canvas);
     // Set buffer size immediately to avoid blurry first frame
+    // Use fallback dimensions if container isn't visible yet (e.g. window on secondary screen)
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(containerRef.current.clientWidth * dpr);
-    canvas.height = Math.floor(containerRef.current.clientHeight * dpr);
+    canvas.width = Math.floor(containerRef.current.clientWidth * dpr) || 300;
+    canvas.height = Math.floor(containerRef.current.clientHeight * dpr) || 150;
     mapRefsRef.current.canvas = canvas;
 
     // Create projection if transformation is specified

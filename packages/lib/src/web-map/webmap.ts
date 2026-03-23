@@ -233,19 +233,24 @@ export class WebMap {
       if (!state) return;
       const dpr = state.devicePixelRatio;
       const screen = { x: localX * dpr, y: localY * dpr };
+      let handledByMarker = false;
       for (const { layer } of this.layers) {
         if ((layer as any).handleContextMenu) {
-          (layer as any).handleContextMenu(state, screen);
+          if ((layer as any).handleContextMenu(state, screen)) {
+            handledByMarker = true;
+          }
         }
       }
 
-      // Fire contextmenu event to regular listeners
-      const latlng = this.screenToLatLng(localX, localY);
-      this.fire("contextmenu", {
-        latlng,
-        layerPoint: { x: localX, y: localY },
-        originalEvent: e,
-      });
+      // Only fire map-level contextmenu if no marker handled it
+      if (!handledByMarker) {
+        const latlng = this.screenToLatLng(localX, localY);
+        this.fire("contextmenu", {
+          latlng,
+          layerPoint: { x: localX, y: localY },
+          originalEvent: e,
+        });
+      }
     }, { signal });
 
     // Handle double-click
@@ -432,7 +437,15 @@ export class WebMap {
         const dx = e.clientX - this.lastPointer.x;
         const dy = e.clientY - this.lastPointer.y;
         this.lastPointer = { x: e.clientX, y: e.clientY };
-        if (dx !== 0 || dy !== 0) this.didRotate = true;
+
+        // Require a minimum drag distance before applying rotation
+        // to prevent accidental tilt on simple right-click
+        if (!this.didRotate) {
+          const totalDx = e.clientX - (this.downPointer?.x ?? e.clientX);
+          const totalDy = e.clientY - (this.downPointer?.y ?? e.clientY);
+          if (totalDx * totalDx + totalDy * totalDy < 25) return; // 5px threshold
+          this.didRotate = true;
+        }
 
         // Update orientation
         const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
@@ -944,13 +957,8 @@ export class WebMap {
     return { x: wx, y: wy };
   }
 
-  private wheelStepFor(z: number) {
-    // Scale zoom step by level; larger steps for faster zoom like Google Maps
-    if (z < -2) return 0.25;
-    if (z < 0) return 0.3;
-    if (z < 2) return 0.35;
-    if (z < 5) return 0.4;
-    return 0.5;
+  private wheelStepFor(_z: number) {
+    return 0.25;
   }
 
   // Public helpers for debug/overlays
@@ -1124,8 +1132,8 @@ export class WebMap {
   private frame() {
     const gl = this.gl;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const w = Math.floor(this.canvas.clientWidth * dpr) || this.canvas.width;
-    const h = Math.floor(this.canvas.clientHeight * dpr) || this.canvas.height;
+    const w = Math.floor(this.canvas.clientWidth * dpr) || this.canvas.width || 300;
+    const h = Math.floor(this.canvas.clientHeight * dpr) || this.canvas.height || 150;
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
       this.canvas.height = h;
