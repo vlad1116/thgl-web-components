@@ -162,7 +162,7 @@ export function App({
                   iconsPath={version?.more.icons}
                 />
                 <PrivateDrawing hidden={lockedWindow} />
-                <MapControls />
+                <MapControls hidden={lockedWindow} />
               </Actions>
               <LivePlayer
                 markerOptions={appConfig.markerOptions}

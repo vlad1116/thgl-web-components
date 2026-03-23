@@ -66,7 +66,7 @@ export function AppMap({
           iconsPath={version?.more.icons}
         />
         <PrivateDrawing hidden={lockedWindow} />
-        <MapControls />
+        <MapControls hidden={lockedWindow} />
       </div>
 
       <LivePlayer

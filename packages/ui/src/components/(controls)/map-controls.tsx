@@ -239,7 +239,7 @@ function CompassNeedle({ bearing }: { bearing: number }) {
   );
 }
 
-export function MapControls() {
+export function MapControls({ hidden }: { hidden?: boolean }) {
   const map = useMap();
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
@@ -286,7 +286,7 @@ export function MapControls() {
   const handleZoomOut = useCallback(() => map?.zoomOut(), [map]);
   const handleResetView = useCallback(() => map?.resetView(), [map]);
 
-  if (!map) return null;
+  if (!map || hidden) return null;
 
   const is3D = pitch > 0.05;
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
