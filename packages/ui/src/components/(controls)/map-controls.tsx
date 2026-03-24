@@ -210,6 +210,18 @@ function CompassPopover({
           Reset
         </button>
       </div>
+
+      {/* Keyboard shortcut hints */}
+      <div className="border-t border-border/40 pt-2 mt-1 space-y-0.5">
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Middle drag</kbd>
+          <span>Tilt &amp; rotate</span>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Ctrl + drag</kbd>
+          <span>Tilt &amp; rotate</span>
+        </div>
+      </div>
     </div>
   );
 }

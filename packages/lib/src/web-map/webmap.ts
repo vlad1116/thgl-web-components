@@ -80,7 +80,6 @@ export class WebMap {
   private raf = 0;
   private dragging = false;
   private rotating = false; // RMB drag for rotate/tilt
-  private didRotate = false; // whether RMB drag actually moved
   private lastPointer?: { x: number; y: number };
   private downPointer?: { x: number; y: number; t: number };
   private rotationPivot?: { screen: { x: number; y: number }; latLng: LatLng };
@@ -237,9 +236,6 @@ export class WebMap {
     this.canvas.addEventListener("contextmenu", (e: MouseEvent) => {
       e.preventDefault();
 
-      // Don't open context menu after right-click drag
-      if (this.didRotate) return;
-
       // Forward to IconMarkerLayer for contextmenu detection
       const rect = this.canvas.getBoundingClientRect();
       const localX = e.clientX - rect.left;
@@ -282,6 +278,8 @@ export class WebMap {
     }, { signal });
 
     this.canvas.addEventListener("pointerdown", (e) => {
+      // Prevent middle-click auto-scroll
+      if (e.button === 1) e.preventDefault();
       const rect = this.canvas.getBoundingClientRect();
       const localX = e.clientX - rect.left;
       const localY = e.clientY - rect.top;
@@ -333,10 +331,9 @@ export class WebMap {
 
       // Only start dragging/rotating if interactions are enabled
       if (!this.interactionsDisabled) {
-        if (e.button === 2) {
-          // right button: rotate/tilt
+        if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+          // middle button or ctrl+left: rotate/tilt
           this.rotating = true;
-          this.didRotate = false;
 
           // Use proper perspective-aware screen->world
           const worldPos = this.screenToWorld(localX, localY);
@@ -346,7 +343,8 @@ export class WebMap {
             screen: { x: localX, y: localY },
             latLng,
           };
-        } else {
+        } else if (e.button === 0) {
+          // left button only: pan
           this.dragging = true;
         }
       }
@@ -452,16 +450,6 @@ export class WebMap {
         const dx = e.clientX - this.lastPointer.x;
         const dy = e.clientY - this.lastPointer.y;
         this.lastPointer = { x: e.clientX, y: e.clientY };
-
-        // Require a minimum drag distance before applying rotation
-        // to prevent accidental tilt on simple right-click
-        if (!this.didRotate) {
-          const totalDx = e.clientX - (this.downPointer?.x ?? e.clientX);
-          const totalDy = e.clientY - (this.downPointer?.y ?? e.clientY);
-          if (totalDx * totalDx + totalDy * totalDy < 25) return; // 5px threshold
-          this.didRotate = true;
-        }
-
         // Update orientation
         const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
         this.pitch = newPitch;
@@ -560,7 +548,7 @@ export class WebMap {
       const isTouch = e.pointerType === "touch";
       const maxDist2 = isTouch ? 100 : 25; // 10px for touch, 5px for mouse
       const maxDt = isTouch ? 500 : 300; // 500ms for touch, 300ms for mouse
-      if (dist2 <= maxDist2 && dt <= maxDt) {
+      if (dist2 <= maxDist2 && dt <= maxDt && e.button === 0) {
         // Check for double-tap on touch devices
         if (isTouch && this.lastTap) {
           const tapDx = up.x - this.lastTap.x;

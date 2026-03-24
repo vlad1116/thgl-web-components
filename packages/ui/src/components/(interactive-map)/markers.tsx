@@ -1188,7 +1188,8 @@ function MarkersContent({
         showTooltipForMarker(m);
         const s = newSpawnMap.get(m.id);
         if (s && !s.address) {
-          onClick(getNodeId(s));
+          const nodeId = getNodeId(s);
+          onClick(selectedNodeId === nodeId ? null : nodeId);
         }
       });
 
