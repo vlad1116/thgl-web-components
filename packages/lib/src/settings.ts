@@ -138,7 +138,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   textSize: 20,
   baseIconSize: 1,
   dynamicIconSize: true,
-  dynamicIconSizeFactor: 0.67,
+  dynamicIconSizeFactor: 0.33,
   playerIconSize: 1,
   iconSizeByGroup: {},
   iconSizeByFilter: {},
@@ -863,7 +863,9 @@ export const useSettingsStore = create(
         },
 
         setAudioAlertVolume: (volume: number) => {
-          updateSettings({ audioAlertVolume: Math.max(0, Math.min(1, volume)) });
+          updateSettings({
+            audioAlertVolume: Math.max(0, Math.min(1, volume)),
+          });
         },
 
         toggleShowAudioAlertRange: () => {
@@ -875,7 +877,10 @@ export const useSettingsStore = create(
           const state = get();
           const current = state.audioAlertByFilter[filterId] ?? false;
           updateSettings({
-            audioAlertByFilter: { ...state.audioAlertByFilter, [filterId]: !current },
+            audioAlertByFilter: {
+              ...state.audioAlertByFilter,
+              [filterId]: !current,
+            },
           });
         },
 
@@ -998,7 +1003,12 @@ export const useSettingsStore = create(
         },
 
         setDynamicIconSizeFactor: (dynamicIconSizeFactor) => {
-          updateSettings({ dynamicIconSizeFactor: Math.max(0, Math.min(1, dynamicIconSizeFactor)) });
+          updateSettings({
+            dynamicIconSizeFactor: Math.max(
+              0,
+              Math.min(1, dynamicIconSizeFactor),
+            ),
+          });
         },
 
         setPlayerIconSize: (playerIconSize) => {

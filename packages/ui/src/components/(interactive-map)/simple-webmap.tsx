@@ -121,10 +121,10 @@ export function SimpleWebMap({
       const [[lat1, lng1], [lat2, lng2]] = boundsToFit;
       center = [(lat1 + lat2) / 2, (lng1 + lng2) / 2];
 
-      // Calculate zoom to fit bounds
+      // Calculate zoom to fit bounds with padding (zoom out slightly for breathing room)
       const containerWidth = containerRef.current.clientWidth || 300;
       const containerHeight = containerRef.current.clientHeight || 200;
-      zoom = calculateFitZoom(boundsToFit, containerWidth, containerHeight);
+      zoom = calculateFitZoom(boundsToFit, containerWidth, containerHeight) - 0.5;
     }
 
     // view prop overrides fitBounds
@@ -155,6 +155,9 @@ export function SimpleWebMap({
     const markerLayer = new IconMarkerLayer();
     markerLayer.setColorBlindMode(colorBlindMode);
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
+    // Disable dynamic sizing on simple maps — fixed icon size works better
+    // in small embedded views where zoom is auto-calculated from fitBounds
+    markerLayer.setDynamicSizeFactor(0);
     webmap.addLayer(markerLayer, { zIndex: 100 });
     markerLayerRef.current = markerLayer;
 
