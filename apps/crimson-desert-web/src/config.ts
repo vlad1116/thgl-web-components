@@ -4,8 +4,18 @@ export const APP_CONFIG: AppConfig = {
   name: "crimson-desert",
   title: "Crimson Desert",
   domain: "crimsondesert",
-  supportedLocales: ["en"],
+  supportedLocales: ["en", "ko", "ja", "fr", "de", "it", "pl", "pt-BR", "ru", "es", "tr", "zh-CN", "zh-TW"],
   appUrl: "https://www.th.gl/companion-app",
+  markerOptions: {
+    radius: 6,
+    playerIcon: "player.webp",
+    imageSprite: true,
+    clusterPrecision: 10,
+    zPos: {
+      xyMaxDistance: 100,
+      zDistance: 5,
+    },
+  },
   internalLinks: [
     {
       title: "Crimson Desert Interactive Map",
