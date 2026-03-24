@@ -1060,10 +1060,10 @@ export class IconMarkerLayer implements Layer {
     // This ensures icons are perfectly anchored during rotation and perspective changes
     gl.uniformMatrix3fv(this.u_view_loc, false, state.viewMatrix!);
 
-    // Only reproject markers when instances or zoom changed
+    // Reproject markers when instances changed or zoom is different from last frame
+    const zoomChanged = this.lastBufferZoom !== state.zoom;
     const rebuildBuffers =
-      this.lastBufferVersion !== this.instancesVersion ||
-      Math.abs(this.lastBufferZoom - state.zoom) > 0.001;
+      this.lastBufferVersion !== this.instancesVersion || zoomChanged;
     if (rebuildBuffers) {
       this.lastBufferVersion = this.instancesVersion;
       this.lastBufferZoom = state.zoom;
