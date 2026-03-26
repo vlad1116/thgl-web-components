@@ -31,6 +31,7 @@ import {
 import { AddSharedFilter } from "./add-shared-filter";
 import { UploadFilter } from "./upload-filter";
 import { inverseRotateCoordinate, rotateCoordinate } from "./rotation";
+import { useCoordinates } from "../(providers)";
 
 export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
   const map = useMap();
@@ -57,6 +58,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     (state) => state.setTempPrivateDrawing,
   );
 
+  const { staticDrawings } = useCoordinates();
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const isEditing = tempPrivateDrawing !== null;
@@ -463,9 +465,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       return pos;
     };
 
-    // Get selected drawings from myFilters (exclude currently editing drawing)
+    // Get selected drawings from myFilters + staticDrawings (exclude currently editing drawing)
     const editingName = isEditing ? tempPrivateDrawing?.name : null;
-    const selectedDrawings = myFilters.filter(
+    const allDrawingFilters = [...myFilters, ...(staticDrawings || [])];
+    const selectedDrawings = allDrawingFilters.filter(
       (filter) => filters.includes(filter.name) && filter.drawing && filter.name !== editingName
     );
 
@@ -572,7 +575,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         savedDrawingsLayerRef.current = null;
       }
     };
-  }, [map, filters, myFilters, mapName, isEditing, tempPrivateDrawing?.name]);
+  }, [map, filters, myFilters, staticDrawings, mapName, isEditing, tempPrivateDrawing?.name]);
 
   if (hidden) {
     return null;
