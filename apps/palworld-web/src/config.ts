@@ -9,7 +9,7 @@ export const APP_CONFIG: AppConfig = {
   appUrl: "https://www.th.gl/companion-app",
   markerOptions: {
     radius: 6,
-    // playerIcon: "player.webp",
+    playerIcon: "player.webp",
     imageSprite: true,
     zPos: {
       xyMaxDistance: 15000,

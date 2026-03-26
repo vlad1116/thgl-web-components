@@ -10,7 +10,7 @@ export const APP_CONFIG: OverwolfAppConfig = {
   discordApplicationId: "1199636411821854730",
   markerOptions: {
     radius: 6,
-    // playerIcon: "player.webp",
+    playerIcon: "player.webp",
     imageSprite: true,
     zPos: {
       xyMaxDistance: 15000,

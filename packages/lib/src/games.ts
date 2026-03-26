@@ -142,7 +142,7 @@ export const games: Array<Game> = [
       overlayURL: "/apps/blue-protocol-star-resonance/overlay",
       markerOptions: {
         radius: 6,
-        // playerIcon: "player.webp",
+        playerIcon: "player.webp",
         imageSprite: true,
         zPos: {
           xyMaxDistance: 100,
@@ -721,7 +721,7 @@ export type Game = {
     overlayURL: string;
     markerOptions: {
       radius: number;
-      playerIcon?: string;
+      playerIcon: string;
       imageSprite: boolean;
       zPos: {
         xyMaxDistance: number;

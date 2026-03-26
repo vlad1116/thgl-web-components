@@ -1,6 +1,6 @@
 export interface MarkerOptions {
   radius: number;
-  playerIcon?: string;
+  playerIcon: string;
   imageSprite?: boolean;
   zPos?: {
     xyMaxDistance: number;
