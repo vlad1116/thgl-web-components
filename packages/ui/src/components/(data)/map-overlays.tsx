@@ -7,8 +7,11 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { cn, useUserStore } from "@repo/lib";
-import { ZoneOverlayLayer } from "@repo/lib/web-map";
-import type { DrawingShape } from "@repo/lib/web-map";
+import {
+  ZoneOverlayLayer,
+  DrawingLayer,
+  type DrawingShape,
+} from "@repo/lib/web-map";
 import {
   ChevronRight,
   FoldVertical,
@@ -18,6 +21,7 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useT } from "../(providers)";
+import useSWRImmutable from "swr/immutable";
 
 interface ZoneEntry {
   values: number[];
@@ -66,16 +70,16 @@ function zoneColor(val: number): [number, number, number, number] {
   ];
 }
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 /** Pure UI for a single group */
 function OverlayGroupUI({
   layer,
   activeCount,
-  itemNames,
   onToggleAll,
 }: {
   layer: ZoneLayer;
   activeCount: number;
-  itemNames: string[];
   onToggleAll: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -179,25 +183,16 @@ function OverlayGroupUI({
 
 export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
   const [open, setOpen] = useState(false);
-  const [config, setConfig] = useState<OverlayConfig | null>(null);
   const map = useMapStore((state) => state.map);
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const t = useT();
 
-  // One ZoneOverlayLayer per group — persists across filter changes
+  const { data: config } = useSWRImmutable<OverlayConfig>(configUrl, fetcher);
+
   const zoneLayersRef = useRef<Map<string, ZoneOverlayLayer>>(new Map());
   const addedRef = useRef<Set<string>>(new Set());
-  const drawingLayerRef = useRef<
-    import("@repo/lib/web-map").DrawingLayer | null
-  >(null);
-
-  useEffect(() => {
-    fetch(configUrl)
-      .then((r) => r.json())
-      .then((data: OverlayConfig) => setConfig(data))
-      .catch(() => {});
-  }, [configUrl]);
+  const drawingLayerRef = useRef<DrawingLayer | null>(null);
 
   // Per-group active state
   const layerStates = useMemo(() => {
@@ -219,7 +214,7 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     [layerStates],
   );
 
-  // Sync ZoneOverlayLayers with map — create once, update palette on filter change
+  // Sync ZoneOverlayLayers with map
   useEffect(() => {
     if (!map || !config || map.mapName !== config.mapName) return;
 
@@ -229,7 +224,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     for (const { layer, activeZones } of layerStates) {
       const hasActive = activeZones.length > 0;
 
-      // Create layer if needed
       if (!zoneLayers.has(layer.group)) {
         const zl = new ZoneOverlayLayer({
           url: `${basePath}/${layer.bitmap}`,
@@ -240,7 +234,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
 
       const zl = zoneLayers.get(layer.group)!;
 
-      // Add/remove from map based on whether any zones are active
       if (hasActive && !added.has(layer.group)) {
         map.addLayer(zl, { zIndex: 20 });
         added.add(layer.group);
@@ -249,8 +242,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
         added.delete(layer.group);
       }
 
-      // Update palette: clear all first, then set active zones
-      // (must clear first because zones share pixel values)
       zl.clearAll();
       if (hasActive) {
         const toSet: {
@@ -288,7 +279,7 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     }
 
     const labelsData: { name: string; center: [number, number] }[] = [];
-    for (const { layer, activeZones } of layerStates) {
+    for (const { activeZones } of layerStates) {
       for (const z of activeZones) {
         if (z.centers) {
           for (const c of z.centers) {
@@ -299,24 +290,21 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     }
     if (labelsData.length === 0) return;
 
-    import("@repo/lib/web-map").then(({ DrawingLayer }) => {
-      if (!map) return;
-      const dl = new DrawingLayer({ interactive: false });
-      map.addLayer(dl, { zIndex: 25 });
-      let idx = 0;
-      for (const { name, center } of labelsData) {
-        dl.addShape({
-          id: `overlay_label_${idx++}`,
-          type: "text",
-          center,
-          text: name,
-          color: "#ffffffcc",
-          size: 11,
-          mapName: config.mapName,
-        } as DrawingShape);
-      }
-      drawingLayerRef.current = dl;
-    });
+    const dl = new DrawingLayer({ interactive: false });
+    map.addLayer(dl, { zIndex: 25 });
+    let idx = 0;
+    for (const { name, center } of labelsData) {
+      dl.addShape({
+        id: `overlay_label_${idx++}`,
+        type: "text",
+        center,
+        text: name,
+        color: "#ffffffcc",
+        size: 11,
+        mapName: config.mapName,
+      } as DrawingShape);
+    }
+    drawingLayerRef.current = dl;
 
     return () => {
       if (drawingLayerRef.current) {
@@ -377,7 +365,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
               key={layer.group}
               layer={layer}
               activeCount={activeZones.length}
-              itemNames={itemNames}
               onToggleAll={() => {
                 const hasActive = activeZones.length > 0;
                 const newFilters = hasActive

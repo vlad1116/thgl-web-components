@@ -13,6 +13,7 @@ export const games: Array<Game> = [
     discordId: "crimson-desert",
     title: "Crimson Desert",
     logo: "https://www.th.gl/global_icons/crimson-desert.webp",
+    additionalFilters: ["CrimsonDesertZones"],
     companion: {
       baseURL: "/apps/crimson-desert",
       controllerURL: "/apps/crimson-desert/controller",
@@ -701,7 +702,8 @@ export type AdditionalContent =
   | "PaliaGridToggle"
   | "PaliaTime"
   | "DuneDeepDesertGrid"
-  | "DuneHeatmaps";
+  | "DuneHeatmaps"
+  | "CrimsonDesertZones";
 
 export type AdditionalTooltip = "PalworldCoordinates" | "DuneAltitude";
 

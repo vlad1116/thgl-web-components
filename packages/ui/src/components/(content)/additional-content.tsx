@@ -1,6 +1,7 @@
 import type { AdditionalContent } from "@repo/lib";
 import { PlayerDetails } from "./player-details";
 import {
+  CrimsonDesertZones,
   DuneDeepDesertGrid,
   DuneHeatmaps,
   PaliaGrid,
@@ -17,6 +18,7 @@ const ADDITIONAL_CONTENT = {
   PaliaTime: PaliaTime,
   DuneDeepDesertGrid: DuneDeepDesertGrid,
   DuneHeatmaps: DuneHeatmaps,
+  CrimsonDesertZones: CrimsonDesertZones,
 } as const;
 
 export type AdditionalContentType = ({
