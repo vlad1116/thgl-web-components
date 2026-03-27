@@ -18,6 +18,7 @@ import { AdditionalTooltipType } from "../(content)";
 const MARKER_OPTIONS: MarkerOptions = {
   imageSprite: true,
   radius: 6,
+  playerIcon: "player.webp",
 };
 export function FullMap({
   tilesConfig,
