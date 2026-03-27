@@ -11,6 +11,7 @@ export { D4Settings, useD4SettingsStore } from "./diablo4-settings";
 export { DuneAltitude } from "./dune-altitude";
 export { DuneDeepDesertGrid } from "./dune-deep-desert-grid";
 export { DuneHeatmaps } from "./dune-heatmaps";
+export { MapOverlays, type MapOverlaysProps } from "./map-overlays";
 export { NodeDetails } from "./node-details";
 export { PaliaGridToggle } from "./palia-grid-toggle";
 export { PaliaGrid } from "./palia-grid";

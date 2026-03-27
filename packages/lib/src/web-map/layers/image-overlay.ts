@@ -202,10 +202,8 @@ export class ImageOverlayLayer implements Layer {
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!state.viewMatrix || !this.imageLoaded || !this.texture) return;
 
-    if (this.needsBuild) {
-      this.buildQuad(state.projection);
-      this.needsBuild = false;
-    }
+    // Rebuild quad every frame — projection changes with zoom and the quad is only 6 vertices
+    this.buildQuad(state.projection);
 
     if (!this.program || !this.vao) return;
 

@@ -9,6 +9,7 @@ export {
 export { GridLayer, type GridLayerOptions } from "./layers/grid";
 export { DrawingLayer, type DrawingShape, type DrawingLayerOptions } from "./layers/drawing";
 export { ImageOverlayLayer, type ImageOverlayOptions } from "./layers/image-overlay";
+export { ZoneOverlayLayer } from "./layers/zone-overlay";
 export {
   DrawingManager,
   type DrawingMode,

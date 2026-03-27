@@ -1,4 +1,5 @@
 import type { Layer, LatLng, RenderState } from "../types";
+import earcut from "earcut";
 
 export interface DrawingShape {
   id: string;
@@ -43,6 +44,8 @@ export class DrawingLayer implements Layer {
   private cachedCanvasRect: DOMRect | null = null;
   private cachedRectTime: number = 0;
   private rectCacheMs: number = 100;
+  // Cache earcut triangulation per shape to avoid re-triangulation on zoom
+  private earcutCache: Map<string, number[]> = new Map();
 
   constructor(options: DrawingLayerOptions = {}) {
     this.options = { interactive: true, ...options };
@@ -155,6 +158,7 @@ export class DrawingLayer implements Layer {
     if (shape.type === "text") {
       this.createTextElement(shape);
     }
+    this.earcutCache.delete(shape.id);
     this.needsBufferUpdate = true;
   }
 
@@ -330,6 +334,7 @@ export class DrawingLayer implements Layer {
     }
     this.activeShapeIds.clear();
     this.shapes.clear();
+    this.earcutCache.clear();
     this.needsBufferUpdate = true;
   }
 
@@ -343,7 +348,7 @@ export class DrawingLayer implements Layer {
 
     const pixelToWorld = this.getPixelToWorldScale(state);
 
-    for (const shape of this.shapes.values()) {
+    for (const [shapeId, shape] of this.shapes.entries()) {
       if (shape.type === 'text') continue;
 
       const color = this.hexToRgba(shape.color);
@@ -376,7 +381,7 @@ export class DrawingLayer implements Layer {
             if (shape.fillColor) {
               vertexOffset += this.addFilledPolygon(
                 corners, this.hexToRgba(shape.fillColor),
-                vertexData, indices, vertexOffset, state.projection
+                vertexData, indices, vertexOffset, state.projection, shapeId
               );
             }
             vertexOffset += this.addStrokedPolyline(
@@ -392,7 +397,7 @@ export class DrawingLayer implements Layer {
             if (shape.fillColor) {
               vertexOffset += this.addFilledPolygon(
                 shape.positions, this.hexToRgba(shape.fillColor),
-                vertexData, indices, vertexOffset, state.projection
+                vertexData, indices, vertexOffset, state.projection, shapeId
               );
             }
             vertexOffset += this.addStrokedPolyline(
@@ -672,8 +677,8 @@ export class DrawingLayer implements Layer {
   }
 
   /**
-   * Add a filled polygon using a triangle fan from vertex 0.
-   * Works correctly for convex polygons and reasonably for mildly concave ones.
+   * Add a filled polygon using earcut triangulation.
+   * Handles concave polygons correctly. Caches triangulation per shape.
    */
   private addFilledPolygon(
     positions: LatLng[],
@@ -682,6 +687,7 @@ export class DrawingLayer implements Layer {
     indices: number[],
     vertexOffset: number,
     projection: (latlng: LatLng) => { x: number; y: number },
+    shapeId?: string,
   ): number {
     if (positions.length < 3) return 0;
 
@@ -693,9 +699,19 @@ export class DrawingLayer implements Layer {
       vertexData.push(wp.x, wp.y, r, g, b, a);
     }
 
-    // Triangle fan from vertex 0
-    for (let i = 1; i < worldPositions.length - 1; i++) {
-      indices.push(vertexOffset, vertexOffset + i, vertexOffset + i + 1);
+    // Use cached triangulation if available (stable across zoom changes)
+    const cacheKey = shapeId ?? "";
+    let triIndices = cacheKey ? this.earcutCache.get(cacheKey) : undefined;
+    if (!triIndices) {
+      const coords: number[] = [];
+      for (const wp of worldPositions) {
+        coords.push(wp.x, wp.y);
+      }
+      triIndices = earcut(coords) as unknown as number[];
+      if (cacheKey) this.earcutCache.set(cacheKey, triIndices);
+    }
+    for (const idx of triIndices) {
+      indices.push(vertexOffset + idx);
     }
 
     return worldPositions.length;
