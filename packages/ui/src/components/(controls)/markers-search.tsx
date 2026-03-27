@@ -197,7 +197,7 @@ export function MarkersSearch({
         )}
         {additionalFilters && (
           <>
-            {additionalFilters}
+            <ScrollArea type="auto">{additionalFilters}</ScrollArea>
             <Separator />
           </>
         )}
@@ -210,13 +210,7 @@ export function MarkersSearch({
         <Presets />
         <Separator />
         <GlobalFilters />
-        <ScrollArea
-          className={cn("max-h-[40vh]", {
-            "md:max-h-[25vh]": !expandedFilters,
-            "md:max-h-none": expandedFilters,
-          })}
-          type="auto"
-        >
+        <ScrollArea type="auto">
           {internalSearch ? (
             <>
               {isLoading && internalSearch.length >= 3 && (

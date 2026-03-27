@@ -113,8 +113,8 @@ const DATA_FORGE_URL = "https://data.th.gl";
 // const DATA_FORGE_URL = "http://localhost:3000";
 
 // Static files (version.json, icons, tiles, config, dicts)
-const DATA_FORGE_CDN_URL = "https://cdn.th.gl";
-// const DATA_FORGE_CDN_URL = "http://localhost:3000";
+export const DATA_FORGE_CDN_URL = "https://cdn.th.gl";
+// export const DATA_FORGE_CDN_URL = "http://localhost:3000";
 
 export function getImageURL(url: string) {
   if (url.startsWith("/global_icons/game-icons")) {
