@@ -5,7 +5,7 @@ import { MapOverlays } from "@repo/ui/data";
 
 export const generateMetadata = createMapPageGenerateMetadata(APP_CONFIG);
 
-const CDN = `${DATA_FORGE_CDN_URL}/crimson-desert/overlays`;
+const CDN = `${DATA_FORGE_CDN_URL}/crimson-desert/icons/overlays`;
 
 export default createMapPage(
   APP_CONFIG,

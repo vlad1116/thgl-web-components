@@ -16,7 +16,6 @@ import {
   UnfoldVertical,
 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
-import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useT } from "../(providers)";
 
@@ -83,8 +82,7 @@ function OverlayGroupUI({
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const t = useT();
-  const ratio =
-    layer.zones.length > 0 ? activeCount / layer.zones.length : 0;
+  const ratio = layer.zones.length > 0 ? activeCount / layer.zones.length : 0;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -108,7 +106,9 @@ function OverlayGroupUI({
                 open && "rotate-90",
               )}
             />
-            <span className="font-semibold truncate">{t(layer.group) || layer.group}</span>
+            <span className="font-semibold truncate">
+              {t(layer.group) || layer.group}
+            </span>
             <span className="text-xs text-muted-foreground tabular-nums shrink-0">
               {activeCount}/{layer.zones.length}
             </span>
@@ -156,7 +156,11 @@ function OverlayGroupUI({
             if (zone.desc) {
               const descText = t(`${zone.desc}_desc`) || zone.desc;
               return (
-                <Tooltip key={zone.values[0]} delayDuration={300} disableHoverableContent>
+                <Tooltip
+                  key={zone.values[0]}
+                  delayDuration={300}
+                  disableHoverableContent
+                >
                   <TooltipTrigger asChild>{btn}</TooltipTrigger>
                   <TooltipContent side="right" className="max-w-[300px]">
                     <p className="font-semibold">{t(zone.name) || zone.name}</p>
