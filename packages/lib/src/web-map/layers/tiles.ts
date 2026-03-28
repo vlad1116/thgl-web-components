@@ -24,7 +24,7 @@ export class TileLayer implements Layer {
   private vao: WebGLVertexArrayObject | null = null;
   private quad: WebGLBuffer | null = null;
   private textures: TileTex[] = [];
-  private failedTiles = new Set<string>(); // Track failed tiles to prevent retries (server errors)
+  private failedTiles = new Set<string>(); // Permanently failed tiles (404) — cleared on zoom change
   private loadingTiles = new Set<string>(); // Track loading tiles
   private networkErrorTiles = new Map<string, number>(); // Track network error tiles with retry timestamp
   private opts: TileLayerOptions;
@@ -222,8 +222,9 @@ export class TileLayer implements Layer {
           const k: TileKey = { z: nativeZ, x: serverX, y: serverY };
           const keyStr = `${k.z}/${k.x}/${k.y}`;
 
-          // Skip if already failed or currently loading
-          if (this.failedTiles.has(keyStr) || this.loadingTiles.has(keyStr)) continue;
+          // Skip currently loading or permanently failed (404)
+          if (this.loadingTiles.has(keyStr)) continue;
+          if (this.failedTiles.has(keyStr)) continue;
 
           // Skip network error tiles until retry time (5 seconds backoff)
           const networkErrorTime = this.networkErrorTiles.get(keyStr);
@@ -240,16 +241,13 @@ export class TileLayer implements Layer {
               this.loadingTiles.delete(keyStr);
               if (tex) {
                 this.textures.push(tex);
-                // Clear from network error cache on success
                 this.networkErrorTiles.delete(keyStr);
+              } else if (isNetworkError) {
+                // Network error (offline): retry after 5 seconds
+                this.networkErrorTiles.set(keyStr, performance.now() + 5000);
               } else {
-                if (isNetworkError) {
-                  // Network error: retry after 5 seconds
-                  this.networkErrorTiles.set(keyStr, performance.now() + 5000);
-                } else {
-                  // Server error: mark as permanently failed
-                  this.failedTiles.add(keyStr);
-                }
+                // Server error (404, 500, etc): don't retry until zoom change
+                this.failedTiles.add(keyStr);
               }
             });
           }
@@ -359,7 +357,6 @@ export class TileLayer implements Layer {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
       return { tex: { key, tex, localX, localY }, isNetworkError: false };
     } catch (error: any) {
-      // Check if this is a network error (should retry) or server error (permanent)
       const isNetworkError = error?.isNetworkError ?? false;
       return { tex: null, isNetworkError };
     }
@@ -453,12 +450,8 @@ function loadImage(src: string, crossOrigin?: string): Promise<HTMLImageElement>
     const img = new Image();
     if (crossOrigin) img.crossOrigin = crossOrigin;
     img.onload = () => res(img);
-    img.onerror = (event) => {
-      // Check if this is a network error (offline) or server error (404, etc)
-      // Network errors don't provide HTTP status, server errors do via naturalWidth === 0
+    img.onerror = () => {
       const error: any = new Error('Image load failed');
-      // If we're offline or have network issues, the error event won't have loaded any data
-      // Server errors (404, 403, etc) will complete the request but fail to decode
       error.isNetworkError = !navigator.onLine;
       rej(error);
     };

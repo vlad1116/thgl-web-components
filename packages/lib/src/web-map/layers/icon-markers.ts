@@ -938,6 +938,7 @@ export class IconMarkerLayer implements Layer {
     }
     this.gl = undefined;
     this.preallocatedBuffers = { capacity: 0 };
+    this.failedSheets.clear();
     for (const handlers of Object.values(this.eventHandlers)) {
       handlers.clear();
     }
@@ -953,17 +954,25 @@ export class IconMarkerLayer implements Layer {
 
     const img = this.sheetImages.get(name);
     if (!img) {
-
-
       return null;
+    }
+
+    // Check if this sheet failed to load — use circle fallback
+    if (this.failedSheets.has(name)) {
+      return this.sheets.get(DEFAULT_CIRCLE_SHEET) ?? this.createDefaultCircleSheet(gl);
     }
 
     // Canvas elements are always ready; HTMLImageElements need to be loaded
     const isCanvas = img instanceof HTMLCanvasElement;
-    if (!isCanvas && (!img.complete || img.naturalWidth === 0)) {
-
-
-      return null;
+    if (!isCanvas) {
+      if (img.complete && img.naturalWidth === 0) {
+        // Image finished loading but has no data — mark as failed
+        this.failedSheets.add(name);
+        return this.sheets.get(DEFAULT_CIRCLE_SHEET) ?? this.createDefaultCircleSheet(gl);
+      }
+      if (!img.complete) {
+        return null; // Still loading
+      }
     }
 
     const w = isCanvas ? img.width : img.naturalWidth;
@@ -1309,9 +1318,19 @@ export class IconMarkerLayer implements Layer {
     );
   }
 
+  private failedSheets = new Set<string>(); // Track sheets that failed to load
+
   private createImage(url: string) {
     const img = new Image();
     img.crossOrigin = "anonymous";
+    img.onerror = () => {
+      for (const [name, source] of this.sheetImages) {
+        if (source === img) {
+          this.failedSheets.add(name);
+          break;
+        }
+      }
+    };
     img.src = url;
     return img;
   }
