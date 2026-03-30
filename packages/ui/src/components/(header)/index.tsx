@@ -3,7 +3,6 @@ export { Account } from "./account";
 export { AppDownload } from "./app-download-link";
 export { ExternalAnchor } from "./external-anchor";
 export { InteractiveMapLink } from "./interactive-map-link";
-export { LockWindowButton } from "./lock-window-button";
 export { NavMenu } from "./nav-menu";
 export { PageTitle } from "./page-title";
 export { Brand } from "./brand";
@@ -21,3 +20,5 @@ export {
   trackVersion,
 } from "./plausible-tracker";
 export { ReleaseNotesLink } from "./release-notes-link";
+export { DiscordIcon, GitHubIcon, RedditIcon } from "./social-icons";
+export { WindowControlSymbols } from "./window-controls";
