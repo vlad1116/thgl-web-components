@@ -18,7 +18,7 @@ export function HeaderOffset({
       className={cn(
         "relative",
         {
-          "pt-[54px] md:pl-[77px]": !bypass,
+          "pt-[54px]": !bypass,
           "h-dscreen lock": full,
         },
         className,

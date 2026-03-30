@@ -113,7 +113,7 @@ export function App({
               moreSettings={moreSettings}
               filters={filters}
             />
-            <HeaderOffset bypass={Boolean(isOverlay) || lockedWindow} full>
+            <HeaderOffset bypass={Boolean(isOverlay) || lockedWindow} full className={!isOverlay && !lockedWindow ? "pt-[32px]" : undefined}>
               <MapContainer isOverlay={Boolean(isOverlay)}>
                 <InteractiveMap
                   appTitle={appConfig.title}
@@ -139,6 +139,7 @@ export function App({
                   iconsPath={version?.more.icons}
                   additionalTooltip={additionalTooltip}
                   coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
+                  className="top-[40px]"
                   mapEnTitles={Object.fromEntries(
                     Object.keys(tiles).map((k) => [
                       k,
@@ -149,7 +150,7 @@ export function App({
               )}
               {lockedWindow ? lockedWindowComponents : null}
               {additionalComponents}
-              <Actions>
+              <Actions mapControls={<MapControls hidden={lockedWindow} />} className="top-[40px]">
                 <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
                 <StreamingSender
                   domain={appConfig.domain}
@@ -162,7 +163,6 @@ export function App({
                   iconsPath={version?.more.icons}
                 />
                 <PrivateDrawing hidden={lockedWindow} />
-                <MapControls hidden={lockedWindow} />
               </Actions>
               <LivePlayer
                 markerOptions={appConfig.markerOptions}

@@ -93,8 +93,7 @@ export function AdFreeContainer({
       ref={el}
     >
       <div
-        // href="https://www.th.gl/support-me"
-        className="block text-center text-xs p-0.5 group cursor-pointer"
+        className="block text-center text-[11px] leading-tight py-0.5 group cursor-pointer"
         onClick={() => {
           setShowUserDialog(true);
           window.open("https://www.th.gl/support-me", "_blank");

@@ -67,7 +67,7 @@ export function FullMap({
             tilesConfig={tilesConfig}
           />
           <TraceLine />
-          <Actions>
+          <Actions mapControls={<MapControls />}>
             <Whiteboard domain={appConfig.domain} />
             {appConfig.appUrl ? (
               <StreamingReceiver
@@ -77,7 +77,6 @@ export function FullMap({
             ) : null}
             <PrivateNode appName={appConfig.name} iconsPath={iconsPath} />
             <PrivateDrawing />
-            <MapControls />
           </Actions>
         </>
       )}

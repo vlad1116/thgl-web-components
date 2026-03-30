@@ -9,7 +9,6 @@ import {
   putSharedFilters,
   useUserStore,
   getIconsUrl,
-  devLog,
 } from "@repo/lib";
 import {
   DEFAULT_CIRCLE_SHEET,
@@ -265,10 +264,6 @@ export function PrivateNode({
         markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
         initialSheet = PRIVATE_NODE_ICON_SHEET;
         initialRect = { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height };
-        devLog.info("PrivateNode", "Using cached processed icon for initial marker", {
-          width: cachedProcessed.width,
-          height: cachedProcessed.height,
-        });
       } else {
         // Check if source image is cached
         const cachedSource = getSourceImage(fullIconUrl);
@@ -283,10 +278,6 @@ export function PrivateNode({
           markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, processedImg);
           initialSheet = PRIVATE_NODE_ICON_SHEET;
           initialRect = { x: 0, y: 0, width: procWidth, height: procHeight };
-          devLog.info("PrivateNode", "Processed and cached icon for initial marker", {
-            width: procWidth,
-            height: procHeight,
-          });
         } else {
           // No cached source - use colored circle, visual effect will update when loaded
           const circleSheetName = `__circle_${color}__`;
@@ -312,12 +303,6 @@ export function PrivateNode({
       key: "private-node-preview",
       isHighlighted: false, // Keep false to match normal marker size on map (highlighted = 1.15x bigger)
     };
-    devLog.info("PrivateNode", "Main effect: creating marker", {
-      latLng,
-      size,
-      hasIcon: !!tempPrivateNode?.icon?.url,
-      initialSheet,
-    });
     markerLayer.add(marker);
     // Increment version to trigger visual effect (in case color/icon changes later)
     setMarkerVersion((v) => v + 1);
@@ -350,7 +335,6 @@ export function PrivateNode({
     map.on("click", handleClick);
 
     return () => {
-      devLog.warn("PrivateNode", "Main effect CLEANUP: removing marker");
       map.off("click", handleClick);
       markerLayer.remove(PRIVATE_NODE_MARKER_ID);
     };
@@ -359,13 +343,6 @@ export function PrivateNode({
   // Unified visual effect: handles icon OR circle based on tempPrivateNode.icon
   // Uses requestAnimationFrame to ensure marker exists from main effect
   useEffect(() => {
-    devLog.debug("PrivateNode", "Visual effect triggered", {
-      isEditing,
-      hasMap: !!map,
-      color,
-      iconUrl: tempPrivateNode?.icon?.url,
-    });
-
     if (!isEditing || !map) return;
 
     const markerLayer = map.markerLayer;
@@ -374,10 +351,6 @@ export function PrivateNode({
     // Use requestAnimationFrame to ensure marker is created by main effect
     const rafId = requestAnimationFrame(() => {
       const existingMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
-      devLog.debug("PrivateNode", "RAF callback", {
-        existingMarker: !!existingMarker,
-        iconUrl: tempPrivateNode?.icon?.url,
-      });
       if (!existingMarker) return;
 
       const iconUrl = tempPrivateNode?.icon?.url;
@@ -403,12 +376,6 @@ export function PrivateNode({
         // Check shared processed image cache first (same cache as markers.tsx)
         const cachedProcessed = getProcessedImage(cacheKey);
         if (cachedProcessed) {
-          // Use cached processed image with exact same dimensions as markers.tsx
-          devLog.info("PrivateNode", "Using cached processed image from shared cache", {
-            width: cachedProcessed.width,
-            height: cachedProcessed.height,
-            cacheKey,
-          });
           markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
           markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
             sheet: PRIVATE_NODE_ICON_SHEET,
@@ -425,14 +392,6 @@ export function PrivateNode({
               isGameIcon,
             );
 
-            devLog.info("PrivateNode", "Processed icon, storing in shared cache", {
-              procWidth,
-              procHeight,
-              color,
-              isGameIcon,
-              cacheKey,
-            });
-
             // Store in shared cache so markers.tsx uses the exact same entry
             setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
 
@@ -440,7 +399,6 @@ export function PrivateNode({
             const updateMarker = () => {
               const currentMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
               if (!currentMarker) {
-                devLog.warn("PrivateNode", "Marker was removed during image load, skipping update");
                 return;
               }
               markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, processedImg);
@@ -468,7 +426,6 @@ export function PrivateNode({
             img.onload = () => {
               // Check if marker still exists before applying
               if (!markerLayer.getMarker(PRIVATE_NODE_MARKER_ID)) {
-                devLog.warn("PrivateNode", "Marker removed during source image load");
                 return;
               }
               // Store in shared cache for use by markers.tsx

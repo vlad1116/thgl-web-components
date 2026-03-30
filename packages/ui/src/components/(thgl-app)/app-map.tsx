@@ -53,19 +53,21 @@ export function AppMap({
         iconsPath={version?.more.icons}
         additionalTooltip={additionalTooltip}
       />
-      <div className="fixed top-[40px] right-2 mt-[1px] z-[500] flex gap-2 flex-col sm:flex-row">
-        <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
-        <StreamingSender
-          domain={appConfig.domain}
-          hidden={lockedWindow}
-          withoutLiveMode={withoutLiveMode}
-        />
-        <PrivateNode
-          appName={appConfig.name}
-          hidden={lockedWindow}
-          iconsPath={version?.more.icons}
-        />
-        <PrivateDrawing hidden={lockedWindow} />
+      <div className="fixed top-[40px] right-2 mt-[1px] z-[500] flex gap-1.5 items-center">
+        <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden [&_button]:border-0 [&_button]:shadow-none [&_button]:rounded-none [&_button]:h-8 [&_button]:w-8">
+          <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
+          <StreamingSender
+            domain={appConfig.domain}
+            hidden={lockedWindow}
+            withoutLiveMode={withoutLiveMode}
+          />
+          <PrivateNode
+            appName={appConfig.name}
+            hidden={lockedWindow}
+            iconsPath={version?.more.icons}
+          />
+          <PrivateDrawing hidden={lockedWindow} />
+        </div>
         <MapControls hidden={lockedWindow} />
       </div>
 

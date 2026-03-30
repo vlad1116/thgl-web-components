@@ -161,6 +161,15 @@ export function Markers({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
+      // Close tooltip if hovering over any UI overlay outside the map canvas and tooltip
+      const target = e.target as HTMLElement;
+      const canvas = containerRef.current?.querySelector("canvas");
+      const isOverCanvas = canvas && canvas.contains(target);
+      const isOverTooltip = tooltipRef.current?.contains(target);
+      if (!isOverCanvas && !isOverTooltip) {
+        setTooltipIsOpen(false);
+        return;
+      }
       if (!isInSafeZone(e)) {
         setTooltipIsOpen(false);
       }
@@ -177,7 +186,7 @@ export function Markers({
     };
   }, [tooltipIsOpen, tooltipData]);
 
-  // Get container for tooltip portal
+  // Get container for tooltip coordinate reference
   useEffect(() => {
     if (map) {
       containerRef.current = map.getContainer()?.parentElement ?? null;
@@ -214,7 +223,7 @@ export function Markers({
                 coordinateCopyFormat={markerOptions.coordinateCopyFormat}
               />
             </TooltipPositioner>,
-            containerRef.current
+            document.body
           )
         : null}
     </>
@@ -246,21 +255,27 @@ const TooltipPositioner = React.forwardRef<
     const w = rect.width;
     const h = rect.height;
 
+    // Convert container-relative x/y to viewport coordinates
+    const vx = cRect.left + x;
+    const vy = cRect.top + y;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
     // Default: above, centered
-    let tx = x - w / 2;
-    let ty = y - h - radius - gap;
+    let tx = vx - w / 2;
+    let ty = vy - h - radius - gap;
 
     // If overflows top, place below
     if (ty < 0) {
-      ty = y + radius + gap;
+      ty = vy + radius + gap;
     }
-    // If overflows bottom too, just clamp to top
-    if (ty + h > cRect.height) {
-      ty = Math.max(0, cRect.height - h);
+    // If overflows bottom too, just clamp
+    if (ty + h > vh) {
+      ty = Math.max(0, vh - h);
     }
-    // Clamp horizontal
+    // Clamp horizontal to viewport
     if (tx < 0) tx = 0;
-    if (tx + w > cRect.width) tx = Math.max(0, cRect.width - w);
+    if (tx + w > vw) tx = Math.max(0, vw - w);
 
     setPos({ transform: `translate3d(${tx}px, ${ty}px, 0px)` });
   }, [x, y, radius, containerRef]);
@@ -282,11 +297,11 @@ const TooltipPositioner = React.forwardRef<
         if (typeof ref === "function") ref(node);
         else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="cursor-default z-[600] rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
+      className="cursor-default z-[999999] rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       style={{
-        position: "absolute",
+        position: "fixed",
         left: 0,
         top: 0,
         pointerEvents: "auto",
@@ -1166,6 +1181,23 @@ function MarkersContent({
         if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
         tooltipDelayRef.current = setTimeout(() => {
           tooltipDelayRef.current = null;
+          // Don't open tooltip if cursor is over a UI overlay (map controls, filters, etc.)
+          // Check the topmost element at the marker's screen position
+          const canvas = map?.getContainer();
+          if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            const state = (map as any).lastState;
+            if (state) {
+              const worldPos = state.projection(m.latLng);
+              const view = state.viewMatrix;
+              const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
+              const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
+              const sx = (clipX * 0.5 + 0.5) * rect.width + rect.left;
+              const sy = (1 - (clipY * 0.5 + 0.5)) * rect.height + rect.top;
+              const topEl = document.elementFromPoint(sx, sy);
+              if (topEl && !canvas.contains(topEl)) return;
+            }
+          }
           showTooltipForMarker(m);
         }, 200);
       });

@@ -11,11 +11,13 @@ export function NavMenu({
   children,
   active,
   external,
+  externalFooter,
   breakpoint = "lg",
 }: {
   children: ReactNode;
   active: ReactNode;
   external: ReactNode;
+  externalFooter?: ReactNode;
   breakpoint?: "lg" | "md" | "sm";
 }) {
   const [open1, setOpen1] = useState(false);
@@ -51,11 +53,22 @@ export function NavMenu({
             className="flex flex-col items-center gap-2 max-h-[75vh]"
             type="auto"
           >
-            {children}
-            <Separator />
-            <div className="flex flex-col items-center gap-2 p-2">
+            {/* External links first (In-Game App, locale, social) */}
+            <div className="flex flex-wrap justify-center gap-1.5 p-2">
               {external}
             </div>
+            <Separator />
+            {/* Internal page links */}
+            {children}
+            {/* Footer links (legal) */}
+            {externalFooter && (
+              <>
+                <Separator />
+                <div className="flex flex-col items-center gap-2 p-2">
+                  {externalFooter}
+                </div>
+              </>
+            )}
           </ScrollArea>
         </PopoverContent>
       </Popover>
@@ -79,6 +92,14 @@ export function NavMenu({
               type="auto"
             >
               {children}
+              {externalFooter && (
+                <>
+                  <Separator />
+                  <div className="flex flex-col items-center gap-2 p-2">
+                    {externalFooter}
+                  </div>
+                </>
+              )}
             </ScrollArea>
           </PopoverContent>
         </Popover>

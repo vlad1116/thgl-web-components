@@ -2,7 +2,7 @@ import { getClosestActors } from "@repo/lib/overwolf";
 import { Button } from "../(controls)";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Bug, Loader2 } from "lucide-react";
 
 export function SendLogs() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,13 +15,18 @@ export function SendLogs() {
     setIsLoading(false);
   };
   return (
-    <Button onClick={handleClick} disabled={isLoading}>
+    <Button
+      onClick={handleClick}
+      disabled={isLoading}
+      size="icon"
+      variant="ghost"
+      className="h-8 w-8"
+      title="Debug Actors"
+    >
       {isLoading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
-        </>
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        "Debug Actors"
+        <Bug className="h-4 w-4" />
       )}
     </Button>
   );

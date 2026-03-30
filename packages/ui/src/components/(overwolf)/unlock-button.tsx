@@ -37,7 +37,7 @@ export function UnlockButton({
         size="icon"
         onClick={onClick}
         className={cn(
-          "transition-all",
+          "transition-all h-7 w-7",
           hintVisible ? "bg-white" : "bg-white/10 text-white hover:bg-white/40",
         )}
       >
@@ -45,11 +45,11 @@ export function UnlockButton({
       </Button>
       {hintVisible && (
         <>
-          <p className="text-xl font-bold">
-            Click the eye to show the controls or hit
+          <p className="text-xs font-medium">
+            Click the eye to show controls or hit
           </p>
-          <Hotkey name={HOTKEYS.TOGGLE_LOCK_APP} gameClassId={gameClassId} />(
-          {timeLeft})
+          <Hotkey name={HOTKEYS.TOGGLE_LOCK_APP} gameClassId={gameClassId} />
+          <span className="text-xs text-muted-foreground">({timeLeft})</span>
         </>
       )}
     </div>

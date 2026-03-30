@@ -10,9 +10,9 @@ import { Button } from "../(controls)";
 import {
   ChevronLeft,
   ChevronRight,
+  CircleUser,
   Home,
   Settings,
-  User,
   Circle,
   Globe,
   HelpCircle,
@@ -216,7 +216,7 @@ export function DashboardSidebar() {
             className="w-full justify-start"
             onClick={() => account.setShowUserDialog(true)}
           >
-            <User className="h-4 w-4 mr-2" />
+            <CircleUser className={cn("h-4 w-4 mr-2", account.userId && "text-primary")} />
             <span className="truncate text-xs">
               {account?.decryptedUserId ? account.decryptedUserId : t("sidebar.signIn")}
             </span>
@@ -230,7 +230,7 @@ export function DashboardSidebar() {
                 className="w-full justify-center"
                 onClick={() => account.setShowUserDialog(true)}
               >
-                <User className="h-4 w-4" />
+                <CircleUser className={cn("h-4 w-4", account.userId && "text-primary")} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -239,6 +239,22 @@ export function DashboardSidebar() {
               </p>
             </TooltipContent>
           </Tooltip>
+        )}
+        {isExpanded && (
+          <div className="flex flex-wrap gap-x-2 gap-y-0.5 px-2 pt-1 text-[10px] text-muted-foreground">
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => openInBrowser("https://www.th.gl/legal-notice")}
+            >
+              Legal Notice
+            </button>
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => openInBrowser("https://www.th.gl/privacy-policy")}
+            >
+              Privacy Policy
+            </button>
+          </div>
         )}
       </div>
     </aside>

@@ -189,7 +189,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
   const t = useT();
 
   const { data: config } = useSWRImmutable<OverlayConfig>(configUrl, fetcher);
-
   const zoneLayersRef = useRef<Map<string, ZoneOverlayLayer>>(new Map());
   const addedRef = useRef<Set<string>>(new Set());
   const drawingLayerRef = useRef<DrawingLayer | null>(null);

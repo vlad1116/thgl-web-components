@@ -104,7 +104,7 @@
     ],
     "partners": [
       {
-        "title": "Dune Awakening Database",
+        "title": "Database",
         "url": "https://dune.gaming.tools/",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
@@ -121,17 +121,6 @@
           "fileName": "partners-11684652201894637399.webp",
           "x": 48,
           "y": 0,
-          "width": 24,
-          "height": 24
-        }
-      },
-      {
-        "title": "Private Server Hosting",
-        "url": "https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=59",
-        "sprite": {
-          "fileName": "partners-11684652201894637399.webp",
-          "x": 0,
-          "y": 24,
           "width": 24,
           "height": 24
         }
@@ -193,19 +182,6 @@
     "tags": [
       "interactive_map"
     ],
-    "partners": [
-      {
-        "title": "Satisfactory Server Hosting",
-        "url": "https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=64",
-        "sprite": {
-          "fileName": "partners-11684652201894637399.webp",
-          "x": 0,
-          "y": 24,
-          "width": 24,
-          "height": 24
-        }
-      }
-    ],
     "sprite": {
       "fileName": "games-11684652201894637399.webp",
       "x": 0,
@@ -236,7 +212,7 @@
     ],
     "partners": [
       {
-        "title": "Pax Dei Database",
+        "title": "Database",
         "url": "https://paxdei.gaming.tools?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
@@ -258,34 +234,12 @@
         }
       },
       {
-        "title": "Pax Dei Tools",
-        "url": "https://pax-dei-tools.com//?ref=thgl",
-        "sprite": {
-          "fileName": "partners-11684652201894637399.webp",
-          "x": 24,
-          "y": 24,
-          "width": 24,
-          "height": 24
-        }
-      },
-      {
-        "title": "Pax Clans",
-        "url": "https://paxclans.com/?ref=thgl",
-        "sprite": {
-          "fileName": "partners-11684652201894637399.webp",
-          "x": 48,
-          "y": 24,
-          "width": 24,
-          "height": 24
-        }
-      },
-      {
-        "title": "Guides",
-        "url": "https://mmo-wiki.com/pax-dei/?ref=thgl",
+        "title": "Tools",
+        "url": "https://pax-dei-tools.com/?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
           "x": 0,
-          "y": 48,
+          "y": 24,
           "width": 24,
           "height": 24
         }
@@ -307,7 +261,7 @@
     ],
     "partners": [
       {
-        "title": "Night Crows Database",
+        "title": "Database",
         "url": "https://nightcrows.gaming.tools?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
@@ -362,23 +316,12 @@
     ],
     "partners": [
       {
-        "title": "D4 Armory",
-        "url": "https://d4armory.io/?ref=thgl",
-        "sprite": {
-          "fileName": "partners-11684652201894637399.webp",
-          "x": 24,
-          "y": 48,
-          "width": 24,
-          "height": 24
-        }
-      },
-      {
         "title": "Diablo IV Companion",
         "url": "https://github.com/josdemmers/Diablo4Companion?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
-          "x": 48,
-          "y": 48,
+          "x": 24,
+          "y": 24,
           "width": 24,
           "height": 24
         }
@@ -443,7 +386,7 @@
     ],
     "partners": [
       {
-        "title": "Palia Database",
+        "title": "Paliapedia",
         "url": "https://paliapedia.com?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
@@ -458,8 +401,8 @@
         "url": "https://paliatracker.com?ref=thgl",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
-          "x": 0,
-          "y": 72,
+          "x": 48,
+          "y": 24,
           "width": 24,
           "height": 24
         }
@@ -485,8 +428,8 @@
         "url": "https://www.voicy.network/official-soundboards/games/palworld",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
-          "x": 24,
-          "y": 72,
+          "x": 0,
+          "y": 48,
           "width": 24,
           "height": 24
         }
@@ -507,8 +450,8 @@
         "url": "https://palworld.wiki.gg",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
-          "x": 48,
-          "y": 72,
+          "x": 24,
+          "y": 48,
           "width": 24,
           "height": 24
         }
@@ -518,8 +461,8 @@
         "url": "https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=60",
         "sprite": {
           "fileName": "partners-11684652201894637399.webp",
-          "x": 0,
-          "y": 24,
+          "x": 48,
+          "y": 48,
           "width": 24,
           "height": 24
         }
@@ -566,6 +509,19 @@
     "url": "https://crimsondesert.th.gl",
     "tags": [
       "interactive_map"
+    ],
+    "partners": [
+      {
+        "title": "Database",
+        "url": "https://crimsondesert.gaming.tools/",
+        "sprite": {
+          "fileName": "partners-11684652201894637399.webp",
+          "x": 24,
+          "y": 0,
+          "width": 24,
+          "height": 24
+        }
+      }
     ],
     "sprite": {
       "fileName": "games-11684652201894637399.webp",

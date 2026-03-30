@@ -8,7 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "../(data)";
 import { Button } from "../ui/button";
+import { Globe } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@repo/lib";
 
 const LOCALE_LABELS: Record<string, string> = {
   en: "English",
@@ -47,7 +49,10 @@ export function LocaleSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">{LOCALE_LABELS[current] ?? current}</Button>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs font-medium">
+          <Globe className="h-3 w-3 opacity-50" />
+          {LOCALE_LABELS[current] ?? current}
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {locales.map((locale) => {
@@ -72,9 +77,15 @@ export function LocaleSwitcher({
             segments.join("/") +
             (searchParams.size ? `?${searchParams}` : "");
 
+          const isActive = locale === current;
           return (
             <DropdownMenuItem key={locale} asChild>
-              <Link href={href}>{LOCALE_LABELS[locale] ?? locale}</Link>
+              <Link
+                href={href}
+                className={cn(isActive && "font-medium text-primary")}
+              >
+                {LOCALE_LABELS[locale] ?? locale}
+              </Link>
             </DropdownMenuItem>
           );
         })}

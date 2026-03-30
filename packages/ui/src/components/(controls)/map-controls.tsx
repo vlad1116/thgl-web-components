@@ -304,24 +304,22 @@ export function MapControls({ hidden }: { hidden?: boolean }) {
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
 
   return (
-    <>
+    <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden">
       {/* Compass */}
       <Popover>
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <Button
-                size="icon"
-                variant="outline"
-                className={cn(showCompassActive && "ring-1 ring-red-500/40")}
-                aria-label="Compass"
-              >
-                <CompassNeedle bearing={bearing} />
-              </Button>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Compass</TooltipContent>
-        </Tooltip>
+        <PopoverTrigger asChild>
+          <button
+            className={cn(
+              "h-8 w-8 flex items-center justify-center cursor-pointer",
+              "hover:bg-accent transition-colors",
+              showCompassActive && "text-red-400",
+            )}
+            aria-label="Compass"
+            title="Compass"
+          >
+            <CompassNeedle bearing={bearing} />
+          </button>
+        </PopoverTrigger>
         <PopoverContent side="bottom" className="w-auto p-3">
           <CompassPopover
             bearing={bearing}
@@ -336,15 +334,17 @@ export function MapControls({ hidden }: { hidden?: boolean }) {
       {/* 3D toggle */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            variant="outline"
+          <button
             onClick={handleToggle3D}
-            className={cn("text-xs font-bold", is3D && "text-primary")}
+            className={cn(
+              "h-8 w-8 flex items-center justify-center cursor-pointer",
+              "text-xs font-bold hover:bg-accent transition-colors",
+              is3D && "text-primary",
+            )}
             aria-label={is3D ? "Switch to 2D" : "Switch to 3D"}
           >
             {is3D ? "2D" : "3D"}
-          </Button>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
           {is3D ? "Switch to 2D" : "Switch to 3D"}
@@ -354,9 +354,9 @@ export function MapControls({ hidden }: { hidden?: boolean }) {
       {/* Zoom in */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <Button size="icon" variant="outline" onClick={handleZoomIn} aria-label="Zoom in">
-            <Plus className="h-4 w-4" />
-          </Button>
+          <button onClick={handleZoomIn} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Zoom in">
+            <Plus className="h-3.5 w-3.5" />
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">Zoom in</TooltipContent>
       </Tooltip>
@@ -364,9 +364,9 @@ export function MapControls({ hidden }: { hidden?: boolean }) {
       {/* Zoom out */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <Button size="icon" variant="outline" onClick={handleZoomOut} aria-label="Zoom out">
-            <Minus className="h-4 w-4" />
-          </Button>
+          <button onClick={handleZoomOut} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Zoom out">
+            <Minus className="h-3.5 w-3.5" />
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">Zoom out</TooltipContent>
       </Tooltip>
@@ -374,12 +374,12 @@ export function MapControls({ hidden }: { hidden?: boolean }) {
       {/* Reset view */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <Button size="icon" variant="outline" onClick={handleResetView} aria-label="Reset view">
-            <Home className="h-4 w-4" />
-          </Button>
+          <button onClick={handleResetView} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Reset view">
+            <Home className="h-3.5 w-3.5" />
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">Reset view</TooltipContent>
       </Tooltip>
-    </>
+    </div>
   );
 }

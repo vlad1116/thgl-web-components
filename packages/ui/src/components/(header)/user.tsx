@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { CircleUser } from "lucide-react";
 import { Button } from "../(controls)";
 import { useT } from "../(providers)";
 import { cn, useAccountStore } from "@repo/lib";
@@ -15,17 +15,17 @@ export function User({ isExpanded }: { isExpanded: boolean }) {
     <>
       <Button
         size={isExpanded ? "default" : "icon"}
-        title={t("Subscription Status")}
-        variant="secondary"
+        title={t("account")}
+        variant={isExpanded ? "secondary" : "outline"}
         onClick={() => user.setShowUserDialog(true)}
       >
-        <Heart className={cn(user.userId && "fill-primary stroke-primary")} />
+        <CircleUser className={cn(!isExpanded && "h-4 w-4", user.userId && "text-primary")} />
         <span
           className={cn("ml-2", {
             hidden: !isExpanded,
           })}
         >
-          {t("subscriber")}
+          {t("account")}
         </span>
       </Button>
       <UserDialog />

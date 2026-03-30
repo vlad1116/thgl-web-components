@@ -1,16 +1,19 @@
 "use client";
 
 import { cn, TilesConfig, useSettingsStore, useUserStore } from "@repo/lib";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { MarkersSearchResults } from "./markers-search-results";
 import { MarkersFilters } from "./markers-filters";
 import { ScrollArea } from "../ui/scroll-area";
 import {
   FoldVertical,
+  PanelLeftClose,
   Search,
+  SlidersHorizontal,
   TriangleAlert,
   UnfoldVertical,
+  X,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { MapSelect } from "./map-select";
@@ -83,10 +86,41 @@ export function MarkersSearch({
   }, [internalSearch]);
   const isLoading = searchIsLoading || search !== internalSearch;
 
+  // Mobile: collapse filters on first render
+  const mobileInitRef = useRef(false);
+  useEffect(() => {
+    if (mobileInitRef.current || embed) return;
+    mobileInitRef.current = true;
+    if (window.matchMedia("(max-width: 767px)").matches && showFilters) {
+      toggleShowFilters();
+    }
+  }, [_hasHydrated]);
+
+  const panelVisible = showFilters || !!selectedNodeId;
+
   return (
+    <>
+      {/* Floating filter toggle when panel is hidden */}
+      <button
+        className={cn(
+          "fixed top-[64px] left-2 z-[500] h-8 px-3 rounded-md border border-input bg-background shadow-sm flex items-center gap-1.5 text-xs font-medium cursor-pointer hover:bg-accent transition-all",
+          panelVisible && "opacity-0 pointer-events-none",
+          embed && "hidden",
+          className,
+        )}
+        onClick={toggleShowFilters}
+        type="button"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        Filters
+      </button>
+
     <div
       className={cn(
-        `fixed w-[200px] md:w-[300px] lg:w-[363px] top-[64px] left-2 bottom-2 z-[500] md:ml-[77px] pointer-events-none h-[calc(100vh-74px)] flex flex-col gap-1`,
+        `fixed w-[200px] md:w-[300px] lg:w-[363px] top-[64px] z-[500] pointer-events-none flex flex-col gap-1`,
+        `bottom-[60px] h-[calc(100vh-134px)] md:bottom-2 md:h-[calc(100vh-74px)]`,
+        `transition-[left] duration-200`,
+        panelVisible ? "left-2" : "left-[calc(-100%-8px)]",
         { "top-2 md:ml-0 h-[100vh]": embed },
         className,
       )}
@@ -160,7 +194,7 @@ export function MarkersSearch({
         <button
           aria-expanded={showFilters}
           aria-haspopup="menu"
-          aria-label="Open filters"
+          aria-label={showFilters ? "Close filters" : "Open filters"}
           className={cn(
             `flex absolute inset-y-0 right-1 items-center pr-2 text-gray-400 hover:text-gray-200 md:text-white`,
           )}
@@ -168,7 +202,7 @@ export function MarkersSearch({
           type="button"
         >
           {showFilters ? (
-            <FoldVertical className="h-4 w-4" />
+            <PanelLeftClose className="h-4 w-4" />
           ) : (
             <UnfoldVertical className="h-4 w-4" />
           )}
@@ -176,7 +210,8 @@ export function MarkersSearch({
       </div>
       <div
         className={cn(
-          "pointer-events-auto border rounded-md bg-card text-card-foreground shadow grid relative pb-1 overflow-hidden text-sm",
+          "pointer-events-auto border rounded-md bg-card text-card-foreground shadow relative pb-1 overflow-hidden text-sm flex flex-col",
+          expandedFilters ? "" : "md:max-h-[min(40vh,300px)]",
           {
             collapse: !showFilters,
             hidden: selectedNodeId,
@@ -196,21 +231,23 @@ export function MarkersSearch({
           </div>
         )}
         {additionalFilters && (
-          <>
+          <div className="shrink-0 max-h-[50%] overflow-hidden flex flex-col">
             <ScrollArea type="auto">{additionalFilters}</ScrollArea>
             <Separator />
-          </>
+          </div>
         )}
         {mapNames.length > 1 && (
-          <>
+          <div className="shrink-0">
             <MapSelect mapNames={mapNames} />
             <Separator />
-          </>
+          </div>
         )}
-        <Presets />
-        <Separator />
-        <GlobalFilters />
-        <ScrollArea type="auto">
+        <div className="shrink-0">
+          <Presets />
+          <Separator />
+          <GlobalFilters />
+        </div>
+        <ScrollArea type="auto" className="min-h-0">
           {internalSearch ? (
             <>
               {isLoading && internalSearch.length >= 3 && (
@@ -240,10 +277,9 @@ export function MarkersSearch({
       </div>
       <button
         className={cn(
-          "pointer-events-auto hover:text-primary mx-auto bg-card p-1 rounded-b-md -mt-4 hidden",
+          "pointer-events-auto hover:text-primary mx-auto bg-card p-1 rounded-b-md -mt-4",
           {
-            collapse: !showFilters,
-            "md:block": !selectedNodeId,
+            hidden: !showFilters || !!selectedNodeId,
           },
         )}
         onClick={toggleExpandedFilters}
@@ -257,5 +293,6 @@ export function MarkersSearch({
       <div className="grow" />
       {children}
     </div>
+    </>
   );
 }

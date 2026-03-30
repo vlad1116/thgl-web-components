@@ -7,6 +7,7 @@ export { LockWindowButton } from "./lock-window-button";
 export { NavMenu } from "./nav-menu";
 export { PageTitle } from "./page-title";
 export { Brand } from "./brand";
+export { GameSwitcher } from "./game-switcher";
 export { Header } from "./header";
 export { HeaderLink } from "./header-link";
 export { HeaderOffset } from "./header-offset";

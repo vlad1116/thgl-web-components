@@ -10,14 +10,15 @@ export function Brand({
   return (
     <div
       className={cn(
-        "hidden sm:block text-lg md:text-2xl md:leading-6 font-extrabold tracking-tight whitespace-nowrap",
+        "hidden sm:block text-lg md:text-xl md:leading-6 font-extrabold tracking-tight whitespace-nowrap",
         className,
       )}
     >
-      {title.replaceAll(" ", "").toUpperCase()}
-      <span className={cn("text-xs text-gray-400 hidden min-[410px]:inline")}>
-        .TH.GL
+      <span className="hidden lg:inline">
+        {title.replaceAll(" ", "").toUpperCase()}
+        <span className="text-xs text-gray-400">.TH.GL</span>
       </span>
+      <span className="lg:hidden">TH.GL</span>
     </div>
   );
 }
