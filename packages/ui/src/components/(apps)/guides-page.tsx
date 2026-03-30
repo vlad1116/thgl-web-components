@@ -81,7 +81,7 @@ export function createGuidesPage(appConfig: AppConfig) {
         description: t("guides.typeDescription", {
           vars: { type: t(v.id), title: appConfig.title },
         }),
-        icon: v.icon as IconSprite,
+        icon: typeof v.icon === "object" ? (v.icon as IconSprite) : undefined,
       })),
     );
 
