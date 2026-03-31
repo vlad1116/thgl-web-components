@@ -88,7 +88,7 @@ async function senActorsToGamingTools(actors: Actor[]) {
   }
   try {
     await fetch(
-      "https://pd-loot-processor.gamingtools.workers.dev/location-reports/add/thgl",
+      "https://paxdei-api.gaming.tools/api/v2/location-reports/thgl",
       {
         method: "POST",
         headers: {
