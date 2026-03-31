@@ -49,7 +49,7 @@ export function AppHeader({
   const { typesIdMap } = useCoordinates();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isStartDragging, setIsStartDragging] = useState(false);
+
 
   useEffect(() => {
     if (isOverlay) {
@@ -102,15 +102,8 @@ export function AppHeader({
                   : overwolf.windows.maximize(windowInfo.id)
             }
             onMouseDown={() => {
-              setIsStartDragging(true);
-            }}
-            onMouseUp={() => {
-              setIsStartDragging(false);
-            }}
-            onMouseMove={() => {
-              if (isStartDragging) {
+              if (!isMaximized) {
                 overwolf.windows.dragMove(windowInfo.id);
-                setIsStartDragging(false);
               }
             }}
           >
@@ -121,8 +114,11 @@ export function AppHeader({
             <nav
               className="ml-2 grow flex items-center gap-2 text-sm font-bold overflow-hidden"
               style={{ paddingRight: rightPx }}
-              onMouseDown={(e) => e.stopPropagation()}
             >
+              <div
+                className="flex items-center gap-2"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
               <Button
                 onClick={settingsStore.toggleLockedWindow}
                 size="xs"
@@ -178,6 +174,7 @@ export function AppHeader({
               )}
 
               <AppStatus gameClassId={gameClassId} />
+              </div>
             </nav>
 
             {/* Right side buttons */}
