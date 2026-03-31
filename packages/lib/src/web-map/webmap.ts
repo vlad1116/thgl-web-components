@@ -748,13 +748,13 @@ export class WebMap {
    * Zoom in by one level
    */
   zoomIn() {
-    this.targetZoom = Math.min(this.maxZoom, this.zoom + 1);
+    this.targetZoom = Math.min(this.maxZoom, this.zoom + 0.5);
   }
   /**
-   * Zoom out by one level
+   * Zoom out by half a level
    */
   zoomOut() {
-    this.targetZoom = Math.max(this.minZoom, this.zoom - 1);
+    this.targetZoom = Math.max(this.minZoom, this.zoom - 0.5);
   }
   getMinZoom() {
     return this.minZoom;
