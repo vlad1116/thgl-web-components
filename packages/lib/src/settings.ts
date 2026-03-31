@@ -644,7 +644,7 @@ export const useSettingsStore = create(
             playerIconSize: 1,
             baseIconSize: 1,
             dynamicIconSize: true,
-            dynamicIconSizeFactor: 0.67,
+            dynamicIconSizeFactor: 0.33,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
           });
@@ -658,7 +658,7 @@ export const useSettingsStore = create(
             playerIconSize: 1,
             baseIconSize: 1,
             dynamicIconSize: true,
-            dynamicIconSizeFactor: 0.67,
+            dynamicIconSizeFactor: 0.33,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
             // Accessibility
