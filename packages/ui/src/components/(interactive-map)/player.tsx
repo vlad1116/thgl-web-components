@@ -17,7 +17,6 @@ import { applyColorBlindTransform } from "./color-blind";
 import type { ColorBlindMode } from "@repo/lib";
 import { DrawingLayer } from "@repo/lib/web-map";
 
-
 export function Player({
   appName,
   player,
@@ -199,72 +198,46 @@ export function Player({
     run();
   }, [iconUrl, iconSize, colorBlindMode, colorBlindSeverity]);
 
-  // Use rAF to coalesce position updates into a single frame update.
-  // This prevents effects from piling up when multiple player positions
-  // arrive within the same animation frame.
-  const latestPlayerRef = useRef(player);
-  const rafRef = useRef<number>(0);
-  const lastPanTimeRef = useRef<number>(0);
-  latestPlayerRef.current = player;
-
-  // Interval between panTo calls. Each panTo animation runs for this duration,
-  // ensuring it completes before the next one starts. During animation, Leaflet
-  // moves the canvas via CSS (GPU-accelerated) without redrawing markers.
-  // Canvas markers only redraw once on moveend (~5 redraws/sec instead of ~60).
-  const PAN_INTERVAL = 200;
+  // Use stable primitives as deps so this effect only fires when the
+  // player position actually changes, not on every game state emission.
+  const px = player?.x;
+  const py = player?.y;
+  const pz = player?.z;
+  const pMap = player?.mapName;
 
   useEffect(() => {
-    if (!map?.mapName || !player || !marker.current) {
+    if (!map?.mapName || px == null || py == null || !marker.current) {
       return;
     }
 
-    // Cancel any pending rAF to prevent piling up
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
+    // Apply rotation to player position if configured
+    let playerPosition: [number, number] = [px, py];
+    const rotationDegrees = map._rotationDegrees;
+    const rotationCenter = map._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      playerPosition = rotateCoordinate(
+        [px, py],
+        rotationDegrees,
+        rotationCenter,
+      );
     }
 
-    rafRef.current = requestAnimationFrame(() => {
-      // Always read the latest player position (coalesces multiple updates)
-      const p = latestPlayerRef.current;
-      if (!p || !marker.current) return;
-
-      // Apply rotation to player position if configured
-      let playerPosition: [number, number] = [p.x, p.y];
-      const rotationDegrees = map._rotationDegrees;
-      const rotationCenter = map._rotationCenter;
-      if (rotationDegrees && rotationCenter) {
-        playerPosition = rotateCoordinate(
-          [p.x, p.y],
-          rotationDegrees,
-          rotationCenter,
-        );
-      }
-
-      // Always update player marker position (DOM marker with CSS transition, cheap)
-      marker.current.updatePosition({
-        ...p,
-        x: playerPosition[0],
-        y: playerPosition[1],
-      });
-
-      const isOnMap = !p.mapName || p.mapName === map.mapName;
-      if (!isOnMap) {
-        return;
-      }
-
-      if (followPlayerPosition) {
-        // Smoothly pan to player position
-        map.panTo(playerPosition);
-      }
+    // Update player marker position (DOM marker with CSS transition, cheap)
+    marker.current.updatePosition({
+      ...player,
+      x: playerPosition[0],
+      y: playerPosition[1],
     });
 
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = 0;
-      }
-    };
-  }, [map?.mapName, player, followPlayerPosition]);
+    const isOnMap = !pMap || pMap === map.mapName;
+    if (!isOnMap) {
+      return;
+    }
+
+    if (followPlayerPosition) {
+      map.panTo(playerPosition);
+    }
+  }, [map?.mapName, px, py, pz, pMap, followPlayerPosition]);
 
   useEffect(() => {
     if (!player?.mapName || !map) {
@@ -337,7 +310,11 @@ export function Player({
     const rotationDegrees = map._rotationDegrees;
     const rotationCenter = map._rotationCenter;
     if (rotationDegrees && rotationCenter) {
-      pos = rotateCoordinate([player.x, player.y], rotationDegrees, rotationCenter);
+      pos = rotateCoordinate(
+        [player.x, player.y],
+        rotationDegrees,
+        rotationCenter,
+      );
     }
     alertCircleTargetRef.current = pos;
     if (!alertCircleDisplayRef.current) {
@@ -351,7 +328,10 @@ export function Player({
       const layer = alertCircleLayerRef.current;
       const target = alertCircleTargetRef.current;
       const display = alertCircleDisplayRef.current;
-      if (!layer || !target || !display) { alertCircleRafRef.current = 0; return; }
+      if (!layer || !target || !display) {
+        alertCircleRafRef.current = 0;
+        return;
+      }
 
       const now = performance.now();
       const dt = Math.min(100, now - lastTs);
@@ -371,7 +351,9 @@ export function Player({
 
       const existing = layer.getShape("audio-alert-range");
       if (existing) {
-        layer.updateShape("audio-alert-range", { center: [...display] as [number, number] });
+        layer.updateShape("audio-alert-range", {
+          center: [...display] as [number, number],
+        });
       } else {
         layer.addShape({
           id: "audio-alert-range",

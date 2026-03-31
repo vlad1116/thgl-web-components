@@ -357,8 +357,9 @@ export class WebMap {
         // Finalize zoom to current state before drag starts
         this.zoomAnim = undefined;
       }
-      // Cancel any existing inertia when user starts dragging
+      // Cancel any existing inertia and pan animation when user starts dragging
       this.panAnim = undefined;
+      this.targetCenter = null;
       // Update cursor to grabbing while dragging
       if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
     }, { signal });
