@@ -222,9 +222,29 @@ export function InteractiveMap({
       });
     });
 
-    // Save view on move (debounced)
+    // Save view on move (debounced) and snap back if fully out of bounds
     let timeoutId: NodeJS.Timeout | null = null;
+    let isSnapping = false;
+    const tileBounds = mapTileOptions.fitBounds;
     webmap.on("moveend", () => {
+      if (isSnapping) return;
+
+      // Check if viewport has any overlap with map bounds
+      if (tileBounds) {
+        const view = webmap.getViewBounds();
+        const mapMin: [number, number] = [Math.min(tileBounds[0][0], tileBounds[1][0]), Math.min(tileBounds[0][1], tileBounds[1][1])];
+        const mapMax: [number, number] = [Math.max(tileBounds[0][0], tileBounds[1][0]), Math.max(tileBounds[0][1], tileBounds[1][1])];
+        const noOverlap =
+          view.min[0] > mapMax[0] || view.max[0] < mapMin[0] ||
+          view.min[1] > mapMax[1] || view.max[1] < mapMin[1];
+        if (noOverlap) {
+          isSnapping = true;
+          webmap.panInsideBounds(tileBounds);
+          setTimeout(() => { isSnapping = false; }, 1000);
+          return;
+        }
+      }
+
       if (timeoutId) {
         clearTimeout(timeoutId);
       }

@@ -716,9 +716,62 @@ export class WebMap {
     }
   }
 
+  /** Get the lat/lng bounds of the current viewport */
+  getViewBounds(): { min: LatLng; max: LatLng } {
+    const w = this.canvas.clientWidth || this.canvas.width;
+    const h = this.canvas.clientHeight || this.canvas.height;
+    const tl = this.screenToLatLng(0, 0);
+    const br = this.screenToLatLng(w, h);
+    return {
+      min: [Math.min(tl[0], br[0]), Math.min(tl[1], br[1])],
+      max: [Math.max(tl[0], br[0]), Math.max(tl[1], br[1])],
+    };
+  }
+
+  /** Check if two lat/lng rectangles intersect */
+  private boundsIntersect(
+    a: { min: LatLng; max: LatLng },
+    b: { min: LatLng; max: LatLng },
+  ): boolean {
+    return !(
+      a.min[0] > b.max[0] || a.max[0] < b.min[0] ||
+      a.min[1] > b.max[1] || a.max[1] < b.min[1]
+    );
+  }
+
+  /** Pan the minimum amount so the viewport intersects the given bounds */
+  panInsideBounds(bounds: Bounds) {
+    const view = this.getViewBounds();
+    const mapBounds = {
+      min: [Math.min(bounds[0][0], bounds[1][0]), Math.min(bounds[0][1], bounds[1][1])] as LatLng,
+      max: [Math.max(bounds[0][0], bounds[1][0]), Math.max(bounds[0][1], bounds[1][1])] as LatLng,
+    };
+    if (this.boundsIntersect(view, mapBounds)) return;
+
+    // Pan so the nearest map edge is at the viewport center.
+    // This ensures the map is clearly visible, not just 1px overlap.
+    let lat = this.center[0];
+    let lng = this.center[1];
+    if (view.max[0] < mapBounds.min[0]) {
+      lat = mapBounds.min[0]; // viewport is above map → center on map's top edge
+    } else if (view.min[0] > mapBounds.max[0]) {
+      lat = mapBounds.max[0]; // viewport is below map → center on map's bottom edge
+    }
+    if (view.max[1] < mapBounds.min[1]) {
+      lng = mapBounds.min[1];
+    } else if (view.min[1] > mapBounds.max[1]) {
+      lng = mapBounds.max[1];
+    }
+    this.center = [lat, lng] as LatLng;
+    this.targetCenter = null;
+    this.panAnim = undefined;
+  }
+
   setCenter(center: LatLng) {
     this.center = center;
     this.targetCenter = null;
+    // Mark as having moved so moveend fires on next frame
+    this.wasMoving = true;
   }
   /** Smoothly animate to a new center position */
   panTo(center: LatLng) {
@@ -1088,8 +1141,11 @@ export class WebMap {
     const [[minX, minY], [maxX, maxY]] = this.panConstraint.bounds;
     const tf = this.panConstraint.tf;
     const s = Math.pow(2, zoom);
-    const minPx = { x: s * (tf.a * minX + tf.b), y: s * (tf.c * minY + tf.d) };
-    const maxPx = { x: s * (tf.a * maxX + tf.b), y: s * (tf.c * maxY + tf.d) };
+    const px1 = { x: s * (tf.a * minX + tf.b), y: s * (tf.c * minY + tf.d) };
+    const px2 = { x: s * (tf.a * maxX + tf.b), y: s * (tf.c * maxY + tf.d) };
+    // Normalize — transformation may flip axes
+    const minPx = { x: Math.min(px1.x, px2.x), y: Math.min(px1.y, px2.y) };
+    const maxPx = { x: Math.max(px1.x, px2.x), y: Math.max(px1.y, px2.y) };
     // Use CSS pixels for view calculations
     const w = this.canvas.clientWidth || this.canvas.width;
     const h = this.canvas.clientHeight || this.canvas.height;
@@ -1232,6 +1288,7 @@ export class WebMap {
       }
     }
 
+
     // Use CSS pixels for view matrix to ensure consistent zoom behavior across DPR
     const cssW = this.canvas.clientWidth || w;
     const cssH = this.canvas.clientHeight || h;
@@ -1265,6 +1322,7 @@ export class WebMap {
       this.dragging ||
       this.rotating ||
       this.panAnim !== undefined ||
+      this.targetCenter !== null ||
       this.zoomAnim !== undefined ||
       Math.abs(this.targetZoom - this.zoom) > 1e-3;
 
