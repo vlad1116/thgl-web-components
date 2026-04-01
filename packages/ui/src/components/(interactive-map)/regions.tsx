@@ -27,6 +27,10 @@ export function Regions(): JSX.Element {
   const { regions } = useCoordinates();
   const filters = useUserStore((state) => state.filters);
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
+  const dynamicIconSize = useSettingsStore((state) => state.dynamicIconSize);
+  const dynamicIconSizeFactor = useSettingsStore(
+    (state) => state.dynamicIconSizeFactor,
+  );
   const layerRef = useRef<DrawingLayer | null>(null);
 
   const showBorders = filters.includes("region_borders");
@@ -108,6 +112,11 @@ export function Regions(): JSX.Element {
       }
     };
   }, [map, regions, showBorders, showNames, baseIconSize, t]);
+
+  // Sync dynamic size factor to region drawing layer
+  useEffect(() => {
+    layerRef.current?.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
+  }, [dynamicIconSize, dynamicIconSizeFactor]);
 
   return <></>;
 }

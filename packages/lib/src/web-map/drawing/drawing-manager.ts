@@ -64,6 +64,10 @@ export class DrawingManager {
     originalCenter?: LatLng;
   } | null = null;
 
+  getDrawingLayer(): DrawingLayer {
+    return this.drawingLayer;
+  }
+
   constructor(map: WebMap, options: DrawingManagerOptions = {}) {
     this.map = map;
     this.drawingLayer = new DrawingLayer({ interactive: true });

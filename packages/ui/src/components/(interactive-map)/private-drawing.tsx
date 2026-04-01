@@ -58,6 +58,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     (state) => state.setTempPrivateDrawing,
   );
 
+  const dynamicIconSize = useSettingsStore((state) => state.dynamicIconSize);
+  const dynamicIconSizeFactor = useSettingsStore(
+    (state) => state.dynamicIconSizeFactor,
+  );
   const { staticDrawings } = useCoordinates();
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
@@ -576,6 +580,13 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       }
     };
   }, [map, filters, myFilters, staticDrawings, mapName, isEditing, tempPrivateDrawing?.name]);
+
+  // Sync dynamic size factor to drawing layers
+  useEffect(() => {
+    const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
+    drawingManagerRef.current?.getDrawingLayer().setDynamicSizeFactor(factor);
+    savedDrawingsLayerRef.current?.setDynamicSizeFactor(factor);
+  }, [dynamicIconSize, dynamicIconSizeFactor]);
 
   if (hidden) {
     return null;

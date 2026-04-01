@@ -27,24 +27,29 @@ export class DrawingLayer implements Layer {
   private options: DrawingLayerOptions;
   private vertexBuffer: WebGLBuffer | null = null;
   private indexBuffer: WebGLBuffer | null = null;
-  // Interleaved vertex data: [x, y, r, g, b, a] per vertex (6 floats = 24 bytes)
+  // Interleaved vertex data: [cx, cy, ox, oy, r, g, b, a] per vertex (8 floats = 32 bytes)
   private vertexData: Float32Array = new Float32Array();
   private indices: Uint16Array = new Uint16Array();
   private textElements: Map<string, HTMLElement> = new Map();
   private vertexMarkers: Map<string, HTMLElement[]> = new Map();
   private activeShapeIds: Set<string> = new Set();
   private needsBufferUpdate = false;
-  private lastBufferZoom = -1;
   // Reusable scratch arrays for buffer building (avoids per-frame allocations)
   private scratchVertexData: number[] = [];
   private scratchIndices: number[] = [];
   private uniformLocations: {
     view?: WebGLUniformLocation | null;
+    zoomCorrection?: WebGLUniformLocation | null;
+    strokeScale?: WebGLUniformLocation | null;
   } = {};
   private attribLocations: {
-    position: number;
+    center: number;
+    offset: number;
     color: number;
-  } = { position: -1, color: -1 };
+  } = { center: -1, offset: -1, color: -1 };
+  private bufferRefZoom = -1; // zoom level at which geometry was last built
+  private bufferRefPixelToWorld = 0; // pixelToWorld at refZoom
+  private dynamicSizeFactor = 0; // 0=fixed width, 2/3=default dynamic
   private cachedCanvasRect: DOMRect | null = null;
   private cachedRectTime: number = 0;
   private rectCacheMs: number = 100;
@@ -69,7 +74,10 @@ export class DrawingLayer implements Layer {
 
     // Cache uniform and attribute locations
     this.uniformLocations.view = this.gl.getUniformLocation(this.program, "u_view");
-    this.attribLocations.position = this.gl.getAttribLocation(this.program, "a_position");
+    this.uniformLocations.zoomCorrection = this.gl.getUniformLocation(this.program, "u_zoomCorrection");
+    this.uniformLocations.strokeScale = this.gl.getUniformLocation(this.program, "u_strokeScale");
+    this.attribLocations.center = this.gl.getAttribLocation(this.program, "a_center");
+    this.attribLocations.offset = this.gl.getAttribLocation(this.program, "a_offset");
     this.attribLocations.color = this.gl.getAttribLocation(this.program, "a_color");
   }
 
@@ -81,15 +89,20 @@ export class DrawingLayer implements Layer {
     if (!this.gl) return;
 
     const vertexShaderSource = `#version 300 es
-      in vec2 a_position;
+      in vec2 a_center;   // centerline position (world px at refZoom)
+      in vec2 a_offset;   // stroke normal offset (world px at refZoom)
       in vec4 a_color;
 
       uniform mat3 u_view;
+      uniform float u_zoomCorrection;  // pow(2, currentZoom - refZoom)
+      uniform float u_strokeScale;     // dynamic size scale for stroke width
 
       out vec4 v_color;
 
       void main() {
-        vec3 pos = u_view * vec3(a_position, 1.0);
+        // Scale center to current zoom, apply dynamic size to stroke offset
+        vec2 worldPos = a_center * u_zoomCorrection + a_offset * u_zoomCorrection * u_strokeScale;
+        vec3 pos = u_view * vec3(worldPos, 1.0);
         gl_Position = vec4(pos.xy, 0.0, 1.0);
         v_color = a_color;
       }
@@ -203,6 +216,10 @@ export class DrawingLayer implements Layer {
 
   getAllShapes(): DrawingShape[] {
     return Array.from(this.shapes.values());
+  }
+
+  setDynamicSizeFactor(factor: number) {
+    this.dynamicSizeFactor = factor;
   }
 
   setActiveShape(id: string | null): void {
@@ -502,12 +519,12 @@ export class DrawingLayer implements Layer {
       const nx = (-dy / len) * halfWidth;
       const ny = (dx / len) * halfWidth;
 
-      // Four corners of the quad - interleaved [x, y, r, g, b, a]
+      // Four corners: [center.x, center.y, offset.x, offset.y, r, g, b, a]
       const v0 = vertexOffset + totalVertices;
-      vertexData.push(p1.x + nx, p1.y + ny, r, g, b, a); // top-left
-      vertexData.push(p1.x - nx, p1.y - ny, r, g, b, a); // bottom-left
-      vertexData.push(p2.x - nx, p2.y - ny, r, g, b, a); // bottom-right
-      vertexData.push(p2.x + nx, p2.y + ny, r, g, b, a); // top-right
+      vertexData.push(p1.x, p1.y, nx, ny, r, g, b, a);
+      vertexData.push(p1.x, p1.y, -nx, -ny, r, g, b, a);
+      vertexData.push(p2.x, p2.y, -nx, -ny, r, g, b, a);
+      vertexData.push(p2.x, p2.y, nx, ny, r, g, b, a);
 
       // Two triangles for the quad
       indices.push(v0, v0 + 1, v0 + 2);
@@ -617,15 +634,15 @@ export class DrawingLayer implements Layer {
     const segments = Math.max(2, Math.ceil(angleDiff / (Math.PI / 8)));
     const [r, g, b, a] = color;
 
-    // Center vertex - interleaved [x, y, r, g, b, a]
-    vertexData.push(center.x, center.y, r, g, b, a);
+    // Center vertex: [cx, cy, ox=0, oy=0, r, g, b, a]
+    vertexData.push(center.x, center.y, 0, 0, r, g, b, a);
     const centerIdx = vertexOffset;
     let vertCount = 1;
 
-    // Arc vertices - interleaved [x, y, r, g, b, a]
+    // Arc vertices: offset from center
     for (let i = 0; i <= segments; i++) {
       const angle = startAngle + (i / segments) * angleDiff;
-      vertexData.push(center.x + Math.cos(angle) * halfWidth, center.y + Math.sin(angle) * halfWidth, r, g, b, a);
+      vertexData.push(center.x, center.y, Math.cos(angle) * halfWidth, Math.sin(angle) * halfWidth, r, g, b, a);
       vertCount++;
     }
 
@@ -662,15 +679,15 @@ export class DrawingLayer implements Layer {
     const startAngle = isStart ? baseAngle : baseAngle + Math.PI;
     const [r, g, b, a] = color;
 
-    // Center vertex - interleaved [x, y, r, g, b, a]
-    vertexData.push(center.x, center.y, r, g, b, a);
+    // Center vertex: [cx, cy, ox=0, oy=0, r, g, b, a]
+    vertexData.push(center.x, center.y, 0, 0, r, g, b, a);
     const centerIdx = vertexOffset;
     let vertCount = 1;
 
-    // Arc vertices - interleaved [x, y, r, g, b, a]
+    // Arc vertices: offset from center
     for (let i = 0; i <= segments; i++) {
       const angle = startAngle + (i / segments) * Math.PI;
-      vertexData.push(center.x + Math.cos(angle) * halfWidth, center.y + Math.sin(angle) * halfWidth, r, g, b, a);
+      vertexData.push(center.x, center.y, Math.cos(angle) * halfWidth, Math.sin(angle) * halfWidth, r, g, b, a);
       vertCount++;
     }
 
@@ -700,9 +717,9 @@ export class DrawingLayer implements Layer {
     const worldPositions = positions.map(p => projection(p));
     const [r, g, b, a] = color;
 
-    // Add all vertices with interleaved color data
+    // Add all vertices: [cx, cy, ox=0, oy=0, r, g, b, a] — no stroke offset for fills
     for (const wp of worldPositions) {
-      vertexData.push(wp.x, wp.y, r, g, b, a);
+      vertexData.push(wp.x, wp.y, 0, 0, r, g, b, a);
     }
 
     // Use cached triangulation if available (stable across zoom changes)
@@ -856,15 +873,14 @@ export class DrawingLayer implements Layer {
     // Update vertex markers for active shapes
     this.updateActiveShapeVertexMarkers(state);
 
-    // Update buffers when shapes changed or zoom changed significantly.
-    // Use a threshold (0.1 zoom levels) to avoid rebuilding geometry on every
-    // frame during smooth zoom animation — the small stroke width difference is
-    // imperceptible but the rebuild causes flicker from round join re-tessellation.
-    const zoomChanged = this.shapes.size > 0 && Math.abs(state.zoom - this.lastBufferZoom) > 0.1;
-    if (this.needsBufferUpdate || zoomChanged) {
+    // Only rebuild geometry when shapes change. The vertex shader applies
+    // u_zoomCorrection to scale positions from refZoom to currentZoom,
+    // eliminating per-frame rebuilds that cause flicker from round join re-tessellation.
+    if (this.needsBufferUpdate) {
+      this.bufferRefZoom = state.zoom;
+      this.bufferRefPixelToWorld = this.getPixelToWorldScale(state);
       this.updateBuffers(state);
       this.needsBufferUpdate = false;
-      this.lastBufferZoom = state.zoom;
     }
 
     // Early return before expensive gl.getParameter calls
@@ -884,24 +900,24 @@ export class DrawingLayer implements Layer {
     this.gl.useProgram(this.program);
 
     // Use cached attribute locations
-    const positionLocation = this.attribLocations.position;
+    const centerLocation = this.attribLocations.center;
+    const offsetLocation = this.attribLocations.offset;
     const colorLocation = this.attribLocations.color;
 
     // Bind interleaved vertex buffer
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
-    // Interleaved format: [x, y, r, g, b, a] = 6 floats = 24 bytes per vertex
-    const STRIDE = 6 * 4; // 6 floats * 4 bytes per float = 24 bytes
-    const POSITION_OFFSET = 0;
-    const COLOR_OFFSET = 2 * 4; // 2 floats * 4 bytes = 8 bytes
+    // Interleaved format: [cx, cy, ox, oy, r, g, b, a] = 8 floats = 32 bytes per vertex
+    const STRIDE = 8 * 4;
 
-    // Setup position attribute (2 floats at offset 0)
-    this.gl.enableVertexAttribArray(positionLocation);
-    this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, STRIDE, POSITION_OFFSET);
+    this.gl.enableVertexAttribArray(centerLocation);
+    this.gl.vertexAttribPointer(centerLocation, 2, this.gl.FLOAT, false, STRIDE, 0);
 
-    // Setup color attribute (4 floats at offset 8)
+    this.gl.enableVertexAttribArray(offsetLocation);
+    this.gl.vertexAttribPointer(offsetLocation, 2, this.gl.FLOAT, false, STRIDE, 2 * 4);
+
     this.gl.enableVertexAttribArray(colorLocation);
-    this.gl.vertexAttribPointer(colorLocation, 4, this.gl.FLOAT, false, STRIDE, COLOR_OFFSET);
+    this.gl.vertexAttribPointer(colorLocation, 4, this.gl.FLOAT, false, STRIDE, 4 * 4);
 
     // Enable blending for alpha transparency
     this.gl.enable(this.gl.BLEND);
@@ -916,6 +932,32 @@ export class DrawingLayer implements Layer {
     if (this.uniformLocations.view && state.viewMatrix) {
       this.gl.uniformMatrix3fv(this.uniformLocations.view, false, state.viewMatrix);
     }
+    // Scale center positions from reference zoom to current zoom
+    if (this.uniformLocations.zoomCorrection) {
+      const correction = Math.pow(2, state.zoom - this.bufferRefZoom);
+      this.gl.uniform1f(this.uniformLocations.zoomCorrection, correction);
+    }
+    // Stroke width scaling relative to reference zoom.
+    // The shader applies: offset * zoomCorrection * strokeScale
+    // For constant screen width: need to cancel zoomCorrection on the offset,
+    // then apply current pixelToWorld. So strokeScale = 1/zoomCorrection * (current/ref).
+    // Simplifies to: strokeScale = pixelToWorld_current / (pixelToWorld_ref * zoomCorrection)
+    if (this.uniformLocations.strokeScale) {
+      const zoomCorrection = Math.pow(2, state.zoom - this.bufferRefZoom);
+      const currentPixelToWorld = this.getPixelToWorldScale(state);
+      // Base: constant screen-space width
+      const constantScale = this.bufferRefPixelToWorld > 0
+        ? currentPixelToWorld / (this.bufferRefPixelToWorld * zoomCorrection)
+        : 1;
+
+      if (this.dynamicSizeFactor > 0.001) {
+        // Dynamic: strokes scale with zoom like icons (world-space).
+        // strokeScale = 1.0 means offsets scale 1:1 with zoomCorrection.
+        this.gl.uniform1f(this.uniformLocations.strokeScale, 1.0);
+      } else {
+        this.gl.uniform1f(this.uniformLocations.strokeScale, constantScale);
+      }
+    }
 
     // Draw triangles
     this.gl.drawElements(
@@ -926,7 +968,8 @@ export class DrawingLayer implements Layer {
     );
 
     // Restore WebGL state
-    this.gl.disableVertexAttribArray(positionLocation);
+    this.gl.disableVertexAttribArray(centerLocation);
+    this.gl.disableVertexAttribArray(offsetLocation);
     this.gl.disableVertexAttribArray(colorLocation);
     this.gl.bindVertexArray(prevVao);
     this.gl.useProgram(prevProgram);
