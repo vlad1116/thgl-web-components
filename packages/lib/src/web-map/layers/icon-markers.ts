@@ -1337,15 +1337,18 @@ export class IconMarkerLayer implements Layer {
 
   // Create a default circle texture for markers without icons
   private createDefaultCircleSheet(gl: WebGL2RenderingContext): SheetTex {
-    const size = 64;
+    const logicalSize = 64;
+    const dpr = window.devicePixelRatio || 1;
+    const size = Math.round(logicalSize * dpr);
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d")!;
+    ctx.scale(dpr, dpr);
 
     // Draw a white circle with slight transparency
     ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.arc(logicalSize / 2, logicalSize / 2, logicalSize / 2 - 2, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
     ctx.fill();
 

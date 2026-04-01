@@ -524,17 +524,20 @@ function MarkersContent({
   // Returns a canvas element directly (no data URL conversion needed).
   // Padding accommodates shadow blur (2px) + max high contrast outline (6px).
   const ICON_PADDING = 8;
-  const processedIconCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
+  const processedIconCache = useRef<Map<string, { canvas: HTMLCanvasElement; logicalWidth: number; logicalHeight: number }>>(new Map());
   const processSheetIcon = (
     sourceImg: HTMLImageElement,
     rect: { x: number; y: number; width: number; height: number },
-  ): { canvas: HTMLCanvasElement; width: number; height: number } => {
-    const canvasW = rect.width + ICON_PADDING * 2;
-    const canvasH = rect.height + ICON_PADDING * 2;
+  ): { canvas: HTMLCanvasElement; logicalWidth: number; logicalHeight: number } => {
+    // Render at device pixel ratio for crisp icons on high-DPI displays.
+    const dpr = window.devicePixelRatio || 1;
+    const logicalW = rect.width + ICON_PADDING * 2;
+    const logicalH = rect.height + ICON_PADDING * 2;
     const canvas = document.createElement("canvas");
-    canvas.width = canvasW;
-    canvas.height = canvasH;
+    canvas.width = Math.round(logicalW * dpr);
+    canvas.height = Math.round(logicalH * dpr);
     const ctx = canvas.getContext("2d")!;
+    ctx.scale(dpr, dpr);
 
     // Apply subtle shadow like old Leaflet canvas-marker.ts
     ctx.shadowOffsetX = 0;
@@ -552,7 +555,7 @@ function MarkersContent({
       rect.width, rect.height,
     );
 
-    return { canvas, width: canvasW, height: canvasH };
+    return { canvas, logicalWidth: logicalW, logicalHeight: logicalH };
   };
 
   // Helper to create a colored circle image for private nodes
@@ -564,10 +567,12 @@ function MarkersContent({
     }
 
     const size = 64;
+    const dpr = window.devicePixelRatio || 1;
     const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
     const ctx = canvas.getContext("2d")!;
+    ctx.scale(dpr, dpr);
 
     // Draw colored circle
     ctx.beginPath();
@@ -864,33 +869,38 @@ function MarkersContent({
         const circleImg = createColoredCircleImage(nodeColor);
         markerLayer.setSheet(circleSheetName, circleImg);
         sheet = circleSheetName;
-        rect = { x: 0, y: 0, width: 64, height: 64 };
+        // Use physical pixel size for UV mapping (canvas was DPR-scaled)
+        const circlePx = Math.round(64 * (window.devicePixelRatio || 1));
+        rect = { x: 0, y: 0, width: circlePx, height: circlePx };
       } else if (!markerIcon) {
         // No icon at all - use default circle sheet
         sheet = DEFAULT_CIRCLE_SHEET;
-        rect = { x: 0, y: 0, width: 64, height: 64 };
+        const defaultCirclePx = Math.round(64 * (window.devicePixelRatio || 1));
+        rect = { x: 0, y: 0, width: defaultCirclePx, height: defaultCirclePx };
       }
 
       // Pre-process sprite sheet icons using canvas 2D.
       // This isolates each icon from the atlas (preventing cross-icon bleeding
       // in WebGL bilinear filtering) and applies a subtle shadow.
       if (sheet === "icons" && !useProcessedIcon && spriteSheetSource) {
-        const processedKey = `__processed_icon_${rect.x}_${rect.y}_${rect.width}_${rect.height}__`;
+        const processedKey = `__processed_icon_${rect.x}_${rect.y}_${rect.width}_${rect.height}_${dpr}__`;
         const cached = processedIconCache.current.get(processedKey);
         if (cached) {
           // Scale size up to compensate for padding so icon appears at correct visual size
-          size *= cached.width / rect.width;
+          size *= cached.logicalWidth / rect.width;
           sheet = processedKey;
           markerLayer.setSheet(sheet, cached.canvas);
-          rect = { x: 0, y: 0, width: cached.width, height: cached.height };
+          // Use physical pixel dimensions for UV mapping (canvas.width matches texture size)
+          rect = { x: 0, y: 0, width: cached.canvas.width, height: cached.canvas.height };
         } else {
           const processed = processSheetIcon(spriteSheetSource, rect);
           processedIconCache.current.set(processedKey, processed);
           // Scale size up to compensate for padding so icon appears at correct visual size
-          size *= processed.width / rect.width;
+          size *= processed.logicalWidth / rect.width;
           sheet = processedKey;
           markerLayer.setSheet(sheet, processed.canvas);
-          rect = { x: 0, y: 0, width: processed.width, height: processed.height };
+          // Use physical pixel dimensions for UV mapping (canvas.width matches texture size)
+          rect = { x: 0, y: 0, width: processed.canvas.width, height: processed.canvas.height };
         }
       }
 
@@ -1386,13 +1396,15 @@ function MarkersContent({
     );
     if (!hasAnyLabels) return;
 
+    const dpr = window.devicePixelRatio || 1;
     const fontSize = Math.round(14 * labelTextSize);
     const pad = 6;
     const cache = labelCanvasCache.current;
 
-    // Helper: get or create a canvas with rendered text
+    // Helper: get or create a DPR-scaled canvas with rendered text.
+    // Returns logical width/height; the canvas pixels are DPR-scaled for crisp text.
     const getTextCanvas = (text: string) => {
-      const key = `${text}__${fontSize}`;
+      const key = `${text}__${fontSize}__${dpr}`;
       let entry = cache.get(key);
       if (entry) return entry;
 
@@ -1403,8 +1415,11 @@ function MarkersContent({
       const metrics = ctx.measureText(text);
       const w = Math.ceil(metrics.width) + pad * 2;
       const h = fontSize + pad * 2;
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+
+      // Scale context for high-DPI rendering
+      ctx.scale(dpr, dpr);
 
       // Re-set font after resize
       ctx.font = font;
@@ -1425,8 +1440,6 @@ function MarkersContent({
       return entry;
     };
 
-    const dpr = window.devicePixelRatio || 1;
-
     // Helper: add a label marker to the main marker layer
     const addLabel = (id: string, pos: [number, number], text: string) => {
       const { canvas, width, height } = getTextCanvas(text);
@@ -1443,7 +1456,8 @@ function MarkersContent({
         sizeW: width * dpr,
         screenOffsetY: -(iconSize / 2 + height * dpr / 2 + 2),
         sheet: sheetName,
-        rect: { x: 0, y: 0, width, height },
+        // Use physical pixel dimensions for UV mapping (canvas is DPR-scaled)
+        rect: { x: 0, y: 0, width: canvas.width, height: canvas.height },
         keepUpright: true,
         noHitTest: true,
       });
