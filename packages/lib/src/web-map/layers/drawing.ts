@@ -41,6 +41,10 @@ export class DrawingLayer implements Layer {
   private uniformLocations: {
     view?: WebGLUniformLocation | null;
   } = {};
+  private attribLocations: {
+    position: number;
+    color: number;
+  } = { position: -1, color: -1 };
   private cachedCanvasRect: DOMRect | null = null;
   private cachedRectTime: number = 0;
   private rectCacheMs: number = 100;
@@ -63,8 +67,10 @@ export class DrawingLayer implements Layer {
   private setupVAO(): void {
     if (!this.gl || !this.program) return;
 
-    // Cache uniform locations
+    // Cache uniform and attribute locations
     this.uniformLocations.view = this.gl.getUniformLocation(this.program, "u_view");
+    this.attribLocations.position = this.gl.getAttribLocation(this.program, "a_position");
+    this.attribLocations.color = this.gl.getAttribLocation(this.program, "a_color");
   }
 
   onRemove(): void {
@@ -858,6 +864,7 @@ export class DrawingLayer implements Layer {
       this.lastBufferZoom = state.zoom;
     }
 
+    // Early return before expensive gl.getParameter calls
     if (!this.gl || !this.program || this.indices.length === 0) {
       return;
     }
@@ -873,9 +880,9 @@ export class DrawingLayer implements Layer {
 
     this.gl.useProgram(this.program);
 
-    // Get attribute locations
-    const positionLocation = this.gl.getAttribLocation(this.program, "a_position");
-    const colorLocation = this.gl.getAttribLocation(this.program, "a_color");
+    // Use cached attribute locations
+    const positionLocation = this.attribLocations.position;
+    const colorLocation = this.attribLocations.color;
 
     // Bind interleaved vertex buffer
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -938,16 +945,16 @@ export class DrawingLayer implements Layer {
     element.setAttribute('data-text-id', shape.id);
     element.style.cssText = `
       position: absolute;
+      left: 0px;
+      top: 0px;
       font-size: ${shape.size}px;
       font-family: Arial, system-ui, sans-serif;
       font-weight: 700;
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
-      transform: translate(-50%, -50%);
       -webkit-font-smoothing: antialiased;
-      left: 0px;
-      top: 0px;
+      will-change: transform;
       text-shadow: -1px -1px 0 #594f42, 1px -1px 0 #594f42, -1px 1px 0 #594f42, 1px 1px 0 #594f42, 0 -1px 0 #594f42, 0 1px 0 #594f42, -1px 0 0 #594f42, 1px 0 0 #594f42;
     `;
     element.style.setProperty('color', shape.color, 'important');
@@ -991,9 +998,17 @@ export class DrawingLayer implements Layer {
       const x = (clipX * 0.5 + 0.5) * cssWidth;
       const y = (1 - (clipY * 0.5 + 0.5)) * cssHeight;
 
-      element.style.left = `${x}px`;
-      element.style.top = `${y}px`;
-      element.style.fontSize = `${shape.size * zoomSizeScale}px`;
+      // Two-tier approach to avoid both shaking AND blurriness:
+      // 1. fontSize is re-rasterized in coarse steps (integer pixels) for crisp text
+      // 2. CSS scale() smoothly fills the gap between steps (GPU-only, no re-rasterization)
+      const exactSize = shape.size * zoomSizeScale;
+      const rasterizedSize = Math.round(exactSize);
+      const compensationScale = exactSize / rasterizedSize;
+      element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${compensationScale})`;
+      if (element.dataset.fs !== String(rasterizedSize)) {
+        element.dataset.fs = String(rasterizedSize);
+        element.style.fontSize = `${rasterizedSize}px`;
+      }
     }
   }
 
