@@ -21,6 +21,13 @@ export class ZoneOverlayLayer implements Layer {
   private bounds: [[number, number], [number, number]];
   private imageUrl: string;
   private imageLoaded = false;
+  private lastQuadZoom = -1;
+  // Pre-allocated buffers to avoid per-frame allocations
+  private quadVertices = new Float32Array(12);
+  private quadTexCoords = new Float32Array([
+    0, 1, 1, 1, 0, 0,
+    1, 1, 1, 0, 0, 0,
+  ]);
   // 256 entries × 4 channels (RGBA), index = pixel value
   private palette = new Uint8Array(256 * 4);
 
@@ -135,6 +142,8 @@ export class ZoneOverlayLayer implements Layer {
 
     const texLoc = this.gl.getAttribLocation(this.program, "a_texCoord");
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+    // Upload static texCoords once
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.quadTexCoords, this.gl.STATIC_DRAW);
     this.gl.enableVertexAttribArray(texLoc);
     this.gl.vertexAttribPointer(texLoc, 2, this.gl.FLOAT, false, 0, 0);
 
@@ -195,19 +204,13 @@ export class ZoneOverlayLayer implements Layer {
     const tl = projection([maxLat, minLng]);
     const tr = projection([maxLat, maxLng]);
 
-    const vertices = new Float32Array([
-      bl.x, bl.y, br.x, br.y, tl.x, tl.y,
-      br.x, br.y, tr.x, tr.y, tl.x, tl.y,
-    ]);
-    const texCoords = new Float32Array([
-      0, 1, 1, 1, 0, 0,
-      1, 1, 1, 0, 0, 0,
-    ]);
+    // Reuse pre-allocated buffer
+    const v = this.quadVertices;
+    v[0] = bl.x; v[1] = bl.y; v[2] = br.x; v[3] = br.y; v[4] = tl.x; v[5] = tl.y;
+    v[6] = br.x; v[7] = br.y; v[8] = tr.x; v[9] = tr.y; v[10] = tl.x; v[11] = tl.y;
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, texCoords, this.gl.STATIC_DRAW);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, v, this.gl.DYNAMIC_DRAW);
   }
 
   private createProgram(vs: string, fs: string): WebGLProgram | null {
@@ -230,8 +233,11 @@ export class ZoneOverlayLayer implements Layer {
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!state.viewMatrix || !this.imageLoaded || !this.bitmapTexture || !this.paletteTexture) return;
 
-    // Rebuild quad every frame (projection includes zoom)
-    this.buildQuad(state.projection);
+    // Rebuild quad only when zoom changes (projection depends on zoom)
+    if (this.lastQuadZoom !== state.zoom) {
+      this.buildQuad(state.projection);
+      this.lastQuadZoom = state.zoom;
+    }
 
     if (!this.program || !this.vao) return;
 

@@ -21,7 +21,13 @@ export class ImageOverlayLayer implements Layer {
 
   private options: Required<ImageOverlayOptions>;
   private imageLoaded = false;
-  private needsBuild = true;
+  private lastQuadZoom = -1;
+  // Pre-allocated buffers to avoid per-frame allocations
+  private quadVertices = new Float32Array(12);
+  private static readonly QUAD_TEX_COORDS = new Float32Array([
+    0, 1, 1, 1, 0, 0,
+    1, 1, 1, 0, 0, 0,
+  ]);
 
   constructor(options: ImageOverlayOptions) {
     this.options = {
@@ -99,6 +105,8 @@ export class ImageOverlayLayer implements Layer {
 
     const texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
+    // Upload static texCoords once
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, ImageOverlayLayer.QUAD_TEX_COORDS, this.gl.STATIC_DRAW);
     this.gl.enableVertexAttribArray(texCoordLocation);
     this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
@@ -119,7 +127,8 @@ export class ImageOverlayLayer implements Layer {
       this.texture = this.gl.createTexture();
       this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
       this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      this.gl.generateMipmap(this.gl.TEXTURE_2D);
+      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
@@ -139,42 +148,18 @@ export class ImageOverlayLayer implements Layer {
     if (!this.gl) return;
 
     const [[minLat, minLng], [maxLat, maxLng]] = this.options.bounds;
+    const bl = projection([minLat, minLng]);
+    const br = projection([minLat, maxLng]);
+    const tl = projection([maxLat, minLng]);
+    const tr = projection([maxLat, maxLng]);
 
-    // Project the four corners
-    const bottomLeft = projection([minLat, minLng]);
-    const bottomRight = projection([minLat, maxLng]);
-    const topLeft = projection([maxLat, minLng]);
-    const topRight = projection([maxLat, maxLng]);
-
-    // Two triangles for the quad
-    const vertices = new Float32Array([
-      // Triangle 1
-      bottomLeft.x, bottomLeft.y,
-      bottomRight.x, bottomRight.y,
-      topLeft.x, topLeft.y,
-      // Triangle 2
-      bottomRight.x, bottomRight.y,
-      topRight.x, topRight.y,
-      topLeft.x, topLeft.y,
-    ]);
-
-    // Texture coordinates (flipped Y for WebGL)
-    const texCoords = new Float32Array([
-      // Triangle 1
-      0, 1,
-      1, 1,
-      0, 0,
-      // Triangle 2
-      1, 1,
-      1, 0,
-      0, 0,
-    ]);
+    // Reuse pre-allocated buffer
+    const v = this.quadVertices;
+    v[0] = bl.x; v[1] = bl.y; v[2] = br.x; v[3] = br.y; v[4] = tl.x; v[5] = tl.y;
+    v[6] = br.x; v[7] = br.y; v[8] = tr.x; v[9] = tr.y; v[10] = tl.x; v[11] = tl.y;
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.texCoordBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, texCoords, this.gl.STATIC_DRAW);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, v, this.gl.DYNAMIC_DRAW);
   }
 
   private createProgram(vertexSource: string, fragmentSource: string): WebGLProgram | null {
@@ -202,8 +187,11 @@ export class ImageOverlayLayer implements Layer {
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!state.viewMatrix || !this.imageLoaded || !this.texture) return;
 
-    // Rebuild quad every frame — projection changes with zoom and the quad is only 6 vertices
-    this.buildQuad(state.projection);
+    // Rebuild quad only when zoom changes
+    if (this.lastQuadZoom !== state.zoom) {
+      this.buildQuad(state.projection);
+      this.lastQuadZoom = state.zoom;
+    }
 
     if (!this.program || !this.vao) return;
 

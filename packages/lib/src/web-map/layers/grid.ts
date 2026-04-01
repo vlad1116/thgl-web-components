@@ -85,7 +85,6 @@ export class GridLayer implements Layer {
       this.createLabelBuffers();
       this.createLabelTexture();
       this.setupLabelVAO();
-      this.prepareLabelData();
     }
   }
 
@@ -255,11 +254,12 @@ export class GridLayer implements Layer {
       }
     }
 
-    // Create a canvas for rendering text
+    // Create a canvas for rendering text at device pixel ratio for crisp labels
+    const dpr = window.devicePixelRatio || 1;
     const textCanvas = document.createElement("canvas");
     const ctx = textCanvas.getContext("2d")!;
 
-    // Measure text to determine cell size
+    // Measure text to determine cell size (in logical pixels)
     const fontSize = 24;
     ctx.font = `bold ${fontSize}px Arial`;
     const maxLabel = "J10"; // Longest possible label
@@ -273,14 +273,16 @@ export class GridLayer implements Layer {
     this.atlasWidth = cols * this.charWidth;
     this.atlasHeight = rows * this.charHeight;
 
-    textCanvas.width = this.atlasWidth;
-    textCanvas.height = this.atlasHeight;
+    // Canvas at physical pixel resolution
+    textCanvas.width = Math.round(this.atlasWidth * dpr);
+    textCanvas.height = Math.round(this.atlasHeight * dpr);
 
     // Clear and set up text rendering
-    ctx.clearRect(0, 0, this.atlasWidth, this.atlasHeight);
+    ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
 
-    // Flip the canvas vertically to match WebGL's coordinate system
+    // Scale for DPR, then flip vertically to match WebGL's coordinate system
     ctx.save();
+    ctx.scale(dpr, dpr);
     ctx.translate(0, this.atlasHeight);
     ctx.scale(1, -1);
 
@@ -325,7 +327,8 @@ export class GridLayer implements Layer {
     this.labelTexture = this.gl.createTexture();
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.labelTexture);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, textCanvas);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
@@ -348,10 +351,6 @@ export class GridLayer implements Layer {
         });
       }
     }
-  }
-
-  private prepareLabelData(): void {
-    // Label data is prepared in createLabelTexture
   }
 
   private buildLabelQuads(projection: (latlng: [number, number]) => { x: number; y: number }, zoom: number): void {

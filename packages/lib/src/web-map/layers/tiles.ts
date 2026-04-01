@@ -269,23 +269,23 @@ export class TileLayer implements Layer {
     const now = performance.now();
     const fade = this.prevZ !== undefined ? Math.max(0, 1 - (now - this.zoomChangeAt) / this.fadeMs) : 0;
 
-    // Build set of loaded active tiles for coverage check
-    const loadedActiveTiles = new Set<string>();
-    for (const tt of this.textures) {
-      if (tt.key.z === nativeZ) {
-        loadedActiveTiles.add(`${tt.key.x},${tt.key.y}`);
-      }
-    }
-
     // First draw fallback tiles from other zoom levels (always draw these as base layer)
     // Sort by zoom level (closest to target first for best quality)
     const fallbackTiles = this.textures
       .filter(tt => tt.key.z !== nativeZ)
       .sort((a, b) => Math.abs(a.key.z - nativeZ) - Math.abs(b.key.z - nativeZ));
 
+    // Cache scale per zoom level to avoid redundant Math.pow calls
+    const scaleCache = new Map<number, number>();
+    const getScale = (z: number) => {
+      let s = scaleCache.get(z);
+      if (s === undefined) { s = Math.pow(2, zf - z); scaleCache.set(z, s); }
+      return s;
+    };
+
     for (const tt of fallbackTiles) {
       const z = tt.key.z;
-      const scaleZ = Math.pow(2, zf - z);
+      const scaleZ = getScale(z);
       const size = this.tileSize * scaleZ;
       let originXz = 0, originYz = 0;
       if (this.bounds && this.tf){
@@ -312,7 +312,7 @@ export class TileLayer implements Layer {
     for(const tt of this.textures){
       if (tt.key.z !== nativeZ) continue;
       const z = tt.key.z;
-      const scaleZ = Math.pow(2, zf - z);
+      const scaleZ = getScale(z);
       const size = this.tileSize * scaleZ;
       let originXz = 0, originYz = 0, maxX = Infinity, maxY = Infinity;
       if (this.bounds && this.tf){
@@ -349,12 +349,13 @@ export class TileLayer implements Layer {
       const img = await loadImage(url, 'anonymous');
       const tex = gl.createTexture()!;
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       return { tex: { key, tex, localX, localY }, isNetworkError: false };
     } catch (error: any) {
       const isNetworkError = error?.isNetworkError ?? false;
