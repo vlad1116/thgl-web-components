@@ -936,7 +936,6 @@ export class DrawingLayer implements Layer {
     const element = document.createElement("div");
     element.textContent = shape.text;
     element.setAttribute('data-text-id', shape.id);
-    const translateY = "-50%";
     element.style.cssText = `
       position: absolute;
       font-size: ${shape.size}px;
@@ -945,7 +944,7 @@ export class DrawingLayer implements Layer {
       pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
-      transform: translate(-50%, ${translateY});
+      transform: translate(-50%, -50%);
       -webkit-font-smoothing: antialiased;
       left: 0px;
       top: 0px;

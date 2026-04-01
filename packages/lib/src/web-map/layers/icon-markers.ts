@@ -96,10 +96,9 @@ void main(){
 
   if (a_renderMode < 0.5) {
     // Icon rendering with conditional billboard behavior
-    // Adaptive zoom sizing based on actual view scale, not linear zoom fraction.
-    // Compute dampened ratio of current view scale to reference (midpoint zoom) scale.
-    // pow(ratio, 2/3) gives consistent growth per zoom level across all maps.
+    // Compute view scale once — used for zoom sizing, height offset, and screen projection
     float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
+    // Adaptive zoom sizing based on actual view scale, not linear zoom fraction.
     float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
     float ratio = viewScale / refScale;
     float zoomSizeScale = u_dynamicSizeFactor > 0.001
@@ -107,6 +106,7 @@ void main(){
       : 1.0;
     vec2 center = a_offset + 0.5 * a_size;
     vec2 local = (a_pos - 0.5) * a_size * zoomSizeScale;
+    float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
 
     if (a_keepUpright > 0.5) {
       // Billboard mode: icon always faces the camera
@@ -114,11 +114,6 @@ void main(){
       vec3 centerScreen = u_view * vec3(center, 1.0);
       // Depth from ground position: lower clip Y = closer to viewer = smaller depth
       float depth = (1.0 + centerScreen.y) * 0.5;
-
-      // Apply height offset in screen Y (up direction in screen space)
-      // Scale height by view matrix scale to make it zoom-responsive
-      float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
-      float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
       centerScreen.y += heightClip * iconDirection;
 
       // Apply icon rotation in screen space
@@ -139,8 +134,6 @@ void main(){
       vec3 screenPos = u_view * vec3(iconPos, 1.0);
       // Depth from ground position: lower clip Y = closer to viewer = smaller depth
       float depth = (1.0 + screenPos.y) * 0.5;
-      float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
-      float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
       screenPos.y += heightClip * iconDirection;
 
       gl_Position = vec4(screenPos.xy, depth, 1.0);
@@ -198,14 +191,20 @@ in float v_count;
 in float v_renderMode;
 in vec4 v_tint;
 out vec4 outColor;
-// 7-segment helpers for tiny digit rendering
+// 7-segment helpers for tiny digit rendering — anti-aliased
 float hseg(vec2 uv, float y){
   float thickness = 0.18;
-  return step(abs(uv.y - y), thickness*0.5) * step(0.1, uv.x) * step(uv.x, 0.9);
+  float aa = fwidth(uv.x) * 1.5;
+  return (1.0 - smoothstep(thickness*0.5 - aa, thickness*0.5 + aa, abs(uv.y - y)))
+       * smoothstep(0.1 - aa, 0.1 + aa, uv.x)
+       * (1.0 - smoothstep(0.9 - aa, 0.9 + aa, uv.x));
 }
 float vseg(vec2 uv, float x){
   float thickness = 0.18;
-  return step(abs(uv.x - x), thickness*0.5) * step(0.15, uv.y) * step(uv.y, 0.85);
+  float aa = fwidth(uv.x) * 1.5;
+  return (1.0 - smoothstep(thickness*0.5 - aa, thickness*0.5 + aa, abs(uv.x - x)))
+       * smoothstep(0.15 - aa, 0.15 + aa, uv.y)
+       * (1.0 - smoothstep(0.85 - aa, 0.85 + aa, uv.y));
 }
 float segDigit(int d, vec2 uv){
   float a = hseg(uv, 0.15);
@@ -349,7 +348,10 @@ void main(){
     float vv = (d11 * d20 - d01 * d21) * inv;
     float ww = (d00 * d21 - d01 * d20) * inv;
     float uu = 1.0 - vv - ww;
-    float inside = step(0.0, min(min(uu,vv),ww));
+    // Anti-aliased triangle fill using barycentric signed distance
+    float triDist = min(min(uu,vv),ww);
+    float aa = fwidth(uv.x) * 1.5;
+    float inside = smoothstep(-aa, aa, triDist);
     // Edge distance for outline
     float edge = min(min(vv, ww), uu);
     // Shadow under arrow
@@ -358,11 +360,12 @@ void main(){
     float vvs = (d11 * dot(vps,e0) - d01 * dot(vps,e1)) * inv;
     float wws = (d00 * dot(vps,e1) - d01 * dot(vps,e0)) * inv;
     float uus = 1.0 - vvs - wws;
-    float shInside = step(0.0, min(min(uus,vvs),wws));
+    float shTriDist = min(min(uus,vvs),wws);
+    float shInside = smoothstep(-aa, aa, shTriDist);
     draw = mix(draw, vec3(0.0), shInside * 0.35);
     overlayAlpha = max(overlayAlpha, shInside * 0.35);
     // Stroke + fill (limit stroke to triangle vicinity)
-    float stroke = (inside) * (1.0 - smoothstep(0.012, 0.016, edge));
+    float stroke = inside * (1.0 - smoothstep(0.012, 0.016, edge));
     float fill = inside;
     vec3 arrowCol = vec3(1.0);
     // Apply stroke then fill
@@ -371,15 +374,18 @@ void main(){
     overlayAlpha = max(overlayAlpha, max(stroke, fill));
   }
 
-  // Stacked spawns indicator (top-left corner)
+  // Stacked spawns indicator (top-left corner) — anti-aliased with smoothstep
+  // to prevent subpixel flickering when icon size changes during zoom
   if (v_count > 1.5) {
     vec2 ctr = vec2(0.22, 0.22);
     float arm = 0.14;
-    float hw = 0.035;
+    float hw = 0.04;
+    // Use fwidth for screen-space anti-aliasing (1 pixel soft edge)
+    float aa = fwidth(uv.x) * 1.5;
     float dx = abs(uv.x - ctr.x);
     float dy = abs(uv.y - ctr.y);
-    float hBar = step(dx, arm) * step(dy, hw);
-    float vBar = step(dx, hw) * step(dy, arm);
+    float hBar = (1.0 - smoothstep(arm - aa, arm + aa, dx)) * (1.0 - smoothstep(hw - aa, hw + aa, dy));
+    float vBar = (1.0 - smoothstep(hw - aa, hw + aa, dx)) * (1.0 - smoothstep(arm - aa, arm + aa, dy));
     float cross = max(hBar, vBar);
     // Shadow (larger spread for visibility)
     vec2 sOfs = vec2(0.018, 0.018);
@@ -387,8 +393,8 @@ void main(){
     float sHw = hw + 0.02;
     float sdx = abs(uv.x - sOfs.x - ctr.x);
     float sdy = abs(uv.y - sOfs.y - ctr.y);
-    float sH = step(sdx, sArm) * step(sdy, sHw);
-    float sV = step(sdx, sHw) * step(sdy, sArm);
+    float sH = (1.0 - smoothstep(sArm - aa, sArm + aa, sdx)) * (1.0 - smoothstep(sHw - aa, sHw + aa, sdy));
+    float sV = (1.0 - smoothstep(sHw - aa, sHw + aa, sdx)) * (1.0 - smoothstep(sArm - aa, sArm + aa, sdy));
     float shadow = max(sH, sV);
     draw = mix(draw, vec3(0.0), shadow * 0.7);
     overlayAlpha = max(overlayAlpha, shadow * 0.7);
@@ -981,12 +987,14 @@ export class IconMarkerLayer implements Layer {
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    // Generate mipmaps for smoother downscaling during zoom out
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     const entry = { name, tex, w, h };
     this.sheets.set(name, entry);
     return entry;
@@ -1071,8 +1079,8 @@ export class IconMarkerLayer implements Layer {
 
     // Reproject markers when instances changed or zoom is different from last frame
     const zoomChanged = this.lastBufferZoom !== state.zoom;
-    const rebuildBuffers =
-      this.lastBufferVersion !== this.instancesVersion || zoomChanged;
+    const instancesChanged = this.lastBufferVersion !== this.instancesVersion;
+    const rebuildBuffers = instancesChanged || zoomChanged;
     if (rebuildBuffers) {
       this.lastBufferVersion = this.instancesVersion;
       this.lastBufferZoom = state.zoom;
@@ -1136,6 +1144,9 @@ export class IconMarkerLayer implements Layer {
         offsets[i * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
         sizes[i * 2 + 0] = sizeW;
         sizes[i * 2 + 1] = size;
+
+        // Static per-instance attributes — only compute when instances change
+        if (instancesChanged) {
         const u0 = m.rect.x / s.w;
         const v0 = m.rect.y / s.h;
         const uw = m.rect.width / s.w;
@@ -1194,8 +1205,9 @@ export class IconMarkerLayer implements Layer {
           tints[i * 4 + 2] = 1;
           tints[i * 4 + 3] = 0;
         }
+        } // end instancesChanged
       }
-      // Upload all attribute data using subarray views to avoid copies
+      // Always upload offsets and sizes (change on zoom due to reprojection)
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -1208,44 +1220,48 @@ export class IconMarkerLayer implements Layer {
         sizes.subarray(0, count * 2),
         gl.DYNAMIC_DRAW,
       );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.uvs);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        uvs.subarray(0, count * 4),
-        gl.DYNAMIC_DRAW,
-      );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.discs);
-      gl.bufferData(gl.ARRAY_BUFFER, discs.subarray(0, count), gl.DYNAMIC_DRAW);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.flags);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        flags.subarray(0, count * 2),
-        gl.DYNAMIC_DRAW,
-      );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.counts);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        counts.subarray(0, count),
-        gl.DYNAMIC_DRAW,
-      );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.angles);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        angles.subarray(0, count),
-        gl.DYNAMIC_DRAW,
-      );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.keepUprights);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        keepUprights.subarray(0, count),
-        gl.DYNAMIC_DRAW,
-      );
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        tints.subarray(0, count * 4),
-        gl.DYNAMIC_DRAW,
-      );
+
+      // Only upload static attributes when instances change (not on zoom-only updates)
+      if (instancesChanged) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvs);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          uvs.subarray(0, count * 4),
+          gl.STATIC_DRAW,
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.discs);
+        gl.bufferData(gl.ARRAY_BUFFER, discs.subarray(0, count), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.flags);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          flags.subarray(0, count * 2),
+          gl.STATIC_DRAW,
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.counts);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          counts.subarray(0, count),
+          gl.STATIC_DRAW,
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.angles);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          angles.subarray(0, count),
+          gl.STATIC_DRAW,
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.keepUprights);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          keepUprights.subarray(0, count),
+          gl.STATIC_DRAW,
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          tints.subarray(0, count * 4),
+          gl.STATIC_DRAW,
+        );
+      }
 
       // First pass: Draw height stems (render mode = 1)
       // Reuse preallocated buffer and fill it
@@ -1359,12 +1375,13 @@ export class IconMarkerLayer implements Layer {
 
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
     const entry = { name: DEFAULT_CIRCLE_SHEET, tex, w: size, h: size };
     this.sheets.set(DEFAULT_CIRCLE_SHEET, entry);
