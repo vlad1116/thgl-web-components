@@ -856,8 +856,11 @@ export class DrawingLayer implements Layer {
     // Update vertex markers for active shapes
     this.updateActiveShapeVertexMarkers(state);
 
-    // Update buffers when shapes changed or zoom changed (stroke widths depend on zoom)
-    const zoomChanged = this.shapes.size > 0 && Math.abs(state.zoom - this.lastBufferZoom) > 0.001;
+    // Update buffers when shapes changed or zoom changed significantly.
+    // Use a threshold (0.1 zoom levels) to avoid rebuilding geometry on every
+    // frame during smooth zoom animation — the small stroke width difference is
+    // imperceptible but the rebuild causes flicker from round join re-tessellation.
+    const zoomChanged = this.shapes.size > 0 && Math.abs(state.zoom - this.lastBufferZoom) > 0.1;
     if (this.needsBufferUpdate || zoomChanged) {
       this.updateBuffers(state);
       this.needsBufferUpdate = false;
