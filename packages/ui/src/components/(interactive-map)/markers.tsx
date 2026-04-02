@@ -297,7 +297,7 @@ const TooltipPositioner = React.forwardRef<
         if (typeof ref === "function") ref(node);
         else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="cursor-default z-[999999] rounded-md border bg-popover p-3 text-popover-foreground shadow-md outline-none max-w-xs max-h-[70vh] overflow-y-auto"
+      className="cursor-default z-[999999] rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md outline-none w-[260px] max-h-[70vh]"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       style={{
@@ -1009,7 +1009,7 @@ function MarkersContent({
       const groupCount = typeGroups.size;
       const iconSize = (markerOptions.radius * (icons.get(spawn.type)?.size ?? 1) * 4 - 1)
         * baseIconSize * dpr;
-      const radius = iconSize * 0.5; // half icon size from center
+      const radius = iconSize * 0.75; // 3/4 icon size from center
       let groupIdx = 0;
       for (const [type, items] of typeGroups) {
         const angle = (2 * Math.PI * groupIdx) / groupCount - Math.PI / 2;
@@ -1246,6 +1246,7 @@ function MarkersContent({
             isPrivate: s.isPrivate,
             isLive: Boolean(s.address),
             data: s.data,
+            p: s.p,
           },
         ];
 
@@ -1260,6 +1261,7 @@ function MarkersContent({
               isPrivate: stackedSpawn.isPrivate,
               isLive: Boolean(stackedSpawn.address),
               data: stackedSpawn.data,
+              p: stackedSpawn.p,
             }))
           );
         }

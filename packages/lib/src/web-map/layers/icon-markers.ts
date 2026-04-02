@@ -1362,7 +1362,7 @@ export class IconMarkerLayer implements Layer {
     const fs = `#version 300 es
       precision highp float;
       out vec4 o;
-      void main() { o = vec4(0.5, 0.5, 0.5, 0.4); }`;
+      void main() { o = vec4(0.55, 0.55, 0.55, 0.6); }`;
     const v = gl.createShader(gl.VERTEX_SHADER)!;
     gl.shaderSource(v, vs); gl.compileShader(v);
     const f = gl.createShader(gl.FRAGMENT_SHADER)!;
