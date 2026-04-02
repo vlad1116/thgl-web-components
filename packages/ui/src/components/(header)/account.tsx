@@ -13,6 +13,7 @@ import {
 
 export function Account() {
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
+  const settingsHasHydrated = useSettingsStore((state) => state._hasHydrated);
 
   useEffect(() => {
     if (!accountHasHydrated) {
@@ -143,7 +144,7 @@ export function Account() {
 
     const searchParams = new URLSearchParams(location.search);
     const peerCode = searchParams.get("peer_code");
-    if (peerCode) {
+    if (peerCode && settingsHasHydrated) {
       const settingsStore = useSettingsStore.getState();
       settingsStore.setAutoJoinPeer(true);
       settingsStore.setPeerCode(peerCode);
@@ -153,7 +154,7 @@ export function Account() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [accountHasHydrated]);
+  }, [accountHasHydrated, settingsHasHydrated]);
 
   return <></>;
 }

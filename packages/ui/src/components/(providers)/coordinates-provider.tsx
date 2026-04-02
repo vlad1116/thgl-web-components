@@ -450,7 +450,7 @@ export function CoordinatesProvider({
   }, [isHydrated, liveMode, actors, customNodes, staticNodes]);
 
   useEffect(() => {
-    if (!typesIdMap) {
+    if (!typesIdMap || !isHydrated) {
       return;
     }
     const { setDiscoverNode, isDiscoveredNode } = useSettingsStore.getState();
@@ -506,7 +506,7 @@ export function CoordinatesProvider({
         setDiscoverNode(nodeId, actor.hidden);
       }
     });
-  }, [typesIdMap, actors]);
+  }, [typesIdMap, actors, isHydrated]);
 
   // Only rebuild the expensive Fuse.js search index when user is actively searching.
   // When not searching, return null to avoid O(n) index construction on every actor update.
