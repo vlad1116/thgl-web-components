@@ -606,9 +606,9 @@ export function CoordinatesProvider({
         if ((s as any).address) {
           posHash += s.p[0] * 1000 + s.p[1];
         }
-        // Include name/description for private nodes so edits trigger refresh
+        // Include all editable fields for private nodes so edits trigger refresh
         if (s.isPrivate) {
-          privateHash += `${s.name ?? ""}:${s.description ?? ""}|`;
+          privateHash += `${s.name ?? ""}:${s.description ?? ""}:${s.radius ?? ""}:${s.color ?? ""}|`;
         }
       }
       fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum}:${posHash}:${privateHash};`;

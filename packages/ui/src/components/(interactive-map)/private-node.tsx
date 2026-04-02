@@ -65,6 +65,8 @@ export function PrivateNode({
     (state) => state.setTempPrivateNode,
   );
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
+  const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
+  const iconSizeByGroup = useSettingsStore((state) => state.iconSizeByGroup);
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
   const isEditing = tempPrivateNode !== null;
@@ -234,7 +236,10 @@ export function PrivateNode({
 
     positionRef.current = latLng;
     const dpr = window.devicePixelRatio || 1;
-    const size = (radius * 4 - 1) * baseIconSize * dpr;
+    const filterName = tempPrivateNode?.filter;
+    const typeMultiplier = filterName ? (iconSizeByFilter[filterName] ?? 1) : 1;
+    // Private nodes don't belong to a group, so groupMultiplier is 1
+    const size = (radius * 4 - 1) * baseIconSize * typeMultiplier * dpr;
 
     // Determine initial sheet - use cached icon if available, otherwise colored circle
     let initialSheet = DEFAULT_CIRCLE_SHEET;
@@ -474,12 +479,14 @@ export function PrivateNode({
       if (!existingMarker) return;
 
       const dpr = window.devicePixelRatio || 1;
-      const size = radius * 2 * baseIconSize * dpr;
+      const filterName = tempPrivateNode?.filter;
+      const tm = filterName ? (iconSizeByFilter[filterName] ?? 1) : 1;
+      const size = (radius * 4 - 1) * baseIconSize * tm * dpr;
       markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, { size });
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [isEditing, map, radius, baseIconSize]);
+  }, [isEditing, map, radius, baseIconSize, iconSizeByFilter, tempPrivateNode?.filter]);
 
   // Shared private node from collaboration
   const sharedTempPrivateNode = useConnectionStore(
@@ -512,7 +519,7 @@ export function PrivateNode({
 
     const sharedRadius = sharedTempPrivateNode.radius ?? 10;
     const dpr = window.devicePixelRatio || 1;
-    const size = sharedRadius * 2 * baseIconSize * dpr;
+    const size = (sharedRadius * 4 - 1) * baseIconSize * dpr;
 
     const marker: IconMarkerInstance = {
       id: SHARED_PRIVATE_NODE_MARKER_ID,
