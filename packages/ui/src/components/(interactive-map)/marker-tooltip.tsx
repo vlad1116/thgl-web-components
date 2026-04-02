@@ -1,9 +1,9 @@
 import { API_FORGE_URL, useGameState, useSettingsStore, cn } from "@repo/lib";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useT } from "../(providers)";
 import { AdditionalTooltip, AdditionalTooltipType } from "../(content)";
 import { Comment } from "../(data)";
-import { Copy, Eye, EyeOff, MessageCircle, Navigation, Pencil, Trash2, ChevronDown } from "lucide-react";
+import { Copy, Eye, EyeOff, MessageCircle, Navigation, Pencil, Trash2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../(controls)";
@@ -143,28 +143,10 @@ function DiscoveryToggle({
   );
 }
 
-function ExpandableDescription({ desc }: { desc: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const isLong = desc.length > 120;
-
+function Description({ desc }: { desc: string }) {
   return (
     <div className="text-xs text-popover-foreground/90 leading-snug">
-      <div className={cn(!expanded && isLong && "line-clamp-3")}>
-        <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
-      </div>
-      {isLong && (
-        <button
-          type="button"
-          className="text-[10px] text-muted-foreground hover:text-foreground mt-0.5 inline-flex items-center gap-0.5"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-        >
-          {expanded ? "Show less" : "Show more"}
-          <ChevronDown className={cn("w-3 h-3 transition-transform", expanded && "rotate-180")} />
-        </button>
-      )}
+      <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
     </div>
   );
 }
@@ -350,9 +332,9 @@ function SingleItemTooltip({
         </div>
       )}
 
-      {/* Description — clamped with expand */}
+      {/* Description */}
       {desc && desc !== item.type && (
-        <ExpandableDescription desc={desc} />
+        <Description desc={desc} />
       )}
 
       {/* Private node actions */}
