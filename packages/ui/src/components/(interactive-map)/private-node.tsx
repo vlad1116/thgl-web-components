@@ -488,6 +488,30 @@ export function PrivateNode({
     return () => cancelAnimationFrame(rafId);
   }, [isEditing, map, radius, baseIconSize, iconSizeByFilter, tempPrivateNode?.filter]);
 
+  // Update marker position when coordinates change (e.g. from X/Y input fields)
+  useEffect(() => {
+    if (!isEditing || !map?.markerLayer) return;
+    const p = tempPrivateNode?.p;
+    if (!p) return;
+
+    const markerLayer = map.markerLayer;
+    const rafId = requestAnimationFrame(() => {
+      const existing = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
+      if (!existing) return;
+
+      let displayLatLng: [number, number] = [p[0], p[1]];
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        displayLatLng = rotateCoordinate(p as [number, number], rotationDegrees, rotationCenter);
+      }
+      positionRef.current = displayLatLng;
+      markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, { latLng: displayLatLng });
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [isEditing, map, tempPrivateNode?.p?.[0], tempPrivateNode?.p?.[1]]);
+
   // Shared private node from collaboration
   const sharedTempPrivateNode = useConnectionStore(
     (state) => state.tempPrivateNode,
