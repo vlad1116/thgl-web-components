@@ -991,7 +991,6 @@ export class IconMarkerLayer implements Layer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    // Generate mipmaps for smoother downscaling during zoom out
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -1079,8 +1078,8 @@ export class IconMarkerLayer implements Layer {
 
     // Reproject markers when instances changed or zoom is different from last frame
     const zoomChanged = this.lastBufferZoom !== state.zoom;
-    const instancesChanged = this.lastBufferVersion !== this.instancesVersion;
-    const rebuildBuffers = instancesChanged || zoomChanged;
+    const rebuildBuffers =
+      this.lastBufferVersion !== this.instancesVersion || zoomChanged;
     if (rebuildBuffers) {
       this.lastBufferVersion = this.instancesVersion;
       this.lastBufferZoom = state.zoom;
@@ -1145,8 +1144,6 @@ export class IconMarkerLayer implements Layer {
         sizes[i * 2 + 0] = sizeW;
         sizes[i * 2 + 1] = size;
 
-        // Static per-instance attributes — only compute when instances change
-        if (instancesChanged) {
         const u0 = m.rect.x / s.w;
         const v0 = m.rect.y / s.h;
         const uw = m.rect.width / s.w;
@@ -1205,7 +1202,6 @@ export class IconMarkerLayer implements Layer {
           tints[i * 4 + 2] = 1;
           tints[i * 4 + 3] = 0;
         }
-        } // end instancesChanged
       }
       // Always upload offsets and sizes (change on zoom due to reprojection)
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);
@@ -1221,47 +1217,22 @@ export class IconMarkerLayer implements Layer {
         gl.DYNAMIC_DRAW,
       );
 
-      // Only upload static attributes when instances change (not on zoom-only updates)
-      if (instancesChanged) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvs);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          uvs.subarray(0, count * 4),
-          gl.STATIC_DRAW,
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.discs);
-        gl.bufferData(gl.ARRAY_BUFFER, discs.subarray(0, count), gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.flags);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          flags.subarray(0, count * 2),
-          gl.STATIC_DRAW,
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.counts);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          counts.subarray(0, count),
-          gl.STATIC_DRAW,
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.angles);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          angles.subarray(0, count),
-          gl.STATIC_DRAW,
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.keepUprights);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          keepUprights.subarray(0, count),
-          gl.STATIC_DRAW,
-        );
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          tints.subarray(0, count * 4),
-          gl.STATIC_DRAW,
-        );
-      }
+      // Upload all per-instance attributes. These buffers are shared across
+      // all sheet groups, so they must be re-uploaded for each drawList call.
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.uvs);
+      gl.bufferData(gl.ARRAY_BUFFER, uvs.subarray(0, count * 4), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.discs);
+      gl.bufferData(gl.ARRAY_BUFFER, discs.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.flags);
+      gl.bufferData(gl.ARRAY_BUFFER, flags.subarray(0, count * 2), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.counts);
+      gl.bufferData(gl.ARRAY_BUFFER, counts.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.angles);
+      gl.bufferData(gl.ARRAY_BUFFER, angles.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.keepUprights);
+      gl.bufferData(gl.ARRAY_BUFFER, keepUprights.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
+      gl.bufferData(gl.ARRAY_BUFFER, tints.subarray(0, count * 4), gl.DYNAMIC_DRAW);
 
       // First pass: Draw height stems (render mode = 1)
       // Reuse preallocated buffer and fill it
