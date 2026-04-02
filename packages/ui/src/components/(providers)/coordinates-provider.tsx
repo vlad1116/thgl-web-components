@@ -599,14 +599,19 @@ export function CoordinatesProvider({
     for (const node of nodes) {
       let addrSum = 0;
       let posHash = 0;
+      let privateHash = "";
       for (const s of node.spawns) {
         addrSum += (s as any).address ?? 0;
         // Include position in fingerprint for live actors so moves trigger refresh
         if ((s as any).address) {
           posHash += s.p[0] * 1000 + s.p[1];
         }
+        // Include name/description for private nodes so edits trigger refresh
+        if (s.isPrivate) {
+          privateHash += `${s.name ?? ""}:${s.description ?? ""}|`;
+        }
       }
-      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum}:${posHash};`;
+      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum}:${posHash}:${privateHash};`;
     }
     return fp;
   }, [nodes]);
