@@ -74,28 +74,69 @@ export function createGuidesPage(appConfig: AppConfig) {
     ]);
     const t = getT(dict);
 
-    const guideTypes = version.data.filters.flatMap((filter) =>
-      filter.values.map((v) => ({
-        type: v.id,
-        label: t(v.id),
-        description: t("guides.typeDescription", {
-          vars: { type: t(v.id), title: appConfig.title },
-        }),
-        icon: typeof v.icon === "object" ? (v.icon as IconSprite) : undefined,
-      })),
-    );
+    // Deduplicate filter values by translated label — different IDs can share
+    // the same display name (e.g. "Sword" in Rare/Epic/Legendary categories).
+    // Collect which groups each type appears in for display on the card.
+    const seenLabels = new Map<string, { groups: string[] }>();
+    const guideTypes: {
+      type: string;
+      label: string;
+      description: string;
+      icon: IconSprite | undefined;
+      groups: string[];
+    }[] = [];
+    for (const filter of version.data.filters) {
+      for (const v of filter.values) {
+        const enLabel = enDict[v.id] ?? v.id;
+        const groupLabel = t(filter.group, { fallback: filter.group });
+        const existing = seenLabels.get(enLabel);
+        if (existing) {
+          // Add group if not already listed
+          if (!existing.groups.includes(groupLabel)) {
+            existing.groups.push(groupLabel);
+          }
+          continue;
+        }
+        const groups = [groupLabel];
+        seenLabels.set(enLabel, { groups });
+        guideTypes.push({
+          type: v.id,
+          label: t(v.id),
+          description: t("guides.typeDescription", {
+            vars: { type: t(v.id), title: appConfig.title },
+          }),
+          icon: typeof v.icon === "object" ? (v.icon as IconSprite) : undefined,
+          groups,
+        });
+      }
+    }
 
-    const guideGroups = version.data.filters.map((filter) => ({
-      type: filter.group,
-      label: t(filter.group),
-      description: t("guides.typeDescription", {
-        vars: {
-          type: t(filter.group),
-          title: appConfig.title,
-        },
-      }),
-      icon: null,
-    }));
+    // Deduplicate groups by translated label
+    const seenGroupLabels = new Set<string>();
+    const guideGroups: {
+      type: string;
+      label: string;
+      description: string;
+      icon: null;
+      groups: string[];
+    }[] = [];
+    for (const filter of version.data.filters) {
+      const enGroupLabel = enDict[filter.group] ?? filter.group;
+      if (seenGroupLabels.has(enGroupLabel)) continue;
+      seenGroupLabels.add(enGroupLabel);
+      guideGroups.push({
+        type: filter.group,
+        label: t(filter.group),
+        description: t("guides.typeDescription", {
+          vars: {
+            type: t(filter.group),
+            title: appConfig.title,
+          },
+        }),
+        icon: null,
+        groups: [],
+      });
+    }
 
     const allGuides = [...guideGroups, ...guideTypes];
 
@@ -188,6 +229,18 @@ export function createGuidesPage(appConfig: AppConfig) {
                       <p className="text-sm text-muted-foreground text-left">
                         {guide.description}
                       </p>
+                      {guide.groups.length > 1 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {guide.groups.map((g) => (
+                            <span
+                              key={g}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                            >
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </Link>
                   </li>
                 ))}

@@ -279,6 +279,22 @@ export function getTypeFromVersion(
   return null;
 }
 
+/** Return ALL filter value IDs that translate to the same English name */
+export function getAllTypesFromVersion(
+  version: Version,
+  type: string,
+  dict: Record<string, string>,
+): string[] {
+  const decodedType = decodeURIComponent(type);
+  const { filterValueIds } = getVersionLookupCache(version);
+  const reverseDictMap = getReverseDictMap(dict);
+
+  const possibleKeys = reverseDictMap.get(decodedType);
+  if (!possibleKeys) return [];
+
+  return possibleKeys.filter((key) => filterValueIds.has(key));
+}
+
 export function getGroupFromVersion(
   version: Version,
   group: string,

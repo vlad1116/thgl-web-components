@@ -5,6 +5,7 @@ import {
   DEFAULT_LOCALE,
   fetchVersion,
   FiltersConfig,
+  getAllTypesFromVersion,
   getGroupFromVersion,
   getMetadataAlternates,
   getT,
@@ -101,23 +102,49 @@ export function createGuidePage(appConfig: AppConfig) {
     const t = getT(dict);
     const defaultMapName = Object.keys(version.data.tiles)[0] || "default";
 
-    let url, icon;
-    let guideId = getTypeFromVersion(version, type, dict);
-    if (!guideId) {
-      guideId = getGroupFromVersion(version, type, dict);
-      if (!guideId) {
+    // Find all type IDs that translate to the same name (e.g. "Sword" in multiple rarity categories)
+    const allTypeIds = getAllTypesFromVersion(version, type, dict);
+    let guideId: string;
+    let icon;
+    let spawns: Spawns;
+
+    if (allTypeIds.length > 0) {
+      guideId = allTypeIds[0]; // Use first for title/icon
+      icon = getIconFromFilters(version.data.filters, guideId);
+      // Fetch spawns for ALL matching types
+      const allSpawnArrays = await Promise.all(
+        allTypeIds.map(async (typeId) => {
+          const url = getApiUrl(appConfig.name, `type=${typeId}`);
+          const response = await fetch(url);
+          const buffer = await response.arrayBuffer();
+          return decodeFromBuffer<Spawns>(new Uint8Array(buffer));
+        }),
+      );
+      spawns = allSpawnArrays.flat();
+    } else {
+      const groupId = getGroupFromVersion(version, type, dict);
+      if (!groupId) {
         return notFound();
       }
-      url = getApiUrl(appConfig.name, `group=${guideId}`);
+      guideId = groupId;
       icon = null;
-    } else {
-      url = getApiUrl(appConfig.name, `type=${guideId}`);
-      icon = getIconFromFilters(version.data.filters, guideId);
+      const url = getApiUrl(appConfig.name, `group=${guideId}`);
+      const response = await fetch(url);
+      const buffer = await response.arrayBuffer();
+      spawns = decodeFromBuffer<Spawns>(new Uint8Array(buffer));
     }
     const guideTitle = t(guideId);
-    const response = await fetch(url);
-    const buffer = await response.arrayBuffer();
-    const spawns = decodeFromBuffer<Spawns>(new Uint8Array(buffer));
+
+    // Build type → group label map for disambiguation in the spawns list
+    const typeGroupLabels: Record<string, string> = {};
+    for (const filter of version.data.filters) {
+      for (const v of filter.values) {
+        if (!typeGroupLabels[v.id]) {
+          typeGroupLabels[v.id] = t(filter.group, { fallback: filter.group });
+        }
+      }
+    }
+
     const maps = spawns
       .reduce((acc, n) => {
         const mapName = n.mapName || defaultMapName;
@@ -143,7 +170,7 @@ export function createGuidePage(appConfig: AppConfig) {
       mapName: s.mapName || defaultMapName,
       type: s.type,
       name: dict[s.id ?? s.type] || s.id || s.type,
-      icon: s.icon || icon || getIconFromFilters(version.data.filters, s.type),
+      icon: s.icon || getIconFromFilters(version.data.filters, s.type) || icon,
     }));
 
     return (
@@ -248,6 +275,7 @@ export function createGuidePage(appConfig: AppConfig) {
                 tiles={version.data.tiles}
                 appName={appConfig.name}
                 additionalTooltip={appConfig.game?.additionalTooltip}
+                typeGroupLabels={typeGroupLabels}
               />
             }
           />

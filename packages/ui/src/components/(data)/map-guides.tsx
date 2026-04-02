@@ -16,12 +16,14 @@ export default function MapGuides({
   tiles,
   appName,
   additionalTooltip,
+  typeGroupLabels,
 }: {
   maps: string[];
   simpleSpawns: SimpleSpawn[];
   tiles: TilesConfig;
   appName: string;
   additionalTooltip?: AdditionalTooltipType;
+  typeGroupLabels?: Record<string, string>;
 }) {
   const t = useT();
   const searchParams = useSearchParams();
@@ -71,6 +73,7 @@ export default function MapGuides({
         tiles={tiles}
         appName={appName}
         additionalTooltip={additionalTooltip}
+        typeGroupLabels={typeGroupLabels}
       />
     </>
   );

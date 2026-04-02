@@ -21,12 +21,14 @@ export default function MapProgress({
   tiles,
   appName,
   additionalTooltip,
+  typeGroupLabels,
 }: {
   map: string;
   spawns: SimpleSpawn[];
   tiles: TilesConfig;
   appName: string;
   additionalTooltip?: AdditionalTooltipType;
+  typeGroupLabels?: Record<string, string>;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -78,6 +80,7 @@ export default function MapProgress({
           spawns={spawns}
           onShowClick={setHighlightedIds}
           highlightedIds={highlightedIds}
+          typeGroupLabels={typeGroupLabels}
         />
       </div>
     </section>
