@@ -27,13 +27,18 @@ function getStorageKey() {
   return parts.join("");
 }
 
-const WAIT_TIME_SECONDS = 10;
+const DISMISS_COUNTDOWN = 5;
+const SHOW_DELAY_MS = 30_000; // 30 seconds before showing
+const MIN_INTERACTIONS = 3; // require some user engagement first
+
 export function AdBlocker() {
   const t = useT();
   const mountTime = useRef(Date.now());
-  const [timeLeft, setTimeLeft] = useState(WAIT_TIME_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(DISMISS_COUNTDOWN);
+  const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(true);
   const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
+  const interactionsRef = useRef(0);
 
   const sessionKey = getStorageKey();
 
@@ -42,18 +47,51 @@ export function AdBlocker() {
     undefined,
   );
 
-  const waitedFor10Seconds =
-    Date.now() - mountTime.current >= WAIT_TIME_SECONDS * 1000;
-
+  // Delay showing: wait for minimum time AND user engagement
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (dismissed || ready) return;
 
-    // Use closure instead of functional update to avoid nano-stb filter pattern
+    let lastInteractionTime = 0;
+    const handleInteraction = () => {
+      // Debounce: count at most one interaction per 300ms
+      // (prevents click+pointerdown on same tap from counting twice)
+      const now = Date.now();
+      if (now - lastInteractionTime < 300) return;
+      lastInteractionTime = now;
+      interactionsRef.current++;
+    };
+
+    // Track user engagement (works on both desktop and mobile)
+    document.addEventListener("click", handleInteraction);
+    document.addEventListener("wheel", handleInteraction, { passive: true });
+    document.addEventListener("touchend", handleInteraction);
+
+    const checkReady = () => {
+      const elapsed = Date.now() - mountTime.current;
+      if (elapsed >= SHOW_DELAY_MS && interactionsRef.current >= MIN_INTERACTIONS) {
+        setReady(true);
+      }
+    };
+
+    const intervalId = setInterval(checkReady, 2000);
+
+    return () => {
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("wheel", handleInteraction);
+      document.removeEventListener("touchend", handleInteraction);
+      clearInterval(intervalId);
+    };
+  }, [dismissed, ready]);
+
+  // Dismiss countdown (only starts when dialog is visible)
+  useEffect(() => {
+    if (!ready || timeLeft <= 0) return;
+
     const timeoutId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     return () => clearTimeout(timeoutId);
-  }, [timeLeft]);
+  }, [ready, timeLeft]);
 
-  if (dismissed) return null;
+  if (dismissed || !ready) return null;
 
   return (
     <AlertDialog open={open}>
@@ -122,7 +160,7 @@ export function AdBlocker() {
         <AlertDialogCancel
           disabled={timeLeft > 0}
           onClick={() => {
-            if (!waitedFor10Seconds) return;
+            if (timeLeft > 0) return;
             setDismissed(true);
             setOpen(false);
           }}
