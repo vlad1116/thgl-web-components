@@ -555,7 +555,8 @@ export function PrivateNode({
     }
     const storageCoord = tempPrivateNode.p;
 
-    const id = `${tempPrivateNode.filter}_${Date.now()}`;
+    // Keep existing ID when editing, generate new one when creating
+    const id = tempPrivateNode.id ?? `${tempPrivateNode.filter}_${Date.now()}`;
     const marker: PrivateNode = {
       id,
       name: tempPrivateNode.name,
