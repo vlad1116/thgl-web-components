@@ -49,6 +49,10 @@ export type Spawn = {
   radius?: number;
   isPrivate?: boolean;
   data?: Record<string, string[]>;
+  /** Screen-space X offset in device px for spiderfied mixed-type clusters */
+  spiderOffsetX?: number;
+  /** Screen-space Y offset in device px for spiderfied mixed-type clusters */
+  spiderOffsetY?: number;
 };
 
 export type SimpleSpawn = {

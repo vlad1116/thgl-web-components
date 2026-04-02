@@ -939,6 +939,10 @@ function MarkersContent({
         }
       }
 
+      // Read spider offset from pre-processed synthetic spawns
+      const spiderOffsetX = spawn.spiderOffsetX;
+      const spiderOffsetY = spawn.spiderOffsetY;
+
       const instance: IconMarkerInstance = {
         id,
         latLng: markerPosition,
@@ -952,10 +956,10 @@ function MarkersContent({
         isDiscovered,
         isSelected: selectedNodeId === nodeId,
         keepUpright: true,
-        // Apply tint color for private nodes with icons only when using fallback (unprocessed) icon
-        // When using processed icon, the glow effect already has the color baked in
         tint: spawn.isPrivate && markerIcon && !useProcessedIcon ? spawn.color : undefined,
         isStacked,
+        spiderOffsetX,
+        spiderOffsetY,
       };
 
       markerInstances.push(instance);
@@ -974,8 +978,66 @@ function MarkersContent({
       );
     };
 
-    // Process all spawns
-    spawns.forEach(handleSpawn);
+    // Pre-process spawns: split mixed-type clusters into per-type sub-spawns
+    // arranged in a circle. Same-type clusters are left as-is.
+    const processedSpawns: Spawn[] = [];
+    for (const spawn of spawns) {
+      if (!spawn.cluster || spawn.cluster.length === 0) {
+        processedSpawns.push(spawn);
+        continue;
+      }
+      // Check how many unique types are in this cluster (including the parent)
+      // Only include items whose type has an active filter (is in the icons map or is private)
+      const allItems = [spawn, ...spawn.cluster].filter(
+        (item) => icons.has(item.type) || item.isPrivate
+      );
+      if (allItems.length === 0) continue; // all types filtered out
+      const typeGroups = new Map<string, (Spawn | Omit<Spawn, "cluster">)[]>();
+      for (const item of allItems) {
+        const arr = typeGroups.get(item.type) ?? [];
+        arr.push(item);
+        typeGroups.set(item.type, arr);
+      }
+
+      if (typeGroups.size <= 1) {
+        // Same-type cluster — keep as-is (original stacked behavior)
+        processedSpawns.push(spawn);
+        continue;
+      }
+
+      // Mixed-type: create one sub-spawn per type group, arranged in a circle
+      const groupCount = typeGroups.size;
+      const iconSize = (markerOptions.radius * (icons.get(spawn.type)?.size ?? 1) * 4 - 1)
+        * baseIconSize * dpr;
+      const radius = iconSize * 0.5; // half icon size from center
+      let groupIdx = 0;
+      for (const [type, items] of typeGroups) {
+        const angle = (2 * Math.PI * groupIdx) / groupCount - Math.PI / 2;
+        const offsetX = Math.cos(angle) * radius;
+        const offsetY = Math.sin(angle) * radius;
+
+        // Use the first item as the representative spawn
+        const representative = items[0] as Spawn;
+        // Build sub-cluster from remaining same-type items (if any)
+        const subCluster = items.length > 1
+          ? items.slice(1).map((item) => ({ ...item } as Omit<Spawn, "cluster">))
+          : undefined;
+
+        // Create synthetic spawn with spider offset.
+        // Use the parent's position as center so all groups share the same origin.
+        const syntheticSpawn: Spawn = {
+          ...representative,
+          p: spawn.p,
+          cluster: subCluster,
+          spiderOffsetX: offsetX,
+          spiderOffsetY: offsetY,
+        };
+
+        processedSpawns.push(syntheticSpawn);
+        groupIdx++;
+      }
+    }
+    processedSpawns.forEach(handleSpawn);
 
     // Process shared private spawns
     const sharedPrivateSpawns = sharedMyFilters.flatMap<Spawns[number]>(
@@ -1049,6 +1111,32 @@ function MarkersContent({
       }
     }
 
+    // Add center dots for spiderfied clusters (only where spider markers exist)
+    {
+      const seenCenters = new Set<string>();
+      const len = markerInstances.length; // fixed length — don't iterate newly added dots
+      for (let ci = 0; ci < len; ci++) {
+        const inst = markerInstances[ci];
+        if (!inst.spiderOffsetX && !inst.spiderOffsetY) continue;
+        const key = `${inst.latLng[0]}_${inst.latLng[1]}`;
+        if (seenCenters.has(key)) continue;
+        seenCenters.add(key);
+        const centerId = `__center_${key}`;
+        newSpawnMap.set(centerId, { id: centerId, p: inst.latLng, type: "__center" } as Spawn);
+        markerInstances.push({
+          id: centerId,
+          latLng: inst.latLng,
+          size: Math.max(inst.size * 0.25, 6 * dpr),
+          sheet: DEFAULT_CIRCLE_SHEET,
+          rect: { x: 0, y: 0, width: Math.round(64 * dpr), height: Math.round(64 * dpr) },
+          key: "__center",
+          keepUpright: true,
+          alwaysOnTop: true,
+          noHitTest: true,
+        });
+      }
+    }
+
     // Update spatial grid ref
     spatialGridRef.current = newSpatialGrid;
 
@@ -1116,6 +1204,17 @@ function MarkersContent({
         const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
         let screenX = (clipX * 0.5 + 0.5) * rect.width;
         let screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
+
+        // Offset for spiderfied markers (screen-space, scaled by dynamic icon size)
+        if (m.spiderOffsetX || m.spiderOffsetY) {
+          const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+          const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
+          const zoomSizeScale = factor > 0.001
+            ? Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), factor)))
+            : 1;
+          screenX += (m.spiderOffsetX ?? 0) * zoomSizeScale / dpr;
+          screenY += (m.spiderOffsetY ?? 0) * zoomSizeScale / dpr;
+        }
 
         // Offset tooltip to elevated icon position when height stem is active
         if (state.pitch > 0 && m.zPos) {

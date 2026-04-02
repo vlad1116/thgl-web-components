@@ -39,6 +39,8 @@ export interface IconMarkerInstance {
   keepUpright?: boolean; // do not rotate with map bearing
   tint?: string; // optional color tint (hex string like "#FF0000" or "#FF0000CC")
   isStacked?: boolean; // show indicator for multiple spawns at same location
+  spiderOffsetX?: number; // screen-space X offset in device px for spiderfied clusters
+  spiderOffsetY?: number; // screen-space Y offset in device px for spiderfied clusters
 }
 
 type SheetTex = { name: string; tex: WebGLTexture; w: number; h: number };
@@ -58,6 +60,7 @@ in float a_angle;   // rotation in radians
 in float a_renderMode; // 0=icon, 1=height stem
 in float a_keepUpright; // 1=billboard mode, 0=use own rotation
 in vec4 a_tint;     // RGBA tint color (1,1,1,1 = no tint)
+in vec2 a_spiderOffset; // screen-space offset in device px for spiderfied markers
 uniform mat3 u_view; // world->clip
 uniform float u_pitch; // camera pitch for 3D effect
 uniform float u_bearing; // camera bearing for perspective direction
@@ -122,8 +125,10 @@ void main(){
 
       // Apply screen-space offset directly (no perspective compression)
       vec2 screenOffset = rot * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
+      // Spiderfy offset scaled by dynamic size (matches icon size scaling)
+      vec2 spiderClip = a_spiderOffset * zoomSizeScale * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
 
-      gl_Position = vec4(centerScreen.xy + screenOffset, depth, 1.0);
+      gl_Position = vec4(centerScreen.xy + screenOffset + spiderClip, depth, 1.0);
     } else {
       // Player mode: use world-space rotation (affected by perspective)
       float cs = cos(a_angle), sn = sin(a_angle);
@@ -454,6 +459,7 @@ export class IconMarkerLayer implements Layer {
     stemModes?: Float32Array;
     iconModes?: Float32Array;
     tints?: Float32Array;
+    spiderOffsets?: Float32Array;
     capacity: number;
   } = { capacity: 0 };
 
@@ -468,6 +474,7 @@ export class IconMarkerLayer implements Layer {
   private renderModes!: WebGLBuffer;
   private keepUprights!: WebGLBuffer;
   private tints!: WebGLBuffer;
+  private spiderOffsets!: WebGLBuffer;
   private u_view_loc: WebGLUniformLocation | null = null;
   private u_tex_loc: WebGLUniformLocation | null = null;
   private u_pitch_loc: WebGLUniformLocation | null = null;
@@ -844,6 +851,14 @@ export class IconMarkerLayer implements Layer {
     gl.vertexAttribPointer(a_tint, 4, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(a_tint, 1);
 
+    // Spider offset attribute (vec2, screen-space device px)
+    this.spiderOffsets = gl.createBuffer()!;
+    const a_spiderOffset = gl.getAttribLocation(this.program!, "a_spiderOffset");
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderOffsets);
+    gl.enableVertexAttribArray(a_spiderOffset);
+    gl.vertexAttribPointer(a_spiderOffset, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(a_spiderOffset, 1);
+
     gl.bindVertexArray(null);
     // cache uniform locations
     this.u_view_loc = gl.getUniformLocation(this.program!, "u_view");
@@ -1107,6 +1122,7 @@ export class IconMarkerLayer implements Layer {
           stemModes: new Float32Array(newCap),
           iconModes: new Float32Array(newCap),
           tints: new Float32Array(newCap * 4),
+          spiderOffsets: new Float32Array(newCap * 2),
           capacity: newCap,
         };
       }
@@ -1202,6 +1218,10 @@ export class IconMarkerLayer implements Layer {
           tints[i * 4 + 2] = 1;
           tints[i * 4 + 3] = 0;
         }
+        // Spider offset
+        const so = this.preallocatedBuffers.spiderOffsets!;
+        so[i * 2 + 0] = m.spiderOffsetX ?? 0;
+        so[i * 2 + 1] = m.spiderOffsetY ?? 0;
       }
       // Always upload offsets and sizes (change on zoom due to reprojection)
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);
@@ -1233,6 +1253,8 @@ export class IconMarkerLayer implements Layer {
       gl.bufferData(gl.ARRAY_BUFFER, keepUprights.subarray(0, count), gl.DYNAMIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
       gl.bufferData(gl.ARRAY_BUFFER, tints.subarray(0, count * 4), gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderOffsets);
+      gl.bufferData(gl.ARRAY_BUFFER, this.preallocatedBuffers.spiderOffsets!.subarray(0, count * 2), gl.DYNAMIC_DRAW);
 
       // First pass: Draw height stems (render mode = 1)
       // Reuse preallocated buffer and fill it
@@ -1264,6 +1286,9 @@ export class IconMarkerLayer implements Layer {
     // Reusable arrays to avoid per-frame allocations
     const normalList: IconMarkerInstance[] = [];
     const onTopEntries: { s: { w: number; h: number; tex: WebGLTexture }; items: IconMarkerInstance[] }[] = [];
+
+    // Draw spider lines first (behind all icons)
+    this.drawSpiderLines(gl, state);
 
     for (const [sheet, items] of groups) {
       const s = this.ensureSheet(gl, sheet);
@@ -1303,6 +1328,118 @@ export class IconMarkerLayer implements Layer {
       gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,
       gl.ONE, gl.ONE_MINUS_SRC_ALPHA
     );
+  }
+
+  private spiderLineProg: WebGLProgram | null = null;
+  private spiderLineVao: WebGLVertexArrayObject | null = null;
+  private spiderLineBuf: WebGLBuffer | null = null;
+  private spiderLineData: Float32Array = new Float32Array(0);
+  private spiderLineUniforms: {
+    view: WebGLUniformLocation | null;
+    screen: WebGLUniformLocation | null;
+    zoom: WebGLUniformLocation | null;
+    minZoom: WebGLUniformLocation | null;
+    maxZoom: WebGLUniformLocation | null;
+    factor: WebGLUniformLocation | null;
+  } | null = null;
+
+  private ensureSpiderLineProg(gl: WebGL2RenderingContext) {
+    if (this.spiderLineProg) return;
+    const vs = `#version 300 es
+      in vec4 a_line;
+      uniform mat3 u_view;
+      uniform vec2 u_screen;
+      uniform float u_zoom, u_minZoom, u_maxZoom, u_factor;
+      void main() {
+        float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
+        float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
+        float ratio = viewScale / refScale;
+        float zs = u_factor > 0.001 ? clamp(pow(ratio, u_factor), 0.25, 2.5) : 1.0;
+        vec3 cp = u_view * vec3(a_line.xy, 1.0);
+        vec2 so = a_line.zw * zs * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
+        gl_Position = vec4(cp.xy + so, 0.0, 1.0);
+      }`;
+    const fs = `#version 300 es
+      precision highp float;
+      out vec4 o;
+      void main() { o = vec4(0.5, 0.5, 0.5, 0.4); }`;
+    const v = gl.createShader(gl.VERTEX_SHADER)!;
+    gl.shaderSource(v, vs); gl.compileShader(v);
+    const f = gl.createShader(gl.FRAGMENT_SHADER)!;
+    gl.shaderSource(f, fs); gl.compileShader(f);
+    this.spiderLineProg = gl.createProgram()!;
+    gl.attachShader(this.spiderLineProg, v);
+    gl.attachShader(this.spiderLineProg, f);
+    gl.linkProgram(this.spiderLineProg);
+    gl.deleteShader(v); gl.deleteShader(f);
+    this.spiderLineUniforms = {
+      view: gl.getUniformLocation(this.spiderLineProg, "u_view"),
+      screen: gl.getUniformLocation(this.spiderLineProg, "u_screen"),
+      zoom: gl.getUniformLocation(this.spiderLineProg, "u_zoom"),
+      minZoom: gl.getUniformLocation(this.spiderLineProg, "u_minZoom"),
+      maxZoom: gl.getUniformLocation(this.spiderLineProg, "u_maxZoom"),
+      factor: gl.getUniformLocation(this.spiderLineProg, "u_factor"),
+    };
+    this.spiderLineBuf = gl.createBuffer()!;
+    this.spiderLineVao = gl.createVertexArray()!;
+    gl.bindVertexArray(this.spiderLineVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderLineBuf);
+    const loc = gl.getAttribLocation(this.spiderLineProg, "a_line");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+  }
+
+  private drawSpiderLines(gl: WebGL2RenderingContext, state: RenderState) {
+    // Count spider markers to size the buffer
+    let count = 0;
+    for (const inst of this.instances) {
+      if (inst && (inst.spiderOffsetX || inst.spiderOffsetY)) count++;
+    }
+    if (count === 0) return;
+
+    // Reuse pre-allocated buffer, grow if needed (4 floats per endpoint, 2 endpoints per line)
+    const needed = count * 8;
+    if (this.spiderLineData.length < needed) {
+      this.spiderLineData = new Float32Array(Math.max(needed, Math.ceil(needed * 1.5)));
+    }
+    let idx = 0;
+    for (const inst of this.instances) {
+      if (!inst || (!inst.spiderOffsetX && !inst.spiderOffsetY)) continue;
+      const p = state.projection(inst.latLng);
+      this.spiderLineData[idx++] = p.x;
+      this.spiderLineData[idx++] = p.y;
+      this.spiderLineData[idx++] = 0;
+      this.spiderLineData[idx++] = 0;
+      this.spiderLineData[idx++] = p.x;
+      this.spiderLineData[idx++] = p.y;
+      this.spiderLineData[idx++] = inst.spiderOffsetX ?? 0;
+      this.spiderLineData[idx++] = inst.spiderOffsetY ?? 0;
+    }
+
+    this.ensureSpiderLineProg(gl);
+    if (!this.spiderLineProg || !this.spiderLineVao || !this.spiderLineBuf || !this.spiderLineUniforms) return;
+
+    gl.useProgram(this.spiderLineProg);
+    gl.bindVertexArray(this.spiderLineVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderLineBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, this.spiderLineData.subarray(0, idx), gl.DYNAMIC_DRAW);
+    if (this.spiderLineUniforms.view && state.viewMatrix)
+      gl.uniformMatrix3fv(this.spiderLineUniforms.view, false, state.viewMatrix);
+    if (this.spiderLineUniforms.screen)
+      gl.uniform2f(this.spiderLineUniforms.screen, state.width, state.height);
+    if (this.spiderLineUniforms.zoom)
+      gl.uniform1f(this.spiderLineUniforms.zoom, state.zoom);
+    if (this.spiderLineUniforms.minZoom)
+      gl.uniform1f(this.spiderLineUniforms.minZoom, state.minZoom);
+    if (this.spiderLineUniforms.maxZoom)
+      gl.uniform1f(this.spiderLineUniforms.maxZoom, state.maxZoom);
+    if (this.spiderLineUniforms.factor)
+      gl.uniform1f(this.spiderLineUniforms.factor, this.dynamicSizeFactor);
+    gl.drawArrays(gl.LINES, 0, count * 2);
+    gl.bindVertexArray(null);
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
   }
 
   private failedSheets = new Set<string>(); // Track sheets that failed to load
@@ -1413,6 +1550,11 @@ export class IconMarkerLayer implements Layer {
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
+      // Offset hit test for spiderfied markers (scaled by dynamic size like shader)
+      if (m.spiderOffsetX || m.spiderOffsetY) {
+        s.x += (m.spiderOffsetX ?? 0) * zoomScale;
+        s.y += (m.spiderOffsetY ?? 0) * zoomScale;
+      }
       // Offset hit test to the elevated icon position (height stem)
       s.y += this.getHeightScreenOffset(m, state);
       let effH = m.size * zoomScale;
@@ -1460,6 +1602,11 @@ export class IconMarkerLayer implements Layer {
       if (this.hidden && this.hidden.has(m.id)) continue;
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
+      // Offset hit test for spiderfied markers (scaled by dynamic size like shader)
+      if (m.spiderOffsetX || m.spiderOffsetY) {
+        s.x += (m.spiderOffsetX ?? 0) * zoomScale;
+        s.y += (m.spiderOffsetY ?? 0) * zoomScale;
+      }
       // Offset hit test to the elevated icon position (height stem)
       s.y += this.getHeightScreenOffset(m, state);
       let effH = m.size * zoomScale;
@@ -1487,6 +1634,10 @@ export class IconMarkerLayer implements Layer {
       if (m === null) continue; // Skip null entries
       const p = state.projection(m.latLng);
       const s = toScreen(p.x, p.y);
+      if (m.spiderOffsetX || m.spiderOffsetY) {
+        s.x += m.spiderOffsetX ?? 0;
+        s.y += m.spiderOffsetY ?? 0;
+      }
       const dx = s.x - bestScreen.x;
       const dy = s.y - bestScreen.y;
       if (dx * dx + dy * dy <= joinR2) result.push(m);
