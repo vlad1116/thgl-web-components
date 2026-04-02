@@ -14,6 +14,7 @@ import { HeaderOffset, PageTitle } from "../(header)";
 import { FullMapDynamic } from "../(dynamic)/full-map-dynamic";
 import { MarkersSearch } from "../(controls)/markers-search";
 import { FloatingAds } from "../(ads)";
+import { MarkerPanel } from "../(data)";
 import { notFound } from "next/navigation";
 import { getFullDictionary } from "../../dicts";
 import { ReactNode } from "react";
@@ -131,8 +132,6 @@ export function createMapPage(
             appName={appConfig.name}
             iconsPath={version.more.icons}
             additionalFilters={additionalFilters}
-            additionalTooltip={additionalTooltip}
-            coordinateCopyFormat={appConfig.markerOptions?.coordinateCopyFormat}
             mapEnTitles={Object.fromEntries(
               Object.keys(version.data.tiles).map((k) => [
                 k,
@@ -142,6 +141,11 @@ export function createMapPage(
           >
             <FloatingAds id={appConfig.name} />
           </MarkersSearch>
+          <MarkerPanel
+            appName={appConfig.name}
+            additionalTooltip={additionalTooltip}
+            coordinateCopyFormat={appConfig.markerOptions?.coordinateCopyFormat}
+          />
         </HeaderOffset>
       </CoordinatesProvider>
     );

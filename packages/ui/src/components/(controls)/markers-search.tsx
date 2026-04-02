@@ -19,9 +19,7 @@ import { Separator } from "../ui/separator";
 import { MapSelect } from "./map-select";
 import { Presets } from "./presets";
 import { GlobalFilters } from "./global-filters";
-import { NodeDetails } from "../(data)";
 import { useT } from "../(providers)";
-import { AdditionalTooltipType } from "../(content)";
 
 export function MarkersSearch({
   lastMapUpdate,
@@ -29,29 +27,23 @@ export function MarkersSearch({
   children,
   tileOptions,
   additionalFilters,
-  additionalTooltip,
   embed,
-  hideComments,
   iconsPath,
   className,
   mapEnTitles,
-  coordinateCopyFormat,
 }: {
   lastMapUpdate?: number;
   appName: string;
   children?: ReactNode;
   tileOptions: TilesConfig;
   additionalFilters?: ReactNode;
-  additionalTooltip?: AdditionalTooltipType;
   embed?: boolean;
-  hideComments?: boolean;
   iconsPath: string;
   className?: string;
   mapEnTitles?: Record<string, string>;
-  coordinateCopyFormat?: string;
 }): JSX.Element {
   const t = useT();
-  const { _hasHydrated, search, setSearch, searchIsLoading, selectedNodeId } =
+  const { _hasHydrated, search, setSearch, searchIsLoading } =
     useUserStore();
   const [internalSearch, setInternalSearch] = useState(search);
   const showFilters = useSettingsStore((state) => state.showFilters);
@@ -96,7 +88,7 @@ export function MarkersSearch({
     }
   }, [_hasHydrated]);
 
-  const panelVisible = showFilters || !!selectedNodeId;
+  const panelVisible = showFilters;
 
   return (
     <>
@@ -125,20 +117,8 @@ export function MarkersSearch({
         className,
       )}
     >
-      {selectedNodeId && (
-        <NodeDetails
-          id={selectedNodeId}
-          appName={appName}
-          hideComments={hideComments}
-          additionalTooltip={additionalTooltip}
-          coordinateCopyFormat={coordinateCopyFormat}
-        />
-      )}
       <div
-        className={cn(
-          "relative flex w-full pointer-events-auto bg-card border rounded-md",
-          { hidden: selectedNodeId },
-        )}
+        className="relative flex w-full pointer-events-auto bg-card border rounded-md"
       >
         <Input
           autoComplete="off"
@@ -214,7 +194,6 @@ export function MarkersSearch({
           expandedFilters ? "" : "md:max-h-[min(40vh,300px)]",
           {
             collapse: !showFilters,
-            hidden: selectedNodeId,
           },
         )}
       >
@@ -279,7 +258,7 @@ export function MarkersSearch({
         className={cn(
           "pointer-events-auto hover:text-primary mx-auto bg-card p-1 rounded-b-md -mt-4",
           {
-            hidden: !showFilters || !!selectedNodeId,
+            hidden: !showFilters,
           },
         )}
         onClick={toggleExpandedFilters}

@@ -44,6 +44,7 @@ import { Ads400x300Overlay } from "./ads-400-300-overlay";
 import { Ads400x900Desktop } from "./ads-400-900-desktop";
 import { Ads400x600Desktop } from "./ads-400-600-desktop";
 import { AdditionalTooltipType } from "../(content)";
+import { MarkerPanel } from "../(data)";
 
 export function App({
   appConfig,
@@ -137,8 +138,6 @@ export function App({
                   appName={appConfig.name}
                   additionalFilters={additionalFilters}
                   iconsPath={version?.more.icons}
-                  additionalTooltip={additionalTooltip}
-                  coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
                   className="top-[40px]"
                   mapEnTitles={Object.fromEntries(
                     Object.keys(tiles).map((k) => [
@@ -177,6 +176,14 @@ export function App({
                 tilesConfig={tiles}
               />
               <TraceLine />
+              {!lockedWindow && (
+                <MarkerPanel
+                  appName={appConfig.name}
+                  additionalTooltip={additionalTooltip}
+                  coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
+                  headerOffset="32px"
+                />
+              )}
             </HeaderOffset>
             <MapHotkeys />
           </CoordinatesProvider>

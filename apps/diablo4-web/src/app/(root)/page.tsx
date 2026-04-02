@@ -1,5 +1,6 @@
 import { MarkersSearch } from "@repo/ui/markers-search";
 import { FloatingAds } from "@repo/ui/ads";
+import { MarkerPanel } from "@repo/ui/data";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import type { Metadata } from "next";
@@ -57,6 +58,7 @@ export default async function Home() {
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>
+        <MarkerPanel appName={APP_CONFIG.name} />
       </HeaderOffset>
     </CoordinatesProvider>
   );

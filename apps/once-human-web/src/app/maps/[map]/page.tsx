@@ -5,6 +5,7 @@ import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
 import { MarkersSearch } from "@repo/ui/markers-search";
 import { FloatingAds } from "@repo/ui/ads";
+import { MarkerPanel } from "@repo/ui/data";
 import { notFound } from "next/navigation";
 import { APP_CONFIG } from "@/config";
 
@@ -78,7 +79,6 @@ export default async function Map({ params }: PageProps) {
           tileOptions={version.data.tiles}
           appName={APP_CONFIG.name}
           iconsPath={version.more.icons}
-          coordinateCopyFormat={APP_CONFIG.markerOptions?.coordinateCopyFormat}
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [
               k,
@@ -88,6 +88,10 @@ export default async function Map({ params }: PageProps) {
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>
+        <MarkerPanel
+          appName={APP_CONFIG.name}
+          coordinateCopyFormat={APP_CONFIG.markerOptions?.coordinateCopyFormat}
+        />
       </HeaderOffset>
     </CoordinatesProvider>
   );

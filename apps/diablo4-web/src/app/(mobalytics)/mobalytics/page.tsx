@@ -47,7 +47,6 @@ export default async function Home() {
           tileOptions={version.data.tiles}
           additionalFilters={<Diablo4Events />}
           embed
-          hideComments
           iconsPath={version.more.icons}
           mapEnTitles={Object.fromEntries(
             Object.keys(version.data.tiles).map((k) => [

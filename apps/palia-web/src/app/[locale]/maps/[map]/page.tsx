@@ -5,6 +5,7 @@ import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
 import { MarkersSearch } from "@repo/ui/markers-search";
 import { FloatingAds } from "@repo/ui/ads";
+import { MarkerPanel } from "@repo/ui/data";
 import { notFound } from "next/navigation";
 import { APP_CONFIG } from "@/config";
 import { PaliaGrid, PaliaGridToggle, PaliaTime } from "@repo/ui/data";
@@ -94,6 +95,7 @@ export default async function Map({ params }: PageProps) {
         >
           <FloatingAds id={APP_CONFIG.name} />
         </MarkersSearch>
+        <MarkerPanel appName={APP_CONFIG.name} />
         <PaliaGrid />
       </HeaderOffset>
     </CoordinatesProvider>

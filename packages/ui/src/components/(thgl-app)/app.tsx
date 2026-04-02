@@ -44,6 +44,7 @@ import { MapHotkeys } from "./map-hotkeys";
 import { THGLAppSettingsDialogContent } from "./settings-dialog-content";
 import { THGLMapAds } from "../(ads)";
 import { AdditionalTooltipType } from "../(content)";
+import { MarkerPanel } from "../(data)";
 import { ActorTypeFilter } from "./actor-type-filter";
 import { useMemo } from "react";
 
@@ -277,8 +278,6 @@ export function App({
                     additionalFilters={additionalFilters}
                     iconsPath={version?.more.icons}
                     className="top-[40px] md:ml-0"
-                    additionalTooltip={additionalTooltip}
-                    coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
                     mapEnTitles={Object.fromEntries(
                       Object.keys(tiles).map((k) => [
                         k,
@@ -289,6 +288,14 @@ export function App({
                 )}
                 {lockedWindow ? lockedWindowComponents : null}
                 {additionalComponents}
+                {!lockedWindow && (
+                  <MarkerPanel
+                    appName={appConfig.name}
+                    additionalTooltip={additionalTooltip}
+                    coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
+                    headerOffset="32px"
+                  />
+                )}
               </ErrorBoundary>
             </div>
             <MapHotkeys />
