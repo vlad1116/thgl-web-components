@@ -18,6 +18,7 @@ import { Spawns } from "../(providers)";
 import { HeaderOffset, PageTitle } from "../(header)";
 import { ContentLayout } from "../(ads)";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Subtitle } from "../(content)";
 import MapGuides from "../(data)/map-guides";
 import { Metadata } from "next";
@@ -178,6 +179,32 @@ export function createGuidePage(appConfig: AppConfig) {
         <JSONLDScript
           json={{
             "@context": "https://schema.org",
+            "@type": "Article",
+            headline: t("guide.pageTitle", {
+              vars: { guide: guideTitle, title: appConfig.title },
+            }),
+            description: t("guide.intro", {
+              vars: { guide: guideTitle, title: appConfig.title },
+            }),
+            author: {
+              "@type": "Organization",
+              name: "The Hidden Gaming Lair",
+              url: "https://www.th.gl",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "The Hidden Gaming Lair",
+              url: "https://www.th.gl",
+            },
+            dateModified: version.createdAt
+              ? new Date(version.createdAt).toISOString()
+              : undefined,
+            mainEntityOfPage: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${type}`, locale)}`,
+          }}
+        />
+        <JSONLDScript
+          json={{
+            "@context": "https://schema.org",
             "@type": "FAQPage",
             mainEntity: [
               {
@@ -239,6 +266,23 @@ export function createGuidePage(appConfig: AppConfig) {
               vars: { guide: guideTitle, title: appConfig.title },
             })}
           />
+          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
+            <ol className="flex items-center gap-1">
+              <li>
+                <Link href={localizePath("/", locale)} className="hover:text-foreground transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li>
+                <Link href={localizePath("/guides", locale)} className="hover:text-foreground transition-colors">
+                  Guides
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li aria-current="page">{guideTitle}</li>
+            </ol>
+          </nav>
           <ContentLayout
             id={appConfig.name}
             header={
@@ -266,6 +310,11 @@ export function createGuidePage(appConfig: AppConfig) {
                     },
                   })}
                 </p>
+                {version.createdAt && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Last updated: {new Date(version.createdAt).toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })}
+                  </p>
+                )}
               </>
             }
             content={

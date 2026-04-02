@@ -39,10 +39,8 @@ export function SpawnsList({
   let sections: { label: string | null; entries: [string, SimpleSpawn[]][] }[];
 
   if (typeGroupLabels) {
-    // Collect group labels for each entry
     const groupMap = new Map<string, [string, SimpleSpawn[]][]>();
     for (const [name, groupSpawns] of Object.entries(groupByName)) {
-      // Determine the group from the first spawn's type
       const groupLabel = typeGroupLabels[groupSpawns[0]?.type || ""] ?? null;
       const key = groupLabel ?? "__ungrouped";
       if (!groupMap.has(key)) groupMap.set(key, []);
@@ -56,12 +54,16 @@ export function SpawnsList({
     sections = [{ label: null, entries: Object.entries(groupByName) }];
   }
 
+  const markDiscoveredLabel = t("guide.spawns.markDiscovered", { fallback: "Mark as Discovered" });
+  const resetProgressLabel = t("guide.spawns.resetProgress", { fallback: "Reset Progress" });
+  const highlightLabel = t("guide.spawns.highlightOnMap", { fallback: "Highlight on Map" });
+
   return (
     <div className="flex flex-col gap-1 max-w-2xl w-full">
       {sections.map((section, si) => (
         <div key={section.label ?? si}>
           {section.label && (
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-3 mb-1 px-1">
+            <h4 className="text-sm font-semibold text-muted-foreground mt-4 mb-1.5 px-1 border-b border-border/50 pb-1">
               {section.label}
             </h4>
           )}
@@ -98,19 +100,22 @@ export function SpawnsList({
                   disabled={isMax}
                   className="shrink-0"
                   variant={isMax ? "ghost" : "outline"}
-                  title="Mark as Discovered"
+                  aria-label={markDiscoveredLabel}
+                  title={markDiscoveredLabel}
                 >
                   <Check color={isMax ? "green" : undefined} />
                 </Button>
                 <Button
                   size="icon"
                   onClick={() => {
+                    if (progress > 0 && !confirm(`Reset all ${progress} discovered ${name}?`)) return;
                     groupSpawns.forEach((s) => setDiscoverNode(s.id, false));
                   }}
                   disabled={progress === 0}
                   className="shrink-0"
                   variant="destructive"
-                  title="Reset Progress"
+                  aria-label={resetProgressLabel}
+                  title={resetProgressLabel}
                 >
                   <X />
                 </Button>
@@ -119,7 +124,8 @@ export function SpawnsList({
                   onClick={() => onShowClick(isHighlighted ? [] : groupSpawnIds)}
                   className="shrink-0"
                   variant={isHighlighted ? "secondary" : "ghost"}
-                  title="Highlight on Map"
+                  aria-label={highlightLabel}
+                  title={highlightLabel}
                 >
                   <ImageUpscale />
                 </Button>
