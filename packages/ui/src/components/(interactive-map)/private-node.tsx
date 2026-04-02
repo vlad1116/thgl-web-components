@@ -234,7 +234,7 @@ export function PrivateNode({
 
     positionRef.current = latLng;
     const dpr = window.devicePixelRatio || 1;
-    const size = radius * 2 * baseIconSize * dpr;
+    const size = (radius * 4 - 1) * baseIconSize * dpr;
 
     // Determine initial sheet - use cached icon if available, otherwise colored circle
     let initialSheet = DEFAULT_CIRCLE_SHEET;
