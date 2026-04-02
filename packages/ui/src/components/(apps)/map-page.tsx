@@ -18,6 +18,7 @@ import { MarkerPanel } from "../(data)";
 import { notFound } from "next/navigation";
 import { getFullDictionary } from "../../dicts";
 import { ReactNode } from "react";
+import { JSONLDScript } from "./json-ld-script";
 import { AdditionalTooltipType } from "../(content)";
 
 type PageProps = {
@@ -100,7 +101,62 @@ export function createMapPage(
       decodedMap += " Map";
     }
 
+    const mapTitle = t("map.pageTitle", {
+      vars: { title: appConfig.title, map: decodedMap },
+    });
+    const mapDescription = t("map.intro", {
+      vars: {
+        title: appConfig.title,
+        map: t(mapName),
+        keywords: appConfig.keywords?.slice(0, 5).map((k) => t(k)).join(", ") ?? "",
+      },
+    });
+
     return (
+      <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: mapTitle,
+          description: mapDescription,
+          url: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+          isPartOf: {
+            "@type": "WebSite",
+            name: `${appConfig.title} Interactive Map`,
+            url: `https://${appConfig.domain}.th.gl`,
+          },
+          dateModified: version.createdAt
+            ? new Date(version.createdAt).toISOString()
+            : undefined,
+        }}
+      />
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: `https://${appConfig.domain}.th.gl${localizePath("/", locale)}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Maps",
+              item: `https://${appConfig.domain}.th.gl${localizePath("/maps", locale)}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: t(mapName),
+              item: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+            },
+          ],
+        }}
+      />
       <CoordinatesProvider
         appName={appConfig.name}
         staticDrawings={version.data.drawings}
@@ -115,11 +171,7 @@ export function createMapPage(
         clusterPrecision={appConfig.markerOptions?.clusterPrecision}
       >
         <HeaderOffset full>
-          <PageTitle
-            title={t("map.pageTitle", {
-              vars: { title: appConfig.title, map: decodedMap },
-            })}
-          />
+          <PageTitle title={mapTitle} />
           <FullMapDynamic
             appConfig={appConfig}
             tilesConfig={version.data.tiles}
@@ -148,6 +200,7 @@ export function createMapPage(
           />
         </HeaderOffset>
       </CoordinatesProvider>
+      </>
     );
   };
 }

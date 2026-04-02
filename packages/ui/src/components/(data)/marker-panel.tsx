@@ -10,7 +10,6 @@ import {
   useUserStore,
 } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
-import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
 import { Button } from "../(controls)";
 import {
@@ -268,7 +267,13 @@ export function MarkerPanel({
       </div>
 
       {spawn ? (
-        <ScrollArea className="flex-1" type="auto">
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "hsl(var(--ring) / 0.5) transparent",
+          }}
+        >
           <div className="p-3 space-y-3">
             {/* Metadata */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
@@ -339,7 +344,7 @@ export function MarkerPanel({
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
       ) : (
         <div className="p-3 text-sm text-muted-foreground">
           Node not found

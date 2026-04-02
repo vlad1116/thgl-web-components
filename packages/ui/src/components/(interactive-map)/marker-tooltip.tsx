@@ -3,7 +3,15 @@ import { useMemo } from "react";
 import { useT } from "../(providers)";
 import { AdditionalTooltip, AdditionalTooltipType } from "../(content)";
 import { Comment } from "../(data)";
-import { Copy, Eye, EyeOff, MessageCircle, Navigation, Pencil, Trash2 } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Navigation,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../(controls)";
@@ -99,7 +107,9 @@ function DiscoveryToggle({
   /** Custom toggle handler (for "discover all" button) */
   onToggle?: () => void;
 }) {
-  const storeIsDiscovered = useSettingsStore((state) => state.isDiscoveredNode)(id);
+  const storeIsDiscovered = useSettingsStore((state) => state.isDiscoveredNode)(
+    id,
+  );
   const storeToggle = useSettingsStore((state) => state.toggleDiscoveredNode);
   const isDiscovered = overrideState ?? storeIsDiscovered;
   const handleToggle = onToggle ?? (() => storeToggle(id));
@@ -145,7 +155,13 @@ function DiscoveryToggle({
 
 function Description({ desc }: { desc: string }) {
   return (
-    <div className="text-xs text-popover-foreground/90 leading-snug">
+    <div
+      className="text-xs text-popover-foreground/90 leading-snug max-h-[120px] overflow-y-auto"
+      style={{
+        scrollbarWidth: "thin",
+        scrollbarColor: "hsl(var(--ring) / 0.5) transparent",
+      }}
+    >
       <Markdown options={{ forceBlock: false }}>{desc}</Markdown>
     </div>
   );
@@ -261,7 +277,10 @@ function SingleItemTooltip({
     if (item.description) return item.description.replace("\n", "<br>");
     const vars: Record<string, string> | undefined = item.data
       ? Object.fromEntries(
-          Object.entries(item.data).map(([key, values]) => [key, values?.[0] ?? ""]),
+          Object.entries(item.data).map(([key, values]) => [
+            key,
+            values?.[0] ?? "",
+          ]),
         )
       : undefined;
     return t(item.termId, { isDesc: true, fallback: item.type, vars });
@@ -289,9 +308,7 @@ function SingleItemTooltip({
         <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
           {typeName}
         </span>
-        {groupName && (
-          <span className="truncate opacity-60">{groupName}</span>
-        )}
+        {groupName && <span className="truncate opacity-60">{groupName}</span>}
         <div className="grow" />
         {distance != null && (
           <span className="inline-flex items-center gap-0.5 shrink-0">
@@ -317,7 +334,9 @@ function SingleItemTooltip({
           className="shrink-0 h-4 w-4 p-0.5 rounded hover:bg-muted hover:text-foreground transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            copyToClipboard(formatCoordinates(itemCoords, coordinateCopyFormat));
+            copyToClipboard(
+              formatCoordinates(itemCoords, coordinateCopyFormat),
+            );
             toast("Copied to clipboard");
           }}
         >
@@ -333,9 +352,7 @@ function SingleItemTooltip({
       )}
 
       {/* Description */}
-      {desc && desc !== item.type && (
-        <Description desc={desc} />
-      )}
+      {desc && desc !== item.type && <Description desc={desc} />}
 
       {/* Private node actions */}
       {item.isPrivate && (
@@ -383,7 +400,10 @@ function ClusterTooltip({
     if (item.description) return item.description.replace("\n", "<br>");
     const vars: Record<string, string> | undefined = item.data
       ? Object.fromEntries(
-          Object.entries(item.data).map(([key, values]) => [key, values?.[0] ?? ""]),
+          Object.entries(item.data).map(([key, values]) => [
+            key,
+            values?.[0] ?? "",
+          ]),
         )
       : undefined;
     return t(item.termId, { isDesc: true, fallback: item.type, vars });
@@ -440,7 +460,8 @@ function ClusterTooltip({
           <div className="space-y-0.5 pr-2">
             {items.map((item, i) => {
               const discoveryId = itemIds[i];
-              const name = t(item.termId, { fallback: item.type }) || item.termId;
+              const name =
+                t(item.termId, { fallback: item.type }) || item.termId;
 
               return (
                 <div
