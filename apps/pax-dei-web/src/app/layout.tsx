@@ -23,6 +23,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${APP_CONFIG.domain}.th.gl`),
   title: `${APP_CONFIG.title} – The Hidden Gaming Lair`,
+  authors: [{ name: "DevLeon", url: "https://github.com/lmachens" }],
+  twitter: { card: "summary_large_image" },
 };
 export const revalidate = 60;
 export default async function RootLayout({

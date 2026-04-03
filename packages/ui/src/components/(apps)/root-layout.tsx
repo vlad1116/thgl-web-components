@@ -27,6 +27,10 @@ export function createRootLayoutMetadata(appConfig: AppConfig): Metadata {
   return {
     metadataBase: new URL(`https://${appConfig.domain}.th.gl`),
     title: `${appConfig.title} – The Hidden Gaming Lair`,
+    authors: [{ name: "DevLeon", url: "https://github.com/lmachens" }],
+    twitter: {
+      card: "summary_large_image",
+    },
   };
 }
 

@@ -20,6 +20,7 @@ export const metadata = {
     "Explore interactive maps, overlays, and gaming tools for your favorite titles. Companion App, Overwolf tools, and web-based utilities — all in one place.",
   keywords: "gaming, apps, interactive maps, databases, achievement trackers",
   authors: [{ name: "DevLeon", url: "https://github.com/lmachens" }],
+  twitter: { card: "summary_large_image" },
   alternates: {
     canonical: "/",
   },
