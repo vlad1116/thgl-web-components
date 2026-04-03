@@ -1,4 +1,5 @@
 // Named exports for better tree-shaking
+export { JSONLDScript } from "./json-ld-script";
 export { createGuidePageGenerateMetadata, createGuidePage } from "./guide-page";
 export {
   createGuidesPageGenerateMetadata,

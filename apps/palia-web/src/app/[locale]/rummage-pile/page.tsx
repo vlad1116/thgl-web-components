@@ -1,8 +1,10 @@
-import { ExternalAnchor, HeaderOffset } from "@repo/ui/header";
+import { ExternalAnchor, HeaderOffset, PageTitle } from "@repo/ui/header";
 import { type Metadata } from "next";
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
 import { Button } from "@repo/ui/controls";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 import {
   getApiUrl,
@@ -10,6 +12,7 @@ import {
   fetchVersion,
   getT,
   getMetadataAlternates,
+  localizePath,
   encodeAndObfuscate,
 } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
@@ -39,13 +42,21 @@ export async function generateMetadata({
     APP_CONFIG.supportedLocales,
   );
 
+  const title = t("rummagePile.meta.title");
+  const description = t("rummagePile.meta.description");
+
   return {
     alternates: {
       canonical,
       languages: languageAlternates,
     },
-    title: t("rummagePile.meta.title"),
-    description: t("rummagePile.meta.description"),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+    },
   };
 }
 
@@ -87,16 +98,71 @@ export default async function RummagePile({ params }: PageProps) {
 
   const encodedTimedLootPiles = encodeAndObfuscate(data);
 
+  const pageTitle = t("rummagePile.meta.title");
+  const pageDescription = t("rummagePile.meta.description");
+
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id="palia"
-        header={
-          <>
-            <h2 className="text-2xl">{t("rummagePile.heading")}</h2>
-            <p className="text-sm">{t("rummagePile.description")}</p>
-          </>
-        }
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: pageTitle,
+          description: pageDescription,
+          author: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          mainEntityOfPage: `https://palia.th.gl${localizePath("/rummage-pile", locale)}`,
+        }}
+      />
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: `https://palia.th.gl${localizePath("/", locale)}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: t("rummagePile.heading"),
+              item: `https://palia.th.gl${localizePath("/rummage-pile", locale)}`,
+            },
+          ],
+        }}
+      />
+      <HeaderOffset full>
+        <PageTitle title={pageTitle} />
+        <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link href={localizePath("/", locale)} className="hover:text-foreground transition-colors">
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">{t("rummagePile.heading")}</li>
+          </ol>
+        </nav>
+        <ContentLayout
+          id="palia"
+          header={
+            <>
+              <h2 className="text-2xl">{t("rummagePile.heading")}</h2>
+              <p className="text-sm">{t("rummagePile.description")}</p>
+            </>
+          }
         content={
           <>
             <Suspense>
@@ -218,6 +284,7 @@ export default async function RummagePile({ params }: PageProps) {
         }
       />
     </HeaderOffset>
+    </>
   );
 }
 
