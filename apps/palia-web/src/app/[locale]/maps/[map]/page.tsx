@@ -39,6 +39,7 @@ export async function generateMetadata({
     alternates: { canonical: `/maps/${map}` },
     openGraph: {
       url: `/maps/${map}`,
+      images: ["/opengraph-image.jpg"],
     },
   };
 }

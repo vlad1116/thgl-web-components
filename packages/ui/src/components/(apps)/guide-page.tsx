@@ -78,6 +78,7 @@ export function createGuidePageGenerateMetadata(appConfig: AppConfig) {
         title,
         description,
         url: canonical,
+        images: ["/opengraph-image.jpg"],
       },
     };
     return metaData;
