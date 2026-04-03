@@ -53,7 +53,7 @@ export default async function RootLayout({
         )}
       >
         <I18NProvider dict={dict} locale={locale}>
-          <TooltipProvider><main>{children}</main></TooltipProvider>
+          <TooltipProvider><main className="grow min-h-0">{children}</main></TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
           apiHost="https://metrics.th.gl"
