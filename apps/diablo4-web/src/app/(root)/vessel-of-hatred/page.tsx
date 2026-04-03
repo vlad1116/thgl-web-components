@@ -64,7 +64,7 @@ export default function VesselIOfHatred(): JSX.Element {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title="Vessel of Hatred - Diablo IV - The Hidden Gaming Lair" />
+        <PageTitle title="Vessel of Hatred" />
         <nav
           aria-label="Breadcrumb"
           className="text-xs text-muted-foreground px-4 py-2"

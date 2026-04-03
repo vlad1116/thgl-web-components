@@ -248,7 +248,7 @@ export default function DeviantLocations(): JSX.Element {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title="All Deviant Locations – The Hidden Gaming Lair" />
+        <PageTitle title="All Deviant Locations" />
         <nav
           aria-label="Breadcrumb"
           className="text-xs text-muted-foreground px-4 py-2"

@@ -65,7 +65,7 @@ export default function ActivitiesTracker(): JSX.Element {
       />
       <ActivitiesProvider activities={activities}>
         <HeaderOffset full>
-          <PageTitle title="Activities Tracker – The Hidden Gaming Lair" />
+          <PageTitle title="Activities Tracker" />
           <nav
             aria-label="Breadcrumb"
             className="text-xs text-muted-foreground px-4 py-2"

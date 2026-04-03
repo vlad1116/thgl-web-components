@@ -247,7 +247,7 @@ export default function ModLocations(): JSX.Element {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title="All Mod Locations – The Hidden Gaming Lair" />
+        <PageTitle title="All Mod Locations" />
         <nav
           aria-label="Breadcrumb"
           className="text-xs text-muted-foreground px-4 py-2"

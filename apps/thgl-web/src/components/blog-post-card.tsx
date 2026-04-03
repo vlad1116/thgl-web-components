@@ -26,7 +26,7 @@ export function BlogPostCard({
             className="space-y-2 block"
             aria-label={`Read more about ${entry.title}`}
           >
-            <h3 className="text-lg font-semibold text-brand">{entry.title}</h3>
+            <h2 className="text-lg font-semibold text-brand">{entry.title}</h2>
             <p className="text-muted-foreground text-sm">{entry.description}</p>
             <span className="text-sm underline text-brand" aria-hidden="true">
               Read more →

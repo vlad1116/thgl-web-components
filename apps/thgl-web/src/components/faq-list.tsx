@@ -131,9 +131,9 @@ export function FAQList() {
                   href={`/faq/${faq.id}`}
                   className="block transition-colors hover:text-foreground"
                 >
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {faq.headline}
-                  </h3>
+                  </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {faq.question}
                   </p>

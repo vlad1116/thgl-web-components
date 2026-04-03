@@ -79,7 +79,7 @@ export default async function Remnants() {
           ],
         }}
       />
-      <PageTitle title="All Remnants Field Guide Entries – The Hidden Gaming Lair" />
+      <PageTitle title="All Remnants Field Guide Entries" />
       <nav
         aria-label="Breadcrumb"
         className="text-xs text-muted-foreground px-4 py-2"

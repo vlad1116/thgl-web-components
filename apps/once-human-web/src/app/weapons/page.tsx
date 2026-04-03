@@ -82,7 +82,7 @@ export default async function Weapons() {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title="All Weapons – The Hidden Gaming Lair" />
+        <PageTitle title="All Weapons" />
         <nav
           aria-label="Breadcrumb"
           className="text-xs text-muted-foreground px-4 py-2"

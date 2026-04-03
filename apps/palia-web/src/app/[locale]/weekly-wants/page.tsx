@@ -96,7 +96,7 @@ export default async function WeeklyWants({ params }: PageProps) {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title={pageTitle} />
+        <PageTitle title={heading} />
         <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
           <ol className="flex items-center gap-1">
             <li>

@@ -125,6 +125,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           type="button"
+          aria-label="Filter settings"
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>

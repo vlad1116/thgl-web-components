@@ -143,7 +143,7 @@ export default async function RummagePile({ params }: PageProps) {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title={pageTitle} />
+        <PageTitle title={t("rummagePile.heading")} />
         <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
           <ol className="flex items-center gap-1">
             <li>

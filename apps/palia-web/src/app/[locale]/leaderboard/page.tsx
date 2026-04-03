@@ -113,7 +113,7 @@ export default async function Leaderboard({ params }: PageProps) {
         }}
       />
       <HeaderOffset full>
-        <PageTitle title={pageTitle} />
+        <PageTitle title={heading} />
         <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
           <ol className="flex items-center gap-1">
             <li>
@@ -134,7 +134,7 @@ export default async function Leaderboard({ params }: PageProps) {
               {t("leaderboard.description.part1")}{" "}
               <ExternalAnchor
                 href="https://www.th.gl/companion-app"
-                className="inline-flex gap-1 text-primary"
+                className="inline-flex gap-1 text-primary underline"
               >
                 THGL Companion App
                 <ExternalLink className="w-3 h-3" />
@@ -142,7 +142,7 @@ export default async function Leaderboard({ params }: PageProps) {
               or{" "}
               <ExternalAnchor
                 href="https://www.overwolf.com/app/Leon_Machens-Palia_Map"
-                className="inline-flex gap-1 text-primary"
+                className="inline-flex gap-1 text-primary underline"
               >
                 {t("leaderboard.description.inGameApp")}
                 <ExternalLink className="w-3 h-3" />
