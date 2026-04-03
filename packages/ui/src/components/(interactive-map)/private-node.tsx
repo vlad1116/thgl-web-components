@@ -643,7 +643,7 @@ export function PrivateNode({
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button size="icon" variant={isEditing ? "secondary" : "outline"}>
+            <Button size="icon" variant={isEditing ? "secondary" : "outline"} aria-label="Add node">
               <MapPin className="h-4 w-4" />
             </Button>
           </PopoverTrigger>

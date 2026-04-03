@@ -57,13 +57,13 @@ export default async function RootLayout({
               />
             }
           >
-            <Link href="/">
+            <Link href="/" aria-label="Home">
               <Brand title={APP_CONFIG.domain} />
             </Link>
             <Links appConfig={APP_CONFIG} />
             <Account />
           </Header>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider><main>{children}</main></TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
           apiHost="https://metrics.th.gl"

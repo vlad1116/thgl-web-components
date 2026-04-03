@@ -47,7 +47,7 @@ export default async function RootLayout({
         )}
       >
         <I18NProvider dict={enDictMerged}>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider><main>{children}</main></TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
           apiHost="https://metrics.th.gl"

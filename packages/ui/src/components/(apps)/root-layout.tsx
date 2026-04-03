@@ -67,7 +67,7 @@ export function createRootLayout(appConfig: AppConfig) {
                 />
               }
             >
-              <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}>
+              <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">
                 <Brand title={appConfig.domain} />
               </Link>
 
@@ -85,7 +85,9 @@ export function createRootLayout(appConfig: AppConfig) {
               <Account />
             </Header>
 
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              <main>{children}</main>
+            </TooltipProvider>
           </I18NProvider>
 
           <PlausibleTracker

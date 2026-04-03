@@ -90,6 +90,7 @@ export function SpawnsList({
                     value={progress}
                     max={max}
                     className="absolute inset-0 h-full -z-10 rounded-md"
+                    aria-label={`${name}: ${progress} of ${max}`}
                   />
                 </div>
                 <Button
