@@ -259,7 +259,7 @@ export function MarkerPanel({
         <h2 className="text-sm font-semibold truncate grow">
           {spawn ? t(termId || spawn.type, { fallback: spawn.type }) : "Loading..."}
         </h2>
-        {spawn && (
+        {spawn?.type && (
           <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
             {t(spawn.type, { fallback: spawn.type })}
           </span>

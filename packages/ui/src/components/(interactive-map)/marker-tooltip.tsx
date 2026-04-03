@@ -305,9 +305,11 @@ function SingleItemTooltip({
 
       {/* Row 2: Type badge + distance + comments */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
-          {typeName}
-        </span>
+        {item.type && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
+            {typeName}
+          </span>
+        )}
         {groupName && <span className="truncate opacity-60">{groupName}</span>}
         <div className="grow" />
         {distance != null && (

@@ -66,6 +66,7 @@ export function SimpleWebMarkers({
   const containerRef = useRef<HTMLElement | null>(null);
   const justClickedMarkerRef = useRef(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const tooltipDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track if mouse is in the "safe zone" (marker, tooltip, or between them)
   useEffect(() => {
@@ -74,21 +75,20 @@ export function SimpleWebMarkers({
     const container = containerRef.current;
 
     const isInSafeZone = (e: MouseEvent): boolean => {
+      // tooltipData.x/y are in viewport coordinates (position: fixed)
       const { x, y, radius } = tooltipData;
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
 
-      // Get mouse position relative to container
-      const rect = container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      // Check if mouse is over the tooltip element
+      // Check if mouse is over the tooltip element (with padding for easier hover)
       if (tooltipRef.current) {
         const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const pad = 5;
         if (
-          e.clientX >= tooltipRect.left &&
-          e.clientX <= tooltipRect.right &&
-          e.clientY >= tooltipRect.top &&
-          e.clientY <= tooltipRect.bottom
+          mouseX >= tooltipRect.left - pad &&
+          mouseX <= tooltipRect.right + pad &&
+          mouseY >= tooltipRect.top - pad &&
+          mouseY <= tooltipRect.bottom + pad
         ) {
           return true;
         }
@@ -103,14 +103,16 @@ export function SimpleWebMarkers({
         return true;
       }
 
-      // Check if mouse is in the corridor between marker and tooltip
-      // The tooltip is positioned above the marker
-      const tooltipBottom = y - radius - 8; // 8px gap
-      if (mouseY < y && mouseY > tooltipBottom - 10) {
-        // Check if within horizontal bounds (tooltip width centered on x)
-        const corridorHalfWidth = Math.max(radius + 20, 100);
-        if (Math.abs(mouseX - x) <= corridorHalfWidth) {
-          return true;
+      // Narrow corridor connecting marker center to tooltip edge
+      if (tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const corridorHW = radius + 4;
+        if (Math.abs(mouseX - x) <= corridorHW) {
+          const minY = Math.min(y - radius, tooltipRect.top);
+          const maxY = Math.max(y + radius, tooltipRect.bottom);
+          if (mouseY >= minY && mouseY <= maxY) {
+            return true;
+          }
         }
       }
 
@@ -190,6 +192,19 @@ export function SimpleWebMarkers({
       spawnMap.set(spawn.id, spawn);
     });
     spawnMapRef.current = spawnMap;
+
+    // Compute z range across all spawns for absolute elevation visualization
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    let hasZ = false;
+    for (const spawn of spawns) {
+      if (spawn.p[2] !== undefined) {
+        hasZ = true;
+        minZ = Math.min(minZ, spawn.p[2]);
+        maxZ = Math.max(maxZ, spawn.p[2]);
+      }
+    }
+    const zRange = hasZ && maxZ > minZ ? maxZ - minZ : 0;
 
     // Get container for tooltip portal
     containerRef.current = webmap.getContainer()?.parentElement ?? null;
@@ -289,12 +304,14 @@ export function SimpleWebMarkers({
         };
       }
 
-      // Only calculate altitude indicator when player position is available AND zPos config exists
-      let zPos: "top" | "bottom" | null = null;
+      // Calculate altitude indicator
+      let markerZPos: "top" | "bottom" | "needle" | null = null;
       let zValue: number | undefined = undefined;
+      let zMag: number | undefined = undefined;
+
       if (markerOptions?.zPos && player && spawn.p[2] !== undefined) {
+        // Player-relative z indicator (proximity based)
         const { xyMaxDistance, zDistance } = markerOptions.zPos;
-        // Check XY distance first
         const dx = player.x - spawn.p[0];
         const dy = player.y - spawn.p[1];
         const xyDistSq = dx * dx + dy * dy;
@@ -303,13 +320,17 @@ export function SimpleWebMarkers({
         if (xyDistSq <= maxDistSq) {
           const dz = player.z - spawn.p[2];
           if (dz > zDistance) {
-            zPos = "bottom"; // Player is above spawn
+            markerZPos = "bottom";
             zValue = -dz;
           } else if (dz < -zDistance) {
-            zPos = "top"; // Player is below spawn
+            markerZPos = "top";
             zValue = -dz;
           }
         }
+      } else if (zRange > 0 && spawn.p[2] !== undefined) {
+        // Absolute elevation visualization (needle stem, no arrow)
+        markerZPos = "needle";
+        zMag = (spawn.p[2] - minZ) / zRange;
       }
 
       const marker: IconMarkerInstance = {
@@ -320,7 +341,8 @@ export function SimpleWebMarkers({
         rect: iconRect,
         key: spawn.name,
         z: zValue,
-        zPos,
+        zPos: markerZPos,
+        zMag,
         isHighlighted: highlightedIds.includes(spawn.id),
         isDiscovered,
         keepUpright: true,
@@ -346,8 +368,8 @@ export function SimpleWebMarkers({
         const view = state.viewMatrix;
         const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
         const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
-        const screenX = (clipX * 0.5 + 0.5) * rect.width;
-        const screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
+        const screenX = rect.left + (clipX * 0.5 + 0.5) * rect.width;
+        const screenY = rect.top + (1 - (clipY * 0.5 + 0.5)) * rect.height;
 
         setTooltipData({
           x: screenX,
@@ -358,7 +380,8 @@ export function SimpleWebMarkers({
               id: s.id,
               termId: s.name,
               description: s.description,
-              type: "",
+              type: s.type || "",
+              data: s.data,
             },
           ],
           latLng: s.p,
@@ -366,11 +389,22 @@ export function SimpleWebMarkers({
         setTooltipIsOpen(true);
       };
 
-      // Register event handlers
+      // Register event handlers — delay tooltip open to prevent flickering
+      // when moving between overlapping markers or from tooltip back to marker
       markerLayer.registerEventHandler(spawn.id, "mouseover", (m) => {
-        showTooltipForMarker(m);
+        if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
+        tooltipDelayRef.current = setTimeout(() => {
+          tooltipDelayRef.current = null;
+          showTooltipForMarker(m);
+        }, 200);
       });
-      // Note: mouseout is handled by safe zone tracking above
+      markerLayer.registerEventHandler(spawn.id, "mouseout", () => {
+        if (tooltipDelayRef.current) {
+          clearTimeout(tooltipDelayRef.current);
+          tooltipDelayRef.current = null;
+        }
+      });
+      // Note: full mouseout closing is handled by safe zone tracking above
 
       // Click handler - show tooltip on tap (for touch devices) and call onClick
       markerLayer.registerEventHandler(spawn.id, "click", (m) => {
@@ -411,6 +445,10 @@ export function SimpleWebMarkers({
     };
     webmap.on("click", handleMapClick);
 
+    // Close tooltip on zoom/pan so it doesn't stay stuck
+    const handleZoom = () => setTooltipIsOpen(false);
+    webmap.on("zoomend", handleZoom);
+
     // Listen for clicks outside the map to close tooltip
     const handleDocumentClick = (e: MouseEvent) => {
       const container = containerRef.current;
@@ -423,9 +461,10 @@ export function SimpleWebMarkers({
     document.addEventListener("click", handleDocumentClick);
 
     return () => {
-      // Remove click listeners
+      // Remove listeners
       document.removeEventListener("click", handleDocumentClick);
       webmap.off("click", handleMapClick);
+      webmap.off("zoomend", handleZoom);
       // Remove all markers and event handlers
       for (const id of markerIds) {
         markerLayer.unregisterAllEventHandlers(id);
@@ -467,16 +506,18 @@ export function SimpleWebMarkers({
       const view = state.viewMatrix;
       const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
       const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
-      const screenX = (clipX * 0.5 + 0.5) * canvasRect.width;
-      const screenY = (1 - (clipY * 0.5 + 0.5)) * canvasRect.height;
+      const localX = (clipX * 0.5 + 0.5) * canvasRect.width;
+      const localY = (1 - (clipY * 0.5 + 0.5)) * canvasRect.height;
+      const screenX = canvasRect.left + localX;
+      const screenY = canvasRect.top + localY;
 
       // Close tooltip if marker is outside the canvas bounds
       const margin = tooltipData.radius;
       if (
-        screenX < -margin ||
-        screenX > canvasRect.width + margin ||
-        screenY < -margin ||
-        screenY > canvasRect.height + margin
+        localX < -margin ||
+        localX > canvasRect.width + margin ||
+        localY < -margin ||
+        localY > canvasRect.height + margin
       ) {
         setTooltipIsOpen(false);
         return;
@@ -505,18 +546,25 @@ export function SimpleWebMarkers({
         ? createPortal(
             <div
               ref={tooltipWheelRef}
-              className="cursor-default z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none max-w-xs"
+              className="cursor-default z-50 rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md outline-none w-[260px]"
               onClick={(event) => {
                 event.stopPropagation();
               }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
               }}
+              onMouseEnter={() => {
+                // Cancel any pending tooltip switch when mouse enters current tooltip
+                if (tooltipDelayRef.current) {
+                  clearTimeout(tooltipDelayRef.current);
+                  tooltipDelayRef.current = null;
+                }
+              }}
               style={{
-                position: "absolute",
+                position: "fixed",
                 left: 0,
                 top: 0,
-                transform: `translate3d(calc(${tooltipData.x}px - 50%), calc(${tooltipData.y}px - 100% - ${tooltipData.radius}px - 8px), 0px)`,
+                transform: `translate3d(calc(${tooltipData.x}px - 50%), calc(${tooltipData.y}px - 100% - ${tooltipData.radius}px - 2px), 0px)`,
                 pointerEvents: "auto",
               }}
             >
@@ -527,12 +575,12 @@ export function SimpleWebMarkers({
                 onClose={() => {
                   setTooltipIsOpen(false);
                 }}
-                hideDiscovered
                 hideComments
+                hideDiscovered={withoutDiscoveredNodes}
                 additionalTooltip={additionalTooltip}
               />
             </div>,
-            containerRef.current,
+            document.body,
           )
         : null}
     </>

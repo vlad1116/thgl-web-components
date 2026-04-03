@@ -74,6 +74,7 @@ export type SimpleSpawn = {
   name: string;
   color?: string;
   description?: string;
+  data?: Record<string, string[]>;
 };
 
 export const getNodeId = (spawn: Spawn | SimpleSpawn) => {

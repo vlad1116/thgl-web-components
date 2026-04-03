@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Home, Minus, Plus, RotateCcw } from "lucide-react";
 import { cn } from "@repo/lib";
+import type { WebMap } from "@repo/lib/web-map";
 import { useMap } from "../(interactive-map)/store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
@@ -251,8 +252,16 @@ function CompassNeedle({ bearing }: { bearing: number }) {
   );
 }
 
-export function MapControls({ hidden }: { hidden?: boolean }) {
-  const map = useMap();
+export function MapControls({
+  hidden,
+  webmap: externalMap,
+}: {
+  hidden?: boolean;
+  /** When provided, use this WebMap directly instead of the global useMap() store */
+  webmap?: WebMap | null;
+}) {
+  const storeMap = useMap();
+  const map = externalMap ?? storeMap;
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
   const rafRef = useRef<number>(0);

@@ -6,7 +6,8 @@ import {
   createAffineProjection,
   IconMarkerLayer,
 } from "@repo/lib/web-map";
-import { useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { MapControls } from "../(controls)/map-controls";
 
 export interface SimpleWebMapRef {
   webmap: WebMap | null;
@@ -32,6 +33,7 @@ export function SimpleWebMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const webmapRef = useRef<WebMap | null>(null);
+  const [webmapState, setWebmapState] = useState<WebMap | null>(null);
   const tileLayerRef = useRef<TileLayer | null>(null);
   const markerLayerRef = useRef<IconMarkerLayer | null>(null);
   const mapTileOptions = tileOptions?.[mapName];
@@ -169,7 +171,10 @@ export function SimpleWebMap({
       };
     }
 
+    setWebmapState(webmap);
+
     return () => {
+      setWebmapState(null);
       webmap.destroy();
       if (containerRef.current && canvas.parentNode === containerRef.current) {
         containerRef.current.removeChild(canvas);
@@ -233,6 +238,12 @@ export function SimpleWebMap({
     <div
       className={cn(`h-full !bg-inherit outline-none relative`, className)}
       ref={containerRef}
-    />
+    >
+      {webmapState && (
+        <div className="absolute top-2 right-2 z-10">
+          <MapControls webmap={webmapState} />
+        </div>
+      )}
+    </div>
   );
 }

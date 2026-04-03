@@ -172,6 +172,8 @@ export function createGuidePage(appConfig: AppConfig) {
       type: s.type,
       name: dict[s.id ?? s.type] || s.id || s.type,
       icon: s.icon || getIconFromFilters(version.data.filters, s.type) || icon,
+      description: s.description,
+      data: s.data,
     }));
 
     return (
