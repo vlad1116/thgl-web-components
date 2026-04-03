@@ -37,7 +37,7 @@ import { faqEntries } from "@/lib/faq-entries";
 export const metadata = {
   title: "TH.GL Companion App – Gaming Overlays & Interactive Maps for Windows",
   description:
-    "Download the TH.GL Companion App (7MB): Lightweight app with in-game overlays, real-time position tracking, and second-screen maps for 10+ games including Palworld, Dune Awakening, and Once Human. No additional platform required.",
+    "Download the TH.GL Companion App: lightweight Windows app with in-game overlays, real-time position tracking, and maps for 10+ games. Free, no account required.",
   keywords:
     "gaming overlay app, in-game map overlay, companion app, palworld overlay, dune awakening map, game tracker, overwolf alternative, position tracking",
   alternates: {

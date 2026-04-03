@@ -5,6 +5,7 @@ import {
   fetchVersion,
   getMapNameFromVersion,
   getMetadataAlternates,
+  getOpenGraphImageUrl,
   getT,
   localizePath,
   translate,
@@ -71,6 +72,7 @@ export function createMapPageGenerateMetadata(appConfig: AppConfig) {
         title,
         description,
         url: canonical,
+        images: [getOpenGraphImageUrl(appConfig.name, mapName)],
       },
     };
     return metaData;

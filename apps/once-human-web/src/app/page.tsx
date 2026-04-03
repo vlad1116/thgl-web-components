@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   title: `${APP_CONFIG.title} Interactive Maps & Locations – The Hidden Gaming Lair`,
-  description: `Explore ${APP_CONFIG.title} interactive maps and guides for Manibus, The Way of Winter, Endless Dream, featuring ${APP_CONFIG.keywords!.join(", ")}, and more locations. Stay updated with the latest map updates!`,
+  description: `Explore ${APP_CONFIG.title} interactive maps and guides for Manibus, The Way of Winter, and Endless Dream. Find resources, locations, and track your progress.`,
   openGraph: {
     url: `/`,
   },

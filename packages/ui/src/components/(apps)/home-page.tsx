@@ -55,6 +55,7 @@ export function createHomePageGenerateMetadata(appConfig: AppConfig) {
         title,
         description,
         url: canonical,
+        images: ["/opengraph-image.jpg"],
       },
     };
   };

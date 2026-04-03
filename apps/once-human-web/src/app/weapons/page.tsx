@@ -14,7 +14,8 @@ export const metadata: Metadata = {
     canonical: "/weapons",
   },
   title: "All Weapons – The Hidden Gaming Lair",
-  description: "A comprehensive list of weapons for Once Human.",
+  description:
+    "Browse all weapons in Once Human with stats, types, and details. Find the best weapons for your build and optimize your loadout.",
   openGraph: {
     title: "All Weapons – The Hidden Gaming Lair",
     description: "A comprehensive list of weapons for Once Human.",
