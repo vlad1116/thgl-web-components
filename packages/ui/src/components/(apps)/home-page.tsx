@@ -98,12 +98,15 @@ export function createHomePage(appConfig: AppConfig) {
       })
       .map((map) => {
         const mapName = t(map);
+        const tileUrl = version.data.tiles[map]?.url ?? "";
+        // Extract tile base path from URL like "/map-tiles/Map_WD02/{z}/{y}/{x}.webp"
+        const tileBase = tileUrl.replace(/^\/map-tiles\//, "").replace(/\/\{z\}.*$/, "");
         return {
           title: `${mapName} Map`,
           description: `Navigate ${mapName} with our interactive maps.`,
           href: `/maps/${encodeURIComponent(mapName)}`,
           iconName: "Map" as NavCardProps["iconName"],
-          bgImage: getPreviewImageUrl(appConfig.name, map),
+          bgImage: tileBase ? getPreviewImageUrl(appConfig.name, tileBase) : undefined,
           linkText: `Explore the ${mapName}`,
         };
       });
