@@ -99,8 +99,11 @@ export function createHomePage(appConfig: AppConfig) {
       .map((map) => {
         const mapName = t(map);
         const tileUrl = version.data.tiles[map]?.url ?? "";
-        // Extract tile base path from URL like "/map-tiles/Map_WD02/{z}/{y}/{x}.webp"
-        const tileBase = tileUrl.replace(/^\/map-tiles\//, "").replace(/\/\{z\}.*$/, "");
+        // Extract tile base path from URL like "/map-tiles/0305_Forest-b12cd6b0/{z}/{y}/{x}.webp"
+        const tileBase = tileUrl
+          .replace(/^\/map-tiles\//, "")
+          .replace(/\/\{z\}.*$/, "")
+          .replace(/-[0-9a-f]{16,}$/, "");
         return {
           title: `${mapName} Map`,
           description: `Navigate ${mapName} with our interactive maps.`,
