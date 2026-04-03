@@ -313,7 +313,10 @@ function PlayerRow({ player, rank }: { player: Player; rank: number }) {
         </span>
 
         {/* Last seen */}
-        <span className="hidden xl:flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+        <span
+          className="hidden xl:flex items-center gap-1 text-xs text-muted-foreground shrink-0"
+          suppressHydrationWarning
+        >
           <Clock className="w-3 h-3" />
           {getRelativeTime(player.timestamp)}
         </span>
@@ -336,7 +339,10 @@ function PlayerRow({ player, rank }: { player: Player; rank: number }) {
                 <Home className="w-3 h-3" />
                 Plot: {player.lastKnownPrimaryHousingPlotValue ?? "-"}
               </span>
-              <span className="flex items-center gap-1">
+              <span
+                className="flex items-center gap-1"
+                suppressHydrationWarning
+              >
                 <Clock className="w-3 h-3" />
                 {getRelativeTime(player.timestamp)}
               </span>

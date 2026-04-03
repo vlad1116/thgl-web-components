@@ -38,6 +38,22 @@ export default async function Home() {
       staticDrawings={version.data.drawings}
     >
       <HeaderOffset full>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: `${APP_CONFIG.title} Interactive Map - The Hidden Gaming Lair`,
+              url: `https://${APP_CONFIG.domain}.th.gl`,
+              publisher: {
+                "@type": "Organization",
+                name: "The Hidden Gaming Lair",
+                url: "https://www.th.gl",
+              },
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
         <PageTitle title={`${APP_CONFIG.title} Interactive Map`} />
         <FullMapDynamic
           appConfig={APP_CONFIG}

@@ -47,7 +47,7 @@ function createColumns(database: DatabaseConfig, enDict: Dict) {
   const columns: ColumnDef<Item>[] = [
     {
       accessorKey: "icon",
-      header: "",
+      header: () => <span className="sr-only">Icon</span>,
       cell: ({ row }) => {
         const icon = row.getValue<string>("icon");
         return (
