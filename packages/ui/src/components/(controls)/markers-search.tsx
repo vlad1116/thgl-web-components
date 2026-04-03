@@ -198,7 +198,7 @@ export function MarkersSearch({
         )}
       >
         {lastMapUpdate && (
-          <div className="text-[10px] text-muted-foreground/60 px-2.5 py-1 uppercase tracking-wide">
+          <div className="text-[10px] text-muted-foreground px-2.5 py-1 uppercase tracking-wide">
             {t("markers.search.update")}{" "}
             <span className="tabular-nums">
               {new Date(lastMapUpdate).toLocaleDateString("en-US", {
@@ -256,12 +256,13 @@ export function MarkersSearch({
       </div>
       <button
         className={cn(
-          "pointer-events-auto hover:text-primary mx-auto bg-card p-1 rounded-b-md -mt-4",
+          "pointer-events-auto hover:text-primary mx-auto bg-card p-1.5 rounded-b-md -mt-4",
           {
             hidden: !showFilters,
           },
         )}
         onClick={toggleExpandedFilters}
+        aria-label={expandedFilters ? "Collapse filters" : "Expand filters"}
       >
         {expandedFilters ? (
           <FoldVertical className="h-4 w-4" />

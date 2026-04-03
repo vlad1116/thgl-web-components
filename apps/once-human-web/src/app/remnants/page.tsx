@@ -98,7 +98,7 @@ export default async function Remnants() {
         </ol>
       </nav>
       <div className="py-6 text-left space-y-1">
-      <h3 className="uppercase text-4xl">{item.props.title}</h3>
+      <h2 className="uppercase text-4xl">{item.props.title}</h2>
       <p className="text-primary">{item.props.title1}</p>
       <p className="text-primary">{item.props.title2}</p>
       <p className="text-primary">{item.props.title3}</p>

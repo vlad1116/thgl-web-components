@@ -67,9 +67,9 @@ export function BlogPostCard({
 
             {/* Title and description */}
             <div>
-              <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+              <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
                 {entry.title}
-              </h3>
+              </h2>
               <p className="text-muted-foreground">{entry.description}</p>
             </div>
 

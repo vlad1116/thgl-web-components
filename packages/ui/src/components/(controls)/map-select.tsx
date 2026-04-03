@@ -33,6 +33,7 @@ export function MapSelect({
         <button
           role="combobox"
           aria-expanded={open}
+          aria-label="Select map"
           className="flex items-center w-full px-2.5 py-1.5 text-sm transition-colors hover:text-primary group"
           type="button"
         >

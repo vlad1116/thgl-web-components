@@ -98,7 +98,7 @@ export default function SupportMe() {
             <p className="text-muted-foreground">
               <Link
                 href="/support-me/account"
-                className="text-primary hover:underline font-medium"
+                className="text-primary underline font-medium"
               >
                 Activate your account
               </Link>{" "}
@@ -139,7 +139,7 @@ export default function SupportMe() {
               Get a special role in our Discord server.{" "}
               <Link
                 href="/faq/discord-supporter-role"
-                className="text-primary hover:underline"
+                className="text-primary underline"
               >
                 Learn how to activate it
               </Link>

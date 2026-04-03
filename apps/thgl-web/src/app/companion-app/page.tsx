@@ -82,6 +82,71 @@ export default async function CompanionAppPage() {
 
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto max-w-7xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "TH.GL Companion App",
+            description:
+              "Lightweight gaming companion app with in-game overlays, real-time position tracking, and interactive maps.",
+            applicationCategory: "GameApplication",
+            operatingSystem: "Windows 10, Windows 11",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
+            url: "https://www.th.gl/companion-app",
+            publisher: {
+              "@type": "Organization",
+              name: "The Hidden Gaming Lair",
+              url: "https://www.th.gl",
+            },
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://www.th.gl",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Companion App",
+                item: "https://www.th.gl/companion-app",
+              },
+            ],
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
+      <nav
+        aria-label="Breadcrumb"
+        className="text-xs text-muted-foreground"
+      >
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Companion App</li>
+        </ol>
+      </nav>
       {/* Hero Section */}
       <PageHero
         badge="Standalone Windows App • No Platform Required"

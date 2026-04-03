@@ -121,7 +121,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className="p-1 hover:text-primary transition-colors shrink-0 text-muted-foreground"
+          className="p-1.5 hover:text-primary transition-colors shrink-0 text-muted-foreground"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           type="button"

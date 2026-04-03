@@ -43,7 +43,7 @@ export function GlobalFilters() {
                 type="button"
               >
                 {t(globalFilter.group)}
-                <span className="ml-1 tabular-nums text-muted-foreground/60">
+                <span className="ml-1 tabular-nums text-muted-foreground">
                   {activeCount}/{globalFilter.values.length}
                 </span>
                 <ChevronDown className="ml-0.5 h-2.5 w-2.5 shrink-0" />

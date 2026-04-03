@@ -88,6 +88,25 @@ export default async function HomePage() {
 
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "The Hidden Gaming Lair",
+            alternateName: "TH.GL",
+            url: "https://www.th.gl",
+            description:
+              "Interactive maps, in-game overlays, and real-time position tracking for 20+ games.",
+            publisher: {
+              "@type": "Organization",
+              name: "The Hidden Gaming Lair",
+              url: "https://www.th.gl",
+            },
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       {/* Hero Section */}
       <PageHero
         badge="20+ Games Supported • 10,000+ Daily Users"
