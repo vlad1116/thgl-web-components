@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
+import Link from "next/link";
 
 export const metadata = {
   title: "Legal Notice (Impressum) – The Hidden Gaming Lair",
@@ -8,15 +9,45 @@ export const metadata = {
   alternates: {
     canonical: "/legal-notice",
   },
+  openGraph: {
+    url: "/legal-notice",
+  },
 };
 
 export default function LegalNotice(): JSX.Element {
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Legal Notice (Impressum) – The Hidden Gaming Lair",
+            description:
+              "Legal information and website ownership details for The Hidden Gaming Lair. Provided in accordance with § 5 TMG (Germany).",
+            url: "https://www.th.gl/legal-notice",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <PageHeader
         title="Legal Notice / Impressum"
         description="Angaben gemäß § 5 TMG / In accordance with Section 5 of the German Telemedia Act."
       />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Legal Notice</li>
+        </ol>
+      </nav>
 
       <hr className="border-border" />
 

@@ -1,6 +1,6 @@
 import { getSuggestionOrIssueDetail, getSuggestionsAndIssues } from "@repo/lib";
-import { Subtitle } from "@repo/ui/content";
 import { Button } from "@repo/ui/controls";
+import { PageTitle } from "@repo/ui/header";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -54,6 +54,40 @@ export default async function SuggestionDetailPage({
 
   return (
     <PageShell>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: post.name,
+            url: `https://www.th.gl/suggestions-issues/${post.id}`,
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <Link
+              href="/suggestions-issues"
+              className="hover:text-foreground transition-colors"
+            >
+              Suggestions & Issues
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">{post.name}</li>
+        </ol>
+      </nav>
       <section className="space-y-4">
         <Link href="/suggestions-issues">
           <Button variant="ghost" size="sm">
@@ -61,7 +95,7 @@ export default async function SuggestionDetailPage({
             Back to all suggestions
           </Button>
         </Link>
-        <Subtitle title={post.name} />
+        <PageTitle title={post.name} />
         <p className="text-sm text-muted-foreground">
           Browse through community suggestions and reported issues from our{" "}
           <a

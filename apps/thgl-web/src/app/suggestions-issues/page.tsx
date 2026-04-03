@@ -4,6 +4,7 @@ import { SuggestionsIssuesList } from "./[id]/suggestions-issues";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@repo/ui/controls";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Suggestions & Issues - The Hidden Gaming Lair",
@@ -20,6 +21,19 @@ export default async function SuggestionsPage() {
 
   return (
     <PageShell className="space-y-12 max-w-6xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Suggestions & Issues - The Hidden Gaming Lair",
+            description:
+              "View and discuss suggestions and reported issues for The Hidden Gaming Lair projects.",
+            url: "https://www.th.gl/suggestions-issues",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <PageHeader
         title="Suggestions & Issues"
         description={
@@ -44,6 +58,20 @@ export default async function SuggestionsPage() {
           </>
         }
       />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Suggestions & Issues</li>
+        </ol>
+      </nav>
 
       {posts.length === 0 ? (
         <Card className="border-dashed">

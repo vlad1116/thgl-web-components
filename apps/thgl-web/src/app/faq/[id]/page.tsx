@@ -36,6 +36,49 @@ export default async function FAQDetailPage({
 
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: entry.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: entry.answer,
+                },
+              },
+            ],
+            url: `https://www.th.gl/faq/${entry.id}`,
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <Link
+              href="/faq"
+              className="hover:text-foreground transition-colors"
+            >
+              FAQ
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">{entry.question}</li>
+        </ol>
+      </nav>
       {/* Back button */}
       <div>
         <Button variant="ghost" asChild>

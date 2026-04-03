@@ -6,9 +6,9 @@ export function ClientAppsPage() {
     <section className="px-4 pt-10 pb-20 mx-auto space-y-10 max-w-7xl">
       {/* Static header - rendered on server */}
       <div className="text-center space-y-6">
-        <h1 className="text-4xl md:text-5xl font-bold">
+        <h2 className="text-4xl md:text-5xl font-bold">
           Supported <span className="text-primary">Games</span>
-        </h1>
+        </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Discover interactive maps, overlays, and tools for your favorite games
         </p>

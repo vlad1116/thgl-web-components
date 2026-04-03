@@ -1,6 +1,7 @@
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
 import { Button } from "@repo/ui/controls";
-import { ExternalAnchor, HeaderOffset } from "@repo/ui/header";
+import { ExternalAnchor, HeaderOffset, PageTitle } from "@repo/ui/header";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -20,10 +21,70 @@ export const metadata: Metadata = {
 
 export default function VesselIOfHatred(): JSX.Element {
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id="diablo4"
-        header={
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline:
+            "Vessel of Hatred - Diablo IV - The Hidden Gaming Lair",
+          description:
+            "Prepare for the Vessel of Hatred expansion in Diablo IV with this interactive map and in-game app featuring real-time player position tracking. Find Tenet of Akarat, Helltide, Legion events, Altars of Lilith, and more!",
+          author: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          mainEntityOfPage: "https://diablo4.th.gl/vessel-of-hatred",
+        }}
+      />
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://diablo4.th.gl/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Vessel of Hatred",
+              item: "https://diablo4.th.gl/vessel-of-hatred",
+            },
+          ],
+        }}
+      />
+      <HeaderOffset full>
+        <PageTitle title="Vessel of Hatred - Diablo IV - The Hidden Gaming Lair" />
+        <nav
+          aria-label="Breadcrumb"
+          className="text-xs text-muted-foreground px-4 py-2"
+        >
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-foreground transition-colors"
+              >
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">Vessel of Hatred</li>
+          </ol>
+        </nav>
+        <ContentLayout
+          id="diablo4"
+          header={
           <>
             <h2 className="text-2xl">
               Prepare for the First Diablo IV Expansion: Vessel of Hatred
@@ -176,6 +237,7 @@ export default function VesselIOfHatred(): JSX.Element {
           </>
         }
       />
-    </HeaderOffset>
+      </HeaderOffset>
+    </>
   );
 }

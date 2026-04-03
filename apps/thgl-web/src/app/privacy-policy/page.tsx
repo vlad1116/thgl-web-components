@@ -9,11 +9,27 @@ export const metadata = {
   alternates: {
     canonical: "/privacy-policy",
   },
+  openGraph: {
+    url: "/privacy-policy",
+  },
 };
 
 export default function PrivacyPolicy(): JSX.Element {
   return (
     <PageShell className="space-y-12 max-w-4xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Privacy Policy - The Hidden Gaming Lair",
+            description:
+              "How The Hidden Gaming Lair collects and uses your data. No tracking on www.th.gl. Subscriptions use cookies for account management.",
+            url: "https://www.th.gl/privacy-policy",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <PageHeader
         title="Privacy Policy"
         description={
@@ -30,6 +46,20 @@ export default function PrivacyPolicy(): JSX.Element {
           </>
         }
       />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Privacy Policy</li>
+        </ol>
+      </nav>
 
       <hr className="border-border" />
 

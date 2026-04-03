@@ -10,11 +10,27 @@ export const metadata = {
   alternates: {
     canonical: "/advertise",
   },
+  openGraph: {
+    url: "/advertise",
+  },
 };
 
 export default function AdvertisePage() {
   return (
     <PageShell className="space-y-12 max-w-6xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Sponsor TH.GL – Reach Thousands of Gamers",
+            description:
+              "TH.GL reaches thousands of players daily through interactive maps, overlays, and game tools. Explore sponsorship options to promote your brand.",
+            url: "https://www.th.gl/advertise",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <PageHeader
         title="Sponsor TH.GL"
         description={
@@ -31,6 +47,20 @@ export default function AdvertisePage() {
           </>
         }
       />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Advertise</li>
+        </ol>
+      </nav>
 
       <hr className="border-border" />
 

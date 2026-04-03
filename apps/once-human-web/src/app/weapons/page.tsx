@@ -1,9 +1,11 @@
-import { HeaderOffset } from "@repo/ui/header";
+import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { type Metadata } from "next";
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
 import { notFound } from "next/navigation";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { type Database } from "@repo/ui/providers";
+import Link from "next/link";
 import { APP_CONFIG } from "@/config";
 import { DataTableColumns } from "./columns";
 
@@ -13,6 +15,11 @@ export const metadata: Metadata = {
   },
   title: "All Weapons – The Hidden Gaming Lair",
   description: "A comprehensive list of weapons for Once Human.",
+  openGraph: {
+    title: "All Weapons – The Hidden Gaming Lair",
+    description: "A comprehensive list of weapons for Once Human.",
+    url: "/weapons",
+  },
 };
 
 export default async function Weapons() {
@@ -34,21 +41,80 @@ export default async function Weapons() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id="once-human"
-        header={
-          <>
-            <h2 className="text-2xl">All Weapons</h2>
-            <p className="text-sm">
-              A comprehensive list of weapons for Once Human.
-            </p>
-          </>
-        }
-        content={
-          <DataTableColumns data={data} database={database} enDict={enDict} />
-        }
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "All Weapons – The Hidden Gaming Lair",
+          description: "A comprehensive list of weapons for Once Human.",
+          author: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          mainEntityOfPage: "https://once-human.th.gl/weapons",
+        }}
       />
-    </HeaderOffset>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://once-human.th.gl/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "All Weapons",
+              item: "https://once-human.th.gl/weapons",
+            },
+          ],
+        }}
+      />
+      <HeaderOffset full>
+        <PageTitle title="All Weapons – The Hidden Gaming Lair" />
+        <nav
+          aria-label="Breadcrumb"
+          className="text-xs text-muted-foreground px-4 py-2"
+        >
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-foreground transition-colors"
+              >
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">All Weapons</li>
+          </ol>
+        </nav>
+        <ContentLayout
+          id="once-human"
+          header={
+            <>
+              <h2 className="text-2xl">All Weapons</h2>
+              <p className="text-sm">
+                A comprehensive list of weapons for Once Human.
+              </p>
+            </>
+          }
+          content={
+            <DataTableColumns data={data} database={database} enDict={enDict} />
+          }
+        />
+      </HeaderOffset>
+    </>
   );
 }

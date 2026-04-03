@@ -11,12 +11,46 @@ export const metadata = {
   alternates: {
     canonical: "/support-me",
   },
+  openGraph: {
+    url: "/support-me",
+  },
 };
 
 export default function SupportMe() {
   return (
-    <div className="space-y-16 px-4 pt-10 pb-20 max-w-7xl mx-auto">
-      {/* Hero Section */}
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Support TH.GL – Unlock Ad-Free Access & Perks",
+            description:
+              "Become a supporter of TH.GL and unlock ad-free access, premium features, and preview releases across all tools and platforms.",
+            url: "https://www.th.gl/support-me",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
+      <div className="space-y-16 px-4 pt-10 pb-20 max-w-7xl mx-auto">
+        <nav
+          aria-label="Breadcrumb"
+          className="text-xs text-muted-foreground"
+        >
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-foreground transition-colors"
+              >
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">Support Me</li>
+          </ol>
+        </nav>
+        {/* Hero Section */}
       <div className="text-center space-y-6 max-w-3xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold">
           Support TH.GL Development
@@ -126,6 +160,7 @@ export default function SupportMe() {
           <Link href="/support-me/account">Unlock Your Perks</Link>
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

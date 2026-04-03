@@ -5,6 +5,7 @@ import { partners } from "./partners";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
 import { BenefitList } from "@/components/benefit-list";
+import Link from "next/link";
 
 export const metadata = {
   title: "Partner With TH.GL – Streamers, Creators & Sharers",
@@ -13,15 +14,45 @@ export const metadata = {
   alternates: {
     canonical: "/partner-program",
   },
+  openGraph: {
+    url: "/partner-program",
+  },
 };
 
 export default function PartnerProgramPage() {
   return (
     <PageShell className="space-y-12 max-w-6xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Partner With TH.GL – Streamers, Creators & Sharers",
+            description:
+              "Partner with The Hidden Gaming Lair and get free perks, exposure, and more for sharing my tools or featuring them in your content.",
+            url: "https://www.th.gl/partner-program",
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <PageHeader
         title="Partner With TH.GL"
         description="Are you a streamer, content creator, or someone who shares useful tools with others? Partner with TH.GL and get rewarded for spreading the word."
       />
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
+        <ol className="flex items-center gap-1">
+          <li>
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">Partner Program</li>
+        </ol>
+      </nav>
 
       {/* Partners Section */}
       <section className="space-y-8">

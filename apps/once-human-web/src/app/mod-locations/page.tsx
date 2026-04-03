@@ -1,7 +1,9 @@
-import { HeaderOffset } from "@repo/ui/header";
+import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { DataTable } from "@repo/ui/data";
 import { type Metadata } from "next";
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
+import Link from "next/link";
 import { type Item, columns } from "./columns";
 
 export const metadata: Metadata = {
@@ -11,6 +13,12 @@ export const metadata: Metadata = {
   title: "All Mod Locations – The Hidden Gaming Lair",
   description:
     "A comprehensive list of mod locations for Once Human. It details the mod list, item types, drop locations, enemy types, and map regions. Some notable mods include Elemental Amplifier, Thunderclap, Weakspot DMG Boost, Rejuvenating, and Flame Resonance, each found in different locations and dropped by different enemy types.",
+  openGraph: {
+    title: "All Mod Locations – The Hidden Gaming Lair",
+    description:
+      "A comprehensive list of mod locations for Once Human. It details the mod list, item types, drop locations, enemy types, and map regions.",
+    url: "/mod-locations",
+  },
 };
 
 const allModLocations: Item[] = [
@@ -197,27 +205,87 @@ const allModLocations: Item[] = [
 
 export default function ModLocations(): JSX.Element {
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id="once-human"
-        header={
-          <>
-            <h2 className="text-2xl">All Mod Locations</h2>
-            <p className="text-sm">
-              The document provides a comprehensive list of mod locations for
-              the Once Human game. It details the mod list, item types, drop
-              locations, enemy types, and map regions. Some notable mods include
-              Elemental Amplifier, Thunderclap, Weakspot DMG Boost,
-              Rejuvenating, and Flame Resonance, each found in different
-              locations and gatherable by orbs in the silos.
-              <br />
-              This page will update and have accurate information during CBT3
-              and on the games official launch.
-            </p>
-          </>
-        }
-        content={<DataTable columns={columns} data={allModLocations} />}
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "All Mod Locations – The Hidden Gaming Lair",
+          description:
+            "A comprehensive list of mod locations for Once Human. It details the mod list, item types, drop locations, enemy types, and map regions.",
+          author: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          mainEntityOfPage: "https://once-human.th.gl/mod-locations",
+        }}
       />
-    </HeaderOffset>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://once-human.th.gl/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "All Mod Locations",
+              item: "https://once-human.th.gl/mod-locations",
+            },
+          ],
+        }}
+      />
+      <HeaderOffset full>
+        <PageTitle title="All Mod Locations – The Hidden Gaming Lair" />
+        <nav
+          aria-label="Breadcrumb"
+          className="text-xs text-muted-foreground px-4 py-2"
+        >
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-foreground transition-colors"
+              >
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">All Mod Locations</li>
+          </ol>
+        </nav>
+        <ContentLayout
+          id="once-human"
+          header={
+            <>
+              <h2 className="text-2xl">All Mod Locations</h2>
+              <p className="text-sm">
+                The document provides a comprehensive list of mod locations for
+                the Once Human game. It details the mod list, item types, drop
+                locations, enemy types, and map regions. Some notable mods include
+                Elemental Amplifier, Thunderclap, Weakspot DMG Boost,
+                Rejuvenating, and Flame Resonance, each found in different
+                locations and gatherable by orbs in the silos.
+                <br />
+                This page will update and have accurate information during CBT3
+                and on the games official launch.
+              </p>
+            </>
+          }
+          content={<DataTable columns={columns} data={allModLocations} />}
+        />
+      </HeaderOffset>
+    </>
   );
 }

@@ -1,7 +1,9 @@
-import { HeaderOffset } from "@repo/ui/header";
+import { HeaderOffset, PageTitle } from "@repo/ui/header";
 import { DataTable } from "@repo/ui/data";
 import { type Metadata } from "next";
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
+import Link from "next/link";
 import { type Item, columns } from "./columns";
 
 export const metadata: Metadata = {
@@ -11,6 +13,12 @@ export const metadata: Metadata = {
   title: "All Deviant Locations – The Hidden Gaming Lair",
   description:
     "A comprehensive list of deviant locations for Once Human. It includes information about the deviant's type and effects, which can help users strategize and utilize each deviant effectively.  Moreover, this guide also informs about the deviant's likes, which are essential in maximizing their happiness and productivity. This guide is regularly updated and verified to ensure accuracy and completeness.",
+  openGraph: {
+    title: "All Deviant Locations – The Hidden Gaming Lair",
+    description:
+      "A comprehensive list of deviant locations for Once Human. It includes information about the deviant's type and effects, which can help users strategize and utilize each deviant effectively.",
+    url: "/deviant-locations",
+  },
 };
 
 const allDeviantLocations: Item[] = [
@@ -198,26 +206,86 @@ const allDeviantLocations: Item[] = [
 
 export default function DeviantLocations(): JSX.Element {
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id="once-human"
-        header={
-          <>
-            <h2 className="text-2xl">All Deviant Locations</h2>
-            <p className="text-sm">
-              The document provides a comprehensive list of deviant locations
-              for the Once Human game. It includes information about the
-              deviant's type and effects, which can help users strategize and
-              utilize each deviant effectively. Moreover, this guide also
-              informs about the deviant's likes, which are essential in
-              maximizing their happiness and productivity. This guide is
-              regularly updated and verified to ensure accuracy and
-              completeness.
-            </p>
-          </>
-        }
-        content={<DataTable columns={columns} data={allDeviantLocations} />}
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "All Deviant Locations – The Hidden Gaming Lair",
+          description:
+            "A comprehensive list of deviant locations for Once Human. It includes information about the deviant's type and effects, which can help users strategize and utilize each deviant effectively.",
+          author: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+          mainEntityOfPage: "https://once-human.th.gl/deviant-locations",
+        }}
       />
-    </HeaderOffset>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: "https://once-human.th.gl/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "All Deviant Locations",
+              item: "https://once-human.th.gl/deviant-locations",
+            },
+          ],
+        }}
+      />
+      <HeaderOffset full>
+        <PageTitle title="All Deviant Locations – The Hidden Gaming Lair" />
+        <nav
+          aria-label="Breadcrumb"
+          className="text-xs text-muted-foreground px-4 py-2"
+        >
+          <ol className="flex items-center gap-1">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-foreground transition-colors"
+              >
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">All Deviant Locations</li>
+          </ol>
+        </nav>
+        <ContentLayout
+          id="once-human"
+          header={
+            <>
+              <h2 className="text-2xl">All Deviant Locations</h2>
+              <p className="text-sm">
+                The document provides a comprehensive list of deviant locations
+                for the Once Human game. It includes information about the
+                deviant's type and effects, which can help users strategize and
+                utilize each deviant effectively. Moreover, this guide also
+                informs about the deviant's likes, which are essential in
+                maximizing their happiness and productivity. This guide is
+                regularly updated and verified to ensure accuracy and
+                completeness.
+              </p>
+            </>
+          }
+          content={<DataTable columns={columns} data={allDeviantLocations} />}
+        />
+      </HeaderOffset>
+    </>
   );
 }
