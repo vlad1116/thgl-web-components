@@ -2,6 +2,18 @@ import type { MetadataRoute } from "next";
 import { AppConfig, fetchDict, fetchVersion } from "./config";
 import { DEFAULT_LOCALE, localizePath, translate } from "./i18n";
 
+export function createRobots(appConfig: AppConfig) {
+  return function (): MetadataRoute.Robots {
+    return {
+      rules: {
+        userAgent: "*",
+        disallow: "/nodes/",
+      },
+      sitemap: `https://${appConfig.domain}.th.gl/sitemap.xml`,
+    };
+  };
+}
+
 export function createSitemap(appConfig: AppConfig) {
   const baseUrl = `https://${appConfig.domain}.th.gl`;
 
