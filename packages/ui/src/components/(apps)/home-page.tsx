@@ -5,10 +5,13 @@ import { NavGrid, ReleaseNotes, Subtitle } from "../(content)";
 import {
   AppConfig,
   DEFAULT_LOCALE,
+  fetchVersion,
   getMetadataAlternates,
+  getPreviewImageUrl,
   getT,
   getUpdateMessages,
 } from "@repo/lib";
+import type { NavCardProps } from "../(content)";
 import { getFullDictionary, getStaticDictionary } from "../../dicts";
 import { JSONLDScript } from "./json-ld-script";
 
@@ -68,9 +71,10 @@ export function createHomePageGenerateMetadata(appConfig: AppConfig) {
 export function createHomePage(appConfig: AppConfig) {
   return async function Home({ params }: PageProps) {
     const { locale = DEFAULT_LOCALE } = await params;
-    const [dict, updateMessages] = await Promise.all([
+    const [dict, updateMessages, version] = await Promise.all([
       getFullDictionary(appConfig.name, locale),
       getUpdateMessages(appConfig.name),
+      fetchVersion(appConfig.name),
     ]);
     const t = getT(dict);
 
@@ -81,6 +85,28 @@ export function createHomePage(appConfig: AppConfig) {
         .join(", ") ?? "";
 
     const keywords = appConfig.keywords?.map((k) => t(k)).join(", ") ?? "";
+
+    const internalLinkHrefs = new Set(
+      appConfig.internalLinks?.map((link) => link.href) ?? [],
+    );
+    const mapNames = Object.keys(version.data.tiles);
+    const mapCards: NavCardProps[] = mapNames
+      .filter((map) => {
+        const mapName = t(map);
+        const href = `/maps/${encodeURIComponent(mapName)}`;
+        return !internalLinkHrefs.has(href);
+      })
+      .map((map) => {
+        const mapName = t(map);
+        return {
+          title: `${mapName} Map`,
+          description: `Navigate ${mapName} with our interactive maps.`,
+          href: `/maps/${encodeURIComponent(mapName)}`,
+          iconName: "Map" as NavCardProps["iconName"],
+          bgImage: getPreviewImageUrl(appConfig.name, map),
+          linkText: `Explore the ${mapName}`,
+        };
+      });
 
     const hasCompanionApp = appConfig.appUrl && appConfig.appUrl.includes("companion-app");
 
@@ -123,6 +149,7 @@ export function createHomePage(appConfig: AppConfig) {
                 {appConfig.internalLinks && (
                   <NavGrid cards={appConfig.internalLinks} />
                 )}
+                {mapCards.length > 0 && <NavGrid cards={mapCards} />}
                 {hasCompanionApp && (
                   <a
                     href={appConfig.appUrl!}
