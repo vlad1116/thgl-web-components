@@ -10,6 +10,7 @@ import {
   getT,
   IconSprite,
   localizePath,
+  translate,
 } from "@repo/lib";
 import { HeaderOffset, PageTitle } from "../(header)";
 import { ContentLayout } from "../(ads)";
@@ -87,7 +88,7 @@ export function createGuidesPage(appConfig: AppConfig) {
     }[] = [];
     for (const filter of version.data.filters) {
       for (const v of filter.values) {
-        const enLabel = enDict[v.id] ?? v.id;
+        const enLabel = translate(enDict, v.id);
         const groupLabel = t(filter.group, { fallback: filter.group });
         const existing = seenLabels.get(enLabel);
         if (existing) {
@@ -121,7 +122,7 @@ export function createGuidesPage(appConfig: AppConfig) {
       groups: string[];
     }[] = [];
     for (const filter of version.data.filters) {
-      const enGroupLabel = enDict[filter.group] ?? filter.group;
+      const enGroupLabel = translate(enDict, filter.group);
       if (seenGroupLabels.has(enGroupLabel)) continue;
       seenGroupLabels.add(enGroupLabel);
       guideGroups.push({
@@ -150,7 +151,7 @@ export function createGuidesPage(appConfig: AppConfig) {
               "@type": "ListItem",
               position: i + 1,
               name: g.label,
-              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${enDict[g.type]}`, locale)}`,
+              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${translate(enDict, g.type)}`, locale)}`,
             })),
           }}
         />
@@ -211,7 +212,7 @@ export function createGuidesPage(appConfig: AppConfig) {
                   >
                     <Link
                       href={localizePath(
-                        `/guides/${encodeURIComponent(enDict[guide.type])}`,
+                        `/guides/${encodeURIComponent(translate(enDict, guide.type))}`,
                         locale,
                       )}
                       className="block"

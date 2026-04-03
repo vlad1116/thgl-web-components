@@ -215,11 +215,14 @@ function getReverseDictMap(
 
   if (!reverseDictMap) {
     // Build reverse dictionary map (value -> keys[])
+    // Resolve pointer values (e.g. "@other_key" -> dict["@other_key"])
     reverseDictMap = new Map<string, string[]>();
     for (const [key, value] of Object.entries(dict)) {
-      const existing = reverseDictMap.get(value) || [];
+      const resolved =
+        value && value[0] === "@" ? (dict[value] ?? value) : value;
+      const existing = reverseDictMap.get(resolved) || [];
       existing.push(key);
-      reverseDictMap.set(value, existing);
+      reverseDictMap.set(resolved, existing);
     }
     dictCacheMap.set(dict, reverseDictMap);
   }

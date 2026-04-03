@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { AppConfig, fetchDict, fetchVersion } from "./config";
-import { DEFAULT_LOCALE, localizePath } from "./i18n";
+import { DEFAULT_LOCALE, localizePath, translate } from "./i18n";
 
 export function createSitemap(appConfig: AppConfig) {
   const baseUrl = `https://${appConfig.domain}.th.gl`;
@@ -35,7 +35,7 @@ export function createSitemap(appConfig: AppConfig) {
 
     // Maps
     for (const mapName of mapNames) {
-      const title = enDict[mapName];
+      const title = translate(enDict, mapName);
       const path = `/maps/${encodeURIComponent(title)}`;
       const url = baseUrl + path;
 
@@ -68,7 +68,7 @@ export function createSitemap(appConfig: AppConfig) {
     if (appConfig.internalLinks?.some((link) => link.href === "/guides")) {
       for (const filter of version.data.filters) {
         // Guide group
-        const groupTitle = enDict[filter.group];
+        const groupTitle = translate(enDict, filter.group);
         const path = `/guides/${encodeURIComponent(groupTitle)}`;
         const url = baseUrl + path;
 
@@ -84,7 +84,7 @@ export function createSitemap(appConfig: AppConfig) {
 
         // Guide types
         for (const value of filter.values) {
-          const typeTitle = enDict[value.id];
+          const typeTitle = translate(enDict, value.id);
           const typePath = `/guides/${encodeURIComponent(typeTitle)}`;
           const typeUrl = baseUrl + typePath;
 
