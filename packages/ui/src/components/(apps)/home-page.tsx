@@ -30,7 +30,11 @@ export function createHomePageGenerateMetadata(appConfig: AppConfig) {
         .map((link) => t(link.title))
         .join(", ") ?? "";
 
-    const keywords = appConfig.keywords.map((k) => t(k)).join(", ") ?? "";
+    const keywords =
+      appConfig.keywords
+        .slice(0, 5)
+        .map((k) => t(k))
+        .join(", ") ?? "";
 
     const title = t("home.pageTitle", { vars: { title: appConfig.title } });
     const description = t("home.intro", {

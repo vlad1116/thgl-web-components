@@ -28,7 +28,7 @@ export async function generateMetadata({
 
   let description = `Explore ${decodedMap} in ${APP_CONFIG.title} with `;
   if (APP_CONFIG.keywords) {
-    description += `${APP_CONFIG.keywords.join(", ")}, plus more locations.`;
+    description += `${APP_CONFIG.keywords.slice(0, 5).join(", ")}, plus more locations.`;
   } else {
     description += "locations, points of interest, and more.";
   }

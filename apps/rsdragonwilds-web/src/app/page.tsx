@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   title: `${APP_CONFIG.title} Interactive Maps & Locations – The Hidden Gaming Lair`,
-  description: `Explore ${APP_CONFIG.title} interactive maps for Ashenfall Map, featuring ${APP_CONFIG.keywords!.join(", ")}, and more locations. Stay updated with the latest map updates and guides!`,
+  description: `Explore ${APP_CONFIG.title} interactive maps for Ashenfall Map, featuring ${APP_CONFIG.keywords!.slice(0, 5).join(", ")}, and more locations. Stay updated with the latest map updates and guides!`,
   openGraph: {
     url: `/`,
   },

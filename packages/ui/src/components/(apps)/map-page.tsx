@@ -45,7 +45,11 @@ export function createMapPageGenerateMetadata(appConfig: AppConfig) {
 
     const t = getT(dict);
 
-    const keywords = appConfig.keywords.map((k) => t(k)).join(", ") ?? "";
+    const keywords =
+      appConfig.keywords
+        .slice(0, 5)
+        .map((k) => t(k))
+        .join(", ") ?? "";
 
     const title = t("map.pageTitle", {
       vars: { title: appConfig.title, map: t(mapName) },
