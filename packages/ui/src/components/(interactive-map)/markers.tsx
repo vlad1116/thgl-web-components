@@ -1111,19 +1111,27 @@ function MarkersContent({
       }
     }
 
-    // Add center dots for spiderfied clusters (only where spider markers exist)
+    // Add center dots for spiderfied clusters.
+    // Insert each dot right before the first spider marker of that cluster
+    // so it renders behind the spider icons but not on top of unrelated markers.
     {
-      const seenCenters = new Set<string>();
-      const len = markerInstances.length; // fixed length — don't iterate newly added dots
+      const seenCenters = new Map<string, number>(); // key → index of first spider marker
+      const len = markerInstances.length;
       for (let ci = 0; ci < len; ci++) {
         const inst = markerInstances[ci];
         if (!inst.spiderOffsetX && !inst.spiderOffsetY) continue;
         const key = `${inst.latLng[0]}_${inst.latLng[1]}`;
-        if (seenCenters.has(key)) continue;
-        seenCenters.add(key);
+        if (!seenCenters.has(key)) {
+          seenCenters.set(key, ci);
+        }
+      }
+      // Insert in reverse order so indices stay valid
+      const entries = [...seenCenters.entries()].sort((a, b) => b[1] - a[1]);
+      for (const [key, insertIdx] of entries) {
+        const inst = markerInstances[insertIdx];
         const centerId = `__center_${key}`;
         newSpawnMap.set(centerId, { id: centerId, p: inst.latLng, type: "__center" } as Spawn);
-        markerInstances.push({
+        markerInstances.splice(insertIdx, 0, {
           id: centerId,
           latLng: inst.latLng,
           size: Math.max(inst.size * 0.25, 6 * dpr),
@@ -1131,7 +1139,6 @@ function MarkersContent({
           rect: { x: 0, y: 0, width: Math.round(64 * dpr), height: Math.round(64 * dpr) },
           key: "__center",
           keepUpright: true,
-          alwaysOnTop: true,
           noHitTest: true,
         });
       }
