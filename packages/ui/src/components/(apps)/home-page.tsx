@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { HeaderOffset, PageTitle } from "../(header)";
 import { ContentLayout } from "../(ads)";
 import { NavGrid, ReleaseNotes, Subtitle } from "../(content)";
@@ -10,10 +11,13 @@ import {
   getPreviewImageUrl,
   getT,
   getUpdateMessages,
+  localizePath,
 } from "@repo/lib";
 import type { NavCardProps } from "../(content)";
 import { getFullDictionary, getStaticDictionary } from "../../dicts";
 import { JSONLDScript } from "./json-ld-script";
+
+const MAX_HOME_MAP_CARDS = 6;
 
 type PageProps = {
   params: Promise<{ locale?: string }>;
@@ -114,7 +118,31 @@ export function createHomePage(appConfig: AppConfig) {
         };
       });
 
-    const hasCompanionApp = appConfig.appUrl && appConfig.appUrl.includes("companion-app");
+    const hasCompanionApp =
+      appConfig.appUrl && appConfig.appUrl.includes("companion-app");
+
+    // Split internalLinks into map cards and feature cards
+    const internalMapCards =
+      appConfig.internalLinks?.filter((link) =>
+        link.href?.startsWith("/maps/"),
+      ) ?? [];
+    const featureCards =
+      appConfig.internalLinks?.filter(
+        (link) => !link.href?.startsWith("/maps/"),
+      ) ?? [];
+
+    const allMapCards = [...internalMapCards, ...mapCards];
+    const totalMapCount = allMapCards.length;
+
+    // Count total location types across all filter groups
+    const totalLocationTypes = version.data.filters.reduce(
+      (sum, group) => sum + group.values.length,
+      0,
+    );
+
+    const lastUpdated = version.createdAt
+      ? new Date(version.createdAt)
+      : null;
 
     return (
       <>
@@ -141,39 +169,118 @@ export function createHomePage(appConfig: AppConfig) {
           <ContentLayout
             id={appConfig.name}
             header={
-              <section className="space-y-4">
+              <section className="space-y-6">
+                {/* Title */}
                 <Subtitle
                   title={t("home.sectionTitle", {
                     vars: { title: appConfig.title },
                   })}
                 />
-                <p className="text-muted-foreground">
-                  {t("home.intro", {
-                    vars: { title: appConfig.title, features, keywords },
-                  })}
-                </p>
-                {appConfig.internalLinks && (
-                  <NavGrid cards={appConfig.internalLinks} />
-                )}
-                {mapCards.length > 0 && <NavGrid cards={mapCards} />}
+
+                {/* Stats bar */}
+                <div className="flex items-center justify-center gap-2 sm:gap-4 text-muted-foreground flex-wrap">
+                  {totalMapCount > 0 && (
+                    <div className="text-center px-3 py-1">
+                      <div className="text-lg font-semibold text-foreground tabular-nums">
+                        {totalMapCount}
+                      </div>
+                      <div className="text-xs uppercase tracking-wider">
+                        {totalMapCount === 1 ? "Map" : "Maps"}
+                      </div>
+                    </div>
+                  )}
+                  {totalLocationTypes > 0 && (
+                    <>
+                      <div className="h-8 w-px bg-muted" />
+                      <div className="text-center px-3 py-1">
+                        <div className="text-lg font-semibold text-foreground tabular-nums">
+                          {totalLocationTypes}
+                        </div>
+                        <div className="text-xs uppercase tracking-wider">
+                          Location Types
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {featureCards.length > 0 && (
+                    <>
+                      <div className="h-8 w-px bg-muted" />
+                      <div className="text-center px-3 py-1">
+                        <div className="text-lg font-semibold text-foreground tabular-nums">
+                          {featureCards.length}
+                        </div>
+                        <div className="text-xs uppercase tracking-wider">
+                          {featureCards.length === 1 ? "Guide" : "Guides"}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {lastUpdated && (
+                    <>
+                      <div className="h-8 w-px bg-muted" />
+                      <div className="text-center px-3 py-1">
+                        <div className="text-sm font-medium text-foreground">
+                          {lastUpdated.toLocaleDateString("en", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <div className="text-xs uppercase tracking-wider">
+                          Last Updated
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Companion app CTA */}
                 {hasCompanionApp && (
                   <a
                     href={appConfig.appUrl!}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-center gap-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="group mx-auto flex items-center gap-3 border border-muted rounded-lg px-4 py-2.5 hover:border-primary/50 transition-colors max-w-md"
                   >
-                    <span className="relative flex h-1.5 w-1.5">
+                    <span className="relative flex h-2 w-2 shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
                     </span>
-                    <span>
-                      <strong className="text-foreground">In-Game Companion App</strong>
-                      {" — "}live overlay with player tracking and auto-discovery.
-                      <span className="text-primary ml-1 group-hover:underline">Get it free →</span>
+                    <span className="text-sm text-left">
+                      <strong className="text-foreground block text-sm">
+                        In-Game Companion App
+                      </strong>
+                      <span className="text-xs text-muted-foreground">
+                        Live overlay with player tracking and auto-discovery
+                      </span>
+                    </span>
+                    <span className="text-primary text-xs ml-auto shrink-0 group-hover:underline">
+                      Get it free →
                     </span>
                   </a>
                 )}
+
+                {/* Map cards — show up to MAX_HOME_MAP_CARDS, link to /maps for more */}
+                {allMapCards.length > 0 && (
+                  <NavGrid
+                    cards={allMapCards.slice(0, MAX_HOME_MAP_CARDS)}
+                  />
+                )}
+                {allMapCards.length > MAX_HOME_MAP_CARDS && (
+                  <Link
+                    href={localizePath("/maps", locale)}
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {t("maps.viewAll", {
+                      vars: { count: String(allMapCards.length) },
+                      fallback: `View all ${allMapCards.length} maps`,
+                    })}{" "}
+                    →
+                  </Link>
+                )}
+
+                {/* Feature/guide cards */}
+                {featureCards.length > 0 && <NavGrid cards={featureCards} />}
               </section>
             }
             content={<ReleaseNotes updateMessages={updateMessages} />}

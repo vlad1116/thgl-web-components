@@ -8,6 +8,10 @@ export {
 export { createHomePageGenerateMetadata, createHomePage } from "./home-page";
 export { createMapPageGenerateMetadata, createMapPage } from "./map-page";
 export {
+  createMapsPageGenerateMetadata,
+  createMapsPage,
+} from "./maps-page";
+export {
   rootLayoutViewport,
   createRootLayoutMetadata,
   createRootLayout,
