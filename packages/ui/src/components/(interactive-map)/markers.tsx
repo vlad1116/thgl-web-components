@@ -1408,12 +1408,15 @@ function MarkersContent({
     iconLoadVersion, // Re-run when images finish loading to apply processed icons
   ]);
 
-  // Audio alerts when player is within range of tracked spawns
+  // Audio alerts when player is within range of tracked spawns.
+  // Uses `spawns` directly (not spawnMapRef) because spawns is the
+  // authoritative filtered list from useCoordinates() — it excludes
+  // disabled filters immediately, avoiding stale-ref race conditions.
   useEffect(() => {
     if (
       audioAlertsMuted ||
       !throttledPlayer ||
-      spawnMapRef.current.size === 0
+      spawns.length === 0
     )
       return;
 
@@ -1437,7 +1440,7 @@ function MarkersContent({
 
     // Check if any spawn with audio alerts enabled is in range
     let anyInRange = false;
-    for (const spawn of spawnMapRef.current.values()) {
+    for (const spawn of spawns) {
       if (!audioAlertByFilter[spawn.type]) continue;
 
       // Apply rotation to spawn position if needed
