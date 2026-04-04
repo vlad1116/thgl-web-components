@@ -114,98 +114,104 @@ export function createMapPage(
       vars: {
         title: appConfig.title,
         map: t(mapName),
-        keywords: appConfig.keywords?.slice(0, 5).map((k) => t(k)).join(", ") ?? "",
+        keywords:
+          appConfig.keywords
+            ?.slice(0, 5)
+            .map((k) => t(k))
+            .join(", ") ?? "",
       },
     });
 
     return (
       <>
-      <JSONLDScript
-        json={{
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          name: mapTitle,
-          description: mapDescription,
-          url: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
-          isPartOf: {
-            "@type": "WebSite",
-            name: `${appConfig.title} Interactive Map`,
-            url: `https://${appConfig.domain}.th.gl`,
-          },
-          dateModified: version.createdAt
-            ? new Date(version.createdAt).toISOString()
-            : undefined,
-        }}
-      />
-      <JSONLDScript
-        json={{
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          itemListElement: [
-            {
-              "@type": "ListItem",
-              position: 1,
-              name: "Home",
-              item: `https://${appConfig.domain}.th.gl${localizePath("/", locale)}`,
+        <JSONLDScript
+          json={{
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: mapTitle,
+            description: mapDescription,
+            url: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+            isPartOf: {
+              "@type": "WebSite",
+              name: `${appConfig.title} Interactive Map`,
+              url: `https://${appConfig.domain}.th.gl`,
             },
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: "Maps",
-              item: `https://${appConfig.domain}.th.gl${localizePath("/maps", locale)}`,
-            },
-            {
-              "@type": "ListItem",
-              position: 3,
-              name: t(mapName),
-              item: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
-            },
-          ],
-        }}
-      />
-      <CoordinatesProvider
-        appName={appConfig.name}
-        staticDrawings={version.data.drawings}
-        filters={version.data.filters}
-        mapNames={Object.keys(version.data.tiles)}
-        useCbor
-        regions={version.data.regions}
-        typesIdMap={version.data.typesIdMap}
-        nodesPaths={version.more.nodes}
-        globalFilters={version.data.globalFilters}
-        map={mapName}
-        clusterPrecision={appConfig.markerOptions?.clusterPrecision}
-      >
-        <HeaderOffset full>
-          <PageTitle title={mapTitle} />
-          <FullMapDynamic
-            appConfig={appConfig}
-            tilesConfig={version.data.tiles}
-            iconsPath={version.more.icons}
-            additionalTooltip={additionalTooltip}
-          />
-          <MarkersSearch
-            lastMapUpdate={version.createdAt}
-            tileOptions={version.data.tiles}
-            appName={appConfig.name}
-            iconsPath={version.more.icons}
-            additionalFilters={additionalFilters}
-            mapEnTitles={Object.fromEntries(
-              Object.keys(version.data.tiles).map((k) => [
-                k,
-                translate(dict, k),
-              ]),
-            )}
-          >
-            <FloatingAds id={appConfig.name} />
-          </MarkersSearch>
-          <MarkerPanel
-            appName={appConfig.name}
-            additionalTooltip={additionalTooltip}
-            coordinateCopyFormat={appConfig.markerOptions?.coordinateCopyFormat}
-          />
-        </HeaderOffset>
-      </CoordinatesProvider>
+            dateModified: version.createdAt
+              ? new Date(version.createdAt).toISOString()
+              : undefined,
+          }}
+        />
+        <JSONLDScript
+          json={{
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: `https://${appConfig.domain}.th.gl${localizePath("/", locale)}`,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Maps",
+                item: `https://${appConfig.domain}.th.gl${localizePath("/maps", locale)}`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: t(mapName),
+                item: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+              },
+            ],
+          }}
+        />
+        <CoordinatesProvider
+          appName={appConfig.name}
+          staticDrawings={version.data.drawings}
+          filters={version.data.filters}
+          mapNames={Object.keys(version.data.tiles)}
+          useCbor
+          regions={version.data.regions}
+          typesIdMap={appConfig.withoutLiveMode ? {} : version.data.typesIdMap}
+          nodesPaths={version.more.nodes}
+          globalFilters={version.data.globalFilters}
+          map={mapName}
+          clusterPrecision={appConfig.markerOptions?.clusterPrecision}
+        >
+          <HeaderOffset full>
+            <PageTitle title={mapTitle} />
+            <FullMapDynamic
+              appConfig={appConfig}
+              tilesConfig={version.data.tiles}
+              iconsPath={version.more.icons}
+              additionalTooltip={additionalTooltip}
+            />
+            <MarkersSearch
+              lastMapUpdate={version.createdAt}
+              tileOptions={version.data.tiles}
+              appName={appConfig.name}
+              iconsPath={version.more.icons}
+              additionalFilters={additionalFilters}
+              mapEnTitles={Object.fromEntries(
+                Object.keys(version.data.tiles).map((k) => [
+                  k,
+                  translate(dict, k),
+                ]),
+              )}
+            >
+              <FloatingAds id={appConfig.name} />
+            </MarkersSearch>
+            <MarkerPanel
+              appName={appConfig.name}
+              additionalTooltip={additionalTooltip}
+              coordinateCopyFormat={
+                appConfig.markerOptions?.coordinateCopyFormat
+              }
+            />
+          </HeaderOffset>
+        </CoordinatesProvider>
       </>
     );
   };
