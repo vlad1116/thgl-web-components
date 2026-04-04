@@ -63,6 +63,8 @@ export type AppConfig = {
   externalLinks?: { href: string; title: string }[];
   markerOptions?: MarkerOptions;
   game?: Game;
+  /** Featured filter IDs to highlight on the home page. If not set, first filters are shown. */
+  topFilters?: string[];
 };
 
 export type OverwolfAppConfig = {
@@ -101,6 +103,15 @@ export type Version = {
   more: {
     nodes: Record<string, string>;
     icons: string;
+  };
+  /** Spawn counts for UI display */
+  counts?: {
+    /** Total spawns across all maps */
+    total: number;
+    /** Spawn count per filter type ID */
+    byType: Record<string, number>;
+    /** Spawn count per map name */
+    byMap: Record<string, number>;
   };
 };
 

@@ -79,28 +79,35 @@ export function createGuidesPage(appConfig: AppConfig) {
     // Deduplicate filter values by translated label — different IDs can share
     // the same display name (e.g. "Sword" in Rare/Epic/Legendary categories).
     // Collect which groups each type appears in for display on the card.
-    const seenLabels = new Map<string, { groups: string[] }>();
+    const countsByType = version.counts?.byType;
+    const seenLabels = new Map<
+      string,
+      { groups: string[]; locationCount: number }
+    >();
     const guideTypes: {
       type: string;
       label: string;
       description: string;
       icon: IconSprite | undefined;
       groups: string[];
+      locationCount: number;
     }[] = [];
     for (const filter of version.data.filters) {
       for (const v of filter.values) {
         const enLabel = translate(enDict, v.id);
         const groupLabel = t(filter.group, { fallback: filter.group });
+        const count = countsByType?.[v.id] || 0;
         const existing = seenLabels.get(enLabel);
         if (existing) {
           // Add group if not already listed
           if (!existing.groups.includes(groupLabel)) {
             existing.groups.push(groupLabel);
           }
+          existing.locationCount += count;
           continue;
         }
         const groups = [groupLabel];
-        seenLabels.set(enLabel, { groups });
+        seenLabels.set(enLabel, { groups, locationCount: count });
         guideTypes.push({
           type: v.id,
           label: t(v.id),
@@ -109,6 +116,7 @@ export function createGuidesPage(appConfig: AppConfig) {
           }),
           icon: typeof v.icon === "object" ? (v.icon as IconSprite) : undefined,
           groups,
+          locationCount: count,
         });
       }
     }
@@ -121,11 +129,18 @@ export function createGuidesPage(appConfig: AppConfig) {
       description: string;
       icon: null;
       groups: string[];
+      locationCount: number;
     }[] = [];
     for (const filter of version.data.filters) {
       const enGroupLabel = translate(enDict, filter.group);
       if (seenGroupLabels.has(enGroupLabel)) continue;
       seenGroupLabels.add(enGroupLabel);
+      let groupLocationCount = 0;
+      if (countsByType) {
+        for (const v of filter.values) {
+          groupLocationCount += countsByType[v.id] || 0;
+        }
+      }
       guideGroups.push({
         type: filter.group,
         label: t(filter.group),
@@ -137,6 +152,7 @@ export function createGuidesPage(appConfig: AppConfig) {
         }),
         icon: null,
         groups: [],
+        locationCount: groupLocationCount,
       });
     }
 
@@ -181,10 +197,16 @@ export function createGuidesPage(appConfig: AppConfig) {
           <PageTitle
             title={t("guides.pageTitle", { vars: { title: appConfig.title } })}
           />
-          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground px-4 py-2">
+          <nav
+            aria-label="Breadcrumb"
+            className="text-xs text-muted-foreground px-4 py-2"
+          >
             <ol className="flex items-center gap-1">
               <li>
-                <Link href={localizePath("/", locale)} className="hover:text-foreground transition-colors">
+                <Link
+                  href={localizePath("/", locale)}
+                  className="hover:text-foreground transition-colors"
+                >
                   Home
                 </Link>
               </li>
@@ -218,12 +240,12 @@ export function createGuidesPage(appConfig: AppConfig) {
                       )}
                       className="block"
                     >
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 text-left">
                         {guide.icon && (
                           <img
                             alt=""
                             role="presentation"
-                            className="shrink-0 object-none w-[64px] h-[64px]"
+                            className="shrink-0 object-none w-[64px] h-[64px] mt-0.5"
                             src={getIconsUrl(
                               appConfig.name,
                               guide.icon.url,
@@ -237,7 +259,16 @@ export function createGuidesPage(appConfig: AppConfig) {
                             }}
                           />
                         )}
-                        <h2 className="text-lg font-semibold">{guide.label}</h2>
+                        <div>
+                          <h2 className="text-lg font-semibold">
+                            {guide.label}
+                          </h2>
+                          {guide.locationCount > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              {guide.locationCount.toLocaleString()} locations
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground text-left">
                         {guide.description}

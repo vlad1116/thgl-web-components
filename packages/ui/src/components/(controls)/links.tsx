@@ -20,19 +20,24 @@ import { useI18n } from "../(providers)";
 import { ScriptLoader } from "../(ads)";
 import ConsentLink from "../(ads)/consent-link";
 
-const HOME_INTERNAL_LINK = {
-  href: "/",
-  title: "home.title",
-  description: "home.description",
-  iconName: "House",
-} as const;
-
-const DEFAULT_INTERNAL_LINKS = [
+const STANDARD_NAV_LINKS = [
   {
     href: "/",
-    title: "defaultMap.title",
+    title: "home.title",
+    description: "home.description",
+    iconName: "House",
+  },
+  {
+    href: "/maps",
+    title: "interactive_map",
     description: "defaultMap.description",
     iconName: "Map",
+  },
+  {
+    href: "/guides",
+    title: "config.internalLinks.guides.title",
+    description: "guides.nav.description",
+    iconName: "BookOpen",
   },
 ] as const;
 
@@ -49,9 +54,16 @@ export function Links({
   const { locale, t } = useI18n();
 
   const internalLinks = useMemo(() => {
-    const list = appConfig.internalLinks ?? DEFAULT_INTERNAL_LINKS;
-    const hasHome = list.some((l) => l.href === HOME_INTERNAL_LINK.href);
-    return hasHome ? list : [HOME_INTERNAL_LINK, ...list];
+    // Standard nav: Home, Maps, Guides
+    // Then app-specific links (non-map, non-guide from internalLinks)
+    const appLinks =
+      appConfig.internalLinks?.filter(
+        (l) =>
+          l.href !== "/" &&
+          !l.href.startsWith("/maps") &&
+          !l.href.startsWith("/guides"),
+      ) ?? [];
+    return [...STANDARD_NAV_LINKS, ...appLinks];
   }, [appConfig.internalLinks]);
 
   const links = internalLinks.map((l) => {

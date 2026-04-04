@@ -1252,17 +1252,22 @@ function MarkersContent({
 
         if (isStacked) {
           items.push(
-            ...s.cluster!.map((stackedSpawn) => ({
-              id: stackedSpawn.id,
-              termId: (stackedSpawn.name ?? stackedSpawn.id ?? stackedSpawn.type).replace(/my_\d+_/, ""),
-              description: stackedSpawn.description,
-              type: stackedSpawn.type,
-              group: filter?.group,
-              isPrivate: stackedSpawn.isPrivate,
-              isLive: Boolean(stackedSpawn.address),
-              data: stackedSpawn.data,
-              p: stackedSpawn.p,
-            }))
+            ...s.cluster!.map((stackedSpawn) => {
+              const stackedFilter = stackedSpawn.type !== s.type
+                ? filters.find((f) => f.values.some((v) => v.id === stackedSpawn.type))
+                : filter;
+              return {
+                id: stackedSpawn.id,
+                termId: (stackedSpawn.name ?? stackedSpawn.id ?? stackedSpawn.type).replace(/my_\d+_/, ""),
+                description: stackedSpawn.description,
+                type: stackedSpawn.type,
+                group: stackedFilter?.group,
+                isPrivate: stackedSpawn.isPrivate,
+                isLive: Boolean(stackedSpawn.address),
+                data: stackedSpawn.data,
+                p: stackedSpawn.p,
+              };
+            })
           );
         }
 

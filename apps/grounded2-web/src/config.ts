@@ -16,12 +16,6 @@ export const APP_CONFIG: AppConfig = {
       bgImage: getPreviewImageUrl("grounded2", "brookhollow-park"),
       linkText: "Explore the Brookhollow Park Map",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
   ],
   promoLinks: [],
   externalLinks: [],

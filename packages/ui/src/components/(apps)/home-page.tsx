@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { HeaderOffset, PageTitle } from "../(header)";
 import { ContentLayout } from "../(ads)";
 import { NavGrid, ReleaseNotes, Subtitle } from "../(content)";
@@ -7,10 +8,12 @@ import {
   AppConfig,
   DEFAULT_LOCALE,
   fetchVersion,
+  getIconsUrl,
   getMetadataAlternates,
   getPreviewImageUrl,
   getT,
   getUpdateMessages,
+  type IconSprite,
   localizePath,
 } from "@repo/lib";
 import type { NavCardProps } from "../(content)";
@@ -108,9 +111,13 @@ export function createHomePage(appConfig: AppConfig) {
           .replace(/^\/map-tiles\//, "")
           .replace(/\/\{z\}.*$/, "")
           .replace(/-[0-9a-f]{16,}$/, "");
+        const mapLocCount = version.counts?.byMap?.[map] || 0;
+        const desc = mapLocCount > 0
+          ? `${mapLocCount.toLocaleString()} locations`
+          : `Navigate ${mapName} with our interactive maps.`;
         return {
           title: `${mapName} Map`,
-          description: `Navigate ${mapName} with our interactive maps.`,
+          description: desc,
           href: `/maps/${encodeURIComponent(mapName)}`,
           iconName: "Map" as NavCardProps["iconName"],
           bgImage: tileBase ? getPreviewImageUrl(appConfig.name, tileBase) : undefined,
@@ -121,20 +128,42 @@ export function createHomePage(appConfig: AppConfig) {
     const hasCompanionApp =
       appConfig.appUrl && appConfig.appUrl.includes("companion-app");
 
-    // Split internalLinks into map cards and feature cards
-    const internalMapCards =
-      appConfig.internalLinks?.filter((link) =>
-        link.href?.startsWith("/maps/"),
-      ) ?? [];
+    // Split internalLinks into map cards, guide links, and other feature cards
+    // Enrich map cards with location counts from version.counts.byMap
+    const mapNameToKey = new Map<string, string>();
+    for (const tileKey of Object.keys(version.data.tiles)) {
+      mapNameToKey.set(t(tileKey), tileKey);
+    }
+    const internalMapCards: NavCardProps[] =
+      appConfig.internalLinks
+        ?.filter((link) => link.href?.startsWith("/maps/"))
+        .map((link) => {
+          const mapDisplayName = decodeURIComponent(
+            link.href.replace("/maps/", ""),
+          );
+          const tileKey = mapNameToKey.get(mapDisplayName);
+          const locCount =
+            tileKey && version.counts?.byMap?.[tileKey];
+          return {
+            ...link,
+            description: locCount
+              ? `${locCount.toLocaleString()} locations`
+              : link.description,
+          };
+        }) ?? [];
+    // Feature cards: non-map, non-guide links (e.g. "Weapons", "Deviant Locations")
     const featureCards =
       appConfig.internalLinks?.filter(
-        (link) => !link.href?.startsWith("/maps/"),
+        (link) =>
+          !link.href?.startsWith("/maps/") &&
+          !link.href?.startsWith("/guides"),
       ) ?? [];
 
     const allMapCards = [...internalMapCards, ...mapCards];
     const totalMapCount = allMapCards.length;
 
-    // Count total location types across all filter groups
+    // Total locations: use counts from version if available, otherwise count filter types
+    const totalLocations = version.counts?.total;
     const totalLocationTypes = version.data.filters.reduce(
       (sum, group) => sum + group.values.length,
       0,
@@ -143,6 +172,71 @@ export function createHomePage(appConfig: AppConfig) {
     const lastUpdated = version.createdAt
       ? new Date(version.createdAt)
       : null;
+
+    // Build highlighted filter types for the home page.
+    // Priority: topFilters config > first N filter values from each group
+    const MAX_HIGHLIGHTED_FILTERS = 8;
+    type HighlightedFilter = {
+      id: string;
+      name: string;
+      group: string;
+      locationCount: number;
+      href: string;
+      icon?: IconSprite;
+    };
+    const highlightedFilters: HighlightedFilter[] = [];
+
+    // Build lookup: filter value ID → { groupName, icon }
+    const filterLookup = new Map<
+      string,
+      { groupName: string; icon?: IconSprite }
+    >();
+    for (const group of version.data.filters) {
+      for (const value of group.values) {
+        filterLookup.set(value.id, {
+          groupName: group.group,
+          icon:
+            typeof value.icon === "object"
+              ? (value.icon as IconSprite)
+              : undefined,
+        });
+      }
+    }
+
+    if (appConfig.topFilters && appConfig.topFilters.length > 0) {
+      // Use explicitly configured top filters
+      for (const filterId of appConfig.topFilters) {
+        if (highlightedFilters.length >= MAX_HIGHLIGHTED_FILTERS) break;
+        const info = filterLookup.get(filterId);
+        if (!info) continue;
+        const name = t(filterId);
+        highlightedFilters.push({
+          id: filterId,
+          name,
+          group: t(info.groupName),
+          locationCount: version.counts?.byType?.[filterId] || 0,
+          href: `/guides/${encodeURIComponent(name)}`,
+          icon: info.icon,
+        });
+      }
+    } else {
+      // Auto-pick: take first value from each group
+      for (const group of version.data.filters) {
+        if (highlightedFilters.length >= MAX_HIGHLIGHTED_FILTERS) break;
+        const first = group.values[0];
+        if (!first) continue;
+        const info = filterLookup.get(first.id);
+        const name = t(first.id);
+        highlightedFilters.push({
+          id: first.id,
+          name,
+          group: t(group.group),
+          locationCount: version.counts?.byType?.[first.id] || 0,
+          href: `/guides/${encodeURIComponent(name)}`,
+          icon: info?.icon,
+        });
+      }
+    }
 
     return (
       <>
@@ -170,12 +264,19 @@ export function createHomePage(appConfig: AppConfig) {
             id={appConfig.name}
             header={
               <section className="space-y-6">
-                {/* Title */}
-                <Subtitle
-                  title={t("home.sectionTitle", {
-                    vars: { title: appConfig.title },
-                  })}
-                />
+                {/* Title + intro */}
+                <div className="space-y-2">
+                  <Subtitle
+                    title={t("home.sectionTitle", {
+                      vars: { title: appConfig.title },
+                    })}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t("home.intro", {
+                      vars: { title: appConfig.title, features, keywords },
+                    })}
+                  </p>
+                </div>
 
                 {/* Stats bar */}
                 <div className="flex items-center justify-center gap-2 sm:gap-4 text-muted-foreground flex-wrap">
@@ -189,28 +290,17 @@ export function createHomePage(appConfig: AppConfig) {
                       </div>
                     </div>
                   )}
-                  {totalLocationTypes > 0 && (
+                  {(totalLocations || totalLocationTypes > 0) && (
                     <>
                       <div className="h-8 w-px bg-muted" />
                       <div className="text-center px-3 py-1">
                         <div className="text-lg font-semibold text-foreground tabular-nums">
-                          {totalLocationTypes}
+                          {totalLocations
+                            ? totalLocations.toLocaleString()
+                            : totalLocationTypes}
                         </div>
                         <div className="text-xs uppercase tracking-wider">
-                          Location Types
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  {featureCards.length > 0 && (
-                    <>
-                      <div className="h-8 w-px bg-muted" />
-                      <div className="text-center px-3 py-1">
-                        <div className="text-lg font-semibold text-foreground tabular-nums">
-                          {featureCards.length}
-                        </div>
-                        <div className="text-xs uppercase tracking-wider">
-                          {featureCards.length === 1 ? "Guide" : "Guides"}
+                          {totalLocations ? "Locations" : "Location Types"}
                         </div>
                       </div>
                     </>
@@ -234,7 +324,7 @@ export function createHomePage(appConfig: AppConfig) {
                   )}
                 </div>
 
-                {/* Companion app CTA */}
+                {/* 1. Companion app CTA */}
                 {hasCompanionApp && (
                   <a
                     href={appConfig.appUrl!}
@@ -260,16 +350,85 @@ export function createHomePage(appConfig: AppConfig) {
                   </a>
                 )}
 
-                {/* Map cards — show up to MAX_HOME_MAP_CARDS, link to /maps for more */}
-                {allMapCards.length > 0 && (
-                  <NavGrid
-                    cards={allMapCards.slice(0, MAX_HOME_MAP_CARDS)}
-                  />
-                )}
+                {/* 2. Map cards */}
+                {allMapCards.length > 0 && (() => {
+                  const visible = allMapCards.slice(0, MAX_HOME_MAP_CARDS);
+                  const withImage = visible.filter((c) => c.bgImage);
+                  const withoutImage = visible.filter((c) => !c.bgImage);
+                  return (
+                    <div className="space-y-2">
+                      {withImage.length > 0 && (
+                        <div className={`grid gap-4 ${
+                          withImage.length === 1
+                            ? "grid-cols-1 max-w-md mx-auto"
+                            : withImage.length === 2
+                              ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                        }`}>
+                          {withImage.map((card) => (
+                            <Link
+                              key={card.href ?? card.title}
+                              href={localizePath(card.href ?? "/", locale)}
+                              className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
+                            >
+                              <div className="aspect-video bg-muted/30 relative">
+                                <Image
+                                  src={card.bgImage!}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                />
+                              </div>
+                              <div className="px-3 py-2 flex items-baseline justify-between gap-2">
+                                <span className="font-medium text-sm truncate">
+                                  {t(card.title)}
+                                </span>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {card.description && /^\d/.test(card.description) && (
+                                    <>{card.description} · </>
+                                  )}
+                                  <span className="group-hover:text-primary transition-colors">
+                                    Explore →
+                                  </span>
+                                </span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                      {withoutImage.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {withoutImage.map((card) => (
+                            <Link
+                              key={card.href ?? card.title}
+                              href={localizePath(card.href ?? "/", locale)}
+                              className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
+                            >
+                              <div className="px-3 py-2 flex items-baseline justify-between gap-2">
+                                <span className="font-medium text-sm truncate">
+                                  {t(card.title)}
+                                </span>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {card.description && /^\d/.test(card.description) && (
+                                    <>{card.description} · </>
+                                  )}
+                                  <span className="group-hover:text-primary transition-colors">
+                                    Explore →
+                                  </span>
+                                </span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {allMapCards.length > MAX_HOME_MAP_CARDS && (
                   <Link
                     href={localizePath("/maps", locale)}
-                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="inline-flex items-center gap-2 rounded-md border border-muted/50 px-4 py-2 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                   >
                     {t("maps.viewAll", {
                       vars: { count: String(allMapCards.length) },
@@ -279,8 +438,61 @@ export function createHomePage(appConfig: AppConfig) {
                   </Link>
                 )}
 
-                {/* Feature/guide cards */}
+                {/* 3. Feature cards (non-map, non-guide internal links) */}
                 {featureCards.length > 0 && <NavGrid cards={featureCards} />}
+
+                {/* 4. Highlighted filters / guides */}
+                {highlightedFilters.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {highlightedFilters.map((filter) => (
+                        <Link
+                          key={filter.id}
+                          href={localizePath(filter.href, locale)}
+                          className="flex items-center gap-2.5 rounded-md border border-muted/50 px-2.5 py-2 text-left hover:border-primary/50 transition-colors group"
+                        >
+                          {filter.icon && (
+                            <img
+                              alt=""
+                              role="presentation"
+                              className="shrink-0 object-none"
+                              src={getIconsUrl(
+                                appConfig.name,
+                                filter.icon.url,
+                                version.more.icons,
+                              )}
+                              width={filter.icon.width}
+                              height={filter.icon.height}
+                              style={{
+                                objectPosition: `-${filter.icon.x}px -${filter.icon.y}px`,
+                                width: filter.icon.width,
+                                height: filter.icon.height,
+                                zoom: 24 / filter.icon.width,
+                              }}
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium truncate group-hover:text-primary transition-colors">
+                              {filter.name}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {filter.group}
+                              {filter.locationCount > 0 &&
+                                ` · ${filter.locationCount.toLocaleString()}`}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    <Link
+                      href={localizePath("/guides", locale)}
+                      className="inline-flex items-center gap-2 rounded-md border border-muted/50 px-4 py-2 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                    >
+                      View all guides →
+                    </Link>
+                  </div>
+                )}
+
               </section>
             }
             content={<ReleaseNotes updateMessages={updateMessages} />}

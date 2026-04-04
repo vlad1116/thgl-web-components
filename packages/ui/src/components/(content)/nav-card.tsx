@@ -64,8 +64,13 @@ export function NavCard({
           ) : null}
         </CardHeader>
 
-        <CardFooter className="px-2 py-1 text-sm relative z-10 text-muted-foreground">
-          {t(linkText)} →
+        <CardFooter className="px-2 py-1 relative z-10 text-muted-foreground flex justify-between items-center gap-2">
+          <span className="text-sm">{t(linkText)} →</span>
+          {bgImage && description && (
+            <span className="text-[11px] opacity-70 shrink-0">
+              {t(description)}
+            </span>
+          )}
         </CardFooter>
       </Card>
     </Link>

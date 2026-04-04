@@ -34,30 +34,6 @@ export const APP_CONFIG: AppConfig = {
       bgImage: getPreviewImageUrl("starsand-island", "MineCave_MainLand"),
       linkText: "Explore the Moonlit Forest Map",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Treasure%20Chest",
-      title: "Treasure Chests",
-      linkText: "Find all Treasure Chests",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Campsite",
-      title: "Campsites",
-      linkText: "Discover all Campsites",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Gravecrystal",
-      title: "Gravecrystals",
-      linkText: "Locate all Gravecrystals",
-      iconName: "BookOpen",
-    },
   ],
   promoLinks: [],
   externalLinks: [],
@@ -70,4 +46,5 @@ export const APP_CONFIG: AppConfig = {
     "Resources",
     "Moonlit Forest",
   ],
+  topFilters: ["chest_island", "campsite", "elf_stone"],
 };

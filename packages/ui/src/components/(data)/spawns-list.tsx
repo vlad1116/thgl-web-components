@@ -22,37 +22,52 @@ export function SpawnsList({
   const isDiscoveredNode = useSettingsStore((state) => state.isDiscoveredNode);
   const setDiscoverNode = useSettingsStore((state) => state.setDiscoverNode);
 
-  // Group spawns by display name (original behavior)
-  const groupByName = spawns.reduce(
-    (acc, spawn) => {
+  // Build sections of spawn entries, grouped by type and optionally by group label.
+  // Groups by type ID (not display name) so different filter types with the same
+  // translated name stay separate (e.g. common "sifudog" vs predator "predator_sifudog").
+  type Entry = { name: string; spawns: SimpleSpawn[]; groupLabel: string | null };
+  type Section = { label: string | null; entries: Entry[] };
+
+  const sections: Section[] = (() => {
+    // Group spawns by display name, but use a composite key of
+    // "type:name" so same-named spawns from different filter types
+    // stay separate (e.g. common vs predator "Dogen").
+    const useTypeKey = Boolean(typeGroupLabels);
+    const grouped: Record<string, SimpleSpawn[]> = {};
+    for (const spawn of spawns) {
       const name = t(spawn.id, { fallback: spawn.type });
-      if (!acc[name]) {
-        acc[name] = [];
-      }
-      acc[name].push(spawn);
-      return acc;
-    },
-    {} as Record<string, SimpleSpawn[]>,
-  );
-
-  // If typeGroupLabels provided, organize entries into sections by group
-  let sections: { label: string | null; entries: [string, SimpleSpawn[]][] }[];
-
-  if (typeGroupLabels) {
-    const groupMap = new Map<string, [string, SimpleSpawn[]][]>();
-    for (const [name, groupSpawns] of Object.entries(groupByName)) {
-      const groupLabel = typeGroupLabels[groupSpawns[0]?.type || ""] ?? null;
-      const key = groupLabel ?? "__ungrouped";
-      if (!groupMap.has(key)) groupMap.set(key, []);
-      groupMap.get(key)!.push([name, groupSpawns]);
+      const key = useTypeKey ? `${spawn.type || ""}::${name}` : name;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(spawn);
     }
-    sections = [...groupMap.entries()].map(([key, entries]) => ({
-      label: key === "__ungrouped" ? null : key,
-      entries,
-    }));
-  } else {
-    sections = [{ label: null, entries: Object.entries(groupByName) }];
-  }
+
+    if (typeGroupLabels) {
+      // Organize entries into sections by group label
+      const groupMap = new Map<string, Entry[]>();
+      for (const [, groupSpawns] of Object.entries(grouped)) {
+        const name = t(groupSpawns[0].id, { fallback: groupSpawns[0].type });
+        const typeId = groupSpawns[0].type || "";
+        const groupLabel = typeGroupLabels[typeId] ?? null;
+        const key = groupLabel ?? "__ungrouped";
+        if (!groupMap.has(key)) groupMap.set(key, []);
+        groupMap.get(key)!.push({ name, spawns: groupSpawns, groupLabel });
+      }
+      return [...groupMap.entries()].map(([key, entries]) => ({
+        label: key === "__ungrouped" ? null : key,
+        entries,
+      }));
+    }
+
+    // No group labels — flat list
+    return [{
+      label: null,
+      entries: Object.entries(grouped).map(([, s]) => ({
+        name: t(s[0].id, { fallback: s[0].type }),
+        spawns: s,
+        groupLabel: null,
+      })),
+    }];
+  })();
 
   const markDiscoveredLabel = t("guide.spawns.markDiscovered", { fallback: "Mark as Discovered" });
   const resetProgressLabel = t("guide.spawns.resetProgress", { fallback: "Reset Progress" });
@@ -67,7 +82,8 @@ export function SpawnsList({
               {section.label}
             </h4>
           )}
-          {section.entries.map(([name, groupSpawns]) => {
+          {section.entries.map((entry) => {
+            const { name, spawns: groupSpawns } = entry;
             const progress = groupSpawns.filter((spawn) =>
               isDiscoveredNode(getNodeId(spawn)),
             ).length;

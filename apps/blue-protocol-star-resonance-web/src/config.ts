@@ -161,32 +161,9 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Browse the Lore Dictionary",
       iconName: "BookOpen",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Boss",
-      title: "Bosses",
-      linkText: "Discover all Bosses",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides//Camera%20Point",
-      title: "Camera Points",
-      linkText: "Discover all Camera Points",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Wind%20Barrier",
-      title: "Wind Barrier",
-      linkText: "Discover all Wind Barriers",
-      iconName: "BookOpen",
-    },
   ],
   promoLinks: [],
   externalLinks: [],
   keywords: ["BPSR", "Bosses", "Guides", "Maps", "Rare Spawns", "Engram Hubs"],
+  topFilters: ["monster_ignisor", "camera_point", "wind_barrier"],
 };

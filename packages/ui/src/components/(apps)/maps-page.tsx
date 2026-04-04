@@ -78,6 +78,8 @@ export function createMapsPage(appConfig: AppConfig) {
 
     const mapNames = Object.keys(version.data.tiles);
 
+    const countsByMap = version.counts?.byMap;
+
     const maps = mapNames.map((map) => {
       const mapName = t(map);
       const enName = translate(enDict, map);
@@ -90,6 +92,7 @@ export function createMapsPage(appConfig: AppConfig) {
         bgImage: tileBase
           ? getPreviewImageUrl(appConfig.name, tileBase)
           : undefined,
+        locationCount: countsByMap?.[map] ?? 0,
       };
     });
 
@@ -170,40 +173,72 @@ export function createMapsPage(appConfig: AppConfig) {
                 </p>
               </>
             }
-            content={
-              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {maps.map((map) => (
-                  <li key={map.key}>
-                    <Link
-                      href={localizePath(map.href, locale)}
-                      className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
-                    >
-                      {map.bgImage ? (
-                        <div className="aspect-video bg-muted/30 relative">
-                          <Image
-                            src={map.bgImage}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video bg-muted/30" />
-                      )}
-                      <div className="px-3 py-2 flex items-center justify-between">
-                        <span className="font-medium text-sm truncate">
-                          {map.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors shrink-0 ml-2">
+            content={(() => {
+              const mapsWithImage = maps.filter((m) => m.bgImage);
+              const mapsWithoutImage = maps.filter((m) => !m.bgImage);
+              const totalLocations = version.counts?.total;
+
+              const renderMapCard = (map: (typeof maps)[number]) => (
+                <li key={map.key}>
+                  <Link
+                    href={localizePath(map.href, locale)}
+                    className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
+                  >
+                    {map.bgImage ? (
+                      <div className="aspect-video bg-muted/30 relative">
+                        <Image
+                          src={map.bgImage}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      </div>
+                    ) : null}
+                    <div className="px-3 py-2 flex items-baseline justify-between gap-2">
+                      <span className="font-medium text-sm truncate">
+                        {map.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {map.locationCount > 0 && (
+                          <>{map.locationCount.toLocaleString()} locations · </>
+                        )}
+                        <span className="group-hover:text-primary transition-colors">
                           Explore →
                         </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            }
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              );
+
+              return (
+                <div className="space-y-6 mt-4">
+                  {totalLocations && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      {totalLocations.toLocaleString()} total locations across{" "}
+                      {maps.length} maps
+                    </p>
+                  )}
+                  {mapsWithImage.length > 0 && (
+                    <ul className={`grid gap-4 ${
+                      mapsWithImage.length === 1
+                        ? "grid-cols-1 max-w-md mx-auto"
+                        : mapsWithImage.length === 2
+                          ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                    }`}>
+                      {mapsWithImage.map(renderMapCard)}
+                    </ul>
+                  )}
+                  {mapsWithoutImage.length > 0 && (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {mapsWithoutImage.map(renderMapCard)}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
           />
         </HeaderOffset>
       </>

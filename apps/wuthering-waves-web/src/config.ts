@@ -84,24 +84,6 @@ export const APP_CONFIG: AppConfig = {
       bgImage: getPreviewImageUrl("wuthering-waves", "WP_JK_Underground"),
       linkText: "Open the Vault Underground Map",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Blue%20Tidal%20Heritage",
-      title: "Blue Tidal Heritage",
-      linkText: "Discover all Blue Tidal Heritage",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Premium%20Supply%20Chest",
-      title: "Premium Supply Chest",
-      linkText: "Discover all Premium Supply Chest",
-      iconName: "BookOpen",
-    },
   ],
   externalLinks: [],
   keywords: [
@@ -110,4 +92,5 @@ export const APP_CONFIG: AppConfig = {
     "Tidal Heritage",
     "Collectibles",
   ],
+  topFilters: ["Treasure005", "branch3.0_693_Treasure_3_4"],
 };

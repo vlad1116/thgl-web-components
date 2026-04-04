@@ -92,20 +92,9 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Browse All Quests",
       iconName: "BookOpen",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Geniemon%20(Pets)",
-      title: "Geniemon (Pets)",
-      linkText: "Discover all Geniemon (Pets)",
-      iconName: "BookOpen",
-    },
   ],
   promoLinks: [],
   externalLinks: [],
   keywords: ["DNA", "Geniemon", "Chests", "Collectibles", "Readables"],
+  topFilters: ["geniemon_zisha"],
 };

@@ -6,6 +6,7 @@
     "home.title": "Home",
     "home.intro": "Explore {{features}} in {{title}} with {{keywords}}, plus more locations brought to you by The Hidden Gaming Lair!",
     "home.description": "Return to the home page.",
+    "guides.nav.description": "Location guides, spawn points, and discovery tracker.",
     "guides.pageTitle": "Guides – {{title}}",
     "guides.intro": "Browse all location-based guides for {{title}}, including {{features}}, and more.",
     "guides.title": "Explore Location-Based Guides",

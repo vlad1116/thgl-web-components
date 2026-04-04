@@ -84,30 +84,6 @@ export const APP_CONFIG: AppConfig = {
       iconName: "Axe",
       linkText: "View Weapons",
     },
-    {
-      href: "/guides/Mystical%20Crate",
-      title: "Mystical Crate Guide",
-      iconName: "BookOpen",
-      linkText: "Discover all Mystical Crates",
-    },
-    {
-      href: "/guides/Viewpoint",
-      title: "Viewpoint Guide",
-      iconName: "BookOpen",
-      linkText: "Discover all Viewpoint Locations",
-    },
-    {
-      href: "/guides/Hoard%20Crate",
-      title: "Hoard Crate Guide",
-      iconName: "BookOpen",
-      linkText: "Discover all Hoard Crate Locations",
-    },
-    {
-      href: "/guides",
-      title: "All Guides",
-      iconName: "BookOpen",
-      linkText: "Discover all Locations",
-    },
   ],
   markerOptions: {
     radius: 6,
@@ -120,4 +96,5 @@ export const APP_CONFIG: AppConfig = {
     coordinateCopyFormat: "({x},{y})",
   },
   keywords: ["Ores", "Resources", "Riddles", "Deviants"],
+  topFilters: ["mystical_crate", "landscape_viewpoint_camera", "hoard_loot_crate"],
 };

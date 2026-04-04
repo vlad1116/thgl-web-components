@@ -86,30 +86,6 @@ export const APP_CONFIG: AppConfig = {
       iconName: "Server",
       bgImage: "/private-servers-tile.webp",
     },
-    {
-      href: "/guides",
-      title: "config.internalLinks.guides.title",
-      linkText: "config.internalLinks.guides.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Landsraad%20House%20Representatives",
-      title: "config.internalLinks.landsraad.title",
-      linkText: "config.internalLinks.landsraad.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Deserters",
-      title: "config.internalLinks.deserters.title",
-      linkText: "config.internalLinks.deserters.linkText",
-      iconName: "BookOpen",
-    },
-    {
-      href: "/guides/Scavengers",
-      title: "config.internalLinks.scavengers.title",
-      linkText: "config.internalLinks.scavengers.linkText",
-      iconName: "BookOpen",
-    },
   ],
   // promoLinks: [
   //   {
@@ -137,4 +113,5 @@ export const APP_CONFIG: AppConfig = {
     "config.keywords.resources",
     "config.keywords.trainers",
   ],
+  topFilters: ["house_representativeswydras"],
 };
