@@ -81,7 +81,7 @@ export function createUserStore(
                 if (center) {
                   viewByMap[mapName].center = center;
                 }
-                if (zoom && !viewByMap[mapName].zoom) {
+                if (zoom) {
                   viewByMap[mapName].zoom = zoom;
                 }
                 return { mapName, viewByMap };

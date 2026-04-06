@@ -250,6 +250,9 @@ export function InteractiveMap({
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
+      // Save current view immediately on cleanup (navigation, unmount)
+      const c = webmap.getCenter();
+      setViewByMap(mapName, [c.lat, c.lng], webmap.getZoom());
       setMap(null);
       webmap.destroy();
       if (
