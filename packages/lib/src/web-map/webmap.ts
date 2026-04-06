@@ -135,6 +135,9 @@ export class WebMap {
   private initialZoom: number;
   private initialBearing: number;
   private initialPitch: number;
+  // Default view from tile config (always valid, used by resetView)
+  private defaultCenter?: LatLng;
+  private defaultZoom?: number;
 
   constructor(opts: WebMapOptions) {
     this.canvas = opts.canvas;
@@ -897,9 +900,14 @@ export class WebMap {
     this.cachedPitch = this.pitch;
     this.cachedCosP = Math.max(1e-4, Math.cos(this.pitch));
   }
+  /** Set the default view from tile config (fitBounds center). Used by resetView. */
+  setDefaultView(center: LatLng, zoom: number) {
+    this.defaultCenter = center;
+    this.defaultZoom = zoom;
+  }
   resetView() {
-    this.center = [...this.initialCenter] as LatLng;
-    this.setZoom(this.initialZoom);
+    this.center = [...(this.defaultCenter ?? this.initialCenter)] as LatLng;
+    this.setZoom(this.defaultZoom ?? this.initialZoom);
     this.setBearing(this.initialBearing);
     this.setPitch(this.initialPitch);
   }

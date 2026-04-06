@@ -167,6 +167,18 @@ export function InteractiveMap({
     });
     mapRefsRef.current.webmap = webmap;
 
+    // Set default view from tile config so resetView always goes to a valid position
+    if (mapTileOptions.fitBounds) {
+      const [[lat1, lng1], [lat2, lng2]] = mapTileOptions.fitBounds;
+      const defaultCenter: [number, number] = [(lat1 + lat2) / 2, (lng1 + lng2) / 2];
+      const containerWidth = containerRef.current.clientWidth || 300;
+      const containerHeight = containerRef.current.clientHeight || 200;
+      const defaultZoom = calculateFitZoom(mapTileOptions.fitBounds, containerWidth, containerHeight);
+      webmap.setDefaultView(defaultCenter, defaultZoom);
+    } else if (mapTileOptions.view?.center) {
+      webmap.setDefaultView(mapTileOptions.view.center, mapTileOptions.view.zoom ?? minZoom);
+    }
+
     // Create and add marker layers
     const markerLayer = new IconMarkerLayer();
     markerLayer.setColorBlindMode(colorBlindMode);
@@ -222,29 +234,9 @@ export function InteractiveMap({
       });
     });
 
-    // Save view on move (debounced) and snap back if fully out of bounds
+    // Save view on move (debounced)
     let timeoutId: NodeJS.Timeout | null = null;
-    let isSnapping = false;
-    const tileBounds = mapTileOptions.fitBounds;
     webmap.on("moveend", () => {
-      if (isSnapping) return;
-
-      // Check if viewport has any overlap with map bounds
-      if (tileBounds) {
-        const view = webmap.getViewBounds();
-        const mapMin: [number, number] = [Math.min(tileBounds[0][0], tileBounds[1][0]), Math.min(tileBounds[0][1], tileBounds[1][1])];
-        const mapMax: [number, number] = [Math.max(tileBounds[0][0], tileBounds[1][0]), Math.max(tileBounds[0][1], tileBounds[1][1])];
-        const noOverlap =
-          view.min[0] > mapMax[0] || view.max[0] < mapMin[0] ||
-          view.min[1] > mapMax[1] || view.max[1] < mapMin[1];
-        if (noOverlap) {
-          isSnapping = true;
-          webmap.panInsideBounds(tileBounds);
-          setTimeout(() => { isSnapping = false; }, 1000);
-          return;
-        }
-      }
-
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
