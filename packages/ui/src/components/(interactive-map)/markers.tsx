@@ -978,6 +978,7 @@ function MarkersContent({
       );
     };
 
+
     // Pre-process spawns: split mixed-type clusters into per-type sub-spawns
     // arranged in a circle. Same-type clusters are left as-is.
     const processedSpawns: Spawn[] = [];
@@ -1037,7 +1038,9 @@ function MarkersContent({
         groupIdx++;
       }
     }
+
     processedSpawns.forEach(handleSpawn);
+
 
     // Process shared private spawns
     const sharedPrivateSpawns = sharedMyFilters.flatMap<Spawns[number]>(
@@ -1059,6 +1062,7 @@ function MarkersContent({
       }
     );
     sharedPrivateSpawns.forEach(handleSpawn);
+
 
 
     // Height visualization without player: absolute or relative to selected marker
@@ -1111,38 +1115,56 @@ function MarkersContent({
       }
     }
 
+
     // Add center dots for spiderfied clusters.
     // Insert each dot right before the first spider marker of that cluster
     // so it renders behind the spider icons but not on top of unrelated markers.
+    // Uses a single O(n) pass instead of O(n²) splice operations.
     {
-      const seenCenters = new Map<string, number>(); // key → index of first spider marker
+      // First pass: find indices where center dots need to be inserted
+      const seenCenters = new Set<string>();
+      const insertAtIndex = new Set<number>(); // indices that need a dot before them
+      const dotDataByIndex = new Map<number, { key: string; inst: IconMarkerInstance }>();
       const len = markerInstances.length;
       for (let ci = 0; ci < len; ci++) {
         const inst = markerInstances[ci];
         if (!inst.spiderOffsetX && !inst.spiderOffsetY) continue;
         const key = `${inst.latLng[0]}_${inst.latLng[1]}`;
         if (!seenCenters.has(key)) {
-          seenCenters.set(key, ci);
+          seenCenters.add(key);
+          insertAtIndex.add(ci);
+          dotDataByIndex.set(ci, { key, inst });
         }
       }
-      // Insert in reverse order so indices stay valid
-      const entries = [...seenCenters.entries()].sort((a, b) => b[1] - a[1]);
-      for (const [key, insertIdx] of entries) {
-        const inst = markerInstances[insertIdx];
-        const centerId = `__center_${key}`;
-        newSpawnMap.set(centerId, { id: centerId, p: inst.latLng, type: "__center" } as Spawn);
-        markerInstances.splice(insertIdx, 0, {
-          id: centerId,
-          latLng: inst.latLng,
-          size: Math.max(inst.size * 0.25, 6 * dpr),
-          sheet: DEFAULT_CIRCLE_SHEET,
-          rect: { x: 0, y: 0, width: Math.round(64 * dpr), height: Math.round(64 * dpr) },
-          key: "__center",
-          keepUpright: true,
-          noHitTest: true,
-        });
+
+      if (insertAtIndex.size > 0) {
+        // Single-pass rebuild: copy elements and insert dots at marked positions
+        const newInstances: IconMarkerInstance[] = [];
+        newInstances.length = len + insertAtIndex.size; // pre-allocate
+        let wi = 0;
+        for (let ci = 0; ci < len; ci++) {
+          if (insertAtIndex.has(ci)) {
+            const { key, inst } = dotDataByIndex.get(ci)!;
+            const centerId = `__center_${key}`;
+            newSpawnMap.set(centerId, { id: centerId, p: inst.latLng, type: "__center" } as Spawn);
+            newInstances[wi++] = {
+              id: centerId,
+              latLng: inst.latLng,
+              size: Math.max(inst.size * 0.25, 6 * dpr),
+              sheet: DEFAULT_CIRCLE_SHEET,
+              rect: { x: 0, y: 0, width: Math.round(64 * dpr), height: Math.round(64 * dpr) },
+              key: "__center",
+              keepUpright: true,
+              noHitTest: true,
+            };
+          }
+          newInstances[wi++] = markerInstances[ci];
+        }
+        markerInstances.length = wi;
+        for (let k = 0; k < wi; k++) markerInstances[k] = newInstances[k];
       }
     }
+
 
     // Update spatial grid ref
     spatialGridRef.current = newSpatialGrid;
@@ -1176,6 +1198,7 @@ function MarkersContent({
       if (staticToRemove.length > 0) markerLayer.removeMany(staticToRemove);
       if (liveToRemove.length > 0) liveMarkerLayer?.removeMany(liveToRemove);
     }
+
 
     // Share icon sheets with live marker layer so live actors can use the same sprites
     if (liveMarkerLayer) {
@@ -1362,6 +1385,7 @@ function MarkersContent({
         setDiscoverNode(nodeId, !wasDiscovered);
       });
     }
+
 
     // Update spawn map ref
     spawnMapRef.current = newSpawnMap;
