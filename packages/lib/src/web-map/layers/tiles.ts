@@ -19,6 +19,7 @@ interface TileKey { z: number; x: number; y: number }
 interface TileTex { key: TileKey; tex: WebGLTexture; localX: number; localY: number }
 
 export class TileLayer implements Layer {
+  onTileLoad?: () => void;
   private gl?: WebGL2RenderingContext;
   private program: WebGLProgram | null = null;
   private vao: WebGLVertexArrayObject | null = null;
@@ -242,6 +243,7 @@ export class TileLayer implements Layer {
               if (tex) {
                 this.textures.push(tex);
                 this.networkErrorTiles.delete(keyStr);
+                this.onTileLoad?.();
               } else if (isNetworkError) {
                 // Network error (offline): retry after 5 seconds
                 this.networkErrorTiles.set(keyStr, performance.now() + 5000);

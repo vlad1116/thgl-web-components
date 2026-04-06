@@ -130,8 +130,6 @@ export class WebMap {
   // Movement tracking for moveend/zoomend events
   private wasMoving = false;
   private lastZoom: number = 0;
-  // Flag to force a render
-  private needsRender = false;
   // Initial view state for resetView()
   private initialCenter: LatLng;
   private initialZoom: number;
@@ -706,6 +704,10 @@ export class WebMap {
     this.layers.push({ layer, z });
     this.layers.sort((a, b) => a.z - b.z);
     layer.onAdd(this.gl);
+    // Wire up redraw notifications for tile layers (async tile loads)
+    if ("onTileLoad" in layer) {
+      (layer as any).onTileLoad = () => this.requestRedraw();
+    }
   }
 
   removeLayer(layer: Layer) {
@@ -941,9 +943,8 @@ export class WebMap {
    * Triggers a re-render on the next animation frame.
    */
   invalidateSize() {
-    // Force canvas size update on next frame
-    // The frame() method already handles canvas resize
-    this.needsRender = true;
+    // Force canvas size update and re-render on next frame
+    this._needsRedraw = true;
   }
 
   getRotationPivot() {
@@ -1189,6 +1190,13 @@ export class WebMap {
 
   // (removed) legacy unproject helper; use projection-specific unprojectAt instead
 
+  /** Signal that a redraw is needed (e.g. layer data changed) */
+  requestRedraw() {
+    this._needsRedraw = true;
+  }
+  private _needsRedraw = true;
+  private _lastViewHash = "";
+
   private frame() {
     if (this.contextLost) return;
     const gl = this.gl;
@@ -1199,8 +1207,8 @@ export class WebMap {
       this.canvas.width = w;
       this.canvas.height = h;
       gl.viewport(0, 0, w, h);
+      this._needsRedraw = true;
     }
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
     // animation step (zoom smoothing, pan smoothing, and anchor-preserving center)
     const now = performance.now();
@@ -1307,6 +1315,21 @@ export class WebMap {
       projection: this.projectionBound,
       viewMatrix: view,
     };
+
+    // Skip rendering if nothing changed: same view matrix, no layer updates,
+    // no active animations. Compare view matrix values directly (cheap).
+    const viewHash = `${view[0]},${view[1]},${view[3]},${view[4]},${view[6]},${view[7]},${w},${h}`;
+    // Check if any layer needs a rebuild (e.g. markers added/removed)
+    const layersDirty = this.layers.some(({ layer }) =>
+      "isDirty" in layer && (layer as any).isDirty(),
+    );
+    if (viewHash === this._lastViewHash && !this._needsRedraw && !layersDirty) {
+      return;
+    }
+    this._lastViewHash = viewHash;
+    this._needsRedraw = false;
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     // Provide a view matrix to layers via a GL uniform convention
     // Layers fetch it from WebMap via helper (they maintain their own programs)

@@ -34,6 +34,11 @@ export class DrawingLayer implements Layer {
   private vertexMarkers: Map<string, HTMLElement[]> = new Map();
   private activeShapeIds: Set<string> = new Set();
   private needsBufferUpdate = false;
+
+  /** Check if the layer has pending changes that need rendering */
+  isDirty(): boolean {
+    return this.needsBufferUpdate;
+  }
   // Reusable scratch arrays for buffer building (avoids per-frame allocations)
   private scratchVertexData: number[] = [];
   private scratchIndices: number[] = [];

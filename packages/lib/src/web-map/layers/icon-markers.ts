@@ -1020,6 +1020,11 @@ export class IconMarkerLayer implements Layer {
   private lastBufferVersion = -1;
   private lastBufferZoom = -999;
 
+  /** Check if the layer has pending changes that need rendering */
+  isDirty(): boolean {
+    return this.instancesVersion !== this.lastBufferVersion;
+  }
+
   private rebuildGroups() {
     this.cachedGroups.clear();
     for (let i = 0; i < this.instances.length; i++) {
@@ -1127,8 +1132,6 @@ export class IconMarkerLayer implements Layer {
         };
       }
 
-      const count = list.length;
-
       const offsets = this.preallocatedBuffers.offsets!;
       const sizes = this.preallocatedBuffers.sizes!;
       const uvs = this.preallocatedBuffers.uvs!;
@@ -1138,6 +1141,7 @@ export class IconMarkerLayer implements Layer {
       const angles = this.preallocatedBuffers.angles!;
       const keepUprights = this.preallocatedBuffers.keepUprights!;
       const tints = this.preallocatedBuffers.tints!;
+
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         const c = m as any;
@@ -1187,11 +1191,8 @@ export class IconMarkerLayer implements Layer {
         flags[i * 2 + 0] = normalizedHeight;
         flags[i * 2 + 1] = direction;
         counts[i] = m.isStacked ? 2 : 1;
-        // For upright icons, we need to counter-rotate in world space
-        // The view matrix will apply the map rotation, so we pre-rotate the opposite way
         const angle = m.rotation ?? 0;
         angles[i] = angle;
-        // Set keepUpright flag: 1 for billboard mode, 0 for player rotation
         keepUprights[i] = m.keepUpright !== false ? 1.0 : 0.0;
         // Parse tint color (hex string to RGBA), cached on the instance
         if (m.tint) {
@@ -1212,7 +1213,6 @@ export class IconMarkerLayer implements Layer {
           tints[i * 4 + 2] = rgba[2];
           tints[i * 4 + 3] = rgba[3];
         } else {
-          // No tint - use white with 0 alpha (no effect)
           tints[i * 4 + 0] = 1;
           tints[i * 4 + 1] = 1;
           tints[i * 4 + 2] = 1;
@@ -1223,6 +1223,9 @@ export class IconMarkerLayer implements Layer {
         so[i * 2 + 0] = m.spiderOffsetX ?? 0;
         so[i * 2 + 1] = m.spiderOffsetY ?? 0;
       }
+
+      const count = list.length;
+
       // Always upload offsets and sizes (change on zoom due to reprojection)
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);
       gl.bufferData(
@@ -1257,7 +1260,6 @@ export class IconMarkerLayer implements Layer {
       gl.bufferData(gl.ARRAY_BUFFER, this.preallocatedBuffers.spiderOffsets!.subarray(0, count * 2), gl.DYNAMIC_DRAW);
 
       // First pass: Draw height stems (render mode = 1)
-      // Reuse preallocated buffer and fill it
       const stemModes = this.preallocatedBuffers.stemModes!;
       stemModes.fill(1.0, 0, count);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.renderModes);
