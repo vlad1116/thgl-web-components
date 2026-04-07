@@ -708,9 +708,10 @@ export class WebMap {
     this.layers.sort((a, b) => a.z - b.z);
     layer.onAdd(this.gl);
     // Wire up redraw notifications for tile layers (async tile loads)
-    if ("onTileLoad" in layer) {
-      (layer as any).onTileLoad = () => this.requestRedraw();
-    }
+    // Wire up redraw callback for layers that support it (e.g. tile loads)
+    (layer as any).onTileLoad = () => this.requestRedraw();
+    // Force a redraw so the new layer renders immediately
+    this._needsRedraw = true;
   }
 
   removeLayer(layer: Layer) {
@@ -718,6 +719,7 @@ export class WebMap {
     if (i >= 0) {
       this.layers[i].layer.onRemove();
       this.layers.splice(i, 1);
+      this._needsRedraw = true;
     }
   }
 
