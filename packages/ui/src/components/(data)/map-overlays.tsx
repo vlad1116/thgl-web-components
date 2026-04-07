@@ -213,7 +213,8 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     [layerStates],
   );
 
-  // Sync ZoneOverlayLayers with map
+  // Sync ZoneOverlayLayers with map — layers stay added (palette = transparent
+  // when inactive) to avoid destroying/reloading the bitmap on every toggle.
   useEffect(() => {
     if (!map || !config || map.mapName !== config.mapName) return;
 
@@ -221,8 +222,6 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     const added = addedRef.current;
 
     for (const { layer, activeZones } of layerStates) {
-      const hasActive = activeZones.length > 0;
-
       if (!zoneLayers.has(layer.group)) {
         const zl = new ZoneOverlayLayer({
           url: `${basePath}/${layer.bitmap}`,
@@ -233,16 +232,14 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
 
       const zl = zoneLayers.get(layer.group)!;
 
-      if (hasActive && !added.has(layer.group)) {
+      // Add layer once; never remove — visibility is palette-driven
+      if (!added.has(layer.group)) {
         map.addLayer(zl, { zIndex: 20 });
         added.add(layer.group);
-      } else if (!hasActive && added.has(layer.group)) {
-        map.removeLayer(zl);
-        added.delete(layer.group);
       }
 
       zl.clearAll();
-      if (hasActive) {
+      if (activeZones.length > 0) {
         const toSet: {
           value: number;
           color: [number, number, number, number];
@@ -256,8 +253,14 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
         zl.setZones(toSet);
       }
     }
+  }, [map, config, layerStates]);
 
+  // Cleanup only on map/config change or unmount
+  useEffect(() => {
+    if (!map) return;
     return () => {
+      const zoneLayers = zoneLayersRef.current;
+      const added = addedRef.current;
       for (const [group] of zoneLayers) {
         if (added.has(group)) {
           const zl = zoneLayers.get(group);
@@ -266,7 +269,7 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
       }
       added.clear();
     };
-  }, [map, config, filters]);
+  }, [map, config]);
 
   // Labels
   useEffect(() => {

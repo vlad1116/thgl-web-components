@@ -21,6 +21,7 @@ export class ZoneOverlayLayer implements Layer {
   private bounds: [[number, number], [number, number]];
   private imageUrl: string;
   private imageLoaded = false;
+  private _dirty = false;
   private lastQuadZoom = -1;
   // Pre-allocated buffers to avoid per-frame allocations
   private quadVertices = new Float32Array(12);
@@ -70,6 +71,12 @@ export class ZoneOverlayLayer implements Layer {
   clearAll(): void {
     this.palette.fill(0);
     this.uploadPalette();
+  }
+
+  isDirty(): boolean {
+    const d = this._dirty;
+    this._dirty = false;
+    return d;
   }
 
   onAdd(gl: WebGL2RenderingContext): void {
@@ -173,6 +180,7 @@ export class ZoneOverlayLayer implements Layer {
       256, 1,
       this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.palette,
     );
+    this._dirty = true;
   }
 
   private loadBitmap(): void {
@@ -192,6 +200,7 @@ export class ZoneOverlayLayer implements Layer {
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
       this.imageLoaded = true;
+      this._dirty = true;
     };
     image.src = this.imageUrl;
   }
