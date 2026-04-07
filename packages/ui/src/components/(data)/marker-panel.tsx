@@ -59,6 +59,8 @@ function copyToClipboard(text: string): void {
 }
 
 function DiscoveryToggle({ id }: { id: string }) {
+  // Subscribe to discoveredNodes changes so the toggle updates reactively
+  useSettingsStore((state) => state.discoveredNodes);
   const isDiscovered = useSettingsStore((state) => state.isDiscoveredNode)(id);
   const toggle = useSettingsStore((state) => state.toggleDiscoveredNode);
 

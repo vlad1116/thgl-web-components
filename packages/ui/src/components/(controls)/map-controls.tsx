@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Home, Minus, Plus, RotateCcw } from "lucide-react";
-import { cn } from "@repo/lib";
+import { Home, Locate, Minus, Plus, RotateCcw } from "lucide-react";
+import { cn, useGameState, useSettingsStore } from "@repo/lib";
 import type { WebMap } from "@repo/lib/web-map";
 import { useMap } from "../(interactive-map)/store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -306,11 +306,15 @@ export function MapControls({
   const handleZoomIn = useCallback(() => map?.zoomIn(), [map]);
   const handleZoomOut = useCallback(() => map?.zoomOut(), [map]);
   const handleResetView = useCallback(() => map?.resetView(), [map]);
+  const player = useGameState((state) => state.player);
+  const followPlayer = useSettingsStore((state) => state.followPlayer);
+  const toggleFollowPlayer = useSettingsStore((state) => state.toggleFollowPlayer);
 
   if (!map || hidden) return null;
 
   const is3D = pitch > 0.05;
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
+  const hasPlayer = Boolean(player);
 
   return (
     <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden">
@@ -339,6 +343,28 @@ export function MapControls({
           />
         </PopoverContent>
       </Popover>
+
+      {/* Follow player toggle — only visible when a player is connected */}
+      {hasPlayer && (
+        <Tooltip delayDuration={200} disableHoverableContent>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggleFollowPlayer}
+              className={cn(
+                "h-8 w-8 flex items-center justify-center cursor-pointer",
+                "hover:bg-accent transition-colors",
+                followPlayer && "text-primary",
+              )}
+              aria-label={followPlayer ? "Stop following player" : "Follow player"}
+            >
+              <Locate className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {followPlayer ? "Stop following player" : "Follow player"}
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {/* 3D toggle */}
       <Tooltip delayDuration={200} disableHoverableContent>

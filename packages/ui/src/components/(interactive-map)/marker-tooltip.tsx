@@ -107,6 +107,8 @@ function DiscoveryToggle({
   /** Custom toggle handler (for "discover all" button) */
   onToggle?: () => void;
 }) {
+  // Subscribe to discoveredNodes changes so the toggle updates reactively
+  useSettingsStore((state) => state.discoveredNodes);
   const storeIsDiscovered = useSettingsStore((state) => state.isDiscoveredNode)(
     id,
   );
