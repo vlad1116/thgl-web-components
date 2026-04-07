@@ -1343,15 +1343,21 @@ export class IconMarkerLayer implements Layer {
     minZoom: WebGLUniformLocation | null;
     maxZoom: WebGLUniformLocation | null;
     factor: WebGLUniformLocation | null;
+    pitch: WebGLUniformLocation | null;
   } | null = null;
 
   private ensureSpiderLineProg(gl: WebGL2RenderingContext) {
     if (this.spiderLineProg) return;
     const vs = `#version 300 es
+      // a_line: xy=world pos, zw=spider offset
+      // a_height: x=heightIntensity, y=direction
       in vec4 a_line;
+      in vec2 a_height;
       uniform mat3 u_view;
       uniform vec2 u_screen;
-      uniform float u_zoom, u_minZoom, u_maxZoom, u_factor;
+      uniform float u_zoom, u_minZoom, u_maxZoom, u_factor, u_pitch;
+      const float MIN_NEEDLE_WORLD = 0.0;
+      const float MAX_NEEDLE_WORLD = 20.0;
       void main() {
         float viewScale = length(vec2(u_view[0][0], u_view[1][0]));
         float refScale = viewScale * pow(2.0, (u_minZoom + u_maxZoom) * 0.5 - u_zoom);
@@ -1359,7 +1365,23 @@ export class IconMarkerLayer implements Layer {
         float zs = u_factor > 0.001 ? clamp(pow(ratio, u_factor), 0.25, 2.5) : 1.0;
         vec3 cp = u_view * vec3(a_line.xy, 1.0);
         vec2 so = a_line.zw * zs * vec2(2.0 / u_screen.x, -2.0 / u_screen.y);
-        gl_Position = vec4(cp.xy + so, 0.0, 1.0);
+
+        // Height offset (matches icon shader logic)
+        float heightIntensity = clamp(a_height.x, 0.0, 1.0);
+        float directionFlag = a_height.y;
+        float direction = abs(directionFlag) > 1.5 ? sign(directionFlag) : (directionFlag > 0.5 ? 1.0 : (directionFlag < -0.5 ? -1.0 : 0.0));
+        float iconDirection = direction;
+        if (abs(iconDirection) < 0.5 || heightIntensity < 0.01) {
+          iconDirection = 0.0;
+        }
+        float zoomScale = pow(2.0, u_zoom);
+        float heightWorld = mix(MIN_NEEDLE_WORLD, MAX_NEEDLE_WORLD, heightIntensity) * abs(sin(u_pitch)) * zoomScale * 500.0;
+        float heightClip = heightWorld * viewScale * (2.0 / u_screen.y);
+
+        float depth = (1.0 + cp.y) * 0.5;
+        cp.y += heightClip * iconDirection;
+
+        gl_Position = vec4(cp.xy + so, depth, 1.0);
       }`;
     const fs = `#version 300 es
       precision highp float;
@@ -1381,14 +1403,21 @@ export class IconMarkerLayer implements Layer {
       minZoom: gl.getUniformLocation(this.spiderLineProg, "u_minZoom"),
       maxZoom: gl.getUniformLocation(this.spiderLineProg, "u_maxZoom"),
       factor: gl.getUniformLocation(this.spiderLineProg, "u_factor"),
+      pitch: gl.getUniformLocation(this.spiderLineProg, "u_pitch"),
     };
     this.spiderLineBuf = gl.createBuffer()!;
     this.spiderLineVao = gl.createVertexArray()!;
     gl.bindVertexArray(this.spiderLineVao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderLineBuf);
-    const loc = gl.getAttribLocation(this.spiderLineProg, "a_line");
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+    // a_line: 4 floats at offset 0, stride 6 floats
+    const stride = 6 * 4; // 6 floats * 4 bytes
+    const locLine = gl.getAttribLocation(this.spiderLineProg, "a_line");
+    gl.enableVertexAttribArray(locLine);
+    gl.vertexAttribPointer(locLine, 4, gl.FLOAT, false, stride, 0);
+    // a_height: 2 floats at offset 4 floats
+    const locHeight = gl.getAttribLocation(this.spiderLineProg, "a_height");
+    gl.enableVertexAttribArray(locHeight);
+    gl.vertexAttribPointer(locHeight, 2, gl.FLOAT, false, stride, 4 * 4);
     gl.bindVertexArray(null);
   }
 
@@ -1400,8 +1429,9 @@ export class IconMarkerLayer implements Layer {
     }
     if (count === 0) return;
 
-    // Reuse pre-allocated buffer, grow if needed (4 floats per endpoint, 2 endpoints per line)
-    const needed = count * 8;
+    // 6 floats per vertex (worldX, worldY, spiderOffsetX, spiderOffsetY, heightIntensity, direction)
+    // 2 vertices per line
+    const needed = count * 12;
     if (this.spiderLineData.length < needed) {
       this.spiderLineData = new Float32Array(Math.max(needed, Math.ceil(needed * 1.5)));
     }
@@ -1409,14 +1439,36 @@ export class IconMarkerLayer implements Layer {
     for (const inst of this.instances) {
       if (!inst || (!inst.spiderOffsetX && !inst.spiderOffsetY)) continue;
       const p = state.projection(inst.latLng);
+      // Compute height info (same logic as uploadInstances)
+      const rawZ = typeof inst.z === "number" ? inst.z : 0;
+      let normalizedHeight =
+        inst.zMag !== undefined ? Math.min(1, Math.max(0, inst.zMag)) : undefined;
+      if (normalizedHeight === undefined) {
+        normalizedHeight =
+          rawZ === 0
+            ? 0
+            : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+      }
+      let direction = 0;
+      if (inst.zPos === "top") direction = 1;
+      else if (inst.zPos === "bottom") direction = -1;
+      else if (inst.zPos === "needle") direction = 2;
+      else if (inst.zPos === "needle-down") direction = -2;
+
+      // Center endpoint (no spider offset, same height)
       this.spiderLineData[idx++] = p.x;
       this.spiderLineData[idx++] = p.y;
       this.spiderLineData[idx++] = 0;
       this.spiderLineData[idx++] = 0;
+      this.spiderLineData[idx++] = normalizedHeight;
+      this.spiderLineData[idx++] = direction;
+      // Offset endpoint (with spider offset, same height)
       this.spiderLineData[idx++] = p.x;
       this.spiderLineData[idx++] = p.y;
       this.spiderLineData[idx++] = inst.spiderOffsetX ?? 0;
       this.spiderLineData[idx++] = inst.spiderOffsetY ?? 0;
+      this.spiderLineData[idx++] = normalizedHeight;
+      this.spiderLineData[idx++] = direction;
     }
 
     this.ensureSpiderLineProg(gl);
@@ -1438,6 +1490,8 @@ export class IconMarkerLayer implements Layer {
       gl.uniform1f(this.spiderLineUniforms.maxZoom, state.maxZoom);
     if (this.spiderLineUniforms.factor)
       gl.uniform1f(this.spiderLineUniforms.factor, this.dynamicSizeFactor);
+    if (this.spiderLineUniforms.pitch)
+      gl.uniform1f(this.spiderLineUniforms.pitch, state.pitch);
     gl.drawArrays(gl.LINES, 0, count * 2);
     gl.bindVertexArray(null);
     gl.useProgram(this.program);

@@ -965,8 +965,10 @@ function MarkersContent({
       markerInstances.push(instance);
 
 
-      // Track raw Z for height visualization without player
-      if (!throttledPlayer && spawn.p[2] !== undefined) {
+      // Track raw Z for height visualization without player.
+      // Skip z=0 — these are spawns without real elevation data and
+      // would skew the normalization range for all other markers.
+      if (!throttledPlayer && spawn.p[2] !== undefined && spawn.p[2] !== 0) {
         markerZValues.set(markerInstances.length - 1, spawn.p[2]);
       }
 
@@ -1156,6 +1158,9 @@ function MarkersContent({
               key: "__center",
               keepUpright: true,
               noHitTest: true,
+              z: inst.z,
+              zPos: inst.zPos,
+              zMag: inst.zMag,
             };
           }
           newInstances[wi++] = markerInstances[ci];
