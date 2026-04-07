@@ -149,7 +149,7 @@ export function App({
               )}
               {lockedWindow ? lockedWindowComponents : null}
               {additionalComponents}
-              <Actions mapControls={<MapControls hidden={lockedWindow} />} className="top-[40px]">
+              <Actions mapControls={<MapControls hidden={lockedWindow} alwaysShowFollowPlayer />} className="top-[40px]">
                 <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
                 <StreamingSender
                   domain={appConfig.domain}

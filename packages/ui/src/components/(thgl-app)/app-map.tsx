@@ -68,7 +68,7 @@ export function AppMap({
           />
           <PrivateDrawing hidden={lockedWindow} />
         </div>
-        <MapControls hidden={lockedWindow} />
+        <MapControls hidden={lockedWindow} alwaysShowFollowPlayer />
       </div>
 
       <LivePlayer

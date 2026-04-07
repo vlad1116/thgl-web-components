@@ -255,10 +255,13 @@ function CompassNeedle({ bearing }: { bearing: number }) {
 export function MapControls({
   hidden,
   webmap: externalMap,
+  alwaysShowFollowPlayer,
 }: {
   hidden?: boolean;
   /** When provided, use this WebMap directly instead of the global useMap() store */
   webmap?: WebMap | null;
+  /** Always show the follow player toggle (for in-game overlays) */
+  alwaysShowFollowPlayer?: boolean;
 }) {
   const storeMap = useMap();
   const map = externalMap ?? storeMap;
@@ -314,7 +317,7 @@ export function MapControls({
 
   const is3D = pitch > 0.05;
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
-  const hasPlayer = Boolean(player);
+  const showFollowPlayer = alwaysShowFollowPlayer || Boolean(player);
 
   return (
     <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden">
@@ -344,8 +347,8 @@ export function MapControls({
         </PopoverContent>
       </Popover>
 
-      {/* Follow player toggle — only visible when a player is connected */}
-      {hasPlayer && (
+      {/* Follow player toggle */}
+      {showFollowPlayer && (
         <Tooltip delayDuration={200} disableHoverableContent>
           <TooltipTrigger asChild>
             <button
