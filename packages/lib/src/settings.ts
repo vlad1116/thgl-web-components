@@ -138,7 +138,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   textSize: 20,
   baseIconSize: 1,
   dynamicIconSize: true,
-  dynamicIconSizeFactor: 0.33,
+  dynamicIconSizeFactor: 0.2,
   playerIconSize: 1,
   iconSizeByGroup: {},
   iconSizeByFilter: {},
@@ -644,7 +644,7 @@ export const useSettingsStore = create(
             playerIconSize: 1,
             baseIconSize: 1,
             dynamicIconSize: true,
-            dynamicIconSizeFactor: 0.33,
+            dynamicIconSizeFactor: 0.2,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
           });
@@ -658,7 +658,7 @@ export const useSettingsStore = create(
             playerIconSize: 1,
             baseIconSize: 1,
             dynamicIconSize: true,
-            dynamicIconSizeFactor: 0.33,
+            dynamicIconSizeFactor: 0.2,
             iconSizeByFilter: {},
             iconSizeByGroup: {},
             // Accessibility
