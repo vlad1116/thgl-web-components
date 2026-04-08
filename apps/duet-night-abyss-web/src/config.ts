@@ -8,6 +8,15 @@ export const APP_CONFIG: AppConfig = {
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
+      title: "Haojing Map",
+      description:
+        "Navigate Duet Night Abyss's Haojing region with our interactive maps.",
+      href: "/maps/Haojing",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("duet-night-abyss", "Huaxu_Haojing_Main"),
+      linkText: "Explore the Haojing Map",
+    },
+    {
       title: "Mistwharf Map",
       description:
         "Navigate Duet Night Abyss's Mistwharf region with our interactive maps.",
