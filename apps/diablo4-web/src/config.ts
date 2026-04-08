@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "diablo4",
@@ -9,17 +9,13 @@ export const APP_CONFIG: AppConfig = {
   withoutLiveMode: true,
   internalLinks: [
     {
-      href: "/",
-      title: "Maps",
-      description: "Explore Diablo 4 Interactive Maps",
+      title: "Diablo IV Map",
+      description:
+        "Explore Diablo 4 Interactive Maps with real-time position tracking. Find Altars of Lilith, dungeons, bosses, events, and more.",
+      href: "/maps/Sanctuary",
       iconName: "Map",
-      linkText: "Explore Maps",
-    },
-    {
-      title: "Vessel of Hatred",
-      description: "Prepare for the Vessel of Hatred expansion",
-      href: "/vessel-of-hatred",
-      iconName: "MessageSquareWarning",
+      linkText: "Explore the Map",
+      bgImage: getPreviewImageUrl("diablo4", "Sanctuary"),
     },
   ],
   externalLinks: [],
@@ -33,4 +29,14 @@ export const APP_CONFIG: AppConfig = {
     },
   },
   keywords: ["Dungeons", "World Events", "Strongholds", "Nightmare Dungeons"],
+  topFilters: [
+    "altarsOfLilith",
+    "tenetOfAkarat",
+    "dungeons",
+    "strongholds",
+    "worldBossArenas",
+    "waypoints",
+    "cellars",
+    "sideQuests",
+  ],
 };

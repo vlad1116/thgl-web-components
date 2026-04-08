@@ -219,8 +219,9 @@ export function createHomePage(appConfig: AppConfig) {
           icon: info.icon,
         });
       }
-    } else {
-      // Auto-pick: take first value from each group
+    }
+    // Fall through to auto-pick if topFilters produced no matches
+    if (highlightedFilters.length === 0) {
       for (const group of version.data.filters) {
         if (highlightedFilters.length >= MAX_HIGHLIGHTED_FILTERS) break;
         const first = group.values[0];
