@@ -220,23 +220,22 @@ export function createHomePage(appConfig: AppConfig) {
         });
       }
     }
-    // Fall through to auto-pick if topFilters produced no matches
-    if (highlightedFilters.length === 0) {
-      for (const group of version.data.filters) {
-        if (highlightedFilters.length >= MAX_HIGHLIGHTED_FILTERS) break;
-        const first = group.values[0];
-        if (!first) continue;
-        const info = filterLookup.get(first.id);
-        const name = t(first.id);
-        highlightedFilters.push({
-          id: first.id,
-          name,
-          group: t(group.group),
-          locationCount: version.counts?.byType?.[first.id] || 0,
-          href: `/guides/${encodeURIComponent(name)}`,
-          icon: info?.icon,
-        });
-      }
+    // Auto-pick from groups to fill remaining slots
+    const usedIds = new Set(highlightedFilters.map((f) => f.id));
+    for (const group of version.data.filters) {
+      if (highlightedFilters.length >= MAX_HIGHLIGHTED_FILTERS) break;
+      const first = group.values[0];
+      if (!first || usedIds.has(first.id)) continue;
+      const info = filterLookup.get(first.id);
+      const name = t(first.id);
+      highlightedFilters.push({
+        id: first.id,
+        name,
+        group: t(group.group),
+        locationCount: version.counts?.byType?.[first.id] || 0,
+        href: `/guides/${encodeURIComponent(name)}`,
+        icon: info?.icon,
+      });
     }
 
     return (
