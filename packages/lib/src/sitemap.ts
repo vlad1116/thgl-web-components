@@ -16,16 +16,18 @@ export function createRobots(appConfig: AppConfig) {
 
 export function createSitemap(appConfig: AppConfig) {
   const baseUrl = `https://${appConfig.domain}.th.gl`;
+  const locales = appConfig.supportedLocales;
+  const hasLocales = locales.length > 1;
 
   const getAlternates = (
     path: string,
   ): MetadataRoute.Sitemap[number]["alternates"] | undefined => {
     const canonical = `${baseUrl}${path}`;
 
-    if (appConfig.supportedLocales.length <= 1) return undefined;
+    if (!hasLocales) return undefined;
 
     const languages = Object.fromEntries([
-      ...appConfig.supportedLocales.map((locale) => [
+      ...locales.map((locale) => [
         locale,
         locale === DEFAULT_LOCALE
           ? canonical
@@ -34,6 +36,49 @@ export function createSitemap(appConfig: AppConfig) {
       ["x-default", canonical],
     ]);
     return { languages };
+  };
+
+  /** Add an entry for the canonical path and one per non-default locale. */
+  const addEntry = (
+    entries: Map<string, MetadataRoute.Sitemap[number]>,
+    path: string,
+    opts: {
+      changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+      priority: number;
+    },
+  ) => {
+    const alternates = getAlternates(path);
+    const now = new Date();
+
+    // Canonical (English / default locale)
+    const canonicalUrl = baseUrl + path;
+    if (!entries.has(canonicalUrl)) {
+      entries.set(canonicalUrl, {
+        url: canonicalUrl,
+        lastModified: now,
+        changeFrequency: opts.changeFrequency,
+        priority: opts.priority,
+        alternates,
+      });
+    }
+
+    // Locale-specific URLs
+    if (hasLocales) {
+      for (const locale of locales) {
+        if (locale === DEFAULT_LOCALE) continue;
+        const localePath = localizePath(path, locale);
+        const localeUrl = baseUrl + localePath;
+        if (!entries.has(localeUrl)) {
+          entries.set(localeUrl, {
+            url: localeUrl,
+            lastModified: now,
+            changeFrequency: opts.changeFrequency,
+            priority: opts.priority,
+            alternates,
+          });
+        }
+      }
+    }
   };
 
   return async function (): Promise<MetadataRoute.Sitemap> {
@@ -45,18 +90,21 @@ export function createSitemap(appConfig: AppConfig) {
 
     const entries = new Map<string, MetadataRoute.Sitemap[number]>();
 
-    // Maps
+    // Maps index
+    if (mapNames.length > 0) {
+      addEntry(entries, "/maps", {
+        changeFrequency: "daily",
+        priority: 0.8,
+      });
+    }
+
+    // Individual maps
     for (const mapName of mapNames) {
       const title = translate(enDict, mapName);
       const path = `/maps/${encodeURIComponent(title)}`;
-      const url = baseUrl + path;
-
-      entries.set(url, {
-        url,
-        lastModified: new Date(),
+      addEntry(entries, path, {
         changeFrequency: "daily",
         priority: 1,
-        alternates: getAlternates(path),
       });
     }
 
@@ -66,60 +114,46 @@ export function createSitemap(appConfig: AppConfig) {
       const url = baseUrl + path;
 
       if (!entries.has(url)) {
-        entries.set(url, {
-          url,
-          lastModified: new Date(),
+        addEntry(entries, path, {
           changeFrequency: "daily",
           priority: 0.8,
-          alternates: getAlternates(path),
         });
       }
     }
 
-    // Guides
-    if (appConfig.internalLinks?.some((link) => link.href === "/guides")) {
+    // Guides — always include when filters exist (guides pages are generated
+    // from filters regardless of whether /guides is in internalLinks)
+    if (version.data.filters.length > 0) {
+      addEntry(entries, "/guides", {
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
+
       for (const filter of version.data.filters) {
         // Guide group
         const groupTitle = translate(enDict, filter.group);
-        const path = `/guides/${encodeURIComponent(groupTitle)}`;
-        const url = baseUrl + path;
-
-        if (!entries.has(url)) {
-          entries.set(url, {
-            url,
-            lastModified: new Date(),
-            changeFrequency: "weekly",
-            priority: 0.6,
-            alternates: getAlternates(path),
-          });
-        }
+        const groupPath = `/guides/${encodeURIComponent(groupTitle)}`;
+        addEntry(entries, groupPath, {
+          changeFrequency: "weekly",
+          priority: 0.6,
+        });
 
         // Guide types
         for (const value of filter.values) {
           const typeTitle = translate(enDict, value.id);
           const typePath = `/guides/${encodeURIComponent(typeTitle)}`;
-          const typeUrl = baseUrl + typePath;
-
-          if (!entries.has(typeUrl)) {
-            entries.set(typeUrl, {
-              url: typeUrl,
-              lastModified: new Date(),
-              changeFrequency: "weekly",
-              priority: 0.5,
-              alternates: getAlternates(typePath),
-            });
-          }
+          addEntry(entries, typePath, {
+            changeFrequency: "weekly",
+            priority: 0.5,
+          });
         }
       }
     }
 
-    // Add homepage last
-    entries.set(baseUrl, {
-      url: baseUrl,
-      lastModified: new Date(),
+    // Homepage
+    addEntry(entries, "/", {
       changeFrequency: "daily",
       priority: 0.9,
-      alternates: getAlternates("/"),
     });
 
     return Array.from(entries.values());
