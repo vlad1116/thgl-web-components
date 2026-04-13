@@ -19,7 +19,7 @@ export default function DashboardLayout({
     <>
       <InitializeApp role="dashboard" />
       <LocaleSync />
-      <div className="flex h-full flex-col w-full">
+      <div className="flex h-full flex-col w-dvw">
         <AppHeader>
           <div className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
             <Image

@@ -57,7 +57,7 @@ export function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "h-full border-r bg-card flex flex-col transition-all duration-300",
+        "h-full shrink-0 border-r bg-card flex flex-col transition-all duration-300",
         isExpanded ? "w-[220px]" : "w-[60px]",
       )}
     >
