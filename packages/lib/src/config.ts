@@ -120,8 +120,8 @@ export const API_FORGE_URL = "https://api-forge.th.gl";
 // export const TH_GL_URL = "http://localhost:3006";
 
 // API endpoints (search)
-const DATA_FORGE_URL = "https://data.th.gl";
-// const DATA_FORGE_URL = "http://localhost:3000";
+export const DATA_FORGE_URL = "https://data.th.gl";
+// export const DATA_FORGE_URL = "http://localhost:3000";
 
 // Static files (version.json, icons, tiles, config, dicts)
 export const DATA_FORGE_CDN_URL = "https://cdn.th.gl";

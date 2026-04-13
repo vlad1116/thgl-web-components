@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { DATA_FORGE_CDN_URL, useSettingsStore } from "@repo/lib";
+import { DATA_FORGE_URL, useSettingsStore } from "@repo/lib";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { Upload, FileCheck, Loader2, AlertCircle, Copy } from "lucide-react";
 
-const API_URL = DATA_FORGE_CDN_URL + "/api/crimson-desert/save";
+const API_URL = DATA_FORGE_URL + "/api/crimson-desert/save";
 
 type SaveParseResult = {
   discoveredNodeIds: string[];
@@ -195,9 +195,21 @@ export function CrimsonDesertSaveImport() {
                   <div className="divide-y text-sm">
                     {(
                       [
-                        ["Quests", state.data.summary.quests, state.data.totals?.quests],
-                        ["Knowledge", state.data.summary.knowledge, state.data.totals?.knowledge],
-                        ["Waypoints", state.data.summary.waypoints, state.data.totals?.waypoints],
+                        [
+                          "Quests",
+                          state.data.summary.quests,
+                          state.data.totals?.quests,
+                        ],
+                        [
+                          "Knowledge",
+                          state.data.summary.knowledge,
+                          state.data.totals?.knowledge,
+                        ],
+                        [
+                          "Waypoints",
+                          state.data.summary.waypoints,
+                          state.data.totals?.waypoints,
+                        ],
                         ["Chests", state.data.summary.chests, undefined],
                       ] as [string, number, number | undefined][]
                     )
@@ -205,16 +217,26 @@ export function CrimsonDesertSaveImport() {
                       .map(([label, found, total]) => (
                         <div key={label} className="px-3 py-2 space-y-1">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">{label}</span>
+                            <span className="text-muted-foreground">
+                              {label}
+                            </span>
                             <span className="font-medium tabular-nums">
-                              {found}{total ? <span className="text-muted-foreground font-normal"> / {total}</span> : null}
+                              {found}
+                              {total ? (
+                                <span className="text-muted-foreground font-normal">
+                                  {" "}
+                                  / {total}
+                                </span>
+                              ) : null}
                             </span>
                           </div>
                           {total ? (
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-primary rounded-full transition-all"
-                                style={{ width: `${Math.min(100, (found / total) * 100)}%` }}
+                                style={{
+                                  width: `${Math.min(100, (found / total) * 100)}%`,
+                                }}
                               />
                             </div>
                           ) : null}
@@ -224,7 +246,8 @@ export function CrimsonDesertSaveImport() {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  {state.data.discoveredNodeIds.length} locations can be marked as discovered on the map.
+                  {state.data.discoveredNodeIds.length} locations can be marked
+                  as discovered on the map.
                 </p>
 
                 <div className="flex gap-2">
