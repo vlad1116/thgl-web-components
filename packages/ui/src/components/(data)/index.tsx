@@ -12,6 +12,7 @@ export { DuneAltitude } from "./dune-altitude";
 export { DuneDeepDesertGrid } from "./dune-deep-desert-grid";
 export { DuneHeatmaps } from "./dune-heatmaps";
 export { CrimsonDesertZones } from "./crimson-desert-zones";
+export { CrimsonDesertSaveImport } from "./crimson-desert-save-import";
 export { MapOverlays, type MapOverlaysProps } from "./map-overlays";
 export { NodeDetails } from "./node-details";
 export { MarkerPanel } from "./marker-panel";
