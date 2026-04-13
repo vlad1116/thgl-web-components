@@ -1,5 +1,6 @@
 import { postWebviewMessage, GpuFlag, CloseAction } from "./webview";
 import { WindowMode } from "./apps";
+import type { ConnectedClient } from "./states";
 
 export type CurrentVersion = {
   version: string;
@@ -20,6 +21,7 @@ export type InitialState = {
   alwaysRunAsAdmin: boolean;
   closeAction: CloseAction;
   locale: string;
+  connectedClients?: ConnectedClient[];
 };
 
 export function getVersionFromWebview() {

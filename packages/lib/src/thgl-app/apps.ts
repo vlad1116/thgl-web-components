@@ -316,6 +316,9 @@ export async function initializeApp(role: "client" | "dashboard" = "client") {
           liveState.setAlwaysRunAsAdmin(data.alwaysRunAsAdmin ?? false);
           liveState.setCloseAction(data.closeAction ?? "ask");
           liveState.setLocale(data.locale ?? "en");
+          if (data.connectedClients) {
+            liveState.setConnectedClients(data.connectedClients);
+          }
           console.log("Dashboard received initial state:", data);
 
           // Cleanup stale sessions on startup - use current running games if available, else empty
