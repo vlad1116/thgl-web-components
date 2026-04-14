@@ -134,6 +134,29 @@ export function ProfileEditor() {
     }
   };
 
+  const handleAvatarRemove = async () => {
+    setAvatarError(null);
+    setAvatarSuccess(null);
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch(`${API_FORGE_URL}/users/avatar`, {
+        method: "DELETE",
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setAvatarError(data.error || "Failed to remove avatar");
+        return;
+      }
+      setProfile(currentUsername, null);
+      setAvatarSuccess("Avatar removed");
+    } catch {
+      setAvatarError("Failed to remove avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-6">
@@ -152,7 +175,7 @@ export function ProfileEditor() {
               dangerouslySetInnerHTML={{ __html: avatarSvg }}
             />
           )}
-          <div>
+          <div className="flex gap-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -168,6 +191,16 @@ export function ProfileEditor() {
             >
               {uploadingAvatar ? "Uploading..." : "Upload Avatar"}
             </Button>
+            {currentAvatarUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={uploadingAvatar}
+                onClick={handleAvatarRemove}
+              >
+                Remove
+              </Button>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             PNG, JPEG, or WebP. Max 256KB.
