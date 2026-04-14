@@ -202,7 +202,7 @@ export function MarkerPanel({
       return spawnId === selectedNodeId;
     };
 
-    // Pass 1: exact match on parent or cluster child
+    // Pass 1: exact match on parent or cluster child in filtered spawns
     for (const s of spawns) {
       if (matchId(s)) return s;
       if (s.cluster) {
@@ -212,8 +212,7 @@ export function MarkerPanel({
       }
     }
 
-    // Pass 2: match by id prefix (before @) — handles cases where
-    // coordinates differ due to clustering (parent coords vs child coords)
+    // Pass 2: match by id prefix (before @) — handles coordinate mismatch from clustering
     const atIdx = selectedNodeId.indexOf("@");
     if (atIdx > 0) {
       const idPart = selectedNodeId.slice(0, atIdx);

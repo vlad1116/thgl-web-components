@@ -53,13 +53,19 @@ function findSpawn(
 }
 
 export function useMarkerUrlSync(markerSlug: string | undefined) {
-  const { spawns } = useCoordinates();
+  const { spawns, nodes } = useCoordinates();
   const t = useT();
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
   const setSelectedNodeId = useUserStore((state) => state.setSelectedNodeId);
   const mapName = useUserStore((state) => state.mapName);
   const hasResolved = useRef(false);
+  const resolvedSlug = useRef<string | undefined>(undefined);
   const initialTitle = useRef<string>("");
+
+  // Reset when markerSlug changes
+  if (markerSlug !== resolvedSlug.current) {
+    hasResolved.current = false;
+  }
 
   // Store the original document title on mount
   useEffect(() => {
@@ -67,43 +73,53 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
   }, []);
 
   // Resolve markerSlug to nodeId on initial load
+  // Search raw nodes (unfiltered) so markers work even if filter is disabled
   useEffect(() => {
-    if (!markerSlug || hasResolved.current || !spawns.length) return;
+    if (!markerSlug || hasResolved.current || !nodes.length) return;
 
-    const findMatch = (): Spawn | null => {
-      // Check ?id= query param first (most reliable)
+    const findInNodes = (): Spawn | null => {
+      // Check ?id= query param first
       const searchParams = new URLSearchParams(location.search);
       const idParam = searchParams.get("id");
-      if (idParam) {
-        const match = findSpawn(idParam, spawns);
-        if (match) return match;
-      }
 
-      // Try matching slug as a nodeId (e.g., "camp_534@-1648:-4406")
-      if (markerSlug.includes("@")) {
-        const match = findSpawn(markerSlug, spawns);
-        if (match) return match;
-      }
+      for (const node of nodes) {
+        if (node.mapName && node.mapName !== mapName) continue;
+        for (const s of node.spawns) {
+          const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
+          const nodeId = getNodeId(spawn);
 
-      // Fall back to matching by translated name
-      for (const spawn of spawns) {
-        const name = getMarkerDisplayName(spawn, t);
-        if (name === markerSlug) return spawn;
-        if (spawn.cluster) {
-          for (const c of spawn.cluster) {
-            const cName = getMarkerDisplayName(c, t);
-            if (cName === markerSlug) return c;
+          // Match by ?id= param
+          if (idParam && (nodeId === idParam || spawn.id === idParam?.split("@")[0])) {
+            return spawn;
+          }
+
+          // Match by slug as nodeId
+          if (!idParam && markerSlug.includes("@")) {
+            if (nodeId === markerSlug) return spawn;
+            // id-prefix fallback
+            const slugPrefix = markerSlug.slice(0, markerSlug.indexOf("@"));
+            const spawnPrefix = spawn.id?.includes("@")
+              ? spawn.id.slice(0, spawn.id.indexOf("@"))
+              : spawn.id || spawn.type;
+            if (slugPrefix === spawnPrefix) return spawn;
+          }
+
+          // Match by translated name
+          if (!idParam && !markerSlug.includes("@")) {
+            const name = getMarkerDisplayName(spawn, t);
+            if (name === markerSlug) return spawn;
           }
         }
       }
       return null;
     };
 
-    const match = findMatch();
+    const match = findInNodes();
     if (!match) return;
 
     // Select immediately
     hasResolved.current = true;
+    resolvedSlug.current = markerSlug;
     setSelectedNodeId(getNodeId(match));
 
     // Center map on spawn
@@ -121,7 +137,7 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
       });
       return unsub;
     }
-  }, [markerSlug, spawns, t, setSelectedNodeId]);
+  }, [markerSlug, nodes, mapName, t, setSelectedNodeId]);
 
   // Sync URL and document.title when selectedNodeId changes
   useEffect(() => {
