@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { getNodeId, isOverwolf, Spawn, useUserStore } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { useMapStore } from "../(interactive-map)";
+import { trackPageview } from "../(header)/plausible-tracker";
 
 export function getMarkerDisplayName(
   spawn: { name?: string; id?: string; type: string },
@@ -175,6 +176,7 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
           // Only update title for interactive selections (URL changed),
           // not for SSR-loaded markers where the server already set the localized title
           document.title = `${name} - ${t(mapName)} | ${document.title.split(" | ").pop() ?? ""}`;
+          trackPageview();
         }
       }
     } else if (!selectedNodeId) {

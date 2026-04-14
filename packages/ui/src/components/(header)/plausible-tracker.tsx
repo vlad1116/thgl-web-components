@@ -67,6 +67,14 @@ export const trackEvent = (
   }
 };
 
+export const trackPageview = () => {
+  if (plausible) {
+    lastActionTimestamp = Date.now();
+    plausible.trackPageview();
+    keepAlive();
+  }
+};
+
 export const trackOutboundLinkClick = (url: string) => {
   trackEvent("Outbound Link: Click", { props: { url: url } });
 };
