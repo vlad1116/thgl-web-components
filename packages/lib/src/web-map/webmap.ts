@@ -707,9 +707,9 @@ export class WebMap {
     this.layers.push({ layer, z });
     this.layers.sort((a, b) => a.z - b.z);
     layer.onAdd(this.gl);
-    // Wire up redraw notifications for tile layers (async tile loads)
-    // Wire up redraw callback for layers that support it (e.g. tile loads)
+    // Wire up redraw callbacks for layers with async loads (tiles, icon sheets)
     (layer as any).onTileLoad = () => this.requestRedraw();
+    (layer as any).onSheetLoad = () => this.requestRedraw();
     // Force a redraw so the new layer renders immediately
     this._needsRedraw = true;
   }

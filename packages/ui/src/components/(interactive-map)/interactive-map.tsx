@@ -71,9 +71,12 @@ export function InteractiveMap({
     const { viewByMap, setViewByMap } = useUserStore.getState();
     const view = viewByMap[mapName] ?? {};
 
-    document.title = t("map.pageTitle", {
-      vars: { title: appTitle, map: t(mapName) },
-    });
+    // Only set map title if no marker is selected (marker pages have SSR titles)
+    if (!useUserStore.getState().selectedNodeId) {
+      document.title = t("map.pageTitle", {
+        vars: { title: appTitle, map: t(mapName) },
+      });
+    }
 
     // Create canvas element with correct initial resolution
     const canvas = document.createElement("canvas");

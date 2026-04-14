@@ -172,8 +172,10 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
           decodeURIComponent(newPath)
         ) {
           history.replaceState({}, "", newPath);
+          // Only update title for interactive selections (URL changed),
+          // not for SSR-loaded markers where the server already set the localized title
+          document.title = `${name} - ${t(mapName)} | ${document.title.split(" | ").pop() ?? ""}`;
         }
-        document.title = `${name} - ${t(mapName)} | ${document.title.split(" | ").pop() ?? ""}`;
       }
     } else if (!selectedNodeId) {
       // Deselected — restore base URL and title

@@ -1500,9 +1500,15 @@ export class IconMarkerLayer implements Layer {
 
   private failedSheets = new Set<string>(); // Track sheets that failed to load
 
+  /** Callback injected by WebMap to request a redraw when icon sheets load */
+  onSheetLoad?: () => void;
+
   private createImage(url: string) {
     const img = new Image();
     img.crossOrigin = "anonymous";
+    img.onload = () => {
+      this.onSheetLoad?.();
+    };
     img.onerror = () => {
       for (const [name, source] of this.sheetImages) {
         if (source === img) {
