@@ -171,11 +171,12 @@ export function createSitemapIndex(appConfig: AppConfig) {
     const markerChunks = Math.ceil(markers.length / MARKERS_PER_SITEMAP);
     const totalSitemaps = 1 + markerChunks;
 
+    const now = new Date().toISOString();
     const xml = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...Array.from({ length: totalSitemaps }, (_, i) =>
-        `  <sitemap><loc>${baseUrl}/sitemap/${i}.xml</loc></sitemap>`,
+        `  <sitemap>\n    <loc>${baseUrl}/sitemap/${i}.xml</loc>\n    <lastmod>${now}</lastmod>\n  </sitemap>`,
       ),
       "</sitemapindex>",
     ].join("\n");
