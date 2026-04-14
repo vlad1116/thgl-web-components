@@ -118,6 +118,15 @@ export function createSitemap(appConfig: AppConfig) {
     }
 
     // Named markers per map
+    // Limit total marker entries to keep sitemap under size limits
+    // (each entry × locales × alternates XML can be very large)
+    // Scale marker entries based on number of locales to stay under sitemap size limits
+    // Each marker entry generates ~(1 + locales) URLs with verbose alternates XML
+    const MAX_MARKER_ENTRIES = hasLocales
+      ? Math.floor(200 / locales.length)
+      : 500;
+    let markerCount = 0;
+
     for (const mapName of mapNames) {
       const nodesPath = version.more.nodes[mapName];
       if (!nodesPath) continue;
@@ -133,32 +142,49 @@ export function createSitemap(appConfig: AppConfig) {
         );
         const mapTitle = translate(enDict, mapName);
 
+        // Collect named spawns and deduplicate by display name
+        const namedSpawns = new Map<
+          string,
+          { typeName: string; nodeId: string }
+        >();
+
         for (const node of nodes) {
           const typeName = translate(enDict, node.type);
 
           for (const spawn of node.spawns) {
-            // Only include spawns with specific names that translate to human-readable text
-            const rawId = (spawn.name ?? spawn.id ?? node.type).replace(
-              /my_\d+_/,
-              "",
-            );
+            // Only include spawns with a unique ID (not type@coords format)
+            // that translates to a human-readable name
+            if (!spawn.id || spawn.id.includes("@")) continue;
+            const rawId = (spawn.name ?? spawn.id).replace(/my_\d+_/, "");
             const displayName = translate(enDict, rawId);
             if (displayName === rawId || displayName === typeName) continue;
+
+            // Only keep the first occurrence of each display name per type
+            const key = `${typeName}/${displayName}`;
+            if (namedSpawns.has(key)) continue;
 
             const nodeId = spawn.id?.includes("@")
               ? spawn.id
               : `${spawn.id || node.type}@${spawn.p[0]}:${spawn.p[1]}`;
 
-            const markerPath = `/maps/${encodeURIComponent(mapTitle)}/${encodeURIComponent(typeName)}/${encodeURIComponent(displayName)}?id=${encodeURIComponent(nodeId)}`;
-            addEntry(entries, markerPath, {
-              changeFrequency: "weekly",
-              priority: 0.6,
-            });
+            namedSpawns.set(key, { typeName, nodeId });
           }
+        }
+
+        for (const [key, { typeName, nodeId }] of namedSpawns) {
+          if (markerCount >= MAX_MARKER_ENTRIES) break;
+          const displayName = key.slice(typeName.length + 1);
+          const markerPath = `/maps/${encodeURIComponent(mapTitle)}/${encodeURIComponent(typeName)}/${encodeURIComponent(displayName)}?id=${encodeURIComponent(nodeId)}`;
+          addEntry(entries, markerPath, {
+            changeFrequency: "weekly",
+            priority: 0.6,
+          });
+          markerCount++;
         }
       } catch (err) {
         console.error(`Failed to load nodes for sitemap (${mapName}):`, err);
       }
+      if (markerCount >= MAX_MARKER_ENTRIES) break;
     }
 
     // Internal Links
