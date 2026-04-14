@@ -18,8 +18,6 @@ type NamedMarker = {
   nodeId: string;
 };
 
-// Max URLs per sitemap chunk (Google limit is 50,000, but we keep it
-// lower to stay under Vercel's 19MB ISR body size limit with alternates XML)
 // Each marker generates ~(1 + locales) URL entries with alternates XML.
 // Keep each sitemap chunk under ~15MB to stay within Vercel's 19MB ISR limit.
 const MARKERS_PER_SITEMAP = 150;
@@ -36,41 +34,84 @@ export function createRobots(appConfig: AppConfig) {
   };
 }
 
-function createHelpers(appConfig: AppConfig) {
+/** Load dictionaries for all supported locales */
+async function loadAllDicts(
+  appName: string,
+  locales: string[],
+): Promise<Map<string, Record<string, string>>> {
+  const dicts = new Map<string, Record<string, string>>();
+  const results = await Promise.all(
+    locales.map(async (locale) => {
+      try {
+        const dict = await fetchDict(appName, locale);
+        return [locale, dict] as const;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  for (const result of results) {
+    if (result) dicts.set(result[0], result[1]);
+  }
+  return dicts;
+}
+
+function createHelpers(
+  appConfig: AppConfig,
+  allDicts?: Map<string, Record<string, string>>,
+) {
   const baseUrl = `https://${appConfig.domain}.th.gl`;
   const locales = appConfig.supportedLocales;
   const hasLocales = locales.length > 1;
 
+  /**
+   * Build alternates for a path.
+   * If `localizedPathFn` is provided, each locale gets a custom translated path.
+   * Otherwise, the same path is used with a locale prefix.
+   */
   const getAlternates = (
     path: string,
+    localizedPathFn?: (locale: string) => string | null,
   ): MetadataRoute.Sitemap[number]["alternates"] | undefined => {
     const canonical = `${baseUrl}${path}`;
 
     if (!hasLocales) return undefined;
 
     const languages = Object.fromEntries([
-      ...locales.map((locale) => [
-        locale,
-        locale === DEFAULT_LOCALE
-          ? canonical
-          : `${baseUrl}${localizePath(path, locale)}`,
-      ]),
+      ...locales.map((locale) => {
+        if (localizedPathFn && locale !== DEFAULT_LOCALE) {
+          const lp = localizedPathFn(locale);
+          if (lp) return [locale, `${baseUrl}${localizePath(lp, locale)}`];
+        }
+        return [
+          locale,
+          locale === DEFAULT_LOCALE
+            ? canonical
+            : `${baseUrl}${localizePath(path, locale)}`,
+        ];
+      }),
       ["x-default", canonical],
     ]);
     return { languages };
   };
 
-  /** Add an entry for the canonical path and one per non-default locale (per Google guidelines). */
+  const now = new Date();
+
+  /**
+   * Add a sitemap entry. For entries with translated slugs (guides, markers),
+   * pass `localizedPathFn` to generate per-locale paths with translated names.
+   */
   const addEntry = (
     entries: Map<string, MetadataRoute.Sitemap[number]>,
     path: string,
     opts: {
       changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
       priority: number;
+      /** Return locale-specific path for translated slug URLs */
+      localizedPathFn?: (locale: string) => string | null;
     },
   ) => {
-    const alternates = getAlternates(path);
-    const now = new Date();
+    const alternates = getAlternates(path, opts.localizedPathFn);
 
     const canonicalUrl = baseUrl + path;
     if (!entries.has(canonicalUrl)) {
@@ -86,7 +127,13 @@ function createHelpers(appConfig: AppConfig) {
     if (hasLocales) {
       for (const locale of locales) {
         if (locale === DEFAULT_LOCALE) continue;
-        const localePath = localizePath(path, locale);
+        let localePath: string;
+        if (opts.localizedPathFn) {
+          const lp = opts.localizedPathFn(locale);
+          localePath = localizePath(lp ?? path, locale);
+        } else {
+          localePath = localizePath(path, locale);
+        }
         const localeUrl = baseUrl + localePath;
         if (!entries.has(localeUrl)) {
           entries.set(localeUrl, {
@@ -101,7 +148,7 @@ function createHelpers(appConfig: AppConfig) {
     }
   };
 
-  return { baseUrl, locales, hasLocales, getAlternates, addEntry };
+  return { baseUrl, locales, hasLocales, addEntry, allDicts };
 }
 
 /** Fetch and collect all named markers across all maps */
@@ -158,6 +205,19 @@ async function collectNamedMarkers(
   return markers;
 }
 
+/** Helper to translate a term with a specific locale dictionary, falling back to English */
+function translateForLocale(
+  allDicts: Map<string, Record<string, string>> | undefined,
+  enDict: Record<string, string>,
+  locale: string,
+  key: string,
+): string {
+  if (locale === DEFAULT_LOCALE) return translate(enDict, key);
+  const dict = allDicts?.get(locale);
+  if (!dict) return translate(enDict, key);
+  return translate(dict, key);
+}
+
 export function createSitemapIndex(appConfig: AppConfig) {
   const baseUrl = `https://${appConfig.domain}.th.gl`;
 
@@ -203,8 +263,6 @@ export function createGenerateSitemaps(appConfig: AppConfig) {
 }
 
 export function createSitemap(appConfig: AppConfig) {
-  const { addEntry } = createHelpers(appConfig);
-
   return async function sitemap(
     props?: { id: Promise<string> } | undefined,
   ): Promise<MetadataRoute.Sitemap> {
@@ -215,6 +273,14 @@ export function createSitemap(appConfig: AppConfig) {
       fetchDict(appConfig.name),
     ]);
 
+    // Load all locale dictionaries for translated slug URLs
+    const locales = appConfig.supportedLocales;
+    const hasLocales = locales.length > 1;
+    const allDicts = hasLocales
+      ? await loadAllDicts(appConfig.name, locales)
+      : undefined;
+
+    const { addEntry } = createHelpers(appConfig, allDicts);
     const entries = new Map<string, MetadataRoute.Sitemap[number]>();
 
     if (id === 0) {
@@ -229,11 +295,15 @@ export function createSitemap(appConfig: AppConfig) {
       }
 
       for (const mapName of mapNames) {
-        const title = translate(enDict, mapName);
-        const path = `/maps/${encodeURIComponent(title)}`;
+        const enTitle = translate(enDict, mapName);
+        const path = `/maps/${encodeURIComponent(enTitle)}`;
         addEntry(entries, path, {
           changeFrequency: "daily",
           priority: 1,
+          localizedPathFn: (locale) => {
+            const title = translateForLocale(allDicts, enDict, locale, mapName);
+            return `/maps/${encodeURIComponent(title)}`;
+          },
         });
       }
 
@@ -255,19 +325,31 @@ export function createSitemap(appConfig: AppConfig) {
         });
 
         for (const filter of version.data.filters) {
-          const groupTitle = translate(enDict, filter.group);
-          const groupPath = `/guides/${encodeURIComponent(groupTitle)}`;
+          const enGroupTitle = translate(enDict, filter.group);
+          const groupPath = `/guides/${encodeURIComponent(enGroupTitle)}`;
           addEntry(entries, groupPath, {
             changeFrequency: "weekly",
             priority: 0.6,
+            localizedPathFn: (locale) => {
+              const title = translateForLocale(
+                allDicts, enDict, locale, filter.group,
+              );
+              return `/guides/${encodeURIComponent(title)}`;
+            },
           });
 
           for (const value of filter.values) {
-            const typeTitle = translate(enDict, value.id);
-            const typePath = `/guides/${encodeURIComponent(typeTitle)}`;
+            const enTypeTitle = translate(enDict, value.id);
+            const typePath = `/guides/${encodeURIComponent(enTypeTitle)}`;
             addEntry(entries, typePath, {
               changeFrequency: "weekly",
               priority: 0.5,
+              localizedPathFn: (locale) => {
+                const title = translateForLocale(
+                  allDicts, enDict, locale, value.id,
+                );
+                return `/guides/${encodeURIComponent(title)}`;
+              },
             });
           }
         }
@@ -285,9 +367,37 @@ export function createSitemap(appConfig: AppConfig) {
 
       for (const { mapTitle, typeName, displayName, nodeId } of chunk) {
         const markerPath = `/maps/${encodeURIComponent(mapTitle)}/${encodeURIComponent(typeName)}/${encodeURIComponent(displayName)}?id=${encodeURIComponent(nodeId)}`;
+
+        // Extract raw keys for translation
+        // We need to find the original dict keys from the English translations
+        const mapKey = Object.entries(enDict).find(
+          ([, v]) => v === mapTitle,
+        )?.[0];
+        const typeKey = Object.entries(enDict).find(
+          ([, v]) => v === typeName,
+        )?.[0];
+        const nameKey = Object.entries(enDict).find(
+          ([, v]) => v === displayName,
+        )?.[0];
+
         addEntry(entries, markerPath, {
           changeFrequency: "weekly",
           priority: 0.6,
+          localizedPathFn:
+            mapKey && typeKey && nameKey
+              ? (locale) => {
+                  const lMap = translateForLocale(
+                    allDicts, enDict, locale, mapKey,
+                  );
+                  const lType = translateForLocale(
+                    allDicts, enDict, locale, typeKey,
+                  );
+                  const lName = translateForLocale(
+                    allDicts, enDict, locale, nameKey,
+                  );
+                  return `/maps/${encodeURIComponent(lMap)}/${encodeURIComponent(lType)}/${encodeURIComponent(lName)}?id=${encodeURIComponent(nodeId)}`;
+                }
+              : undefined,
         });
       }
     }
