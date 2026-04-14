@@ -228,9 +228,9 @@ export function createSitemapIndex(appConfig: AppConfig) {
     ]);
 
     const guideCount = countGuideEntries(version, enDict);
-    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
+    const guideChunks = guideCount > 0 ? Math.ceil(guideCount / ENTRIES_PER_CHUNK) : 0;
     const markers = await collectNamedMarkers(appConfig, version, enDict);
-    const markerChunks = Math.ceil(markers.length / ENTRIES_PER_CHUNK);
+    const markerChunks = markers.length > 0 ? Math.ceil(markers.length / ENTRIES_PER_CHUNK) : 0;
     const totalSitemaps = 1 + guideChunks + markerChunks;
 
     const now = new Date().toISOString();
@@ -282,9 +282,9 @@ export function createGenerateSitemaps(appConfig: AppConfig) {
     ]);
 
     const guideCount = countGuideEntries(version, enDict);
-    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
+    const guideChunks = guideCount > 0 ? Math.ceil(guideCount / ENTRIES_PER_CHUNK) : 0;
     const markers = await collectNamedMarkers(appConfig, version, enDict);
-    const markerChunks = Math.ceil(markers.length / ENTRIES_PER_CHUNK);
+    const markerChunks = markers.length > 0 ? Math.ceil(markers.length / ENTRIES_PER_CHUNK) : 0;
 
     // id 0 = core pages (home, maps, links), id 1..guideChunks = guides, rest = markers
     const total = 1 + guideChunks + markerChunks;
@@ -315,7 +315,7 @@ export function createSitemap(appConfig: AppConfig) {
 
     // Determine chunk boundaries
     const guideCount = countGuideEntries(version, enDict);
-    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
+    const guideChunks = guideCount > 0 ? Math.ceil(guideCount / ENTRIES_PER_CHUNK) : 0;
     const markerStartId = 1 + guideChunks;
 
     if (id === 0) {
