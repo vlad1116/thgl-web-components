@@ -168,7 +168,7 @@ export function createGuidesPage(appConfig: AppConfig) {
               "@type": "ListItem",
               position: i + 1,
               name: g.label,
-              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${translate(enDict, g.type)}`, locale)}`,
+              url: `https://${appConfig.domain}.th.gl${localizePath(`/guides/${encodeURIComponent(t(g.type, { fallback: translate(enDict, g.type) }))}`, locale)}`,
             })),
           }}
         />
@@ -235,7 +235,7 @@ export function createGuidesPage(appConfig: AppConfig) {
                   >
                     <Link
                       href={localizePath(
-                        `/guides/${encodeURIComponent(translate(enDict, guide.type))}`,
+                        `/guides/${encodeURIComponent(t(guide.type, { fallback: translate(enDict, guide.type) }))}`,
                         locale,
                       )}
                       className="block"
