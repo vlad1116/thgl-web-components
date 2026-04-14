@@ -155,6 +155,34 @@ async function collectNamedMarkers(
   return markers;
 }
 
+export function createSitemapIndex(appConfig: AppConfig) {
+  const baseUrl = `https://${appConfig.domain}.th.gl`;
+
+  return async function GET() {
+    const [version, enDict] = await Promise.all([
+      fetchVersion(appConfig.name),
+      fetchDict(appConfig.name),
+    ]);
+
+    const markers = await collectNamedMarkers(appConfig, version, enDict);
+    const markerChunks = Math.ceil(markers.length / MARKERS_PER_SITEMAP);
+    const totalSitemaps = 1 + markerChunks;
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...Array.from({ length: totalSitemaps }, (_, i) =>
+        `  <sitemap><loc>${baseUrl}/sitemap/${i}.xml</loc></sitemap>`,
+      ),
+      "</sitemapindex>",
+    ].join("\n");
+
+    return new Response(xml, {
+      headers: { "Content-Type": "application/xml" },
+    });
+  };
+}
+
 export function createGenerateSitemaps(appConfig: AppConfig) {
   return async function generateSitemaps() {
     const [version, enDict] = await Promise.all([
