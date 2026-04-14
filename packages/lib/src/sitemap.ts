@@ -18,9 +18,9 @@ type NamedMarker = {
   nodeId: string;
 };
 
-// Each marker generates ~(1 + locales) URL entries with alternates XML.
+// Each entry generates ~(1 + locales) URL entries with alternates XML.
 // Keep each sitemap chunk under ~15MB to stay within Vercel's 19MB ISR limit.
-const MARKERS_PER_SITEMAP = 150;
+const ENTRIES_PER_CHUNK = 150;
 
 export function createRobots(appConfig: AppConfig) {
   return function (): MetadataRoute.Robots {
@@ -227,9 +227,11 @@ export function createSitemapIndex(appConfig: AppConfig) {
       fetchDict(appConfig.name),
     ]);
 
+    const guideCount = countGuideEntries(version, enDict);
+    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
     const markers = await collectNamedMarkers(appConfig, version, enDict);
-    const markerChunks = Math.ceil(markers.length / MARKERS_PER_SITEMAP);
-    const totalSitemaps = 1 + markerChunks;
+    const markerChunks = Math.ceil(markers.length / ENTRIES_PER_CHUNK);
+    const totalSitemaps = 1 + guideChunks + markerChunks;
 
     const now = new Date().toISOString();
     const xml = [
@@ -247,6 +249,31 @@ export function createSitemapIndex(appConfig: AppConfig) {
   };
 }
 
+/** Count total guide entries (groups + types, deduplicated by English label) */
+function countGuideEntries(
+  version: Awaited<ReturnType<typeof fetchVersion>>,
+  enDict: Record<string, string>,
+): number {
+  const seenLabels = new Set<string>();
+  let count = 1; // /guides index page
+  const seenGroups = new Set<string>();
+  for (const filter of version.data.filters) {
+    const enGroup = translate(enDict, filter.group);
+    if (!seenGroups.has(enGroup)) {
+      seenGroups.add(enGroup);
+      count++;
+    }
+    for (const v of filter.values) {
+      const enLabel = translate(enDict, v.id);
+      if (!seenLabels.has(enLabel)) {
+        seenLabels.add(enLabel);
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
 export function createGenerateSitemaps(appConfig: AppConfig) {
   return async function generateSitemaps() {
     const [version, enDict] = await Promise.all([
@@ -254,11 +281,14 @@ export function createGenerateSitemaps(appConfig: AppConfig) {
       fetchDict(appConfig.name),
     ]);
 
+    const guideCount = countGuideEntries(version, enDict);
+    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
     const markers = await collectNamedMarkers(appConfig, version, enDict);
-    const markerChunks = Math.ceil(markers.length / MARKERS_PER_SITEMAP);
+    const markerChunks = Math.ceil(markers.length / ENTRIES_PER_CHUNK);
 
-    // id 0 = core pages, id 1+ = marker chunks
-    return Array.from({ length: 1 + markerChunks }, (_, i) => ({ id: i }));
+    // id 0 = core pages (home, maps, links), id 1..guideChunks = guides, rest = markers
+    const total = 1 + guideChunks + markerChunks;
+    return Array.from({ length: total }, (_, i) => ({ id: i }));
   };
 }
 
@@ -283,9 +313,19 @@ export function createSitemap(appConfig: AppConfig) {
     const { addEntry } = createHelpers(appConfig, allDicts);
     const entries = new Map<string, MetadataRoute.Sitemap[number]>();
 
+    // Determine chunk boundaries
+    const guideCount = countGuideEntries(version, enDict);
+    const guideChunks = Math.ceil(guideCount / ENTRIES_PER_CHUNK);
+    const markerStartId = 1 + guideChunks;
+
     if (id === 0) {
-      // Core pages: home, maps, guides, internal links
+      // Core pages: home, maps, internal links (no guides — they have their own chunks)
       const mapNames = Object.keys(version.data.tiles);
+
+      addEntry(entries, "/", {
+        changeFrequency: "daily",
+        priority: 0.9,
+      });
 
       if (mapNames.length > 0) {
         addEntry(entries, "/maps", {
@@ -317,53 +357,76 @@ export function createSitemap(appConfig: AppConfig) {
           });
         }
       }
+    } else if (id < markerStartId) {
+      // Guide chunk
+      const guideChunkIndex = id - 1;
+      const allGuideEntries: {
+        path: string;
+        priority: number;
+        localizedPathFn: (locale: string) => string;
+      }[] = [];
 
       if (version.data.filters.length > 0) {
-        addEntry(entries, "/guides", {
-          changeFrequency: "weekly",
+        allGuideEntries.push({
+          path: "/guides",
           priority: 0.7,
+          localizedPathFn: () => "/guides",
         });
+
+        const seenGroups = new Set<string>();
+        const seenTypes = new Set<string>();
 
         for (const filter of version.data.filters) {
           const enGroupTitle = translate(enDict, filter.group);
-          const groupPath = `/guides/${encodeURIComponent(enGroupTitle)}`;
-          addEntry(entries, groupPath, {
-            changeFrequency: "weekly",
-            priority: 0.6,
-            localizedPathFn: (locale) => {
-              const title = translateForLocale(
-                allDicts, enDict, locale, filter.group,
-              );
-              return `/guides/${encodeURIComponent(title)}`;
-            },
-          });
-
-          for (const value of filter.values) {
-            const enTypeTitle = translate(enDict, value.id);
-            const typePath = `/guides/${encodeURIComponent(enTypeTitle)}`;
-            addEntry(entries, typePath, {
-              changeFrequency: "weekly",
-              priority: 0.5,
+          if (!seenGroups.has(enGroupTitle)) {
+            seenGroups.add(enGroupTitle);
+            allGuideEntries.push({
+              path: `/guides/${encodeURIComponent(enGroupTitle)}`,
+              priority: 0.6,
               localizedPathFn: (locale) => {
                 const title = translateForLocale(
-                  allDicts, enDict, locale, value.id,
+                  allDicts, enDict, locale, filter.group,
                 );
                 return `/guides/${encodeURIComponent(title)}`;
               },
             });
           }
+
+          for (const value of filter.values) {
+            const enTypeTitle = translate(enDict, value.id);
+            if (!seenTypes.has(enTypeTitle)) {
+              seenTypes.add(enTypeTitle);
+              allGuideEntries.push({
+                path: `/guides/${encodeURIComponent(enTypeTitle)}`,
+                priority: 0.5,
+                localizedPathFn: (locale) => {
+                  const title = translateForLocale(
+                    allDicts, enDict, locale, value.id,
+                  );
+                  return `/guides/${encodeURIComponent(title)}`;
+                },
+              });
+            }
+          }
         }
       }
 
-      addEntry(entries, "/", {
-        changeFrequency: "daily",
-        priority: 0.9,
-      });
+      const start = guideChunkIndex * ENTRIES_PER_CHUNK;
+      const chunk = allGuideEntries.slice(start, start + ENTRIES_PER_CHUNK);
+
+      for (const entry of chunk) {
+        addEntry(entries, entry.path, {
+          changeFrequency: "weekly",
+          priority: entry.priority,
+          localizedPathFn: entry.localizedPathFn,
+        });
+      }
     } else {
       // Marker chunk
       const markers = await collectNamedMarkers(appConfig, version, enDict);
-      const start = (id - 1) * MARKERS_PER_SITEMAP;
-      const chunk = markers.slice(start, start + MARKERS_PER_SITEMAP);
+      const markerChunkIndex = id - markerStartId;
+      const start = markerChunkIndex * ENTRIES_PER_CHUNK;
+      const chunk = markers.slice(start, start + ENTRIES_PER_CHUNK);
 
       for (const { mapTitle, typeName, displayName, nodeId } of chunk) {
         const markerPath = `/maps/${encodeURIComponent(mapTitle)}/${encodeURIComponent(typeName)}/${encodeURIComponent(displayName)}?id=${encodeURIComponent(nodeId)}`;
