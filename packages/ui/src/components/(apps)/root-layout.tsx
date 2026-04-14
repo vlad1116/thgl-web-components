@@ -86,6 +86,17 @@ export function createRootLayout(appConfig: AppConfig) {
                 )}
               </Links>
 
+              {appConfig.supportedLocales.length > 1 && (
+                <div className="hidden md:flex">
+                  <Suspense>
+                    <LocaleSwitcher
+                      locales={appConfig.supportedLocales}
+                      current={locale}
+                    />
+                  </Suspense>
+                </div>
+              )}
+
               <Account />
             </Header>
 
