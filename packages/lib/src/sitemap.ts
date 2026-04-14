@@ -1,6 +1,15 @@
 import type { MetadataRoute } from "next";
-import { AppConfig, fetchDict, fetchVersion } from "./config";
+import { AppConfig, fetchDict, fetchVersion, getAppUrl } from "./config";
 import { DEFAULT_LOCALE, localizePath, translate } from "./i18n";
+import { decodeFromBuffer } from "./cbor";
+import { type Spawn } from "./coordinates";
+
+type NodesCoordinates = {
+  type: string;
+  static?: boolean;
+  mapName?: string;
+  spawns: (Omit<Spawn, "type" | "id"> & { id?: string })[];
+}[];
 
 export function createRobots(appConfig: AppConfig) {
   return function (): MetadataRoute.Robots {
@@ -106,6 +115,50 @@ export function createSitemap(appConfig: AppConfig) {
         changeFrequency: "daily",
         priority: 1,
       });
+    }
+
+    // Named markers per map
+    for (const mapName of mapNames) {
+      const nodesPath = version.more.nodes[mapName];
+      if (!nodesPath) continue;
+
+      try {
+        const url = getAppUrl(appConfig.name, nodesPath);
+        const response = await fetch(url);
+        if (!response.ok) continue;
+
+        const buffer = await response.arrayBuffer();
+        const nodes = decodeFromBuffer<NodesCoordinates>(
+          new Uint8Array(buffer),
+        );
+        const mapTitle = translate(enDict, mapName);
+
+        for (const node of nodes) {
+          const typeName = translate(enDict, node.type);
+
+          for (const spawn of node.spawns) {
+            // Only include spawns with specific names that translate to human-readable text
+            const rawId = (spawn.name ?? spawn.id ?? node.type).replace(
+              /my_\d+_/,
+              "",
+            );
+            const displayName = translate(enDict, rawId);
+            if (displayName === rawId || displayName === typeName) continue;
+
+            const nodeId = spawn.id?.includes("@")
+              ? spawn.id
+              : `${spawn.id || node.type}@${spawn.p[0]}:${spawn.p[1]}`;
+
+            const markerPath = `/maps/${encodeURIComponent(mapTitle)}/${encodeURIComponent(typeName)}/${encodeURIComponent(displayName)}?id=${encodeURIComponent(nodeId)}`;
+            addEntry(entries, markerPath, {
+              changeFrequency: "weekly",
+              priority: 0.6,
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to load nodes for sitemap (${mapName}):`, err);
+      }
     }
 
     // Internal Links

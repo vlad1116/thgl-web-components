@@ -22,16 +22,28 @@ import { ReactNode } from "react";
 import { JSONLDScript } from "./json-ld-script";
 import { AdditionalTooltipType } from "../(content)";
 
-type PageProps = {
-  params: Promise<{ locale?: string; map: string }>;
+type MapPageProps = {
+  params: Promise<{
+    locale?: string;
+    map: string;
+    type?: string;
+    marker?: string;
+  }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export function createMapPageGenerateMetadata(appConfig: AppConfig) {
   return async function generateMetadata({
     params,
-  }: PageProps): Promise<Metadata> {
-    const { locale = DEFAULT_LOCALE, map } = await params;
+  }: MapPageProps): Promise<Metadata> {
+    const {
+      locale = DEFAULT_LOCALE,
+      map,
+      type: typeSlug,
+      marker: markerSlug,
+    } = await params;
+    const typeName = typeSlug ? decodeURIComponent(typeSlug) : undefined;
+    const markerId = markerSlug ? decodeURIComponent(markerSlug) : undefined;
 
     const [dict, version] = await Promise.all([
       getFullDictionary(appConfig.name, locale),
@@ -51,11 +63,61 @@ export function createMapPageGenerateMetadata(appConfig: AppConfig) {
         .map((k) => t(k))
         .join(", ") ?? "";
 
+    const mapDisplayName = t(mapName);
+
+    // Marker-specific metadata
+    if (typeName && markerId) {
+      // If slug is a human name (no @), use it directly
+      // If slug is a nodeId (has @), extract and translate the id prefix
+      let displayName: string;
+      if (markerId.includes("@")) {
+        const idPrefix = markerId.slice(0, markerId.indexOf("@"));
+        const translated = t(idPrefix, { fallback: idPrefix });
+        displayName =
+          translated !== idPrefix && translated !== typeName
+            ? translated
+            : typeName;
+      } else {
+        // Slug is already a human-readable name
+        displayName = markerId;
+      }
+
+      const title = `${displayName} - ${mapDisplayName} | ${appConfig.title}`;
+      const description = `Find ${displayName} (${typeName}) on the ${mapDisplayName} interactive map for ${appConfig.title}. ${keywords}`;
+
+      const markerPath = `/maps/${map}/${encodeURIComponent(typeName)}/${encodeURIComponent(markerId)}`;
+      const { canonical, languageAlternates } = getMetadataAlternates(
+        markerPath,
+        locale,
+        appConfig.supportedLocales,
+      );
+
+      return {
+        title,
+        description,
+        keywords: [
+          displayName,
+          typeName,
+          ...appConfig.keywords.map((k) => t(k)),
+        ],
+        alternates: {
+          canonical,
+          languages: languageAlternates,
+        },
+        openGraph: {
+          title,
+          description,
+          url: canonical,
+          images: [getOpenGraphImageUrl(appConfig.name, mapName)],
+        },
+      };
+    }
+
     const title = t("map.pageTitle", {
-      vars: { title: appConfig.title, map: t(mapName) },
+      vars: { title: appConfig.title, map: mapDisplayName },
     });
     const description = t("map.intro", {
-      vars: { title: appConfig.title, keywords, map: t(mapName) },
+      vars: { title: appConfig.title, keywords, map: mapDisplayName },
     });
 
     const { canonical, languageAlternates } = getMetadataAlternates(
@@ -88,8 +150,15 @@ export function createMapPage(
   additionalFilters?: ReactNode,
   additionalTooltip?: AdditionalTooltipType,
 ) {
-  return async function Map({ params }: PageProps) {
-    const { locale = DEFAULT_LOCALE, map } = await params;
+  return async function Map({ params }: MapPageProps) {
+    const {
+      locale = DEFAULT_LOCALE,
+      map,
+      type: typeSlug,
+      marker: markerSlug,
+    } = await params;
+    const markerId = markerSlug ? decodeURIComponent(markerSlug) : undefined;
+
     const [dict, version] = await Promise.all([
       getFullDictionary(appConfig.name, locale),
       fetchVersion(appConfig.name),
@@ -107,9 +176,28 @@ export function createMapPage(
       decodedMap += " Map";
     }
 
-    const mapTitle = t("map.pageTitle", {
-      vars: { title: appConfig.title, map: decodedMap },
-    });
+    const typeName = typeSlug ? decodeURIComponent(typeSlug) : undefined;
+
+    // For marker pages, build a human-readable title
+    let markerDisplayName: string | undefined;
+    if (markerId && typeName) {
+      if (markerId.includes("@")) {
+        const idPrefix = markerId.slice(0, markerId.indexOf("@"));
+        const translated = t(idPrefix, { fallback: idPrefix });
+        markerDisplayName =
+          translated !== idPrefix && translated !== typeName
+            ? translated
+            : typeName;
+      } else {
+        markerDisplayName = markerId;
+      }
+    }
+
+    const mapTitle = markerDisplayName
+      ? `${markerDisplayName} - ${decodedMap} | ${appConfig.title}`
+      : t("map.pageTitle", {
+          vars: { title: appConfig.title, map: decodedMap },
+        });
     const mapDescription = t("map.intro", {
       vars: {
         title: appConfig.title,
@@ -122,6 +210,12 @@ export function createMapPage(
       },
     });
 
+    const baseMapUrl = `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`;
+    const markerUrl =
+      typeName && markerId
+        ? `${baseMapUrl}/${encodeURIComponent(typeName)}/${encodeURIComponent(markerId)}`
+        : undefined;
+
     return (
       <>
         <JSONLDScript
@@ -130,7 +224,7 @@ export function createMapPage(
             "@type": "WebPage",
             name: mapTitle,
             description: mapDescription,
-            url: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+            url: markerUrl ?? baseMapUrl,
             isPartOf: {
               "@type": "WebSite",
               name: `${appConfig.title} Interactive Map`,
@@ -162,8 +256,28 @@ export function createMapPage(
                 "@type": "ListItem",
                 position: 3,
                 name: t(mapName),
-                item: `https://${appConfig.domain}.th.gl${localizePath(`/maps/${map}`, locale)}`,
+                item: baseMapUrl,
               },
+              ...(typeName
+                ? [
+                    {
+                      "@type": "ListItem" as const,
+                      position: 4,
+                      name: typeName,
+                      item: `${baseMapUrl}/${encodeURIComponent(typeName)}`,
+                    },
+                  ]
+                : []),
+              ...(markerDisplayName && markerUrl
+                ? [
+                    {
+                      "@type": "ListItem" as const,
+                      position: 5,
+                      name: markerDisplayName,
+                      item: markerUrl,
+                    },
+                  ]
+                : []),
             ],
           }}
         />
@@ -205,6 +319,7 @@ export function createMapPage(
             </MarkersSearch>
             <MarkerPanel
               appName={appConfig.name}
+              markerSlug={markerId}
               additionalTooltip={additionalTooltip}
               coordinateCopyFormat={
                 appConfig.markerOptions?.coordinateCopyFormat

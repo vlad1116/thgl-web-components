@@ -39,7 +39,8 @@ function getDiscoveryId(
   latLng: [number, number] | [number, number, number],
 ): string {
   if (item.id?.includes("@")) return item.id;
-  // Use item's own position for unique IDs, fall back to shared latLng
+  // Always prefer item's own position — latLng is the cluster parent's position
+  // which may differ from the child's actual coordinates
   const pos = item.p ?? latLng;
   return `${item.id || item.type}@${pos[0]}:${pos[1]}`;
 }

@@ -12,6 +12,7 @@ import {
 import { useCoordinates, useT } from "../(providers)";
 import { Separator } from "../ui/separator";
 import { Button } from "../(controls)";
+import { useMarkerUrlSync } from "./use-marker-url-sync";
 import {
   Copy,
   Eye,
@@ -156,17 +157,20 @@ function PrivateNodeActions({
 
 export function MarkerPanel({
   appName,
+  markerSlug,
   hideComments,
   additionalTooltip,
   coordinateCopyFormat,
   headerOffset = "54px",
 }: {
   appName: string;
+  markerSlug?: string;
   hideComments?: boolean;
   additionalTooltip?: AdditionalTooltipType;
   coordinateCopyFormat?: string;
   headerOffset?: string;
 }) {
+  useMarkerUrlSync(markerSlug);
   const t = useT();
   const { spawns, filters } = useCoordinates();
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
@@ -190,20 +194,41 @@ export function MarkerPanel({
   // Find the spawn data
   const spawn = useMemo(() => {
     if (!selectedNodeId) return null;
-    for (const s of spawns) {
+
+    const matchId = (s: (typeof spawns)[number]) => {
       const spawnId = s.id?.includes("@")
         ? s.id
         : `${s.id || s.type}@${s.p[0]}:${s.p[1]}`;
-      if (spawnId === selectedNodeId) return s;
+      return spawnId === selectedNodeId;
+    };
+
+    // Pass 1: exact match on parent or cluster child
+    for (const s of spawns) {
+      if (matchId(s)) return s;
       if (s.cluster) {
         for (const c of s.cluster) {
-          const clusterId = c.id?.includes("@")
-            ? c.id
-            : `${c.id || c.type}@${c.p[0]}:${c.p[1]}`;
-          if (clusterId === selectedNodeId) return c;
+          if (matchId(c)) return c;
         }
       }
     }
+
+    // Pass 2: match by id prefix (before @) — handles cases where
+    // coordinates differ due to clustering (parent coords vs child coords)
+    const atIdx = selectedNodeId.indexOf("@");
+    if (atIdx > 0) {
+      const idPart = selectedNodeId.slice(0, atIdx);
+      for (const s of spawns) {
+        const sid = s.id?.includes("@") ? s.id.slice(0, s.id.indexOf("@")) : (s.id || s.type);
+        if (sid === idPart) return s;
+        if (s.cluster) {
+          for (const c of s.cluster) {
+            const cid = c.id?.includes("@") ? c.id.slice(0, c.id.indexOf("@")) : (c.id || c.type);
+            if (cid === idPart) return c;
+          }
+        }
+      }
+    }
+
     return null;
   }, [selectedNodeId, spawns]);
 
