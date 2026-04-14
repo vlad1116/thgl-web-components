@@ -20,7 +20,9 @@ type NamedMarker = {
 
 // Max URLs per sitemap chunk (Google limit is 50,000, but we keep it
 // lower to stay under Vercel's 19MB ISR body size limit with alternates XML)
-const MARKERS_PER_SITEMAP = 2000;
+// Each marker generates ~(1 + locales) URL entries with alternates XML.
+// Keep each sitemap chunk under ~15MB to stay within Vercel's 19MB ISR limit.
+const MARKERS_PER_SITEMAP = 150;
 
 export function createRobots(appConfig: AppConfig) {
   return function (): MetadataRoute.Robots {
@@ -58,7 +60,7 @@ function createHelpers(appConfig: AppConfig) {
     return { languages };
   };
 
-  /** Add one canonical entry with hreflang alternates for all locales. */
+  /** Add an entry for the canonical path and one per non-default locale (per Google guidelines). */
   const addEntry = (
     entries: Map<string, MetadataRoute.Sitemap[number]>,
     path: string,
@@ -79,6 +81,23 @@ function createHelpers(appConfig: AppConfig) {
         priority: opts.priority,
         alternates,
       });
+    }
+
+    if (hasLocales) {
+      for (const locale of locales) {
+        if (locale === DEFAULT_LOCALE) continue;
+        const localePath = localizePath(path, locale);
+        const localeUrl = baseUrl + localePath;
+        if (!entries.has(localeUrl)) {
+          entries.set(localeUrl, {
+            url: localeUrl,
+            lastModified: now,
+            changeFrequency: opts.changeFrequency,
+            priority: opts.priority,
+            alternates,
+          });
+        }
+      }
     }
   };
 
