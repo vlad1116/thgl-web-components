@@ -637,6 +637,19 @@ function MarkersContent({
 
   // Track effect runs for debugging
 
+  // Reverse lookup: translated icon name → current icon coords from filter config.
+  // Used to fix stale sprite x,y in old shared private nodes that lack filterId.
+  const sharedIconNameLookup = useMemo(() => {
+    const lookup = new Map<string, { x: number; y: number; width: number; height: number; filterId: string }>();
+    for (const filter of filters) {
+      for (const value of filter.values) {
+        if (typeof value.icon !== "string") {
+          lookup.set(t(value.id), { ...value.icon, filterId: value.id });
+        }
+      }
+    }
+    return lookup;
+  }, [filters, t]);
 
   // Main effect: add/update/remove markers
   useEffect(() => {
@@ -1048,18 +1061,28 @@ function MarkersContent({
     const sharedPrivateSpawns = sharedMyFilters.flatMap<Spawns[number]>(
       (myFilter) => {
         return (
-          myFilter.nodes?.map((node) => ({
-            type: myFilter.name,
-            mapName: node.mapName,
-            id: node.id,
-            name: node.name,
-            description: node.description,
-            p: node.p,
-            color: node.color,
-            icon: node.icon,
-            radius: node.radius,
-            isPrivate: true,
-          })) ?? []
+          myFilter.nodes?.map((node) => {
+            // Resolve stale sprite coords for old private nodes missing filterId
+            let icon = node.icon;
+            if (icon && !icon.filterId && icon.name && icon.url?.includes("/icons/")) {
+              const current = sharedIconNameLookup.get(icon.name);
+              if (current) {
+                icon = { ...icon, x: current.x, y: current.y, width: current.width, height: current.height, filterId: current.filterId };
+              }
+            }
+            return {
+              type: myFilter.name,
+              mapName: node.mapName,
+              id: node.id,
+              name: node.name,
+              description: node.description,
+              p: node.p,
+              color: node.color,
+              icon,
+              radius: node.radius,
+              isPrivate: true,
+            };
+          }) ?? []
         );
       }
     );
@@ -1447,6 +1470,7 @@ function MarkersContent({
     dynamicIconSize,
     dynamicIconSizeFactor,
     iconLoadVersion, // Re-run when images finish loading to apply processed icons
+    sharedIconNameLookup, // Re-resolve stale shared private icon coords
   ]);
 
   // Audio alerts when player is within range of tracked spawns.

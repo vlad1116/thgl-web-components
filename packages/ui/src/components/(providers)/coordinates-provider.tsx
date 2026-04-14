@@ -288,6 +288,20 @@ export function CoordinatesProvider({
   const myFilters = useSettingsStore((state) => state.myFilters);
   const actors = useGameState((state) => state.actors);
 
+  // Reverse lookup: translated icon name → current icon coords from filter config.
+  // Used to fix stale sprite x,y in old private nodes that lack filterId.
+  const iconNameLookup = useMemo(() => {
+    const lookup = new Map<string, { x: number; y: number; width: number; height: number; filterId: string }>();
+    for (const filter of filters) {
+      for (const value of filter.values) {
+        if (typeof value.icon !== "string") {
+          lookup.set(t(value.id), { ...value.icon, filterId: value.id });
+        }
+      }
+    }
+    return lookup;
+  }, [filters, t]);
+
   // User-created custom markers (from myFilters)
   const customNodes = useMemo<NodesCoordinates>(() => {
     if (!isHydrated) {
@@ -296,6 +310,14 @@ export function CoordinatesProvider({
     return myFilters.reduce<NodesCoordinates>((acc, myFilter) => {
       myFilter.nodes?.forEach((node) => {
         const nodeMapName = node.mapName;
+        // Resolve stale sprite coords for old private nodes missing filterId
+        let icon = node.icon;
+        if (icon && !icon.filterId && icon.name && icon.url?.includes("/icons/")) {
+          const current = iconNameLookup.get(icon.name);
+          if (current) {
+            icon = { ...icon, x: current.x, y: current.y, width: current.width, height: current.height, filterId: current.filterId };
+          }
+        }
         const category = acc.find(
           (node) => node.type === myFilter.name && node.mapName === nodeMapName,
         );
@@ -306,7 +328,7 @@ export function CoordinatesProvider({
             description: node.description,
             p: node.p,
             color: node.color,
-            icon: node.icon,
+            icon,
             radius: node.radius,
             isPrivate: true,
           });
@@ -321,7 +343,7 @@ export function CoordinatesProvider({
                 description: node.description,
                 p: node.p,
                 color: node.color,
-                icon: node.icon,
+                icon,
                 radius: node.radius,
                 isPrivate: true,
               },
@@ -331,7 +353,7 @@ export function CoordinatesProvider({
       });
       return acc;
     }, []);
-  }, [isHydrated, myFilters]);
+  }, [isHydrated, myFilters, iconNameLookup]);
 
   const allFilters = useMemo(() => {
     if (!isHydrated) {
