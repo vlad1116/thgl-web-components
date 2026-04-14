@@ -126,7 +126,7 @@ function DiscoveryToggle({
             compact ? "h-5 w-5 p-0.5" : "h-6 w-6 p-1",
             isDiscovered
               ? "bg-primary/20 text-primary hover:bg-primary/30"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
           )}
           onClick={(e) => {
             e.stopPropagation();
