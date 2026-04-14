@@ -115,13 +115,13 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
 
   return (
     <>
-      <h4 className="text-sm font-medium flex items-center gap-1.5 uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-sm font-medium flex items-center gap-1.5 uppercase tracking-wide text-muted-foreground">
         <MessageCircle className="w-3.5 h-3.5" />
         Comments
         {comments && comments.length > 0 && (
           <span className="text-xs font-normal">({comments.length})</span>
         )}
-      </h4>
+      </h3>
 
       <ScrollArea type="auto" className="grow">
         <div className="py-3 space-y-4">

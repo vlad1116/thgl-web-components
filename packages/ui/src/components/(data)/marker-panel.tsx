@@ -277,6 +277,7 @@ export function MarkerPanel({
       <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
         <button
           type="button"
+          aria-label="Close"
           className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors shrink-0"
           onClick={close}
         >
@@ -307,6 +308,7 @@ export function MarkerPanel({
                 {formatCoordinates(spawn.p, coordinateCopyFormat)}
                 <button
                   type="button"
+                  aria-label="Copy coordinates"
                   className="h-4 w-4 p-0.5 rounded hover:bg-muted hover:text-foreground transition-colors"
                   onClick={() => {
                     copyToClipboard(formatCoordinates(spawn.p, coordinateCopyFormat));

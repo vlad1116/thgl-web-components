@@ -71,7 +71,7 @@ export function createRootLayout(appConfig: AppConfig) {
                 />
               }
             >
-              <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">
+              <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}>
                 <Brand title={appConfig.domain} />
               </Link>
 
