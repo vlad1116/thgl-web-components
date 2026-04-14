@@ -9,7 +9,7 @@ const nextConfig = {
       },
       {
         source: "/support-me/patreon",
-        destination: `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${process.env.PATREON_CLIENT_ID}&redirect_uri=${process.env.PATREON_REDIRECT_URL}`,
+        destination: "/api/patreon/authorize",
         permanent: false,
       },
       {

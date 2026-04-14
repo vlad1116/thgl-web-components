@@ -2,7 +2,7 @@
 export { Activities } from "./activities";
 export { ActivityProgress } from "./activity-progress";
 export { ActivityReset } from "./activity-reset";
-export { SingleComment, type Comment } from "./comment";
+export { SingleComment, type Comment, type CommentImage } from "./comment";
 export { Comments } from "./comments";
 export { CustomActivities } from "./custom-activities";
 export { DataTable, type ColumnDef } from "./data-table";

@@ -1,4 +1,5 @@
 "use client";
+
 import { Info, MessageCircle } from "lucide-react";
 import {
   Button,
@@ -22,17 +23,20 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { Skeleton } from "../ui/skeleton";
 import { API_FORGE_URL, useAccountStore } from "@repo/lib";
-import { Comment, SingleComment } from "./comment";
+import { type Comment, SingleComment } from "./comment";
 import { ScrollArea } from "../ui/scroll-area";
 import { AuthAlert } from "./auth-alert";
+import { CommentImageUpload } from "./comment-image-upload";
+import { useState } from "react";
 
 const formSchema = z.object({
-  text: z.string().min(2).max(50),
+  text: z.string().min(2).max(500),
 });
 
 export function Comments({ id, appName }: { id: string; appName: string }) {
   const userId = useAccountStore((state) => state.userId);
   const commentsPerk = useAccountStore((state) => state.perks.comments);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
 
   const {
     data: comments,
@@ -50,6 +54,7 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
   });
+
   const { trigger, isMutating } = useSWRMutation(
     `/comments/${id}`,
     async (
@@ -62,17 +67,26 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
           nodeId: string;
           text: string;
           userId: string;
+          images: File[];
         };
       },
     ) => {
+      const formData = new FormData();
+      formData.append("appId", arg.appId);
+      formData.append("nodeId", arg.nodeId);
+      formData.append("text", arg.text);
+      formData.append("userId", arg.userId);
+      for (const img of arg.images) {
+        formData.append("images", img);
+      }
       const res = await fetch(`${API_FORGE_URL}/comments`, {
         method: "POST",
-        body: JSON.stringify(arg),
+        body: formData,
       });
       if (!res.ok) {
         throw new Error("Failed to post comment");
       }
-      return (await res.json()) as Comment[];
+      return (await res.json()) as { comment: Comment };
     },
   );
 
@@ -83,95 +97,127 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
     },
   });
 
+  const watchText = form.watch("text");
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!userId) {
-      return;
-    }
+    if (!userId) return;
 
     await trigger({
       appId: appName,
       nodeId: id,
       text: values.text,
-      userId: userId,
+      userId,
+      images: pendingImages,
     });
     form.reset();
+    setPendingImages([]);
   };
 
   return (
     <>
-      <h4 className="text-md flex items-center uppercase">
-        <MessageCircle className="w-4 h-4 mr-2" />
+      <h4 className="text-sm font-medium flex items-center gap-1.5 uppercase tracking-wide text-muted-foreground">
+        <MessageCircle className="w-3.5 h-3.5" />
         Comments
+        {comments && comments.length > 0 && (
+          <span className="text-xs font-normal">({comments.length})</span>
+        )}
       </h4>
+
       <ScrollArea type="auto" className="grow">
-        <section className="my-4 space-y-4">
-          {error && <p className="text-red-500">{error.message}</p>}
-          {!error && isLoading && <Skeleton className="h-6" />}
-          {comments?.length === 0 && <p>No comments yet</p>}
+        <div className="py-3 space-y-4">
+          {error && (
+            <p className="text-xs text-destructive">{error.message}</p>
+          )}
+          {!error && isLoading && (
+            <div className="space-y-3">
+              <Skeleton className="h-12" />
+              <Skeleton className="h-12" />
+            </div>
+          )}
+          {!error && !isLoading && comments?.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No comments yet. Be the first!
+            </p>
+          )}
           {comments?.map((comment) => (
             <SingleComment key={comment.id} comment={comment} nodeId={id} />
           ))}
-        </section>
+        </div>
       </ScrollArea>
-      <div>
-        <h4 className="flex items-center justify-between">
-          <span className="font-bold">
-            <span className="hidden md:inline">Add </span>Comment
-          </span>
-          <span className="ml-2 text-muted-foreground text-xs grow">
+
+      {/* Form */}
+      <div className="pt-2 border-t border-border">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium">Add comment</span>
+          <div className="flex items-center gap-1.5">
             <a
               href="https://www.markdownguide.org/cheat-sheet/"
               target="_blank"
-              className="text-primary"
+              className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
             >
               Markdown
             </a>
-            <span className="hidden md:inline"> is supported</span>
-          </span>
-          <HoverCard openDelay={20} closeDelay={20}>
-            <HoverCardTrigger>
-              <Info className="h-4 w-4" />
-            </HoverCardTrigger>
-            <HoverCardPortal>
-              <HoverCardContent className="text-sm w-auto">
-                <p>Comments are public and will be visible to everyone.</p>
-                <p>
-                  Be respektful, avoid spamming and ask before advertisement.
-                </p>
-              </HoverCardContent>
-            </HoverCardPortal>
-          </HoverCard>
-        </h4>
+            <HoverCard openDelay={20} closeDelay={20}>
+              <HoverCardTrigger>
+                <Info className="h-3 w-3 text-muted-foreground" />
+              </HoverCardTrigger>
+              <HoverCardPortal>
+                <HoverCardContent className="text-xs w-auto max-w-[240px]">
+                  <p>Comments are public and visible to everyone.</p>
+                  <p>Be respectful, avoid spamming and ask before advertisement.</p>
+                </HoverCardContent>
+              </HoverCardPortal>
+            </HoverCard>
+          </div>
+        </div>
+
+        {!commentsPerk ? (
+          <AuthAlert />
+        ) : (
+          <Form {...form}>
+            <form className="space-y-2" onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="text"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        className="text-xs min-h-0 resize-none"
+                        placeholder="Write a comment..."
+                        rows={2}
+                        maxLength={500}
+                        disabled={isMutating || !userId}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-between">
+                <CommentImageUpload
+                  images={pendingImages}
+                  onImagesChange={setPendingImages}
+                />
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {watchText?.length ?? 0}/500
+                </span>
+              </div>
+
+              <Button
+                type="submit"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={isMutating || !userId}
+              >
+                {isMutating ? "Sending..." : "Send"}
+              </Button>
+            </form>
+          </Form>
+        )}
       </div>
-      {!commentsPerk ? (
-        <AuthAlert />
-      ) : (
-        <Form {...form}>
-          <form className="space-y-2" onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="text"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      className="overflow-hidden"
-                      placeholder="Comment"
-                      rows={1}
-                      disabled={isMutating || !userId}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isMutating || !userId}>
-              Send
-            </Button>
-          </form>
-        </Form>
-      )}
     </>
   );
 }

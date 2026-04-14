@@ -96,7 +96,6 @@ export function AdFreeContainer({
         className="block text-center text-[11px] leading-tight py-0.5 group cursor-pointer"
         onClick={() => {
           setShowUserDialog(true);
-          window.open("https://www.th.gl/support-me", "_blank");
         }}
       >
         {t.rich("adfree.linkText", {

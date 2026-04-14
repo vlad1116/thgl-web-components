@@ -108,7 +108,7 @@ export function isSpecialUser(userId: string) {
 }
 
 export function getCurrentEntitledTiers(currentUser: PatreonUser) {
-  if (isSpecialUser(currentUser.data.id)) {
+if (isSpecialUser(currentUser.data.id)) {
     return ["special"];
   }
   if (!currentUser.included) {

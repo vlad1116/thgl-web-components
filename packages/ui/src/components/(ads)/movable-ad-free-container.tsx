@@ -81,7 +81,6 @@ export function MovableAdsContainer({
             className="block text-center text-xs px-1.5 py-0.5 group"
             onClick={() => {
               setShowUserDialog(true);
-              window.open("https://www.th.gl/support-me", "_blank");
             }}
           >
             {t.rich("adfree.linkText", {

@@ -124,12 +124,10 @@ export function AdBlocker() {
             <div
               onClick={() => {
                 setShowUserDialog(true);
-                window.open("https://www.th.gl/support-me", "_blank");
               }}
-              className="flex gap-1 text-primary hover:underline"
+              className="flex gap-1 text-primary hover:underline cursor-pointer"
             >
               <span>{t("adblocker.supportLink")}</span>
-              <ExternalLink className="w-3 h-3" />
             </div>
           </li>
 

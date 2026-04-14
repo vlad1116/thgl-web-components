@@ -9,17 +9,43 @@ import {
   toCookieStringEmpty,
 } from "@/lib/patreon";
 
+const ALLOWED_DOMAINS = [".th.gl", "localhost"];
+const DEFAULT_REDIRECT = "/support-me/account";
+
+function parseReturnTo(state: string | null): string {
+  if (!state) return DEFAULT_REDIRECT;
+  try {
+    const decoded = JSON.parse(
+      Buffer.from(state, "base64url").toString("utf-8"),
+    );
+    const returnTo = decoded?.return_to;
+    if (typeof returnTo !== "string") return DEFAULT_REDIRECT;
+
+    // Validate the return URL
+    const parsed = new URL(returnTo);
+    const isAllowed = ALLOWED_DOMAINS.some(
+      (domain) =>
+        parsed.hostname === domain || parsed.hostname.endsWith(domain),
+    );
+    return isAllowed ? returnTo : DEFAULT_REDIRECT;
+  } catch {
+    return DEFAULT_REDIRECT;
+  }
+}
+
 export const maxDuration = 25;
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
+  const returnTo = parseReturnTo(state);
 
   if (!code) {
     return new Response(null, {
       status: 302,
       headers: {
         "Set-Cookie": toCookieStringEmpty(),
-        location: "/support-me/account",
+        location: returnTo,
       },
     });
   }
@@ -48,14 +74,14 @@ export async function GET(request: Request) {
 
   const signed = sign(currentUser.data.id, process.env.JWT_SECRET!);
   await kv.set(`token:${currentUser.data.id}`, patreonToken, {
-    ex: 2678400, // patreonToken.expires_in,
+    ex: 2678400,
   });
 
   return new Response(null, {
     status: 302,
     headers: {
-      "Set-Cookie": toCookieString(signed, 2678400), // patreonToken.expires_in),
-      location: "/support-me/account",
+      "Set-Cookie": toCookieString(signed, 2678400),
+      location: returnTo,
     },
   });
 }

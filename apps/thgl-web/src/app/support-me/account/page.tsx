@@ -65,7 +65,7 @@ export default async function SupportMeAccount() {
             );
             if (profileRes.ok) {
               const profile = await profileRes.json();
-              username = profile.username;
+              username = profile.username ?? profile.generatedUsername;
               avatarUrl = profile.avatarUrl;
             }
           } catch {
@@ -84,10 +84,9 @@ export default async function SupportMeAccount() {
           content = (
             <>
               <InitializeAccount account={account} />
-              <ProfileEditor />
               <div className="bg-muted/30 rounded-lg p-8 max-w-3xl mx-auto">
                 <h2 className="text-2xl font-bold mb-6 text-center">
-                  Account Status
+                  Account
                 </h2>
 
                 {/* User Info */}
@@ -129,9 +128,40 @@ export default async function SupportMeAccount() {
 
                     {entitledTierIDs.includes("21470801") && (
                       <p className="text-sm text-amber-500 text-center mt-3">
-                        ⚠️ The Enthusiast tier does not include Ad Removal.
+                        The Enthusiast tier does not include Ad Removal.
                       </p>
                     )}
+                  </div>
+
+                  {/* Perks */}
+                  <div className="border-t border-border pt-4">
+                    <p className="text-sm font-semibold text-center mb-3">
+                      Perks
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
+                      {(
+                        [
+                          { label: "Comments", active: perks.comments, tier: "Enthusiast+" },
+                          { label: "Ad-Free", active: perks.adRemoval, tier: "Pro+" },
+                          { label: "Premium", active: perks.premiumFeatures, tier: "Pro+" },
+                          { label: "Preview Access", active: perks.previewReleaseAccess, tier: "Elite" },
+                        ] as const
+                      ).map((perk) => (
+                        <div
+                          key={perk.label}
+                          className={
+                            perk.active
+                              ? "flex items-center justify-between text-sm text-foreground py-1"
+                              : "flex items-center justify-between text-sm text-muted-foreground/40 py-1"
+                          }
+                        >
+                          <span>{perk.label}</span>
+                          <span className="text-xs text-muted-foreground/50">
+                            {perk.tier}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -166,6 +196,14 @@ export default async function SupportMeAccount() {
                     </Link>
                     .
                   </p>
+                </div>
+
+                {/* Profile */}
+                <div className="border-t border-border pt-4 mt-4">
+                  <p className="text-sm font-semibold text-center mb-4">
+                    Profile
+                  </p>
+                  <ProfileEditor />
                 </div>
 
                 {/* Actions */}

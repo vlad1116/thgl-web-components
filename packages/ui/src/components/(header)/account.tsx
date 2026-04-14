@@ -11,6 +11,30 @@ import {
   useSettingsStore,
 } from "@repo/lib";
 
+async function fetchProfile(token: string) {
+  try {
+    const res = await fetch(
+      `${API_FORGE_URL}/users?userId=${encodeURIComponent(token)}`,
+    );
+    if (res.ok) {
+      const profile = (await res.json()) as {
+        userId: string;
+        username: string | null;
+        generatedUsername: string | null;
+        avatarUrl: string | null;
+      };
+      return {
+        decryptedUserId: profile.userId,
+        username: profile.username ?? profile.generatedUsername,
+        avatarUrl: profile.avatarUrl,
+      };
+    }
+  } catch (err) {
+    console.warn("Failed to fetch user profile:", err);
+  }
+  return { decryptedUserId: null, username: null, avatarUrl: null };
+}
+
 export function Account() {
   const accountHasHydrated = useAccountStore((state) => state._hasHydrated);
   const settingsHasHydrated = useSettingsStore((state) => state._hasHydrated);
@@ -40,6 +64,10 @@ export function Account() {
         }
         return;
       }
+
+      // Fetch profile for any authenticated user (regardless of subscription)
+      const profile = await fetchProfile(userId);
+
       const response = await fetch(TH_GL_URL + "/api/patreon", {
         credentials: "include",
       });
@@ -54,23 +82,13 @@ export function Account() {
           if (response.status === 403) {
             state.setAccount({
               userId,
-              decryptedUserId: null,
+              decryptedUserId: profile.decryptedUserId,
               email: null,
               perks: defaultPerks,
-              username: null,
-              avatarUrl: null,
+              username: profile.username,
+              avatarUrl: profile.avatarUrl,
             });
-          } else if (response.status === 404) {
-            state.setAccount({
-              userId: null,
-              decryptedUserId: null,
-              email: null,
-              perks: defaultPerks,
-              username: null,
-              avatarUrl: null,
-            });
-            Cookies.remove("userId");
-          } else if (response.status === 400) {
+          } else if (response.status === 404 || response.status === 400) {
             state.setAccount({
               userId: null,
               decryptedUserId: null,
@@ -84,25 +102,6 @@ export function Account() {
         } else {
           console.log(`Patreon successfully activated`, body);
 
-          // Fetch user profile from api-forge
-          let username: string | null = null;
-          let avatarUrl: string | null = null;
-          try {
-            const profileRes = await fetch(
-              `${API_FORGE_URL}/users?userId=${encodeURIComponent(userId!)}`,
-            );
-            if (profileRes.ok) {
-              const profile = (await profileRes.json()) as {
-                username: string | null;
-                avatarUrl: string | null;
-              };
-              username = profile.username;
-              avatarUrl = profile.avatarUrl;
-            }
-          } catch (err) {
-            console.warn("Failed to fetch user profile:", err);
-          }
-
           state.setAccount({
             userId,
             decryptedUserId: body.decryptedUserId,
@@ -113,19 +112,19 @@ export function Account() {
               comments: body.comments,
               premiumFeatures: body.premiumFeatures,
             },
-            username,
-            avatarUrl,
+            username: profile.username,
+            avatarUrl: profile.avatarUrl,
           });
         }
       } catch (err) {
         console.error(err);
         state.setAccount({
           userId,
-          decryptedUserId: null,
+          decryptedUserId: profile.decryptedUserId,
           email: null,
           perks: defaultPerks,
-          username: null,
-          avatarUrl: null,
+          username: profile.username,
+          avatarUrl: profile.avatarUrl,
         });
       }
     };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API_FORGE_URL, useAccountStore } from "@repo/lib";
 import { Button, Input, Label } from "@repo/ui/controls";
 import { toSvg } from "jdenticon";
@@ -33,7 +33,16 @@ export function ProfileEditor() {
   const setProfile = useAccountStore((state) => state.setProfile);
 
   const [username, setUsername] = useState(currentUsername ?? "");
+  const [hasSynced, setHasSynced] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  // Sync store value into local state once it becomes available
+  useEffect(() => {
+    if (!hasSynced && currentUsername) {
+      setUsername(currentUsername);
+      setHasSynced(true);
+    }
+  }, [currentUsername, hasSynced]);
   const [usernameSuccess, setUsernameSuccess] = useState<string | null>(null);
   const [savingUsername, setSavingUsername] = useState(false);
 
@@ -70,9 +79,9 @@ export function ProfileEditor() {
       }
 
       setProfile(data.username, currentAvatarUrl);
-      setUsernameSuccess("Username saved");
+      setUsernameSuccess("Profile name saved");
     } catch {
-      setUsernameError("Failed to save username");
+      setUsernameError("Failed to save profile name");
     } finally {
       setSavingUsername(false);
     }
@@ -126,9 +135,7 @@ export function ProfileEditor() {
   };
 
   return (
-    <div className="bg-muted/30 rounded-lg p-8 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-center">Profile</h2>
-
+    <div className="space-y-6">
       <div className="flex flex-col items-center gap-6">
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3">
@@ -171,13 +178,13 @@ export function ProfileEditor() {
           )}
         </div>
 
-        {/* Username */}
+        {/* Profile Name */}
         <div className="w-full max-w-sm space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="profile-name">Profile Name</Label>
           <div className="flex gap-2">
             <Input
-              id="username"
-              placeholder="Choose a username"
+              id="profile-name"
+              placeholder="Choose a profile name"
               value={username}
               onChange={(e) => {
                 setUsername(e.target.value);

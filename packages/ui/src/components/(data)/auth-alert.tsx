@@ -1,24 +1,31 @@
 "use client";
-import { ExternalLink } from "lucide-react";
-import { ExternalAnchor } from "../(header)";
+
+import { Star } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useAccountStore } from "@repo/lib";
+import { Button } from "../(controls)";
 
 export function AuthAlert({ className }: { className?: string }) {
-  const setShowUserDialog = useAccountStore((state) => state.setShowUserDialog);
+  const userId = useAccountStore((state) => state.userId);
+  const setShowUserDialog = useAccountStore(
+    (state) => state.setShowUserDialog,
+  );
 
   return (
     <Alert className={className}>
-      <AlertDescription>
-        You need to sign up for this feature.
-        <ExternalAnchor
-          href="https://www.th.gl/support-me"
-          className="flex gap-1 text-primary hover:underline"
+      <AlertDescription className="flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">
+          {userId ? "Requires a subscription" : "Sign in to use this feature"}
+        </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-6 text-xs gap-1 shrink-0"
           onClick={() => setShowUserDialog(true)}
         >
-          <span>Sign Up</span>
-          <ExternalLink className="w-3 h-3" />
-        </ExternalAnchor>
+          <Star className="w-3 h-3" />
+          {userId ? "View tiers" : "Sign In"}
+        </Button>
       </AlertDescription>
     </Alert>
   );
