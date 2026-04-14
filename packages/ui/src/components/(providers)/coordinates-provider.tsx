@@ -691,9 +691,7 @@ export function CoordinatesProvider({
         const debug = isDebug();
 
         // For including the selected spawn even when its filter is off
-        const selectedIdPrefix = state.selectedNodeId?.includes("@")
-          ? state.selectedNodeId.slice(0, state.selectedNodeId.indexOf("@"))
-          : null;
+        const selectedNodeId = state.selectedNodeId;
 
         currentNodes.forEach((node) => {
           if (node.mapName && node.mapName !== state.mapName) {
@@ -701,10 +699,14 @@ export function CoordinatesProvider({
           }
           const isFilterActive = state.filters.includes(node.type) || debug;
           // If filter is off, only include the specific selected spawn
-          if (!isFilterActive && selectedIdPrefix) {
-            const selectedSpawnData = node.spawns.find(
-              (s) => (s.id ?? node.type) === selectedIdPrefix,
-            );
+          if (!isFilterActive && selectedNodeId) {
+            const selectedSpawnData = node.spawns.find((s) => {
+              const sid = s.id ?? node.type;
+              const nodeId = sid.includes("@")
+                ? sid
+                : `${sid}@${s.p[0]}:${s.p[1]}`;
+              return nodeId === selectedNodeId;
+            });
             if (selectedSpawnData) {
               const spawn = {
                 ...selectedSpawnData,
