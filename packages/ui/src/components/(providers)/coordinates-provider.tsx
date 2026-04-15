@@ -28,6 +28,11 @@ import {
   getApiUrl,
 } from "@repo/lib";
 import { CaseSensitive, Hexagon } from "lucide-react";
+import {
+  buildActorNodes,
+  buildSpawnGrid,
+  type DiscoveryUpdate,
+} from "./actor-node-builder";
 import useSWRImmutable from "swr/immutable";
 import { toast } from "sonner";
 
@@ -88,19 +93,6 @@ export const REGION_FILTERS = [
 ];
 const emptyArray: any[] = [];
 const emptyObject: any = {};
-
-// Proximity threshold for matching actors to static spawns (in game units)
-const PROXIMITY_THRESHOLD = 1;
-
-// Helper: construct node ID for discovery/tracking
-const getNodeId = (
-  spawnId: string | undefined,
-  typeId: string,
-  x: number,
-  y: number,
-): string => {
-  return spawnId?.includes("@") ? spawnId : `${spawnId || typeId}@${x}:${y}`;
-};
 
 export function CoordinatesProvider({
   children,
@@ -380,163 +372,92 @@ export function CoordinatesProvider({
     [staticNodes, typesIdMap],
   );
 
-  const nodes = useMemo<NodesCoordinates>(() => {
+  // Build spatial grid from static nodes (rebuilt only when staticNodes change)
+  const { staticNodesMap, spawnGrid, autoDiscoverSet } = useMemo(() => {
+    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
+    for (const node of staticNodes) {
+      const key = `${node.type}::${node.mapName ?? ""}`;
+      staticNodesMap.set(key, node);
+    }
+    const spawnGrid = buildSpawnGrid(staticNodes, staticNodesMap);
+    const autoDiscoverSet = new Set(
+      filters
+        .flatMap((filter) => filter.values)
+        .filter((f) => f.autoDiscover)
+        .map((f) => f.id),
+    );
+    return { staticNodesMap, spawnGrid, autoDiscoverSet };
+  }, [staticNodes, filters]);
+
+  // Build actor nodes + collect discovery updates in a single pass
+  const { nodes, pendingDiscoveryUpdates } = useMemo<{
+    nodes: NodesCoordinates;
+    pendingDiscoveryUpdates: DiscoveryUpdate[];
+  }>(() => {
     if (!isHydrated || !staticNodes) {
-      return emptyArray as NodesCoordinates;
+      return {
+        nodes: emptyArray as NodesCoordinates,
+        pendingDiscoveryUpdates: [],
+      };
     }
     if (!liveMode || !typesIdMap || Object.keys(typesIdMap).length === 0) {
-      return customNodes.concat(staticNodes);
+      return {
+        nodes: customNodes.concat(staticNodes),
+        pendingDiscoveryUpdates: [],
+      };
     }
     const debug = isDebug();
+    const { isDiscoveredNode } = useSettingsStore.getState();
 
-    // Create lookup map for staticNodes to avoid repeated find() calls
-    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
-    for (const node of staticNodes) {
-      const key = `${node.type}::${node.mapName ?? ""}`;
-      staticNodesMap.set(key, node);
-    }
-
-    const actorNodes: NodesCoordinates = [];
-    const actorCategoriesByType = new Map<string, NodesCoordinates[number]>();
-    actorLoop: for (const actor of actors) {
-      let id = typesIdMap[actor.type];
-      if (!id || actor.hidden) {
-        if (!debug) continue;
-        id = actor.type;
-      }
-
-      const mapName = actor.mapName;
-      // Use map lookup instead of find() for O(1) access
-      const staticNode = staticNodesMap.get(`${id}::${mapName ?? ""}`);
-
-      let spawnToAdd: Spawn | null = null;
-
-      // Check if actor matches a known spawn location
-      if (staticNode && staticNode.spawns.length && !debug) {
-        for (let i = 0; i < staticNode.spawns.length; i++) {
-          const spawn = staticNode.spawns[i];
-          const dx = spawn.p[0] - actor.x;
-          const dy = spawn.p[1] - actor.y;
-          if (
-            dx > -PROXIMITY_THRESHOLD &&
-            dx < PROXIMITY_THRESHOLD &&
-            dy > -PROXIMITY_THRESHOLD &&
-            dy < PROXIMITY_THRESHOLD
-          ) {
-            if (staticNode.static) {
-              // Permanent node: skip actor entirely (already in realStaticNodes)
-              continue actorLoop;
-            }
-            // Dynamic node: replace actor with spawn data (for metadata like id, description)
-            spawnToAdd = {
-              id: getNodeId(spawn.id, id, spawn.p[0], spawn.p[1]),
-              ...spawn,
-              p: [spawn.p[0], spawn.p[1], actor.z || spawn.p[2]],
-              address: actor.address, // Keep actor address for live tracking
-            } as Spawn;
-            break;
-          }
-        }
-      }
-
-      // If we didn't find a matching spawn, create one from the actor
-      if (!spawnToAdd) {
-        spawnToAdd = {
-          id: `${id}@${actor.x}:${actor.y}`,
-          address: actor.address,
-          p: actor.z != null ? [actor.x, actor.y, actor.z] : [actor.x, actor.y],
-        } as Spawn;
-      }
-
-      const key = `${id}::${mapName ?? ""}`;
-      let category = actorCategoriesByType.get(key);
-
-      if (!category) {
-        category = {
-          type: id,
-          mapName: mapName,
-          spawns: [],
-        };
-        actorCategoriesByType.set(key, category);
-        actorNodes.push(category);
-      }
-
-      category.spawns.push(spawnToAdd);
-    }
-
-    if (debug) {
-      return customNodes.concat(actorNodes);
-    }
-
-    return customNodes.concat(realStaticNodes, actorNodes);
-  }, [isHydrated, liveMode, actors, customNodes, staticNodes]);
-
-  useEffect(() => {
-    if (!typesIdMap || !isHydrated) {
-      return;
-    }
-    const { setDiscoverNode, isDiscoveredNode } = useSettingsStore.getState();
-
-    // Create lookup structures for O(1) access
-    const filterValues = filters.flatMap((filter) => filter.values);
-    const autoDiscoverSet = new Set(
-      filterValues.filter((f) => f.autoDiscover).map((f) => f.id),
+    const { actorNodes, discoveryUpdates } = buildActorNodes(
+      actors,
+      typesIdMap,
+      staticNodesMap,
+      spawnGrid,
+      autoDiscoverSet,
+      isDiscoveredNode,
+      debug,
     );
-    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
-    for (const node of staticNodes) {
-      const key = `${node.type}::${node.mapName ?? ""}`;
-      staticNodesMap.set(key, node);
+
+    const resultNodes = debug
+      ? customNodes.concat(actorNodes)
+      : customNodes.concat(realStaticNodes, actorNodes);
+
+    return { nodes: resultNodes, pendingDiscoveryUpdates: discoveryUpdates };
+  }, [
+    isHydrated,
+    liveMode,
+    actors,
+    customNodes,
+    staticNodes,
+    staticNodesMap,
+    spawnGrid,
+    autoDiscoverSet,
+    realStaticNodes,
+  ]);
+
+  // Apply discovery updates (side effect, runs after render)
+  useEffect(() => {
+    if (pendingDiscoveryUpdates.length === 0) return;
+    const { setDiscoverNode } = useSettingsStore.getState();
+    for (const { nodeId, discovered } of pendingDiscoveryUpdates) {
+      setDiscoverNode(nodeId, discovered);
     }
+  }, [pendingDiscoveryUpdates]);
 
-    actors.forEach((actor) => {
-      if (typeof actor.hidden === "undefined") {
-        return;
-      }
-      const id = typesIdMap[actor.type];
-      if (!id || !autoDiscoverSet.has(id)) {
-        return;
-      }
+  // Searchable nodes: static + custom (excludes live actors which change constantly)
+  const searchableNodes = useMemo(
+    () => customNodes.concat(staticNodes),
+    [customNodes, staticNodes],
+  );
 
-      // Use map lookup instead of find() for O(1) access
-      const staticNode = staticNodesMap.get(`${id}::${actor.mapName ?? ""}`);
-      if (staticNode) {
-        const spawn = staticNode.spawns.find((spawn) => {
-          const dx = spawn.p[0] - actor.x;
-          const dy = spawn.p[1] - actor.y;
-          return (
-            dx > -PROXIMITY_THRESHOLD &&
-            dx < PROXIMITY_THRESHOLD &&
-            dy > -PROXIMITY_THRESHOLD &&
-            dy < PROXIMITY_THRESHOLD
-          );
-        });
-        if (spawn) {
-          const nodeId = getNodeId(
-            spawn.id,
-            staticNode.type,
-            spawn.p[0],
-            spawn.p[1],
-          );
-          if (isDiscoveredNode(nodeId) !== actor.hidden) {
-            setDiscoverNode(nodeId, actor.hidden);
-          }
-          return;
-        }
-      }
-      const nodeId = getNodeId(undefined, id, actor.x, actor.y);
-      if (isDiscoveredNode(nodeId) !== actor.hidden) {
-        setDiscoverNode(nodeId, actor.hidden);
-      }
-    });
-  }, [typesIdMap, actors, isHydrated]);
-
-  // Only rebuild the expensive Fuse.js search index when user is actively searching.
-  // When not searching, return null to avoid O(n) index construction on every actor update.
+  // Only rebuild Fuse.js search index when user is actively searching.
+  // Depends on searchableNodes (stable) not nodes (includes actors).
   const searchIndex = useMemo(() => {
     if (!search) {
       return null;
     }
-    const nodeSpawns = nodes.flatMap((node) =>
+    const nodeSpawns = searchableNodes.flatMap((node) =>
       node.spawns.map((spawn) => ({
         id: spawn.id ?? node.type,
         type: node.type,
@@ -593,7 +514,7 @@ export function CoordinatesProvider({
       includeScore: true,
       threshold: 0.3,
     });
-  }, [search, nodes, initialStaticNodes, mapName, t]);
+  }, [search, searchableNodes, initialStaticNodes, mapName, t]);
 
   const icons = useMemo(
     () =>
