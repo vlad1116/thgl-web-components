@@ -47,6 +47,12 @@ type SaveParseResult = {
     waypointsByType?: Record<string, number>;
   };
   totals?: Record<string, number>;
+  nodeIdsByCategory?: {
+    quests: string[];
+    knowledge: string[];
+    waypoints: string[];
+    chests: string[];
+  };
   error?: string;
 };
 
@@ -57,14 +63,12 @@ const SAVE_GROUPS = {
     icon: Scroll,
     defaultOn: true,
     // Node IDs starting with these prefixes
-    prefixes: ["faction_quest@", "main_quest@"],
     types: [] as string[],
   },
   knowledge: {
     label: "Knowledge",
     icon: BookOpen,
     defaultOn: true,
-    prefixes: [] as string[],
     types: [] as string[],
     // Knowledge nodes are mapped to faction_quest nodes — they share prefixes
     // so we track them via the matchedKnowledge count instead
@@ -73,7 +77,6 @@ const SAVE_GROUPS = {
     label: "Mines",
     icon: Pickaxe,
     defaultOn: false,
-    prefixes: [] as string[],
     types: [
       "mine_iron", "mine_copper", "mine_silver", "mine_gold",
       "mine_diamond", "mine_ruby", "mine_bismuth", "mine_bluestone",
@@ -85,7 +88,6 @@ const SAVE_GROUPS = {
     label: "Abyss",
     icon: Skull,
     defaultOn: true,
-    prefixes: [] as string[],
     types: [
       "abyss_nexus", "abyss_cresset", "abyss_ruins",
       "abyss_gate", "abyss_bridge", "abyss_constellation",
@@ -95,14 +97,12 @@ const SAVE_GROUPS = {
     label: "Stations",
     icon: Flame,
     defaultOn: true,
-    prefixes: [] as string[],
     types: ["bonfire", "cooking_station", "crafting_anvil", "alchemy_station"],
   },
   landmarks: {
     label: "Landmarks",
     icon: Compass,
     defaultOn: true,
-    prefixes: [] as string[],
     types: [
       "treasure_box", "religion_box", "sealed_artifact",
       "teleport_gate", "dungeon", "tunnel", "bell",
@@ -113,7 +113,6 @@ const SAVE_GROUPS = {
     label: "Gathering",
     icon: Leaf,
     defaultOn: false,
-    prefixes: [] as string[],
     types: [
       "jijeongta_leaf", "taro", "chaya", "amaranth", "dulse",
       "ensete", "opuntia", "chlorella", "kudzu_vine", "rubber", "mercury",
@@ -123,22 +122,12 @@ const SAVE_GROUPS = {
     label: "Chests",
     icon: Gem,
     defaultOn: true,
-    prefixes: ["collection_chest@", "treasure_box@"],
     types: ["collection_chest", "treasure_box"],
   },
 } as const;
 
 type GroupKey = keyof typeof SAVE_GROUPS;
 const GROUP_KEYS = Object.keys(SAVE_GROUPS) as GroupKey[];
-
-/** Build a set of all waypoint type prefixes for a group */
-function getTypePrefixes(groupKey: GroupKey): string[] {
-  const group = SAVE_GROUPS[groupKey];
-  return [
-    ...group.prefixes,
-    ...group.types.map((t) => t + "@"),
-  ];
-}
 
 /** Compute per-group stats from API response */
 function computeGroupStats(data: SaveParseResult) {
@@ -173,38 +162,53 @@ function computeGroupStats(data: SaveParseResult) {
   return stats;
 }
 
-/** Filter discoveredNodeIds to only include selected groups */
+/** Filter discoveredNodeIds to only include selected groups using per-category data */
 function filterNodeIds(
-  nodeIds: string[],
+  data: SaveParseResult,
   selectedGroups: Set<GroupKey>,
 ): string[] {
-  // Build prefix lookup from selected groups
-  const allowedPrefixes: string[] = [];
-  for (const key of selectedGroups) {
-    allowedPrefixes.push(...getTypePrefixes(key));
+  const byCategory = data.nodeIdsByCategory;
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (ids: string[]) => {
+    for (const id of ids) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        result.push(id);
+      }
+    }
+  };
+
+  // Category-level groups (use exact lists from API, no prefix guessing)
+  if (byCategory) {
+    if (selectedGroups.has("quests")) add(byCategory.quests);
+    if (selectedGroups.has("knowledge")) add(byCategory.knowledge);
+    if (selectedGroups.has("chests")) add(byCategory.chests);
+
+    // Waypoint groups: filter the waypoints list by type prefix
+    if (byCategory.waypoints.length > 0) {
+      const allowedPrefixes: string[] = [];
+      for (const key of selectedGroups) {
+        const group = SAVE_GROUPS[key];
+        if (group.types.length > 0) {
+          allowedPrefixes.push(...group.types.map((t) => t + "@"));
+        }
+      }
+      if (allowedPrefixes.length > 0) {
+        add(
+          byCategory.waypoints.filter((id) =>
+            allowedPrefixes.some((p) => id.startsWith(p)),
+          ),
+        );
+      }
+    }
+  } else {
+    // Fallback for old API without nodeIdsByCategory
+    add(data.discoveredNodeIds);
   }
 
-  // Quest and knowledge nodes both map to faction_quest/main_quest prefixes
-  // If either is selected, we include those prefixes
-  const includeQuestPrefixes =
-    selectedGroups.has("quests") || selectedGroups.has("knowledge");
-
-  return nodeIds.filter((id) => {
-    // Quest/knowledge prefixes (they overlap)
-    if (
-      includeQuestPrefixes &&
-      (id.startsWith("faction_quest@") || id.startsWith("main_quest@"))
-    ) {
-      return true;
-    }
-
-    // Waypoint-type nodes: check type prefix
-    for (const prefix of allowedPrefixes) {
-      if (id.startsWith(prefix)) return true;
-    }
-
-    return false;
-  });
+  return result;
 }
 
 type State =
@@ -233,7 +237,7 @@ export function CrimsonDesertSaveImport() {
 
   const filteredCount = useMemo(() => {
     if (state.step !== "result") return 0;
-    return filterNodeIds(state.data.discoveredNodeIds, selectedGroups).length;
+    return filterNodeIds(state.data, selectedGroups).length;
   }, [state, selectedGroups]);
 
   const handleFile = useCallback(async () => {
@@ -284,10 +288,7 @@ export function CrimsonDesertSaveImport() {
   const applyToMap = useCallback(
     (merge: boolean) => {
       if (state.step !== "result") return;
-      const filtered = filterNodeIds(
-        state.data.discoveredNodeIds,
-        selectedGroups,
-      );
+      const filtered = filterNodeIds(state.data, selectedGroups);
 
       if (filtered.length === 0) {
         toast.error("No groups selected");
