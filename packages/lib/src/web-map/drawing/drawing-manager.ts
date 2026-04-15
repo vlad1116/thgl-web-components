@@ -545,7 +545,11 @@ export class DrawingManager {
 
     // In edit mode, right-click on a vertex deletes it
     if (this.currentMode === 'edit') {
-      this.handleEditVertexDelete(event.latlng);
+      const deleted = this.handleEditVertexDelete(event.latlng);
+      if (deleted) {
+        // Mark event as handled so the map context menu doesn't open
+        (event.originalEvent as any)._drawingHandled = true;
+      }
       return;
     }
 
@@ -563,9 +567,9 @@ export class DrawingManager {
     }
   }
 
-  private handleEditVertexDelete(latlng: LatLng): void {
+  private handleEditVertexDelete(latlng: LatLng): boolean {
     const state = this.map.getRenderState();
-    if (!state) return;
+    if (!state) return false;
 
     const pixelToWorld = this.getPixelToWorldScale(state);
     const tolerance = 15 * pixelToWorld;
@@ -586,10 +590,11 @@ export class DrawingManager {
           newPositions.splice(i, 1);
           this.drawingLayer.updateShape(shape.id, { positions: newPositions });
           this.fire('drawing:edit', { shape: { ...shape, positions: newPositions } });
-          return;
+          return true;
         }
       }
     }
+    return false;
   }
 
   private handleLineClick(latlng: LatLng, originalEvent: MouseEvent): void {

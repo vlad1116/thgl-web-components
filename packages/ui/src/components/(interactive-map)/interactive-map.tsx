@@ -230,6 +230,10 @@ export function InteractiveMap({
       if (location.href.includes("embed")) {
         return;
       }
+      // Skip if handled by drawing manager (e.g. vertex deletion)
+      if ((event.originalEvent as any)._drawingHandled) {
+        return;
+      }
       setContextMenuData({
         x: event.layerPoint.x,
         y: event.layerPoint.y,
