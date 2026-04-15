@@ -1391,7 +1391,11 @@ function MarkersContent({
           tooltipDelayRef.current = null;
         }
         justClickedMarkerRef.current = true;
-        showTooltipForMarker(m);
+        // Skip tooltip on mobile — the MarkerPanel bottom sheet shows all the same info
+        const isMobile = window.innerWidth < 768;
+        if (!isMobile) {
+          showTooltipForMarker(m);
+        }
         const s = newSpawnMap.get(m.id);
         if (s && !s.address) {
           const nodeId = getNodeId(s);

@@ -1,28 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  API_FORGE_URL,
-  cn,
-  useAccountStore,
-  useGameState,
-  useSettingsStore,
-  useUserStore,
-} from "@repo/lib";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn, useGameState, useSettingsStore, useUserStore } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { Separator } from "../ui/separator";
 import { Button } from "../(controls)";
 import { useMarkerUrlSync } from "./use-marker-url-sync";
-import {
-  Copy,
-  Eye,
-  EyeOff,
-  MessageCircle,
-  Navigation,
-  Pencil,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Copy, Eye, EyeOff, Navigation, Pencil, Trash2, X } from "lucide-react";
 import { AdditionalTooltip, AdditionalTooltipType } from "../(content)";
 import { Comments } from "./comments";
 import Markdown from "markdown-to-jsx";
@@ -91,7 +75,9 @@ function DiscoveryToggle({ id }: { id: string }) {
         </button>
       </TooltipTrigger>
       <TooltipContent side="left" className="max-w-[200px] text-xs">
-        <p>Right-click to toggle. Discovered nodes can be hidden in settings.</p>
+        <p>
+          Right-click to toggle. Discovered nodes can be hidden in settings.
+        </p>
       </TooltipContent>
     </Tooltip>
   );
@@ -217,11 +203,15 @@ export function MarkerPanel({
     if (atIdx > 0) {
       const idPart = selectedNodeId.slice(0, atIdx);
       for (const s of spawns) {
-        const sid = s.id?.includes("@") ? s.id.slice(0, s.id.indexOf("@")) : (s.id || s.type);
+        const sid = s.id?.includes("@")
+          ? s.id.slice(0, s.id.indexOf("@"))
+          : s.id || s.type;
         if (sid === idPart) return s;
         if (s.cluster) {
           for (const c of s.cluster) {
-            const cid = c.id?.includes("@") ? c.id.slice(0, c.id.indexOf("@")) : (c.id || c.type);
+            const cid = c.id?.includes("@")
+              ? c.id.slice(0, c.id.indexOf("@"))
+              : c.id || c.type;
             if (cid === idPart) return c;
           }
         }
@@ -284,7 +274,9 @@ export function MarkerPanel({
           <X className="w-4 h-4" />
         </button>
         <h2 className="text-sm font-semibold truncate grow">
-          {spawn ? t(termId || spawn.type, { fallback: spawn.type }) : "Loading..."}
+          {spawn
+            ? t(termId || spawn.type, { fallback: spawn.type })
+            : "Loading..."}
         </h2>
         {spawn?.type && (
           <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
@@ -311,7 +303,9 @@ export function MarkerPanel({
                   aria-label="Copy coordinates"
                   className="h-4 w-4 p-0.5 rounded hover:bg-muted hover:text-foreground transition-colors"
                   onClick={() => {
-                    copyToClipboard(formatCoordinates(spawn.p, coordinateCopyFormat));
+                    copyToClipboard(
+                      formatCoordinates(spawn.p, coordinateCopyFormat),
+                    );
                     toast("Copied to clipboard");
                   }}
                 >
@@ -374,9 +368,7 @@ export function MarkerPanel({
           </div>
         </div>
       ) : (
-        <div className="p-3 text-sm text-muted-foreground">
-          Node not found
-        </div>
+        <div className="p-3 text-sm text-muted-foreground">Node not found</div>
       )}
     </>
   );
@@ -398,25 +390,88 @@ export function MarkerPanel({
         {panelContent}
       </div>
 
-      {/* Mobile: bottom sheet */}
+      {/* Mobile: bottom sheet with swipe-to-dismiss */}
+      <MobileBottomSheet visible={visible} onClose={close}>
+        {panelContent}
+      </MobileBottomSheet>
+    </>
+  );
+}
+
+function MobileBottomSheet({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const isDragging = dragStartY.current !== null;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Only start drag from the handle area (top 40px)
+    const touch = e.touches[0];
+    const rect = sheetRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const touchY = touch.clientY - rect.top;
+    if (touchY > 40) return;
+    dragStartY.current = touch.clientY;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (dragStartY.current === null) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    // Only allow downward dragging
+    setDragOffset(Math.max(0, deltaY));
+    // Prevent pull-to-refresh
+    e.preventDefault();
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (dragStartY.current === null) return;
+    dragStartY.current = null;
+    // Dismiss if dragged more than 80px down
+    if (dragOffset > 80) {
+      onClose();
+    }
+    setDragOffset(0);
+  }, [dragOffset, onClose]);
+
+  return (
+    <div
+      ref={sheetRef}
+      className={cn(
+        "md:hidden fixed inset-x-0 bottom-0 z-[500] bg-card border-t rounded-t-xl shadow-lg pointer-events-auto",
+        !isDragging && "transition-transform duration-200 ease-out",
+        visible ? "translate-y-0" : "translate-y-full",
+      )}
+      style={{
+        maxHeight: "70dvh",
+        transform:
+          visible && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+        touchAction: "none",
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Drag handle */}
+      <div className="flex justify-center py-2 shrink-0 cursor-grab">
+        <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+      </div>
       <div
-        className={cn(
-          "md:hidden fixed inset-x-0 bottom-0 z-[500] bg-card border-t rounded-t-xl shadow-lg pointer-events-auto",
-          "transition-transform duration-200 ease-out",
-          visible ? "translate-y-0" : "translate-y-full",
-        )}
+        className="flex flex-col overflow-hidden"
         style={{
-          maxHeight: "70dvh",
+          maxHeight: "calc(70dvh - 20px)",
+          touchAction: "pan-y",
         }}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center py-2 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-        </div>
-        <div className="flex flex-col overflow-hidden" style={{ maxHeight: "calc(70dvh - 20px)" }}>
-          {panelContent}
-        </div>
+        {children}
       </div>
-    </>
+    </div>
   );
 }
