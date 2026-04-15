@@ -239,7 +239,7 @@ export class DrawingManager {
       case 'text':
         return 'Click to place text';
       case 'edit':
-        return 'Click shape to edit';
+        return 'Drag vertex to move, right-click to delete';
       case 'drag':
         return 'Drag to move';
       case 'remove':
@@ -543,6 +543,12 @@ export class DrawingManager {
     event.originalEvent.preventDefault();
     event.originalEvent.stopPropagation();
 
+    // In edit mode, right-click on a vertex deletes it
+    if (this.currentMode === 'edit') {
+      this.handleEditVertexDelete(event.latlng);
+      return;
+    }
+
     // Right-click cancels current drawing
     if (this.isDrawing && this.currentShape) {
       // Clear vertex markers
@@ -554,6 +560,35 @@ export class DrawingManager {
       this.isDrawing = false;
       this.currentShape = null;
       this.temporaryPoints = [];
+    }
+  }
+
+  private handleEditVertexDelete(latlng: LatLng): void {
+    const state = this.map.getRenderState();
+    if (!state) return;
+
+    const pixelToWorld = this.getPixelToWorldScale(state);
+    const tolerance = 15 * pixelToWorld;
+    const [py, px] = latlng;
+
+    const allShapes = this.drawingLayer.getAllShapes();
+    for (const shape of allShapes) {
+      if (!shape.positions || (shape.type !== 'line' && shape.type !== 'polygon')) continue;
+
+      // Minimum points: line needs 2, polygon needs 3
+      const minPoints = shape.type === 'polygon' ? 3 : 2;
+      if (shape.positions.length <= minPoints) continue;
+
+      for (let i = 0; i < shape.positions.length; i++) {
+        const [vy, vx] = shape.positions[i];
+        if (Math.sqrt((py - vy) ** 2 + (px - vx) ** 2) <= tolerance) {
+          const newPositions = [...shape.positions];
+          newPositions.splice(i, 1);
+          this.drawingLayer.updateShape(shape.id, { positions: newPositions });
+          this.fire('drawing:edit', { shape: { ...shape, positions: newPositions } });
+          return;
+        }
+      }
     }
   }
 
