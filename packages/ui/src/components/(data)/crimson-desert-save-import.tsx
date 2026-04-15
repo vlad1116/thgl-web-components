@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { DATA_FORGE_URL, useSettingsStore } from "@repo/lib";
 import { Button } from "../ui/button";
 import {
@@ -10,8 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { Checkbox } from "../ui/checkbox";
 import { toast } from "sonner";
-import { Upload, FileCheck, Loader2, AlertCircle, Copy } from "lucide-react";
+import {
+  Upload,
+  FileCheck,
+  Loader2,
+  AlertCircle,
+  Copy,
+  Pickaxe,
+  Flame,
+  Compass,
+  Leaf,
+  Skull,
+  Scroll,
+  BookOpen,
+  Gem,
+} from "lucide-react";
 
 const API_URL = DATA_FORGE_URL + "/api/crimson-desert/save";
 
@@ -29,10 +44,168 @@ type SaveParseResult = {
     matchedChests?: number;
     matchedQuests?: number;
     matchedKnowledge?: number;
+    waypointsByType?: Record<string, number>;
   };
-  totals?: { quests: number; knowledge: number; waypoints: number };
+  totals?: Record<string, number>;
   error?: string;
 };
+
+/** Groups that map save data categories to map node types */
+const SAVE_GROUPS = {
+  quests: {
+    label: "Quests",
+    icon: Scroll,
+    defaultOn: true,
+    // Node IDs starting with these prefixes
+    prefixes: ["faction_quest@", "main_quest@"],
+    types: [] as string[],
+  },
+  knowledge: {
+    label: "Knowledge",
+    icon: BookOpen,
+    defaultOn: true,
+    prefixes: [] as string[],
+    types: [] as string[],
+    // Knowledge nodes are mapped to faction_quest nodes — they share prefixes
+    // so we track them via the matchedKnowledge count instead
+  },
+  mines: {
+    label: "Mines",
+    icon: Pickaxe,
+    defaultOn: false,
+    prefixes: [] as string[],
+    types: [
+      "mine_iron", "mine_copper", "mine_silver", "mine_gold",
+      "mine_diamond", "mine_ruby", "mine_bismuth", "mine_bluestone",
+      "mine_greenstone", "mine_redstone", "mine_whitestone",
+      "mine_sulfur", "mine_blacksmith",
+    ],
+  },
+  abyss: {
+    label: "Abyss",
+    icon: Skull,
+    defaultOn: true,
+    prefixes: [] as string[],
+    types: [
+      "abyss_nexus", "abyss_cresset", "abyss_ruins",
+      "abyss_gate", "abyss_bridge", "abyss_constellation",
+    ],
+  },
+  stations: {
+    label: "Stations",
+    icon: Flame,
+    defaultOn: true,
+    prefixes: [] as string[],
+    types: ["bonfire", "cooking_station", "crafting_anvil", "alchemy_station"],
+  },
+  landmarks: {
+    label: "Landmarks",
+    icon: Compass,
+    defaultOn: true,
+    prefixes: [] as string[],
+    types: [
+      "treasure_box", "religion_box", "sealed_artifact",
+      "teleport_gate", "dungeon", "tunnel", "bell",
+      "greymane_shrine", "memory_fragment", "housing_move",
+    ],
+  },
+  gathering: {
+    label: "Gathering",
+    icon: Leaf,
+    defaultOn: false,
+    prefixes: [] as string[],
+    types: [
+      "jijeongta_leaf", "taro", "chaya", "amaranth", "dulse",
+      "ensete", "opuntia", "chlorella", "kudzu_vine", "rubber", "mercury",
+    ],
+  },
+  chests: {
+    label: "Chests",
+    icon: Gem,
+    defaultOn: true,
+    prefixes: ["collection_chest@", "treasure_box@"],
+    types: ["collection_chest", "treasure_box"],
+  },
+} as const;
+
+type GroupKey = keyof typeof SAVE_GROUPS;
+const GROUP_KEYS = Object.keys(SAVE_GROUPS) as GroupKey[];
+
+/** Build a set of all waypoint type prefixes for a group */
+function getTypePrefixes(groupKey: GroupKey): string[] {
+  const group = SAVE_GROUPS[groupKey];
+  return [
+    ...group.prefixes,
+    ...group.types.map((t) => t + "@"),
+  ];
+}
+
+/** Compute per-group stats from API response */
+function computeGroupStats(data: SaveParseResult) {
+  const wbt = data.summary.waypointsByType || {};
+  const totals = data.totals || {};
+
+  const stats: Record<GroupKey, { found: number; total: number }> = {} as never;
+
+  for (const key of GROUP_KEYS) {
+    const group = SAVE_GROUPS[key];
+    if (key === "quests") {
+      stats[key] = {
+        found: data.summary.quests,
+        total: totals.quests || 0,
+      };
+    } else if (key === "knowledge") {
+      stats[key] = {
+        found: data.summary.knowledge,
+        total: totals.knowledge || 0,
+      };
+    } else {
+      let found = 0;
+      let total = 0;
+      for (const t of group.types) {
+        found += wbt[t] || 0;
+        total += totals[t] || 0;
+      }
+      stats[key] = { found, total };
+    }
+  }
+
+  return stats;
+}
+
+/** Filter discoveredNodeIds to only include selected groups */
+function filterNodeIds(
+  nodeIds: string[],
+  selectedGroups: Set<GroupKey>,
+): string[] {
+  // Build prefix lookup from selected groups
+  const allowedPrefixes: string[] = [];
+  for (const key of selectedGroups) {
+    allowedPrefixes.push(...getTypePrefixes(key));
+  }
+
+  // Quest and knowledge nodes both map to faction_quest/main_quest prefixes
+  // If either is selected, we include those prefixes
+  const includeQuestPrefixes =
+    selectedGroups.has("quests") || selectedGroups.has("knowledge");
+
+  return nodeIds.filter((id) => {
+    // Quest/knowledge prefixes (they overlap)
+    if (
+      includeQuestPrefixes &&
+      (id.startsWith("faction_quest@") || id.startsWith("main_quest@"))
+    ) {
+      return true;
+    }
+
+    // Waypoint-type nodes: check type prefix
+    for (const prefix of allowedPrefixes) {
+      if (id.startsWith(prefix)) return true;
+    }
+
+    return false;
+  });
+}
 
 type State =
   | { step: "idle" }
@@ -40,11 +213,28 @@ type State =
   | { step: "result"; data: SaveParseResult }
   | { step: "error"; message: string };
 
+const DEFAULT_SELECTION = new Set(
+  GROUP_KEYS.filter((k) => SAVE_GROUPS[k].defaultOn),
+);
+
 export function CrimsonDesertSaveImport() {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<State>({ step: "idle" });
+  const [selectedGroups, setSelectedGroups] =
+    useState<Set<GroupKey>>(DEFAULT_SELECTION);
   const setDiscoveredNodes = useSettingsStore((s) => s.setDiscoveredNodes);
   const discoveredNodes = useSettingsStore((s) => s.discoveredNodes);
+
+  const groupStats = useMemo(
+    () =>
+      state.step === "result" ? computeGroupStats(state.data) : null,
+    [state],
+  );
+
+  const filteredCount = useMemo(() => {
+    if (state.step !== "result") return 0;
+    return filterNodeIds(state.data.discoveredNodeIds, selectedGroups).length;
+  }, [state, selectedGroups]);
 
   const handleFile = useCallback(async () => {
     const input = document.createElement("input");
@@ -56,6 +246,7 @@ export function CrimsonDesertSaveImport() {
       if (!file) return;
 
       setState({ step: "uploading" });
+      setSelectedGroups(new Set(DEFAULT_SELECTION));
 
       try {
         const buffer = await file.arrayBuffer();
@@ -81,25 +272,42 @@ export function CrimsonDesertSaveImport() {
     input.click();
   }, []);
 
+  const toggleGroup = useCallback((key: GroupKey) => {
+    setSelectedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
   const applyToMap = useCallback(
     (merge: boolean) => {
       if (state.step !== "result") return;
-      const newIds = state.data.discoveredNodeIds;
+      const filtered = filterNodeIds(
+        state.data.discoveredNodeIds,
+        selectedGroups,
+      );
+
+      if (filtered.length === 0) {
+        toast.error("No groups selected");
+        return;
+      }
 
       if (merge) {
-        const merged = [...new Set([...discoveredNodes, ...newIds])];
+        const merged = [...new Set([...discoveredNodes, ...filtered])];
         const added = merged.length - discoveredNodes.length;
         setDiscoveredNodes(merged);
         toast.success(`Added ${added} new discoveries`);
       } else {
-        setDiscoveredNodes(newIds);
-        toast.success(`Set ${newIds.length} discovered items`);
+        setDiscoveredNodes(filtered);
+        toast.success(`Set ${filtered.length} discovered items`);
       }
 
       setState({ step: "idle" });
       setOpen(false);
     },
-    [state, discoveredNodes, setDiscoveredNodes, setOpen],
+    [state, selectedGroups, discoveredNodes, setDiscoveredNodes, setOpen],
   );
 
   const handleOpenChange = useCallback((v: boolean) => {
@@ -120,19 +328,18 @@ export function CrimsonDesertSaveImport() {
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[480px] gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3">
             <DialogTitle className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Import Save File
             </DialogTitle>
             <DialogDescription>
-              Upload your Crimson Desert save file to track discovered items on
-              the map.
+              Upload your save file to mark discovered locations on the map.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="px-5 pb-5 space-y-3">
             <div className="text-xs text-muted-foreground border rounded-md p-2.5 bg-muted/30 flex items-center gap-2">
               <span className="font-mono text-[11px] leading-relaxed select-all flex-1">
                 %LocalAppData%\Pearl Abyss\CD\save
@@ -182,82 +389,131 @@ export function CrimsonDesertSaveImport() {
               </div>
             )}
 
-            {state.step === "result" && (
-              <div className="space-y-4">
-                {/* Overall game progress */}
-                <div className="border rounded-md overflow-hidden">
-                  <div className="bg-muted/50 px-3 py-2 border-b flex items-center gap-2">
-                    <FileCheck className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium">
-                      Save File Progress
-                    </span>
-                  </div>
-                  <div className="divide-y text-sm">
-                    {(
-                      [
-                        [
-                          "Quests",
-                          state.data.summary.quests,
-                          state.data.totals?.quests,
-                        ],
-                        [
-                          "Knowledge",
-                          state.data.summary.knowledge,
-                          state.data.totals?.knowledge,
-                        ],
-                        [
-                          "Waypoints",
-                          state.data.summary.waypoints,
-                          state.data.totals?.waypoints,
-                        ],
-                        ["Chests", state.data.summary.chests, undefined],
-                      ] as [string, number, number | undefined][]
-                    )
-                      .filter(([, found]) => found > 0)
-                      .map(([label, found, total]) => (
-                        <div key={label} className="px-3 py-2 space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {label}
-                            </span>
-                            <span className="font-medium tabular-nums">
-                              {found}
-                              {total ? (
-                                <span className="text-muted-foreground font-normal">
-                                  {" "}
-                                  / {total}
-                                </span>
-                              ) : null}
-                            </span>
-                          </div>
-                          {total ? (
-                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary rounded-full transition-all"
-                                style={{
-                                  width: `${Math.min(100, (found / total) * 100)}%`,
-                                }}
-                              />
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                  </div>
+            {state.step === "result" && groupStats && (
+              <div className="space-y-3">
+                {/* Header with summary */}
+                <div className="flex items-center gap-2 text-sm">
+                  <FileCheck className="h-4 w-4 text-green-500 shrink-0" />
+                  <span className="font-medium">
+                    {state.data.summary.totalDiscovered.toLocaleString()}{" "}
+                    discoveries found
+                  </span>
+                  <span className="text-muted-foreground text-xs ml-auto">
+                    Select what to mark
+                  </span>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {state.data.discoveredNodeIds.length} locations can be marked
-                  as discovered on the map.
-                </p>
+                {/* Group selection with progress */}
+                <div className="border rounded-md overflow-hidden divide-y">
+                  {GROUP_KEYS.map((key) => {
+                    const group = SAVE_GROUPS[key];
+                    const stat = groupStats[key];
+                    const checked = selectedGroups.has(key);
+                    const pct =
+                      stat.total > 0
+                        ? Math.min(100, (stat.found / stat.total) * 100)
+                        : 0;
+                    const Icon = group.icon;
+                    const isEmpty = stat.found === 0 && stat.total === 0;
 
-                <div className="flex gap-2">
-                  <Button className="flex-1" onClick={() => applyToMap(true)}>
+                    if (isEmpty) return null;
+
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors hover:bg-muted/40 ${
+                          checked ? "bg-muted/20" : "opacity-60"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleGroup(key)}
+                          className="shrink-0"
+                        />
+                        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span
+                              className={
+                                checked
+                                  ? "text-foreground"
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              {group.label}
+                            </span>
+                            <span className="font-medium tabular-nums text-xs">
+                              {stat.found.toLocaleString()}
+                              {stat.total > 0 && (
+                                <span className="text-muted-foreground font-normal">
+                                  {" / "}
+                                  {stat.total.toLocaleString()}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          {stat.total > 0 && (
+                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  pct >= 100
+                                    ? "bg-green-500"
+                                    : pct >= 50
+                                      ? "bg-primary"
+                                      : "bg-primary/70"
+                                }`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* Selected count + note */}
+                <div className="flex items-baseline justify-between text-xs text-muted-foreground">
+                  <span>
+                    <span className="text-foreground font-medium tabular-nums">
+                      {filteredCount.toLocaleString()}
+                    </span>{" "}
+                    locations will be marked
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                    onClick={() => {
+                      const allSelected = GROUP_KEYS.every((k) =>
+                        selectedGroups.has(k),
+                      );
+                      setSelectedGroups(
+                        allSelected
+                          ? new Set(DEFAULT_SELECTION)
+                          : new Set(GROUP_KEYS),
+                      );
+                    }}
+                  >
+                    {GROUP_KEYS.every((k) => selectedGroups.has(k))
+                      ? "Reset"
+                      : "Select all"}
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    className="flex-1"
+                    onClick={() => applyToMap(true)}
+                    disabled={filteredCount === 0}
+                  >
                     Merge with existing
                   </Button>
                   <Button
                     variant="secondary"
                     className="flex-1"
                     onClick={() => applyToMap(false)}
+                    disabled={filteredCount === 0}
                   >
                     Replace all
                   </Button>
