@@ -545,11 +545,7 @@ export class DrawingManager {
 
     // In edit mode, right-click on a vertex deletes it
     if (this.currentMode === 'edit') {
-      const deleted = this.handleEditVertexDelete(event.latlng);
-      if (deleted) {
-        // Mark event as handled so the map context menu doesn't open
-        (event.originalEvent as any)._drawingHandled = true;
-      }
+      this.handleEditVertexDelete(event.latlng);
       return;
     }
 

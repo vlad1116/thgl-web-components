@@ -230,8 +230,11 @@ export function InteractiveMap({
       if (location.href.includes("embed")) {
         return;
       }
-      // Skip if handled by drawing manager (e.g. vertex deletion)
-      if ((event.originalEvent as any)._drawingHandled) {
+      // Skip while drawing/editing (cursor locked) or adding a private node
+      if (
+        webmap.isCursorLocked() ||
+        useSettingsStore.getState().tempPrivateNode !== null
+      ) {
         return;
       }
       setContextMenuData({

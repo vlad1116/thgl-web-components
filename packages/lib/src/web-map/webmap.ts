@@ -948,6 +948,11 @@ export class WebMap {
     this._cursorLocked = false;
   }
 
+  /** Returns true when a drawing/editing tool has locked the cursor */
+  isCursorLocked() {
+    return this._cursorLocked;
+  }
+
   /**
    * Force the map to re-check its container size.
    * Triggers a re-render on the next animation frame.
