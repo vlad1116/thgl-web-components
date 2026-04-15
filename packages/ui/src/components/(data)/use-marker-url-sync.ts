@@ -135,12 +135,20 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
     resolvedSlug.current = markerSlug;
     setSelectedNodeId(getNodeId(match));
 
-    // Center map on spawn
+    // Center and zoom map on spawn
     const coords: [number, number] = [match.p[0], match.p[1]];
     const tryCenter = () => {
       const map = useMapStore.getState().map;
       if (!map) return false;
+      // Zoom in to ~70% of max zoom so the marker is easy to find
+      const minZoom = (map as any).minZoom ?? 0;
+      const maxZoom = (map as any).maxZoom ?? 10;
+      const targetZoom = Math.round(minZoom + (maxZoom - minZoom) * 0.7);
+      const currentZoom = map.getZoom();
       map.setCenter(coords);
+      if (currentZoom < targetZoom) {
+        map.setZoom(targetZoom);
+      }
       return true;
     };
 
