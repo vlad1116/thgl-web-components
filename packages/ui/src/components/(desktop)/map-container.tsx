@@ -180,7 +180,7 @@ export function MapContainer({
           )}
           <div
             className={cn("h-full w-full overflow-hidden")}
-            style={{ willChange: "opacity", opacity: windowOpacity.toFixed(2) }}
+            style={{ willChange: "opacity", opacity: windowOpacity }}
           >
             {children}
           </div>
@@ -274,7 +274,7 @@ export function MapContainer({
           className={cn("h-full w-full overflow-hidden")}
           style={{
             willChange: "opacity",
-            opacity: windowOpacity.toFixed(2),
+            opacity: windowOpacity,
             borderRadius: borderRadius,
           }}
         >

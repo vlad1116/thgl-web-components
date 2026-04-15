@@ -17,6 +17,7 @@ import {
   useSettingsStore,
   useUserStore,
 } from "@repo/lib";
+import { useShallow } from "zustand/react/shallow";
 import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
@@ -337,49 +338,74 @@ function MarkersContent({
   const map = useMap();
   const t = useT();
   const { spawns, icons, filters } = useCoordinates();
-  const hideDiscoveredNodes = useSettingsStore(
-    (state) => state.hideDiscoveredNodes
+  // Group settings into logical selectors to minimize re-render triggers
+  const {
+    hideDiscoveredNodes,
+    discoveredNodes,
+    setDiscoverNode,
+    baseIconSize,
+    iconSizeByGroup,
+    iconSizeByFilter,
+    liveMode,
+    fitBoundsOnChange,
+    dynamicIconSize,
+    dynamicIconSizeFactor,
+    tempPrivateNodeId,
+    labelModeByFilter,
+    labelTextSize,
+  } = useSettingsStore(
+    useShallow((state) => ({
+      hideDiscoveredNodes: state.hideDiscoveredNodes,
+      discoveredNodes: state.discoveredNodes,
+      setDiscoverNode: state.setDiscoverNode,
+      baseIconSize: state.baseIconSize,
+      iconSizeByGroup: state.iconSizeByGroup,
+      iconSizeByFilter: state.iconSizeByFilter,
+      liveMode: state.liveMode,
+      fitBoundsOnChange: state.fitBoundsOnChange,
+      dynamicIconSize: state.dynamicIconSize,
+      dynamicIconSizeFactor: state.dynamicIconSizeFactor,
+      tempPrivateNodeId: state.tempPrivateNode?.id,
+      labelModeByFilter: state.labelModeByFilter,
+      labelTextSize: state.labelTextSize,
+    })),
   );
-  const discoveredNodes = useSettingsStore((state) => state.discoveredNodes);
+  const {
+    audioAlertsMuted,
+    audioAlertRange,
+    audioAlertByFilter,
+    audioAlertSound,
+    audioAlertVolume,
+  } = useSettingsStore(
+    useShallow((state) => ({
+      audioAlertsMuted: state.audioAlertsMuted,
+      audioAlertRange: state.audioAlertRange,
+      audioAlertByFilter: state.audioAlertByFilter,
+      audioAlertSound: state.audioAlertSound,
+      audioAlertVolume: state.audioAlertVolume,
+    })),
+  );
+  const {
+    colorBlindMode,
+    colorBlindSeverity,
+    highContrastMode,
+    highContrastColor,
+    highContrastThickness,
+  } = useSettingsStore(
+    useShallow((state) => ({
+      colorBlindMode: state.colorBlindMode,
+      colorBlindSeverity: state.colorBlindSeverity,
+      highContrastMode: state.highContrastMode,
+      highContrastColor: state.highContrastColor,
+      highContrastThickness: state.highContrastThickness,
+    })),
+  );
   const discoveryLookup = useMemo(
     () => buildDiscoveryLookup(discoveredNodes),
-    [discoveredNodes]
+    [discoveredNodes],
   );
-  const setDiscoverNode = useSettingsStore((state) => state.setDiscoverNode);
-  const baseIconSize = useSettingsStore((state) => state.baseIconSize);
-  const iconSizeByGroup = useSettingsStore((state) => state.iconSizeByGroup);
-  const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
   const sharedMyFilters = useConnectionStore((state) => state.myFilters);
-  const liveMode = useSettingsStore((state) => state.liveMode);
-  const audioAlertsMuted = useSettingsStore((state) => state.audioAlertsMuted);
-  const audioAlertRange = useSettingsStore((state) => state.audioAlertRange);
-  const audioAlertByFilter = useSettingsStore(
-    (state) => state.audioAlertByFilter,
-  );
-  const audioAlertSound = useSettingsStore((state) => state.audioAlertSound);
-  const audioAlertVolume = useSettingsStore((state) => state.audioAlertVolume);
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
-  const fitBoundsOnChange = useSettingsStore(
-    (state) => state.fitBoundsOnChange
-  );
-  const colorBlindMode = useSettingsStore((state) => state.colorBlindMode);
-  const colorBlindSeverity = useSettingsStore(
-    (state) => state.colorBlindSeverity
-  );
-  const highContrastMode = useSettingsStore((state) => state.highContrastMode);
-  const highContrastColor = useSettingsStore((state) => state.highContrastColor);
-  const highContrastThickness = useSettingsStore(
-    (state) => state.highContrastThickness
-  );
-  const dynamicIconSize = useSettingsStore((state) => state.dynamicIconSize);
-  const dynamicIconSizeFactor = useSettingsStore((state) => state.dynamicIconSizeFactor);
-  const labelModeByFilter = useSettingsStore(
-    (state) => state.labelModeByFilter,
-  );
-  const labelTextSize = useSettingsStore((state) => state.labelTextSize);
-  const tempPrivateNodeId = useSettingsStore(
-    (state) => state.tempPrivateNode?.id
-  );
   const highlightSpawnIDs = useGameState((state) => state.highlightSpawnIDs);
   const player = useGameState((state) => state.player);
   const throttledPlayer = useThrottle(player, 1000);
@@ -1288,9 +1314,7 @@ function MarkersContent({
           }
         }
 
-        const filter = filters.find((filter) =>
-          filter.values.some((v) => v.id === s.type)
-        );
+        const group = typeToGroup.get(s.type);
         const nodeId = getNodeId(s);
         const isStacked = Boolean(s.cluster && s.cluster.length > 0);
 
@@ -1300,7 +1324,7 @@ function MarkersContent({
             termId: (s.name ?? s.id ?? s.type).replace(/my_\d+_/, ""),
             description: s.description,
             type: s.type,
-            group: filter?.group,
+            group,
             isPrivate: s.isPrivate,
             isLive: Boolean(s.address),
             data: s.data,
@@ -1311,15 +1335,15 @@ function MarkersContent({
         if (isStacked) {
           items.push(
             ...s.cluster!.map((stackedSpawn) => {
-              const stackedFilter = stackedSpawn.type !== s.type
-                ? filters.find((f) => f.values.some((v) => v.id === stackedSpawn.type))
-                : filter;
+              const stackedGroup = stackedSpawn.type !== s.type
+                ? typeToGroup.get(stackedSpawn.type)
+                : group;
               return {
                 id: stackedSpawn.id,
                 termId: (stackedSpawn.name ?? stackedSpawn.id ?? stackedSpawn.type).replace(/my_\d+_/, ""),
                 description: stackedSpawn.description,
                 type: stackedSpawn.type,
-                group: stackedFilter?.group,
+                group: stackedGroup,
                 isPrivate: stackedSpawn.isPrivate,
                 isLive: Boolean(stackedSpawn.address),
                 data: stackedSpawn.data,
