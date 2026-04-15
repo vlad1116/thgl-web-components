@@ -79,39 +79,51 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
     if (!markerSlug || hasResolved.current || !nodes.length) return;
 
     const findInNodes = (): Spawn | null => {
-      // Check ?id= query param first
       const searchParams = new URLSearchParams(location.search);
       const idParam = searchParams.get("id");
+      const target = idParam || (markerSlug?.includes("@") ? markerSlug : null);
 
-      for (const node of nodes) {
-        if (node.mapName && node.mapName !== mapName) continue;
-        for (const s of node.spawns) {
-          const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
-          const nodeId = getNodeId(spawn);
-
-          // Match by ?id= param
-          if (idParam && (nodeId === idParam || spawn.id === idParam?.split("@")[0])) {
-            return spawn;
+      // Pass 1: exact nodeId match (most reliable)
+      if (target) {
+        for (const node of nodes) {
+          if (node.mapName && node.mapName !== mapName) continue;
+          for (const s of node.spawns) {
+            const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
+            if (getNodeId(spawn) === target) return spawn;
           }
+        }
+      }
 
-          // Match by slug as nodeId
-          if (!idParam && markerSlug.includes("@")) {
-            if (nodeId === markerSlug) return spawn;
-            // id-prefix fallback
-            const slugPrefix = markerSlug.slice(0, markerSlug.indexOf("@"));
-            const spawnPrefix = spawn.id?.includes("@")
-              ? spawn.id.slice(0, spawn.id.indexOf("@"))
-              : spawn.id || spawn.type;
-            if (slugPrefix === spawnPrefix) return spawn;
+      // Pass 2: coordinate-tolerant match for ?id= (handles "6024.00" vs "6024")
+      if (target && target.includes("@")) {
+        const [targetId, targetCoords] = target.split("@");
+        const [tx, ty] = targetCoords.split(":").map(Number);
+        if (!isNaN(tx) && !isNaN(ty)) {
+          for (const node of nodes) {
+            if (node.mapName && node.mapName !== mapName) continue;
+            for (const s of node.spawns) {
+              const sid = s.id ?? node.type;
+              if (sid !== targetId) continue;
+              if (Math.abs(s.p[0] - tx) < 0.1 && Math.abs(s.p[1] - ty) < 0.1) {
+                return { ...s, id: sid, type: node.type } as Spawn;
+              }
+            }
           }
+        }
+      }
 
-          // Match by translated name
-          if (!idParam && !markerSlug.includes("@")) {
+      // Pass 3: match by translated name
+      if (!target && markerSlug) {
+        for (const node of nodes) {
+          if (node.mapName && node.mapName !== mapName) continue;
+          for (const s of node.spawns) {
+            const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
             const name = getMarkerDisplayName(spawn, t);
             if (name === markerSlug) return spawn;
           }
         }
       }
+
       return null;
     };
 
