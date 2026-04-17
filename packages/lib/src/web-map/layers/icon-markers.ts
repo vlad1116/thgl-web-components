@@ -437,6 +437,22 @@ export class IconMarkerLayer implements Layer {
   private nullCount = 0; // Track number of null entries for compaction
   private hoveredMarkerId: string | null = null; // Track currently hovered marker
 
+  /** Debug stats updated each frame (read-only) */
+  readonly stats = {
+    totalInstances: 0,
+    visibleInstances: 0,
+    culledInstances: 0,
+    drawCalls: 0,
+    sheetGroups: 0,
+    cullSkipped: false,
+  };
+
+  // Projected bounding box of all markers (updated on zoom change / instance change)
+  private markerBoundsMinX = Infinity;
+  private markerBoundsMaxX = -Infinity;
+  private markerBoundsMinY = Infinity;
+  private markerBoundsMaxY = -Infinity;
+
   // Event handler maps for per-marker callbacks
   private eventHandlers = {
     click: new Map<string, (m: IconMarkerInstance) => void>(),
@@ -1051,6 +1067,14 @@ export class IconMarkerLayer implements Layer {
     }
     const groups = this.cachedGroups;
 
+    // Reset debug stats for this frame
+    this.stats.totalInstances = 0;
+    this.stats.visibleInstances = 0;
+    this.stats.culledInstances = 0;
+    this.stats.drawCalls = 0;
+    this.stats.sheetGroups = groups.size;
+    this.stats.cullSkipped = false;
+
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
 
@@ -1103,7 +1127,53 @@ export class IconMarkerLayer implements Layer {
     if (rebuildBuffers) {
       this.lastBufferVersion = this.instancesVersion;
       this.lastBufferZoom = state.zoom;
+      // Reset marker bounding box — will be recomputed during projection
+      this.markerBoundsMinX = Infinity;
+      this.markerBoundsMaxX = -Infinity;
+      this.markerBoundsMinY = Infinity;
+      this.markerBoundsMaxY = -Infinity;
     }
+
+    // Compute viewport bounds in world pixels for frustum culling.
+    // We invert the view matrix (2D affine part) to map clip-space corners
+    // back to world-pixel coordinates, then cull markers outside.
+    const vm = state.viewMatrix!;
+    const va = vm[0], vb = vm[1], vc = vm[3], vd = vm[4], vtx = vm[6], vty = vm[7];
+    const det = va * vd - vb * vc;
+    let vpMinX = -Infinity, vpMaxX = Infinity, vpMinY = -Infinity, vpMaxY = Infinity;
+    if (Math.abs(det) > 1e-10) {
+      const invDet = 1 / det;
+      const ia =  vd * invDet;
+      const ib = -vb * invDet;
+      const ic = -vc * invDet;
+      const id =  va * invDet;
+      const itx = -(ia * vtx + ic * vty);
+      const ity = -(ib * vtx + id * vty);
+      const cx0 = ia * -1 + ic * -1 + itx;
+      const cy0 = ib * -1 + id * -1 + ity;
+      const cx1 = ia *  1 + ic * -1 + itx;
+      const cy1 = ib *  1 + id * -1 + ity;
+      const cx2 = ia * -1 + ic *  1 + itx;
+      const cy2 = ib * -1 + id *  1 + ity;
+      const cx3 = ia *  1 + ic *  1 + itx;
+      const cy3 = ib *  1 + id *  1 + ity;
+      vpMinX = Math.min(cx0, cx1, cx2, cx3);
+      vpMaxX = Math.max(cx0, cx1, cx2, cx3);
+      vpMinY = Math.min(cy0, cy1, cy2, cy3);
+      vpMaxY = Math.max(cy0, cy1, cy2, cy3);
+    }
+
+    // Skip per-marker culling when viewport contains all marker positions.
+    // When zoomed out fully, all markers are visible so bounds-checking each
+    // one is pure overhead. We track the projected bounding box across
+    // rebuildGroups and compare it against the viewport.
+    const pad = 200; // must match cullPad below
+    const skipCulling =
+      this.markerBoundsMinX >= vpMinX - pad &&
+      this.markerBoundsMaxX <= vpMaxX + pad &&
+      this.markerBoundsMinY >= vpMinY - pad &&
+      this.markerBoundsMaxY <= vpMaxY + pad;
+    this.stats.cullSkipped = skipCulling;
 
     const drawList = (
       s: { w: number; h: number; tex: WebGLTexture },
@@ -1142,6 +1212,11 @@ export class IconMarkerLayer implements Layer {
       const keepUprights = this.preallocatedBuffers.keepUprights!;
       const tints = this.preallocatedBuffers.tints!;
 
+      // Padding in world pixels to avoid popping at viewport edges.
+      // Accounts for marker size, height stems, and spider offsets.
+      const cullPad = 200;
+
+      let visCount = 0;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         const c = m as any;
@@ -1152,27 +1227,44 @@ export class IconMarkerLayer implements Layer {
           p = state.projection(m.latLng);
           c._projX = p.x;
           c._projY = p.y;
+          // Update marker bounding box for skip-culling optimization
+          if (p.x < this.markerBoundsMinX) this.markerBoundsMinX = p.x;
+          if (p.x > this.markerBoundsMaxX) this.markerBoundsMaxX = p.x;
+          if (p.y < this.markerBoundsMinY) this.markerBoundsMinY = p.y;
+          if (p.y > this.markerBoundsMaxY) this.markerBoundsMaxY = p.y;
         } else {
           p = { x: c._projX, y: c._projY };
         }
+
+        // Viewport culling: skip markers entirely outside visible bounds.
+        // When the viewport contains all markers, skip the per-marker check entirely.
+        if (
+          !skipCulling &&
+          !m.alwaysOnTop && !m.isSelected &&
+          (p.x < vpMinX - cullPad || p.x > vpMaxX + cullPad ||
+           p.y < vpMinY - cullPad || p.y > vpMaxY + cullPad)
+        ) {
+          continue;
+        }
+
         let size = m.size;
         let sizeW = m.sizeW ?? size;
         if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
         if (m.isSelected) { size *= 1.3; sizeW *= 1.3; }
-        offsets[i * 2 + 0] = p.x - sizeW / 2;
-        offsets[i * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
-        sizes[i * 2 + 0] = sizeW;
-        sizes[i * 2 + 1] = size;
+        offsets[visCount * 2 + 0] = p.x - sizeW / 2;
+        offsets[visCount * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
+        sizes[visCount * 2 + 0] = sizeW;
+        sizes[visCount * 2 + 1] = size;
 
         const u0 = m.rect.x / s.w;
         const v0 = m.rect.y / s.h;
         const uw = m.rect.width / s.w;
         const vh = m.rect.height / s.h;
-        uvs[i * 4 + 0] = u0;
-        uvs[i * 4 + 1] = v0;
-        uvs[i * 4 + 2] = uw;
-        uvs[i * 4 + 3] = vh;
-        discs[i] = m.isDiscovered ? 1 : 0;
+        uvs[visCount * 4 + 0] = u0;
+        uvs[visCount * 4 + 1] = v0;
+        uvs[visCount * 4 + 2] = uw;
+        uvs[visCount * 4 + 3] = vh;
+        discs[visCount] = m.isDiscovered ? 1 : 0;
         const rawZ = typeof m.z === "number" ? m.z : 0;
         let normalizedHeight =
           m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
@@ -1188,12 +1280,12 @@ export class IconMarkerLayer implements Layer {
         else if (m.zPos === "bottom") direction = -1;
         else if (m.zPos === "needle") direction = 2;
         else if (m.zPos === "needle-down") direction = -2;
-        flags[i * 2 + 0] = normalizedHeight;
-        flags[i * 2 + 1] = direction;
-        counts[i] = m.isStacked ? 2 : 1;
+        flags[visCount * 2 + 0] = normalizedHeight;
+        flags[visCount * 2 + 1] = direction;
+        counts[visCount] = m.isStacked ? 2 : 1;
         const angle = m.rotation ?? 0;
-        angles[i] = angle;
-        keepUprights[i] = m.keepUpright !== false ? 1.0 : 0.0;
+        angles[visCount] = angle;
+        keepUprights[visCount] = m.keepUpright !== false ? 1.0 : 0.0;
         // Parse tint color (hex string to RGBA), cached on the instance
         if (m.tint) {
           let rgba = (m as any)._tintRGBA as [number, number, number, number] | undefined;
@@ -1208,23 +1300,33 @@ export class IconMarkerLayer implements Layer {
             (m as any)._tintRGBA = rgba;
             (m as any)._tintSrc = m.tint;
           }
-          tints[i * 4 + 0] = rgba[0];
-          tints[i * 4 + 1] = rgba[1];
-          tints[i * 4 + 2] = rgba[2];
-          tints[i * 4 + 3] = rgba[3];
+          tints[visCount * 4 + 0] = rgba[0];
+          tints[visCount * 4 + 1] = rgba[1];
+          tints[visCount * 4 + 2] = rgba[2];
+          tints[visCount * 4 + 3] = rgba[3];
         } else {
-          tints[i * 4 + 0] = 1;
-          tints[i * 4 + 1] = 1;
-          tints[i * 4 + 2] = 1;
-          tints[i * 4 + 3] = 0;
+          tints[visCount * 4 + 0] = 1;
+          tints[visCount * 4 + 1] = 1;
+          tints[visCount * 4 + 2] = 1;
+          tints[visCount * 4 + 3] = 0;
         }
         // Spider offset
         const so = this.preallocatedBuffers.spiderOffsets!;
-        so[i * 2 + 0] = m.spiderOffsetX ?? 0;
-        so[i * 2 + 1] = m.spiderOffsetY ?? 0;
+        so[visCount * 2 + 0] = m.spiderOffsetX ?? 0;
+        so[visCount * 2 + 1] = m.spiderOffsetY ?? 0;
+
+        visCount++;
       }
 
-      const count = list.length;
+      // Accumulate debug stats
+      this.stats.totalInstances += list.length;
+      this.stats.visibleInstances += visCount;
+      this.stats.culledInstances += list.length - visCount;
+
+      if (visCount === 0) return;
+
+      this.stats.drawCalls += 2; // stem pass + icon pass
+      const count = visCount;
 
       // Always upload offsets and sizes (change on zoom due to reprojection)
       gl.bindBuffer(gl.ARRAY_BUFFER, this.offsets);

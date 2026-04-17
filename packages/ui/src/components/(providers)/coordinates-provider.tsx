@@ -611,8 +611,6 @@ export function CoordinatesProvider({
           }
         });
       } else {
-        const debug = isDebug();
-
         // For including the selected spawn even when its filter is off
         const selectedNodeId = state.selectedNodeId;
 
@@ -620,7 +618,7 @@ export function CoordinatesProvider({
           if (node.mapName && node.mapName !== state.mapName) {
             return;
           }
-          const isFilterActive = state.filters.includes(node.type) || debug;
+          const isFilterActive = state.filters.includes(node.type);
           // If filter is off, only include the specific selected spawn
           if (!isFilterActive && selectedNodeId) {
             const selectedSpawnData = node.spawns.find((s) => {

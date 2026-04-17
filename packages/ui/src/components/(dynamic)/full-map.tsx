@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DebugPanel,
   InteractiveMap,
   Markers,
   Regions,
@@ -44,6 +45,7 @@ export function FullMap({
         appName={appConfig.name}
         isOverlay={isOverlay}
       />
+      <DebugPanel />
       <Regions />
       <Markers
         appName={appConfig.name}

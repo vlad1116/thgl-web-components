@@ -1,4 +1,5 @@
 // Named exports for better tree-shaking
+export { DebugPanel } from "./debug-panel";
 export { Discovery } from "./discovery";
 export { InteractiveMap } from "./interactive-map";
 export { LivePlayer } from "./live-player";
