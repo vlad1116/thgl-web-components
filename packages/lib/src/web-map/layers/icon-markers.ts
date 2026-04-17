@@ -6,6 +6,137 @@ import { ColorBlindMode } from "../utils/color-blind";
 // Simple icon marker layer that draws textured quads from one or more sprite sheets.
 // Batches draw calls per sheet texture and uses instancing within each batch.
 
+// ---------------------------------------------------------------------------
+// Dynamic Texture Atlas — packs many small icon textures into shared atlas
+// pages so all markers can be drawn with a handful of draw calls instead of
+// one per unique icon.
+// ---------------------------------------------------------------------------
+
+/** Maximum icon dimension (width or height) that qualifies for atlas packing */
+const ATLAS_MAX_ICON = 512;
+/** Atlas page size (2048 is safe on all WebGL2 GPUs) */
+const ATLAS_PAGE_SIZE = 2048;
+/** Padding between icons to prevent filtering bleed */
+const ATLAS_PAD = 2;
+
+interface AtlasEntry {
+  page: string;                // Atlas page name (e.g. "__atlas_0__")
+  rect: IconRect;              // Rect within the atlas canvas (pixel coords)
+}
+
+class TextureAtlas {
+  private pages: { name: string; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D }[] = [];
+  /** Current shelf Y position on the active page */
+  private shelfY = 0;
+  /** Current X position on the current shelf */
+  private shelfX = 0;
+  /** Height of the current shelf (tallest icon in the row) */
+  private shelfH = 0;
+  /** Maps original sheet name → atlas entry */
+  readonly entries = new Map<string, AtlasEntry>();
+  /** Set of atlas page names that have been modified since last WebGL upload */
+  readonly dirtyPages = new Set<string>();
+
+  /** Try to pack a sheet image into the atlas. Returns the entry, or null if too large. */
+  add(
+    name: string,
+    img: HTMLImageElement | HTMLCanvasElement,
+  ): AtlasEntry | null {
+    const w = img instanceof HTMLCanvasElement ? img.width : img.naturalWidth;
+    const h = img instanceof HTMLCanvasElement ? img.height : img.naturalHeight;
+
+    // Don't atlas images that are too large or not ready
+    if (w === 0 || h === 0 || w > ATLAS_MAX_ICON || h > ATLAS_MAX_ICON) {
+      return null;
+    }
+
+    // If already packed, update in place
+    const existing = this.entries.get(name);
+    if (existing) {
+      const page = this.pages.find((p) => p.name === existing.page);
+      if (page) {
+        page.ctx.clearRect(existing.rect.x, existing.rect.y, existing.rect.width, existing.rect.height);
+        page.ctx.drawImage(img, existing.rect.x, existing.rect.y, w, h);
+        this.dirtyPages.add(existing.page);
+        // Update rect dimensions in case size changed
+        existing.rect.width = w;
+        existing.rect.height = h;
+      }
+      return existing;
+    }
+
+    // Try to fit on current shelf of last page
+    const pw = w + ATLAS_PAD;
+    const ph = h + ATLAS_PAD;
+
+    if (this.pages.length > 0) {
+      const lastPage = this.pages[this.pages.length - 1];
+
+      // Does it fit on the current shelf?
+      if (this.shelfX + pw <= ATLAS_PAGE_SIZE && this.shelfY + Math.max(this.shelfH, ph) <= ATLAS_PAGE_SIZE) {
+        const entry = this.placeOnShelf(name, img, w, h, pw, ph, lastPage);
+        return entry;
+      }
+
+      // Start a new shelf on the same page
+      if (pw <= ATLAS_PAGE_SIZE && this.shelfY + this.shelfH + ph <= ATLAS_PAGE_SIZE) {
+        this.shelfY += this.shelfH;
+        this.shelfX = 0;
+        this.shelfH = 0;
+        const entry = this.placeOnShelf(name, img, w, h, pw, ph, lastPage);
+        return entry;
+      }
+    }
+
+    // Need a new page
+    this.createPage();
+    const newPage = this.pages[this.pages.length - 1];
+    return this.placeOnShelf(name, img, w, h, pw, ph, newPage);
+  }
+
+  private placeOnShelf(
+    name: string,
+    img: HTMLImageElement | HTMLCanvasElement,
+    w: number,
+    h: number,
+    pw: number,
+    ph: number,
+    page: { name: string; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D },
+  ): AtlasEntry {
+    const rect: IconRect = { x: this.shelfX, y: this.shelfY, width: w, height: h };
+    page.ctx.drawImage(img, rect.x, rect.y, w, h);
+    this.shelfX += pw;
+    if (ph > this.shelfH) this.shelfH = ph;
+    const entry: AtlasEntry = { page: page.name, rect };
+    this.entries.set(name, entry);
+    this.dirtyPages.add(page.name);
+    return entry;
+  }
+
+  private createPage() {
+    const name = `__atlas_${this.pages.length}__`;
+    const canvas = document.createElement("canvas");
+    canvas.width = ATLAS_PAGE_SIZE;
+    canvas.height = ATLAS_PAGE_SIZE;
+    const ctx = canvas.getContext("2d", { willReadFrequently: false })!;
+    this.pages.push({ name, canvas, ctx });
+    this.shelfX = 0;
+    this.shelfY = 0;
+    this.shelfH = 0;
+    this.dirtyPages.add(name);
+  }
+
+  /** Get the canvas for a given atlas page name */
+  getPageCanvas(name: string): HTMLCanvasElement | undefined {
+    return this.pages.find((p) => p.name === name)?.canvas;
+  }
+
+  /** Get all page names */
+  getPageNames(): string[] {
+    return this.pages.map((p) => p.name);
+  }
+}
+
 export interface IconSheet {
   name: string;
   url: string;
@@ -428,6 +559,7 @@ export class IconMarkerLayer implements Layer {
   private quad: WebGLBuffer | null = null;
   private sheets: Map<string, SheetTex> = new Map();
   private sheetImages: Map<string, HTMLImageElement | HTMLCanvasElement> = new Map();
+  private atlas = new TextureAtlas();
   private instances: IconMarkerInstance[] = [];
   private instancesById: Map<string, number> = new Map(); // Track index by ID to prevent duplicates
   private iconMap: Map<string, { sheet: string; rect: IconRect }> = new Map();
@@ -514,14 +646,12 @@ export class IconMarkerLayer implements Layer {
   private u_hc_thickness_loc: WebGLUniformLocation | null = null;
 
   addSheet(name: string, source: string | HTMLImageElement | HTMLCanvasElement) {
-    const isNew = !this.sheetImages.has(name);
     if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) {
       this.sheetImages.set(name, source);
+      this.tryAtlasPack(name, source);
     } else {
       this.sheetImages.set(name, this.createImage(source));
     }
-
-
   }
   /** Copy all sheet images to another layer (for sharing sprites between static/live layers) */
   copySheets(target: IconMarkerLayer) {
@@ -538,6 +668,22 @@ export class IconMarkerLayer implements Layer {
     this.sheetImages.set(name, source);
     // Delete cached WebGL texture so ensureSheet recreates it with new image
     this.sheets.delete(name);
+    this.tryAtlasPack(name, source);
+  }
+
+  /** Attempt to pack a sheet image into the dynamic texture atlas */
+  private tryAtlasPack(name: string, source: HTMLImageElement | HTMLCanvasElement) {
+    // Don't atlas the default circle sheet — it's handled specially
+    if (name === DEFAULT_CIRCLE_SHEET) return;
+    // Canvas elements are always ready
+    if (source instanceof HTMLCanvasElement) {
+      this.atlas.add(name, source);
+      return;
+    }
+    // HTMLImageElement: pack if already loaded, otherwise wait for onload
+    if (source.complete && source.naturalWidth > 0) {
+      this.atlas.add(name, source);
+    }
   }
   // Get a marker by ID
   getMarker(id: string): IconMarkerInstance | undefined {
@@ -981,7 +1127,21 @@ export class IconMarkerLayer implements Layer {
     }
   }
 
-  private ensureSheet(gl: WebGL2RenderingContext, name: string) {
+  private ensureSheet(gl: WebGL2RenderingContext, name: string): SheetTex | null {
+    // Handle atlas pages: re-upload if dirty, otherwise return cached
+    const atlasCanvas = this.atlas.getPageCanvas(name);
+    if (atlasCanvas) {
+      if (this.atlas.dirtyPages.has(name)) {
+        this.atlas.dirtyPages.delete(name);
+        // Delete cached texture to force re-upload
+        const old = this.sheets.get(name);
+        if (old) gl.deleteTexture(old.tex);
+        this.sheets.delete(name);
+      }
+      if (this.sheets.has(name)) return this.sheets.get(name)!;
+      return this.uploadTexture(gl, name, atlasCanvas, atlasCanvas.width, atlasCanvas.height);
+    }
+
     if (this.sheets.has(name)) return this.sheets.get(name)!;
 
     // Handle default circle sheet specially
@@ -1010,18 +1170,36 @@ export class IconMarkerLayer implements Layer {
       if (!img.complete) {
         return null; // Still loading
       }
+      // Image just loaded — try to pack into atlas now
+      if (!this.atlas.entries.has(name)) {
+        const atlasEntry = this.atlas.add(name, img);
+        if (atlasEntry) {
+          // Successfully packed — rebuild groups to use atlas page grouping
+          this.instancesVersion++;
+          return this.ensureSheet(gl, atlasEntry.page);
+        }
+      }
     }
 
     const w = isCanvas ? img.width : img.naturalWidth;
     const h = isCanvas ? img.height : img.naturalHeight;
 
+    return this.uploadTexture(gl, name, img, w, h);
+  }
 
+  private uploadTexture(
+    gl: WebGL2RenderingContext,
+    name: string,
+    source: HTMLImageElement | HTMLCanvasElement,
+    w: number,
+    h: number,
+  ): SheetTex {
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -1047,10 +1225,13 @@ export class IconMarkerLayer implements Layer {
       const m = this.instances[i];
       if (m === null) continue;
       if (this.hidden && this.hidden.has(m.id)) continue;
-      let arr = this.cachedGroups.get(m.sheet);
+      // Use atlas page name for grouping if the sheet was packed into an atlas
+      const atlasEntry = this.atlas.entries.get(m.sheet);
+      const groupKey = atlasEntry ? atlasEntry.page : m.sheet;
+      let arr = this.cachedGroups.get(groupKey);
       if (!arr) {
         arr = [];
-        this.cachedGroups.set(m.sheet, arr);
+        this.cachedGroups.set(groupKey, arr);
       }
       arr.push(m);
     }
@@ -1256,10 +1437,13 @@ export class IconMarkerLayer implements Layer {
         sizes[visCount * 2 + 0] = sizeW;
         sizes[visCount * 2 + 1] = size;
 
-        const u0 = m.rect.x / s.w;
-        const v0 = m.rect.y / s.h;
-        const uw = m.rect.width / s.w;
-        const vh = m.rect.height / s.h;
+        // Use atlas-remapped rect for UV calculation if this icon was packed
+        const atlasEntry = this.atlas.entries.get(m.sheet);
+        const uvRect = atlasEntry ? atlasEntry.rect : m.rect;
+        const u0 = uvRect.x / s.w;
+        const v0 = uvRect.y / s.h;
+        const uw = uvRect.width / s.w;
+        const vh = uvRect.height / s.h;
         uvs[visCount * 4 + 0] = u0;
         uvs[visCount * 4 + 1] = v0;
         uvs[visCount * 4 + 2] = uw;
@@ -1394,7 +1578,19 @@ export class IconMarkerLayer implements Layer {
     // Draw spider lines first (behind all icons)
     this.drawSpiderLines(gl, state);
 
-    for (const [sheet, items] of groups) {
+    // Sort group keys: DEFAULT_CIRCLE_SHEET first (center dots behind icons),
+    // then everything else. This ensures cluster center dots render behind
+    // their spiderfied icon markers.
+    const sortedGroups: [string, IconMarkerInstance[]][] = [];
+    for (const entry of groups) {
+      if (entry[0] === DEFAULT_CIRCLE_SHEET) {
+        sortedGroups.unshift(entry);
+      } else {
+        sortedGroups.push(entry);
+      }
+    }
+
+    for (const [sheet, items] of sortedGroups) {
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
       normalList.length = 0;
