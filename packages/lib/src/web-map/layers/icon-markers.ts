@@ -1406,10 +1406,10 @@ export class IconMarkerLayer implements Layer {
         const m = list[i];
         const c = m as any;
 
-        // Cache projected position per marker — only recompute on zoom change
-        let p: { x: number; y: number };
-        if (rebuildBuffers || !c._projX) {
-          p = state.projection(m.latLng);
+        // Cache projected position per marker — only recompute on zoom change.
+        // Uses _proj to avoid allocating a new {x,y} object per marker.
+        if (rebuildBuffers || c._projX === undefined) {
+          const p = state.projection(m.latLng);
           c._projX = p.x;
           c._projY = p.y;
           // Update marker bounding box for skip-culling optimization
@@ -1417,17 +1417,17 @@ export class IconMarkerLayer implements Layer {
           if (p.x > this.markerBoundsMaxX) this.markerBoundsMaxX = p.x;
           if (p.y < this.markerBoundsMinY) this.markerBoundsMinY = p.y;
           if (p.y > this.markerBoundsMaxY) this.markerBoundsMaxY = p.y;
-        } else {
-          p = { x: c._projX, y: c._projY };
         }
+        const px = c._projX as number;
+        const py = c._projY as number;
 
         // Viewport culling: skip markers entirely outside visible bounds.
         // When the viewport contains all markers, skip the per-marker check entirely.
         if (
           !skipCulling &&
           !m.alwaysOnTop && !m.isSelected &&
-          (p.x < vpMinX - cullPad || p.x > vpMaxX + cullPad ||
-           p.y < vpMinY - cullPad || p.y > vpMaxY + cullPad)
+          (px < vpMinX - cullPad || px > vpMaxX + cullPad ||
+           py < vpMinY - cullPad || py > vpMaxY + cullPad)
         ) {
           continue;
         }
@@ -1436,8 +1436,8 @@ export class IconMarkerLayer implements Layer {
         let sizeW = m.sizeW ?? size;
         if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
         if (m.isSelected) { size *= 1.3; sizeW *= 1.3; }
-        offsets[visCount * 2 + 0] = p.x - sizeW / 2;
-        offsets[visCount * 2 + 1] = p.y - size / 2 + (m.screenOffsetY ?? 0);
+        offsets[visCount * 2 + 0] = px - sizeW / 2;
+        offsets[visCount * 2 + 1] = py - size / 2 + (m.screenOffsetY ?? 0);
         sizes[visCount * 2 + 0] = sizeW;
         sizes[visCount * 2 + 1] = size;
 
