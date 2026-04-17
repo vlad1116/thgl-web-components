@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";
-import { NITROPAY_SITE_ID } from "./constants";
+import { IS_DEMO_MODE, NITROPAY_SITE_ID, SHOW_DEMO_ADS } from "./constants";
 
 type NitroState = number;
 
@@ -447,7 +447,7 @@ export function ScriptLoader({
   if (!accountHasHydrated) {
     return <>{loading}</>;
   }
-  if (adRemoval || isOverwolf) {
+  if (adRemoval || isOverwolf || (IS_DEMO_MODE && !SHOW_DEMO_ADS)) {
     return <></>;
   }
 
