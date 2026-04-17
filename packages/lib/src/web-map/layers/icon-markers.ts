@@ -1240,7 +1240,10 @@ export class IconMarkerLayer implements Layer {
 
   render(gl: WebGL2RenderingContext, state: RenderState): void {
     if (!this.program || !this.vao) return;
-    if (this.instances.length === 0) return;
+    if (this.instances.length === 0) {
+      this.lastBufferVersion = this.instancesVersion;
+      return;
+    }
 
     // Rebuild groups only when instances change
     if (this.cachedGroupsVersion !== this.instancesVersion) {
@@ -1349,7 +1352,8 @@ export class IconMarkerLayer implements Layer {
     // one is pure overhead. We track the projected bounding box across
     // rebuildGroups and compare it against the viewport.
     const pad = 200; // must match cullPad below
-    const skipCulling =
+    const boundsValid = this.markerBoundsMaxX > this.markerBoundsMinX;
+    const skipCulling = boundsValid &&
       this.markerBoundsMinX >= vpMinX - pad &&
       this.markerBoundsMaxX <= vpMaxX + pad &&
       this.markerBoundsMinY >= vpMinY - pad &&
@@ -1437,9 +1441,16 @@ export class IconMarkerLayer implements Layer {
         sizes[visCount * 2 + 0] = sizeW;
         sizes[visCount * 2 + 1] = size;
 
-        // Use atlas-remapped rect for UV calculation if this icon was packed
-        const atlasEntry = this.atlas.entries.get(m.sheet);
-        const uvRect = atlasEntry ? atlasEntry.rect : m.rect;
+        // Use atlas-remapped rect for UV calculation if this icon was packed.
+        // Cache the lookup on the instance to avoid Map.get per marker per frame.
+        let uvRect: IconRect;
+        if (!rebuildBuffers && c._atlasRect !== undefined) {
+          uvRect = c._atlasRect || m.rect;
+        } else {
+          const atlasEntry = this.atlas.entries.get(m.sheet);
+          c._atlasRect = atlasEntry ? atlasEntry.rect : null;
+          uvRect = c._atlasRect || m.rect;
+        }
         const u0 = uvRect.x / s.w;
         const v0 = uvRect.y / s.h;
         const uw = uvRect.width / s.w;
@@ -1578,19 +1589,29 @@ export class IconMarkerLayer implements Layer {
     // Draw spider lines first (behind all icons)
     this.drawSpiderLines(gl, state);
 
-    // Sort group keys: DEFAULT_CIRCLE_SHEET first (center dots behind icons),
-    // then everything else. This ensures cluster center dots render behind
-    // their spiderfied icon markers.
-    const sortedGroups: [string, IconMarkerInstance[]][] = [];
-    for (const entry of groups) {
-      if (entry[0] === DEFAULT_CIRCLE_SHEET) {
-        sortedGroups.unshift(entry);
-      } else {
-        sortedGroups.push(entry);
+    // Draw DEFAULT_CIRCLE_SHEET first (center dots behind spiderfied icons),
+    // then all other groups.
+    const circleGroup = groups.get(DEFAULT_CIRCLE_SHEET);
+    if (circleGroup) {
+      const s = this.ensureSheet(gl, DEFAULT_CIRCLE_SHEET);
+      if (s) {
+        normalList.length = 0;
+        let onTopList: IconMarkerInstance[] | null = null;
+        for (const m of circleGroup) {
+          if (m.isSelected || m.alwaysOnTop) {
+            if (!onTopList) onTopList = [];
+            onTopList.push(m);
+          } else {
+            normalList.push(m);
+          }
+        }
+        drawList(s, normalList);
+        if (onTopList) onTopEntries.push({ s, items: onTopList });
       }
     }
 
-    for (const [sheet, items] of sortedGroups) {
+    for (const [sheet, items] of groups) {
+      if (sheet === DEFAULT_CIRCLE_SHEET) continue;
       const s = this.ensureSheet(gl, sheet);
       if (!s) continue;
       normalList.length = 0;
