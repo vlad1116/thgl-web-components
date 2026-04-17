@@ -160,7 +160,7 @@ export const games: Array<Game> = [
             "BPSR_STEAM.exe",
             "BPSR.exe",
             "BPSR_EPIC.exe",
-            "StarASIA_STEAM",
+            "StarASIA_STEAM.exe",
           ],
         },
       ],
