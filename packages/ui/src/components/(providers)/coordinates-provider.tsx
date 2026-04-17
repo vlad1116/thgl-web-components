@@ -417,6 +417,7 @@ export function CoordinatesProvider({
       autoDiscoverSet,
       isDiscoveredNode,
       debug,
+      dict,
     );
 
     const resultNodes = debug
@@ -434,6 +435,7 @@ export function CoordinatesProvider({
     spawnGrid,
     autoDiscoverSet,
     realStaticNodes,
+    dict,
   ]);
 
   // Apply discovery updates (side effect, runs after render)

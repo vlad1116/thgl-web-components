@@ -124,6 +124,7 @@ export function buildActorNodes(
   autoDiscoverSet: Set<string>,
   isDiscoveredNode: (nodeId: string) => boolean,
   debug: boolean,
+  dict?: Record<string, string>,
 ): {
   actorNodes: NodesCoordinates;
   discoveryUpdates: DiscoveryUpdate[];
@@ -207,8 +208,12 @@ export function buildActorNodes(
 
     // No matching spawn found — create actor-only spawn
     if (!spawnToAdd) {
+      // Store raw actor type as name so display can resolve it via t() / dicts
+      // e.g., name="ci_2679" → t("ci_2679") → "Grunvar" (from dicts)
+      const actorName = dict?.[actor.type] ? actor.type : undefined;
       spawnToAdd = {
         id: `${id}@${actor.x}:${actor.y}`,
+        name: actorName,
         address: actor.address,
         p:
           actor.z != null
