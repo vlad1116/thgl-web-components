@@ -212,7 +212,7 @@ export function buildActorNodes(
       // e.g., name="ci_2679" → t("ci_2679") → "Grunvar" (from dicts)
       const actorName = dict?.[actor.type] ? actor.type : undefined;
       spawnToAdd = {
-        id: `${id}@${actor.x}:${actor.y}`,
+        id: `${id}@${actor.x.toFixed(2)}:${actor.y.toFixed(2)}`,
         name: actorName,
         address: actor.address,
         p:

@@ -104,7 +104,28 @@ export const buildDiscoveryLookup = (discoveredNodes: string[]) => {
   for (const id of discoveredNodes) {
     if (id.includes("@")) {
       const atIndex = id.indexOf("@");
-      discoveredCoords.add(id.slice(atIndex + 1));
+      const coords = id.slice(atIndex + 1);
+      discoveredCoords.add(coords);
+
+      // Backward compatibility: old node IDs used raw float precision in z:x
+      // order (from getNodeId fallback), while current extraction uses
+      // .toFixed(2) in x:z order. Detect old-format IDs (>2 decimal places)
+      // and also index the swapped+rounded coordinates so they match.
+      const parts = coords.split(":");
+      if (parts.length === 2) {
+        const hasExcessPrecision = parts.some((p) => {
+          const dot = p.indexOf(".");
+          return dot !== -1 && p.length - dot - 1 > 2;
+        });
+        if (hasExcessPrecision) {
+          const a = parseFloat(parts[0]);
+          const b = parseFloat(parts[1]);
+          if (!isNaN(a) && !isNaN(b)) {
+            // Add swapped+rounded: old z:x → new x:z with .toFixed(2)
+            discoveredCoords.add(`${b.toFixed(2)}:${a.toFixed(2)}`);
+          }
+        }
+      }
     }
   }
 
