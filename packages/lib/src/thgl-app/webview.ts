@@ -258,6 +258,10 @@ export type WEBVIEW_SEND_MESSAGE =
   | {
       action: "hideOverlay";
       payload: {};
+    }
+  | {
+      action: "captureGameScreenshot";
+      payload: {};
     };
 
 // GPU acceleration flags for WebView2

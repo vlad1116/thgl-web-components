@@ -27,7 +27,7 @@ import { type Comment, SingleComment } from "./comment";
 import { ScrollArea } from "../ui/scroll-area";
 import { AuthAlert } from "./auth-alert";
 import { CommentImageUpload } from "./comment-image-upload";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 const formSchema = z.object({
   text: z.string().min(2).max(500),
@@ -37,6 +37,18 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
   const userId = useAccountStore((state) => state.userId);
   const commentsPerk = useAccountStore((state) => state.perks.comments);
   const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const isThglApp = typeof window !== "undefined" && !!window.chrome?.webview;
+
+  const handleFormPaste = useCallback((e: React.ClipboardEvent) => {
+    const files = Array.from(e.clipboardData.items)
+      .filter((item) => item.kind === "file" && /^image\//.test(item.type))
+      .map((item) => item.getAsFile())
+      .filter((f): f is File => f !== null);
+    if (files.length > 0) {
+      e.preventDefault();
+      setPendingImages((prev) => [...prev, ...files].slice(0, 3));
+    }
+  }, []);
 
   const {
     data: comments,
@@ -125,9 +137,7 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
 
       <ScrollArea type="auto" className="grow">
         <div className="py-3 space-y-4">
-          {error && (
-            <p className="text-xs text-destructive">{error.message}</p>
-          )}
+          {error && <p className="text-xs text-destructive">{error.message}</p>}
           {!error && isLoading && (
             <div className="space-y-3">
               <Skeleton className="h-12" />
@@ -164,7 +174,9 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
               <HoverCardPortal>
                 <HoverCardContent className="text-xs w-auto max-w-[240px]">
                   <p>Comments are public and visible to everyone.</p>
-                  <p>Be respectful, avoid spamming and ask before advertisement.</p>
+                  <p>
+                    Be respectful, avoid spamming and ask before advertisement.
+                  </p>
                 </HoverCardContent>
               </HoverCardPortal>
             </HoverCard>
@@ -175,7 +187,11 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
           <AuthAlert />
         ) : (
           <Form {...form}>
-            <form className="space-y-2" onSubmit={form.handleSubmit(onSubmit)}>
+            <form
+              className="space-y-2"
+              onSubmit={form.handleSubmit(onSubmit)}
+              onPaste={handleFormPaste}
+            >
               <FormField
                 control={form.control}
                 name="text"
@@ -196,11 +212,13 @@ export function Comments({ id, appName }: { id: string; appName: string }) {
                 )}
               />
 
-              <div className="flex items-center justify-between">
-                <CommentImageUpload
-                  images={pendingImages}
-                  onImagesChange={setPendingImages}
-                />
+              <CommentImageUpload
+                images={pendingImages}
+                onImagesChange={setPendingImages}
+                showScreenshot={isThglApp}
+              />
+
+              <div className="flex items-center justify-end">
                 <span className="text-[10px] text-muted-foreground tabular-nums">
                   {watchText?.length ?? 0}/500
                 </span>
