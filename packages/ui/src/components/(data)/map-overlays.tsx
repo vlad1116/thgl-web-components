@@ -166,9 +166,12 @@ function OverlayGroupUI({
                   disableHoverableContent
                 >
                   <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                  <TooltipContent side="right" className="max-w-[300px]">
+                  <TooltipContent side="right" className="max-w-[350px]">
                     <p className="font-semibold">{t(zone.name) || zone.name}</p>
-                    <p className="text-xs text-muted-foreground">{descText}</p>
+                    <p
+                      className="text-xs text-muted-foreground"
+                      dangerouslySetInnerHTML={{ __html: descText }}
+                    />
                   </TooltipContent>
                 </Tooltip>
               );
