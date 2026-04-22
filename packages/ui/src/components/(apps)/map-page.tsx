@@ -15,7 +15,7 @@ import { HeaderOffset, PageTitle } from "../(header)";
 import { FullMapDynamic } from "../(dynamic)/full-map-dynamic";
 import { MarkersSearch } from "../(controls)/markers-search";
 import { FloatingAds } from "../(ads)";
-import { MarkerPanel } from "../(data)";
+import { MarkerPanel, ZoneDetailsPanel } from "../(data)";
 import { notFound } from "next/navigation";
 import { getFullDictionary } from "../../dicts";
 import { ReactNode } from "react";
@@ -325,6 +325,7 @@ export function createMapPage(
                 appConfig.markerOptions?.coordinateCopyFormat
               }
             />
+            <ZoneDetailsPanel appName={appConfig.name} />
           </HeaderOffset>
         </CoordinatesProvider>
       </>

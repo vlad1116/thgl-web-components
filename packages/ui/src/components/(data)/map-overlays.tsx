@@ -1,4 +1,5 @@
 "use client";
+import { createPortal } from "react-dom";
 import { useMapStore } from "../(interactive-map)/store";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -6,22 +7,25 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { cn, useUserStore } from "@repo/lib";
+import { cn, useUserStore, DATA_FORGE_CDN_URL } from "@repo/lib";
 import {
   ZoneOverlayLayer,
   DrawingLayer,
   type DrawingShape,
 } from "@repo/lib/web-map";
 import {
+  ChevronDown,
   ChevronRight,
   FoldVertical,
   Layers,
   UnfoldVertical,
+  X,
 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useT } from "../(providers)";
 import useSWRImmutable from "swr/immutable";
+import { SidePanel } from "./side-panel";
 
 interface ZoneEntry {
   values: number[];
@@ -184,6 +188,205 @@ function OverlayGroupUI({
   );
 }
 
+// ── Zone Details Panel (lazy-loaded knowledge data) ──
+
+type KnowledgeCategory = { category: string; items: string[] };
+type NpcKnowledgeData = {
+  regions: Record<string, KnowledgeCategory[]>;
+  global: KnowledgeCategory[];
+};
+
+export function ZoneDetailsPanel({
+  appName,
+}: {
+  appName: string;
+}) {
+  const zone = useUserStore((state) => state.selectedZone);
+  const setSelectedZone = useUserStore((state) => state.setSelectedZone);
+
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (zone) requestAnimationFrame(() => setVisible(true));
+    else setVisible(false);
+  }, [zone]);
+
+  const isKnowledgeZone = zone?.group === "zone_group_npc_knowledge";
+  const knowledgeUrl = isKnowledgeZone
+    ? `${DATA_FORGE_CDN_URL}/${appName}/config/npc-knowledge.json`
+    : null;
+  const { data: knowledgeData } = useSWRImmutable<NpcKnowledgeData>(
+    knowledgeUrl,
+    (url: string) => fetch(url).then((r) => r.json()),
+  );
+
+  const regionCategories = useMemo(() => {
+    if (!knowledgeData || !zone) return null;
+    for (const [regionKey, categories] of Object.entries(
+      knowledgeData.regions,
+    )) {
+      if (zone.name.toLowerCase().includes(regionKey.toLowerCase())) {
+        return { region: regionKey, categories, global: knowledgeData.global };
+      }
+    }
+    for (const [regionKey, categories] of Object.entries(
+      knowledgeData.regions,
+    )) {
+      for (const word of zone.name.split(/\s+/)) {
+        if (
+          word.length > 3 &&
+          regionKey.toLowerCase().startsWith(word.toLowerCase())
+        ) {
+          return { region: regionKey, categories, global: knowledgeData.global };
+        }
+      }
+    }
+    return { region: "", categories: [], global: knowledgeData.global };
+  }, [knowledgeData, zone]);
+
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
+
+  const close = () => {
+    setVisible(false);
+    setTimeout(() => setSelectedZone(null), 200);
+  };
+
+  if (!zone) return null;
+
+  const panelContent = (
+    <>
+      {/* Header — matches MarkerPanel layout */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
+        <button
+          type="button"
+          aria-label="Close"
+          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors shrink-0"
+          onClick={close}
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <h2 className="text-sm font-semibold truncate grow">{zone.name}</h2>
+        {isKnowledgeZone && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium leading-none shrink-0">
+            NPC Knowledge
+          </span>
+        )}
+      </div>
+
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "hsl(var(--ring) / 0.5) transparent",
+        }}
+      >
+        <div className="p-3 space-y-3">
+          {!isKnowledgeZone && zone.desc && (
+            <p
+              className="text-xs text-muted-foreground"
+              dangerouslySetInnerHTML={{ __html: zone.desc }}
+            />
+          )}
+          {isKnowledgeZone && !regionCategories && (
+            <p className="text-xs text-muted-foreground">Loading...</p>
+          )}
+          {isKnowledgeZone && regionCategories && (
+            <>
+              {regionCategories.categories.length > 0 && (
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    Region — {regionCategories.region}
+                  </p>
+                  {regionCategories.categories.map((cat) => (
+                    <CategoryList
+                      key={cat.category}
+                      category={cat}
+                      expanded={expandedCategories.has(`r_${cat.category}`)}
+                      onToggle={() => toggleCategory(`r_${cat.category}`)}
+                    />
+                  ))}
+                </div>
+              )}
+              {regionCategories.global.length > 0 && (
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    Global (all regions)
+                  </p>
+                  {regionCategories.global.map((cat) => (
+                    <CategoryList
+                      key={cat.category}
+                      category={cat}
+                      expanded={expandedCategories.has(`g_${cat.category}`)}
+                      onToggle={() => toggleCategory(`g_${cat.category}`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <SidePanel visible={visible} onClose={close}>
+      {panelContent}
+    </SidePanel>
+  );
+}
+
+function CategoryList({
+  category,
+  expanded,
+  onToggle,
+}: {
+  category: KnowledgeCategory;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="mb-0.5">
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-1 w-full text-left py-0.5 px-1 hover:bg-muted rounded text-xs"
+        type="button"
+      >
+        {expanded ? (
+          <ChevronDown className="h-3 w-3 shrink-0" />
+        ) : (
+          <ChevronRight className="h-3 w-3 shrink-0" />
+        )}
+        <span className="truncate">{category.category}</span>
+        <span className="text-muted-foreground ml-auto shrink-0">
+          {category.items.length}
+        </span>
+      </button>
+      {expanded && (
+        <div className="pl-5 py-0.5">
+          {category.items.map((item) => (
+            <div
+              key={item}
+              className="text-xs text-muted-foreground py-0.5"
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
   const [open, setOpen] = useState(false);
   const map = useMapStore((state) => state.map);
@@ -327,6 +530,10 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     desc: string;
   } | null>(null);
 
+  // Zone details panel (opened on click) — stored in shared state
+  const selectedZone = useUserStore((state) => state.selectedZone);
+  const setSelectedZone = useUserStore((state) => state.setSelectedZone);
+
   // Build zone lookup: group → pixelValue → zone
   const zoneLookup = useMemo(() => {
     if (!config) return new Map<string, Map<number, ZoneEntry>>();
@@ -349,6 +556,8 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
       return;
     }
 
+    const getCanvas = () => document.querySelector("canvas") as HTMLElement | null;
+
     const handler = (e: {
       latlng: [number, number];
       originalEvent: MouseEvent;
@@ -370,18 +579,22 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
         );
         if (!isActive) continue;
 
-        const descText = t(`${zone.desc}_desc`) || "";
-        if (!descText) continue;
+        const zoneName = t(zone.name) || zone.name;
+        const descText = t(`${zone.desc}_desc`) || zone.desc || "";
 
         setZoneTooltip({
           x: e.originalEvent.clientX,
           y: e.originalEvent.clientY,
-          name: t(zone.name) || zone.name,
+          name: zoneName,
           desc: descText,
         });
+        const c = getCanvas();
+        if (c) c.style.cursor = "pointer";
         return;
       }
       setZoneTooltip(null);
+      const c = getCanvas();
+      if (c) c.style.cursor = "grab";
     };
 
     const docLeaveHandler = (e: MouseEvent) => {
@@ -391,13 +604,57 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
       }
     };
 
+    // Click handler — open zone details panel (skip if a marker was clicked)
+    const clickHandler = (e: {
+      latlng: [number, number];
+      originalEvent: MouseEvent;
+    }) => {
+      // Defer to next tick so marker click can set selectedNodeId first
+      setTimeout(() => {
+        if (useUserStore.getState().selectedNodeId) return; // marker was clicked
+        _handleZoneClick(e);
+      }, 0);
+    };
+    const _handleZoneClick = (e: {
+      latlng: [number, number];
+      originalEvent: MouseEvent;
+    }) => {
+      const zoneLayers2 = zoneLayersRef.current;
+      for (const { layer, activeZones } of layerStates) {
+        if (activeZones.length === 0) continue;
+        const zl = zoneLayers2.get(layer.group);
+        if (!zl) continue;
+        const pv = zl.sampleAt(e.latlng);
+        if (pv <= 0) continue;
+        const vm = zoneLookup.get(layer.group);
+        const zone = vm?.get(pv);
+        if (!zone?.desc) continue;
+        const isActive = activeZones.some((az) => az.values.includes(pv));
+        if (!isActive) continue;
+
+        setSelectedZone({
+          name: t(zone.name) || zone.name,
+          desc: t(`${zone.desc}_desc`) || "",
+          group: layer.group,
+        });
+        setZoneTooltip(null);
+        return;
+      }
+      // Clicked empty area — close zone panel
+      setSelectedZone(null);
+    };
+
     map.on("mousemove", handler);
+    map.on("click", clickHandler);
     document.addEventListener("mouseover", docLeaveHandler);
 
     return () => {
       map.off("mousemove", handler);
+      map.off("click", clickHandler);
       document.removeEventListener("mouseover", docLeaveHandler);
       setZoneTooltip(null);
+      const c = getCanvas();
+      if (c) c.style.cursor = "grab";
     };
   }, [map, config, layerStates, allActiveItems.join(","), zoneLookup]);
 
@@ -465,21 +722,23 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
           </div>
         )}
       </Collapsible>
-      {zoneTooltip && (
-        <div
-          className="fixed z-[9999] pointer-events-none bg-popover text-popover-foreground border rounded-md shadow-md px-3 py-2 max-w-[350px]"
-          style={{
-            left: zoneTooltip.x + 16,
-            top: zoneTooltip.y - 8,
-          }}
-        >
-          <p className="font-semibold text-sm">{zoneTooltip.name}</p>
-          <p
-            className="text-xs text-muted-foreground mt-0.5"
-            dangerouslySetInnerHTML={{ __html: zoneTooltip.desc }}
-          />
-        </div>
-      )}
+      {zoneTooltip && !selectedZone &&
+        createPortal(
+          <div
+            className="fixed z-[9999] pointer-events-none bg-popover text-popover-foreground border rounded-md shadow-md px-3 py-2 max-w-[350px]"
+            style={{
+              left: zoneTooltip.x + 16,
+              top: zoneTooltip.y - 8,
+            }}
+          >
+            <p className="font-semibold text-sm">{zoneTooltip.name}</p>
+            <p
+              className="text-xs text-muted-foreground mt-0.5"
+              dangerouslySetInnerHTML={{ __html: zoneTooltip.desc }}
+            />
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

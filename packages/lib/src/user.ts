@@ -15,6 +15,8 @@ export interface UserStoreState {
   ) => void;
   selectedNodeId: string | null;
   setSelectedNodeId: (id: string | null) => void;
+  selectedZone: { name: string; desc: string; group: string } | null;
+  setSelectedZone: (zone: { name: string; desc: string; group: string } | null) => void;
   search: string;
   setSearch: (search: string) => void;
   searchIsLoading: boolean;
@@ -103,7 +105,11 @@ export function createUserStore(
             },
             selectedNodeId: null,
             setSelectedNodeId: (id) => {
-              set({ selectedNodeId: id });
+              set({ selectedNodeId: id, ...(id ? { selectedZone: null } : {}) });
+            },
+            selectedZone: null,
+            setSelectedZone: (zone) => {
+              set({ selectedZone: zone, ...(zone ? { selectedNodeId: null } : {}) });
             },
             search: "",
             setSearch: (search) => {
