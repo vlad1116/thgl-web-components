@@ -319,6 +319,88 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     };
   }, [map, config, allActiveItems.join(",")]);
 
+  // Zone hover tooltip on the map
+  const [zoneTooltip, setZoneTooltip] = useState<{
+    x: number;
+    y: number;
+    name: string;
+    desc: string;
+  } | null>(null);
+
+  // Build zone lookup: group → pixelValue → zone
+  const zoneLookup = useMemo(() => {
+    if (!config) return new Map<string, Map<number, ZoneEntry>>();
+    const lookup = new Map<string, Map<number, ZoneEntry>>();
+    for (const layer of config.layers) {
+      const valueMap = new Map<number, ZoneEntry>();
+      for (const zone of layer.zones) {
+        for (const v of zone.values) {
+          valueMap.set(v, zone);
+        }
+      }
+      lookup.set(layer.group, valueMap);
+    }
+    return lookup;
+  }, [config]);
+
+  useEffect(() => {
+    if (!map || !config || allActiveItems.length === 0) {
+      setZoneTooltip(null);
+      return;
+    }
+
+    const handler = (e: {
+      latlng: [number, number];
+      originalEvent: MouseEvent;
+    }) => {
+      const zoneLayers = zoneLayersRef.current;
+      for (const { layer, activeZones } of layerStates) {
+        if (activeZones.length === 0) continue;
+        const zl = zoneLayers.get(layer.group);
+        if (!zl) continue;
+        const pixelValue = zl.sampleAt(e.latlng);
+        if (pixelValue <= 0) continue;
+
+        const valueMap = zoneLookup.get(layer.group);
+        const zone = valueMap?.get(pixelValue);
+        if (!zone?.desc) continue;
+
+        const isActive = activeZones.some((az) =>
+          az.values.includes(pixelValue),
+        );
+        if (!isActive) continue;
+
+        const descText = t(`${zone.desc}_desc`) || "";
+        if (!descText) continue;
+
+        setZoneTooltip({
+          x: e.originalEvent.clientX,
+          y: e.originalEvent.clientY,
+          name: t(zone.name) || zone.name,
+          desc: descText,
+        });
+        return;
+      }
+      setZoneTooltip(null);
+    };
+
+    const docLeaveHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && !target.closest("canvas")) {
+        setZoneTooltip(null);
+      }
+    };
+
+    map.on("mousemove", handler);
+    document.addEventListener("mouseover", docLeaveHandler);
+
+    return () => {
+      map.off("mousemove", handler);
+      document.removeEventListener("mouseover", docLeaveHandler);
+      setZoneTooltip(null);
+    };
+  }, [map, config, layerStates, allActiveItems.join(","), zoneLookup]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -334,53 +416,70 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
   const totalActive = allActiveItems.length;
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="flex items-center transition-colors w-full px-1.5">
-        <CollapsibleTrigger asChild>
-          <button
-            className="text-left transition-colors p-1 pr-2 truncate grow flex items-center justify-between"
-            type="button"
-          >
-            <span
-              className={cn(
-                "font-semibold flex items-center gap-1.5",
-                totalActive > 0 && "text-primary",
-              )}
+    <>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="flex items-center transition-colors w-full px-1.5">
+          <CollapsibleTrigger asChild>
+            <button
+              className="text-left transition-colors p-1 pr-2 truncate grow flex items-center justify-between"
+              type="button"
             >
-              <Layers className="h-4 w-4" />
-              Zone Overlays
-              {!open && totalActive > 0 && (
-                <span className="text-[10px] font-normal opacity-60">
-                  ({totalActive})
-                </span>
+              <span
+                className={cn(
+                  "font-semibold flex items-center gap-1.5",
+                  totalActive > 0 && "text-primary",
+                )}
+              >
+                <Layers className="h-4 w-4" />
+                Zone Overlays
+                {!open && totalActive > 0 && (
+                  <span className="text-[10px] font-normal opacity-60">
+                    ({totalActive})
+                  </span>
+                )}
+              </span>
+              {open ? (
+                <FoldVertical className="h-4 w-4" />
+              ) : (
+                <UnfoldVertical className="h-4 w-4" />
               )}
-            </span>
-            {open ? (
-              <FoldVertical className="h-4 w-4" />
-            ) : (
-              <UnfoldVertical className="h-4 w-4" />
-            )}
-          </button>
-        </CollapsibleTrigger>
-      </div>
-      {open && (
-        <div>
-          {layerStates.map(({ layer, itemNames, activeZones }) => (
-            <OverlayGroupUI
-              key={layer.group}
-              layer={layer}
-              activeCount={activeZones.length}
-              onToggleAll={() => {
-                const hasActive = activeZones.length > 0;
-                const newFilters = hasActive
-                  ? filters.filter((f) => !itemNames.includes(f))
-                  : [...new Set([...filters, ...itemNames])];
-                setFilters(newFilters);
-              }}
-            />
-          ))}
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        {open && (
+          <div>
+            {layerStates.map(({ layer, itemNames, activeZones }) => (
+              <OverlayGroupUI
+                key={layer.group}
+                layer={layer}
+                activeCount={activeZones.length}
+                onToggleAll={() => {
+                  const hasActive = activeZones.length > 0;
+                  const newFilters = hasActive
+                    ? filters.filter((f) => !itemNames.includes(f))
+                    : [...new Set([...filters, ...itemNames])];
+                  setFilters(newFilters);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </Collapsible>
+      {zoneTooltip && (
+        <div
+          className="fixed z-[9999] pointer-events-none bg-popover text-popover-foreground border rounded-md shadow-md px-3 py-2 max-w-[350px]"
+          style={{
+            left: zoneTooltip.x + 16,
+            top: zoneTooltip.y - 8,
+          }}
+        >
+          <p className="font-semibold text-sm">{zoneTooltip.name}</p>
+          <p
+            className="text-xs text-muted-foreground mt-0.5"
+            dangerouslySetInnerHTML={{ __html: zoneTooltip.desc }}
+          />
         </div>
       )}
-    </Collapsible>
+    </>
   );
 }

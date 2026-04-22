@@ -23,6 +23,10 @@ export class ZoneOverlayLayer implements Layer {
   private imageLoaded = false;
   private _dirty = false;
   private lastQuadZoom = -1;
+  // CPU-side bitmap data for pixel sampling (zone hover tooltips)
+  private bitmapData: Uint8Array | null = null;
+  private bitmapWidth = 0;
+  private bitmapHeight = 0;
   // Pre-allocated buffers to avoid per-frame allocations
   private quadVertices = new Float32Array(12);
   private quadTexCoords = new Float32Array([
@@ -71,6 +75,27 @@ export class ZoneOverlayLayer implements Layer {
   clearAll(): void {
     this.palette.fill(0);
     this.uploadPalette();
+  }
+
+  /**
+   * Sample the bitmap value at a map coordinate.
+   * Returns the zone pixel value (0-255) or -1 if outside bounds / not loaded.
+   */
+  sampleAt(latlng: [number, number]): number {
+    if (!this.bitmapData) return -1;
+    const [[minLat, minLng], [maxLat, maxLng]] = this.bounds;
+    const [lat, lng] = latlng;
+    if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return -1;
+
+    // Normalize to 0-1 within bounds
+    const u = (lng - minLng) / (maxLng - minLng);
+    const v = 1 - (lat - minLat) / (maxLat - minLat); // flip Y (image top = maxLat)
+
+    const px = Math.floor(u * this.bitmapWidth);
+    const py = Math.floor(v * this.bitmapHeight);
+    if (px < 0 || px >= this.bitmapWidth || py < 0 || py >= this.bitmapHeight) return -1;
+
+    return this.bitmapData[py * this.bitmapWidth + px];
   }
 
   isDirty(): boolean {
@@ -201,6 +226,23 @@ export class ZoneOverlayLayer implements Layer {
       this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
       this.imageLoaded = true;
       this._dirty = true;
+
+      // Extract pixel data to CPU for hover sampling
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(image, 0, 0);
+        const imgData = ctx.getImageData(0, 0, image.width, image.height);
+        // Extract red channel only (grayscale bitmap)
+        this.bitmapData = new Uint8Array(image.width * image.height);
+        for (let i = 0; i < this.bitmapData.length; i++) {
+          this.bitmapData[i] = imgData.data[i * 4]; // red channel
+        }
+        this.bitmapWidth = image.width;
+        this.bitmapHeight = image.height;
+      }
     };
     image.src = this.imageUrl;
   }
