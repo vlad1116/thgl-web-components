@@ -86,6 +86,14 @@ export const games: Array<Game> = [
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
+    id: "soulmask",
+    discordId: "soulmask",
+    title: "Soulmask",
+    logo: "https://www.th.gl/global_icons/soulmask.webp",
+    web: "https://soulmask.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "soulframe",
     discordId: "soulframe",
     title: "Soulframe",
