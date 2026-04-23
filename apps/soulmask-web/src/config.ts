@@ -16,7 +16,7 @@ export const APP_CONFIG: AppConfig = {
     "zh-CN",
     "zh-TW",
   ],
-  appUrl: null,
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
       title: "Cloud Mist Forest Map",

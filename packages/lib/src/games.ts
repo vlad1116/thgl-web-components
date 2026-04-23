@@ -90,6 +90,36 @@ export const games: Array<Game> = [
     discordId: "soulmask",
     title: "Soulmask",
     logo: "https://www.th.gl/global_icons/soulmask.webp",
+    companion: {
+      baseURL: "/apps/soulmask",
+      controllerURL: "/apps/soulmask/controller",
+      desktopURL: "/apps/soulmask",
+      overlayURL: "/apps/soulmask/overlay",
+      markerOptions: {
+        radius: 6,
+        playerIcon: "player.webp",
+        imageSprite: true,
+        zPos: {
+          xyMaxDistance: 10000,
+          zDistance: 400,
+        },
+      },
+      games: [
+        {
+          title: "Soulmask",
+          processNames: ["WS-Win64-Shipping.exe"],
+        },
+      ],
+      defaultHotkeys: {
+        [HOTKEYS.TOGGLE_APP]: "F6",
+        [HOTKEYS.TOGGLE_LOCK_APP]: "F9",
+        [HOTKEYS.ZOOM_IN_APP]: "F7",
+        [HOTKEYS.ZOOM_OUT_APP]: "F8",
+        [HOTKEYS.DISCOVER_NODE]: "F10",
+        [HOTKEYS.TOGGLE_LIVE_MODE]: "F5",
+        [HOTKEYS.TOGGLE_OVERLAY_FULLSCREEN]: "SHIFT+F9",
+      },
+    },
     web: "https://soulmask.th.gl",
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
