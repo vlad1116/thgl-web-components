@@ -1,0 +1,238 @@
+"use client";
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Fuse from "fuse.js";
+import { Search, X } from "lucide-react";
+
+type SearchEntry = {
+  id: string;
+  name: string;
+  type: string;
+  section: string;
+  href: string;
+  icon?: {
+    url: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
+const SECTION_MAP: Record<string, string> = {
+  units: "units",
+  heroes: "heroes",
+  spells: "spells",
+  items: "items",
+  item_sets: "items",
+  skills: "skills",
+  sub_skills: "skills",
+  specializations: "factions",
+  factions: "factions",
+  faction_laws: "factions",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  units: "Unit",
+  heroes: "Hero",
+  spells: "Spell",
+  items: "Artifact",
+  item_sets: "Item Set",
+  skills: "Skill",
+  sub_skills: "Sub-Skill",
+  specializations: "Specialization",
+  factions: "Faction",
+  faction_laws: "Faction Law",
+};
+
+const TYPE_COLORS: Record<string, string> = {
+  units: "bg-red-900/40 text-red-400",
+  heroes: "bg-amber-900/40 text-amber-400",
+  spells: "bg-indigo-900/40 text-indigo-400",
+  items: "bg-purple-900/40 text-purple-400",
+  item_sets: "bg-purple-900/40 text-purple-400",
+  skills: "bg-emerald-900/40 text-emerald-400",
+  sub_skills: "bg-emerald-900/40 text-emerald-400",
+  specializations: "bg-cyan-900/40 text-cyan-400",
+  factions: "bg-yellow-900/40 text-yellow-400",
+  faction_laws: "bg-yellow-900/40 text-yellow-400",
+};
+
+export function DbSearch({
+  entries,
+  iconsUrl,
+}: {
+  entries: SearchEntry[];
+  iconsUrl: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const fuse = useRef(
+    new Fuse(entries, {
+      keys: ["name"],
+      threshold: 0.3,
+    }),
+  );
+
+  const results = query.trim()
+    ? fuse.current.search(query.trim(), { limit: 12 }).map((r) => r.item)
+    : [];
+
+  const navigate = useCallback(
+    (entry: SearchEntry) => {
+      router.push(entry.href);
+      setQuery("");
+      setOpen(false);
+      inputRef.current?.blur();
+    },
+    [router],
+  );
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      // Ctrl+K or / to focus search
+      if ((e.ctrlKey && e.key === "k") || (e.key === "/" && !open)) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setOpen(true);
+      }
+      // Escape to close
+      if (e.key === "Escape" && open) {
+        setQuery("");
+        setOpen(false);
+        inputRef.current?.blur();
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  // Close on click outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [open]);
+
+  // Reset selection when results change
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && results[selectedIndex]) {
+      e.preventDefault();
+      navigate(results[selectedIndex]);
+    }
+  }
+
+  return (
+    <div ref={containerRef} className="relative hidden sm:block">
+      <div className="relative flex items-center">
+        <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search database..."
+          className="h-8 w-48 focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
+        />
+        {query ? (
+          <button
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
+            className="absolute right-2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <kbd className="absolute right-2 text-[10px] text-muted-foreground border border-neutral-700 rounded px-1 py-0.5 font-mono">
+            /
+          </kbd>
+        )}
+      </div>
+
+      {/* Results dropdown */}
+      {open && results.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-80 max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50">
+          {results.map((entry, i) => (
+            <button
+              key={entry.id}
+              onClick={() => navigate(entry)}
+              onMouseEnter={() => setSelectedIndex(i)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                i === selectedIndex
+                  ? "bg-zinc-800"
+                  : "hover:bg-zinc-800/50"
+              }`}
+            >
+              {entry.icon && (
+                <img
+                  alt=""
+                  role="presentation"
+                  className="shrink-0 object-none w-[32px] h-[32px]"
+                  src={iconsUrl}
+                  width={entry.icon.width}
+                  height={entry.icon.height}
+                  style={{
+                    objectPosition: `-${entry.icon.x}px -${entry.icon.y}px`,
+                    zoom: 0.5,
+                  }}
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">
+                  {entry.name}
+                </div>
+              </div>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                  TYPE_COLORS[entry.type] ?? "bg-zinc-800 text-slate-400"
+                }`}
+              >
+                {TYPE_LABELS[entry.type] ?? entry.type}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* No results */}
+      {open && query.trim() && results.length === 0 && (
+        <div className="absolute top-full left-0 mt-1 w-80 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 p-4 text-center text-sm text-muted-foreground">
+          No results for &ldquo;{query}&rdquo;
+        </div>
+      )}
+    </div>
+  );
+}

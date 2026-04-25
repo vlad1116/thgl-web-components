@@ -724,6 +724,14 @@ export const games: Array<Game> = [
     },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
+  {
+    id: "homm-olden-era",
+    discordId: "homm-olden-era",
+    title: "Heroes of Might & Magic: Olden Era",
+    logo: "https://www.th.gl/global_icons/homm-olden-era.webp",
+    web: "https://oldenera.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
 ];
 
 export type PartnerApp = {
