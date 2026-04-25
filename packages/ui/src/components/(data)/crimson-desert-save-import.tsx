@@ -26,6 +26,8 @@ import {
   Scroll,
   BookOpen,
   Gem,
+  Swords,
+  Package,
 } from "lucide-react";
 
 const API_URL = DATA_FORGE_URL + "/api/crimson-desert/save";
@@ -52,6 +54,8 @@ type SaveParseResult = {
     knowledge: string[];
     waypoints: string[];
     chests: string[];
+    weaponDisplays?: string[];
+    hiddenItems?: string[];
   };
   error?: string;
 };
@@ -124,6 +128,18 @@ const SAVE_GROUPS = {
     defaultOn: true,
     types: ["collection_chest", "treasure_box"],
   },
+  weaponDisplays: {
+    label: "Weapon Displays",
+    icon: Swords,
+    defaultOn: true,
+    types: [] as string[],
+  },
+  hiddenItems: {
+    label: "Hidden Items",
+    icon: Package,
+    defaultOn: true,
+    types: [] as string[],
+  },
 } as const;
 
 type GroupKey = keyof typeof SAVE_GROUPS;
@@ -147,6 +163,16 @@ function computeGroupStats(data: SaveParseResult) {
       stats[key] = {
         found: data.summary.knowledge,
         total: totals.knowledge || 0,
+      };
+    } else if (key === "weaponDisplays") {
+      stats[key] = {
+        found: (data.summary as Record<string, number>).matchedWeaponDisplays || 0,
+        total: totals.weapon_display || 0,
+      };
+    } else if (key === "hiddenItems") {
+      stats[key] = {
+        found: (data.summary as Record<string, number>).matchedHiddenItems || 0,
+        total: totals.hidden_item || 0,
       };
     } else {
       let found = 0;
@@ -185,6 +211,8 @@ function filterNodeIds(
     if (selectedGroups.has("quests")) add(byCategory.quests);
     if (selectedGroups.has("knowledge")) add(byCategory.knowledge);
     if (selectedGroups.has("chests")) add(byCategory.chests);
+    if (selectedGroups.has("weaponDisplays")) add(byCategory.weaponDisplays || []);
+    if (selectedGroups.has("hiddenItems")) add(byCategory.hiddenItems || []);
 
     // Waypoint groups: filter the waypoints list by type prefix
     if (byCategory.waypoints.length > 0) {
@@ -329,7 +357,7 @@ export function CrimsonDesertSaveImport() {
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[480px] gap-0 p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[480px] gap-0 p-0 max-h-[90vh] overflow-y-auto">
           <DialogHeader className="px-5 pt-5 pb-3">
             <DialogTitle className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
