@@ -66,11 +66,11 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string {
       return `Battle bonus: ${buffName}`;
     }
     case "heroBattleAbility": {
-      const abilityName = resolveDict(dict, params[0] as string);
+      const abilityName = resolveName(dict, params[0] as string);
       return `Battle ability: ${abilityName}`;
     }
     case "heroWorldAbility": {
-      const abilityName = resolveDict(dict, params[0] as string);
+      const abilityName = resolveName(dict, params[0] as string);
       return `World ability: ${abilityName}`;
     }
     case "modifyMagic": {
@@ -105,6 +105,15 @@ function humanizeStat(key: string): string {
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
+}
+
+/** Try dict key, then key_name, then humanize */
+function resolveName(dict: Record<string, string>, key: string): string {
+  const direct = resolveDict(dict, key);
+  if (direct !== key) return direct;
+  const withName = resolveDict(dict, `${key}_name`);
+  if (withName !== `${key}_name`) return withName;
+  return humanizeStat(key);
 }
 
 function formatValue(value: string | number): string {

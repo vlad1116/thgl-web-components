@@ -3,14 +3,15 @@ import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
 
 type FactionProps = {
-  biome: string;
-  resourceName: string;
+  biome?: string;
+  resourceName?: string;
   lawTiers?: { unlockAt: number; lawCount: number }[];
   faction?: string;
   bonuses?: {
     type: string;
     params: (string | number)[];
     activationLevel?: number;
+    upgrade?: { increment: number; levelStep: number };
   }[];
 };
 
@@ -21,6 +22,41 @@ type IconSprite = {
   width: number;
   height: number;
 };
+
+/**
+ * Substitute {0}, {1}, {2} template placeholders with bonus param values
+ */
+function substituteTemplate(text: string, bonuses?: FactionProps["bonuses"]): string {
+  if (!bonuses || bonuses.length === 0) return text;
+  // Collect first numeric params from bonuses as template values
+  const values: string[] = [];
+  for (const bonus of bonuses) {
+    for (const p of bonus.params) {
+      const num = parseFloat(String(p));
+      if (!isNaN(num)) {
+        if (num > 0 && num < 1) {
+          values.push(`${(num * 100).toFixed(0)}%`);
+        } else {
+          values.push(String(num));
+        }
+      }
+    }
+    if (bonus.upgrade) {
+      const inc = bonus.upgrade.increment;
+      if (inc > 0 && inc < 1) {
+        values.push(`${(inc * 100).toFixed(0)}%`);
+      } else {
+        values.push(String(inc));
+      }
+      values.push(String(bonus.upgrade.levelStep));
+    }
+  }
+  let result = text;
+  for (let i = 0; i < values.length; i++) {
+    result = result.replace(`{${i}}`, values[i]);
+  }
+  return result;
+}
 
 export function FactionView({
   name,
@@ -39,24 +75,27 @@ export function FactionView({
   locale?: string;
   isFactionLaw?: boolean;
 }) {
-  if (isFactionLaw) {
+  const isFaction = !!props.biome;
+  const isSpecialization = !isFaction && !isFactionLaw;
+  const resolvedDesc = desc !== name ? substituteTemplate(desc, props.bonuses) : "";
+
+  // Specialization view
+  if (isSpecialization) {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-4">
           {icon && <SpriteIcon icon={icon} size={64} />}
           <div>
             <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
-            {props.faction && (
-              <span className="text-xs text-muted-foreground capitalize">
-                {resolveDict(dict, `faction_${props.faction}`)}
-              </span>
-            )}
+            <span className="text-xs px-2 py-0.5 rounded bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">
+              Specialization
+            </span>
           </div>
         </div>
 
-        {desc && desc !== name && (
+        {resolvedDesc && (
           <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-            {desc}
+            {resolvedDesc}
           </p>
         )}
 
@@ -74,31 +113,70 @@ export function FactionView({
     );
   }
 
+  // Faction Law view
+  if (isFactionLaw) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center gap-4">
+          {icon && <SpriteIcon icon={icon} size={64} />}
+          <div>
+            <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
+            {props.faction && (
+              <span className="text-xs text-muted-foreground capitalize">
+                {resolveDict(dict, `faction_${props.faction}`)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {resolvedDesc && (
+          <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+            {resolvedDesc}
+          </p>
+        )}
+
+        {props.bonuses && props.bonuses.length > 0 && (
+          <div>
+            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+              Effects
+            </h4>
+            <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
+              <BonusList bonuses={props.bonuses} dict={dict} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Faction view
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center gap-4">
         {icon && <SpriteIcon icon={icon} size={64} />}
         <div>
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-800/50 capitalize">
-              {props.biome}
-            </span>
-            <span className="text-xs text-muted-foreground capitalize">
-              Resource: {props.resourceName}
-            </span>
+            {props.biome && (
+              <span className="text-xs px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-800/50 capitalize">
+                {props.biome}
+              </span>
+            )}
+            {props.resourceName && (
+              <span className="text-xs text-muted-foreground capitalize">
+                Resource: {props.resourceName}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
-      {desc && desc !== name && (
+      {resolvedDesc && (
         <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-          {desc}
+          {resolvedDesc}
         </p>
       )}
 
-      {/* Law Tiers */}
       {props.lawTiers && props.lawTiers.length > 0 && (
         <div>
           <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">

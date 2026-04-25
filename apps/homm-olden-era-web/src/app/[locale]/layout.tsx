@@ -11,9 +11,10 @@ import { createRootLayoutMetadata } from "@repo/ui/apps";
 import { DEFAULT_LOCALE, cn, fetchVersion } from "@repo/lib";
 import { getFullDictionary, isValidLocale } from "@repo/ui/dicts";
 import { Header, Brand, Account, PlausibleTracker } from "@repo/ui/header";
-import { Links, SettingsDialogContent, LocaleSwitcher, Toaster } from "@repo/ui/controls";
+import { LocaleSwitcher, Toaster } from "@repo/ui/controls";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { DbSearchWrapper } from "@/components/db-search-wrapper";
+import { DbNavLinks } from "@/components/db-nav-links";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -53,44 +54,24 @@ export default async function RootLayout({
         )}
       >
         <I18NProvider dict={dict} locale={locale}>
-          <Header
-            activeApp={APP_CONFIG.title}
-            settingsDialogContent={
-              <SettingsDialogContent
-                activeApp={APP_CONFIG.name}
-                filters={version.data.filters}
-              />
-            }
-          >
+          <Header activeApp={APP_CONFIG.title}>
             <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}>
               <Brand title={APP_CONFIG.domain} />
             </Link>
 
-            <Links appConfig={APP_CONFIG} hideReleaseNotes>
-              {APP_CONFIG.supportedLocales.length > 1 && (
-                <Suspense>
-                  <LocaleSwitcher
-                    locales={APP_CONFIG.supportedLocales}
-                    current={locale}
-                  />
-                </Suspense>
-              )}
-            </Links>
+            <DbNavLinks locale={locale} />
 
-            {/* Database Search */}
             <Suspense>
               <DbSearchWrapper locale={locale} />
             </Suspense>
 
             {APP_CONFIG.supportedLocales.length > 1 && (
-              <div className="hidden md:flex">
-                <Suspense>
-                  <LocaleSwitcher
-                    locales={APP_CONFIG.supportedLocales}
-                    current={locale}
-                  />
-                </Suspense>
-              </div>
+              <Suspense>
+                <LocaleSwitcher
+                  locales={APP_CONFIG.supportedLocales}
+                  current={locale}
+                />
+              </Suspense>
             )}
 
             <Account />

@@ -1,4 +1,9 @@
-import { DatabaseEntryContent } from "@/components/database-entry";
+import { fetchDatabase, fetchDict } from "@repo/lib";
+import { HeaderOffset } from "@repo/ui/header";
+import { APP_CONFIG } from "@/config";
+import { resolveDict } from "@/components/resolve-dict";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { EntityGrid } from "@/components/entity-grid";
 
 type PageProps = {
   params: Promise<{ locale?: string }>;
@@ -6,5 +11,27 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const { locale = "en" } = await params;
-  return <DatabaseEntryContent typePrefix="spells" locale={locale} />;
+  const dict = await fetchDict(APP_CONFIG.name, locale);
+  const database = await fetchDatabase(APP_CONFIG.name);
+  const data = database.filter(
+    (item) => item.type === "spells",
+  );
+
+  const sectionLabel = resolveDict(dict, "spells");
+
+  return (
+    <HeaderOffset full>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} />
+        <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
+        <EntityGrid
+          entries={data}
+          section="spells"
+          dict={dict}
+          locale={locale}
+          groupLabelPrefix="ui.school_"
+        />
+      </div>
+    </HeaderOffset>
+  );
 }

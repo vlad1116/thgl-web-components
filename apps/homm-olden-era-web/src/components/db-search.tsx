@@ -149,7 +149,7 @@ export function DbSearch({
   }
 
   return (
-    <div ref={containerRef} className="relative hidden sm:block">
+    <div ref={containerRef} className="relative shrink-0">
       <div className="relative flex items-center">
         <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <input
@@ -163,7 +163,7 @@ export function DbSearch({
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search database..."
-          className="h-8 w-48 focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
+          className="h-8 w-28 sm:w-40 md:w-48 focus:w-48 sm:focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
         />
         {query ? (
           <button
@@ -184,7 +184,7 @@ export function DbSearch({
 
       {/* Results dropdown */}
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 w-80 max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50">
+        <div className="sidebar-scroll absolute top-full left-0 mt-1 w-80 max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50">
           {results.map((entry, i) => (
             <button
               key={entry.id}
