@@ -164,6 +164,13 @@ function computeGroupStats(data: SaveParseResult) {
         found: data.summary.knowledge,
         total: totals.knowledge || 0,
       };
+    } else if (key === "chests") {
+      stats[key] = {
+        found: (data.summary as Record<string, number>).matchedChests || 0,
+        total: (totals.treasure_box || 0) + (totals.collection_chest || 0) +
+          (totals.sealed_artifact || 0) + (totals.chest || 0) +
+          (totals.treasure_chest_level || 0) + (totals.puzzle_chest || 0),
+      };
     } else if (key === "weaponDisplays") {
       stats[key] = {
         found: (data.summary as Record<string, number>).matchedWeaponDisplays || 0,
