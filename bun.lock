@@ -323,6 +323,32 @@
         "typescript": "catalog:",
       },
     },
+    "apps/homm-olden-era-web": {
+      "name": "homm-olden-era-web",
+      "version": "0.0.0",
+      "dependencies": {
+        "@repo/lib": "workspace:*",
+        "@repo/ui": "workspace:*",
+        "fuse.js": "catalog:",
+        "next": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+      },
+      "devDependencies": {
+        "@next/eslint-plugin-next": "catalog:",
+        "@repo/eslint-config": "workspace:*",
+        "@repo/next-config": "workspace:*",
+        "@repo/tailwind-config": "workspace:*",
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "autoprefixer": "catalog:",
+        "postcss": "catalog:",
+        "tailwindcss": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "apps/infinity-nikki-web": {
       "name": "infinity-nikki-web",
       "version": "0.0.0",
@@ -2179,6 +2205,8 @@
     "hogwarts-legacy-overwolf": ["hogwarts-legacy-overwolf@workspace:apps/hogwarts-legacy-overwolf"],
 
     "hogwarts-legacy-web": ["hogwarts-legacy-web@workspace:apps/hogwarts-legacy-web"],
+
+    "homm-olden-era-web": ["homm-olden-era-web@workspace:apps/homm-olden-era-web"],
 
     "hosted-git-info": ["hosted-git-info@2.8.9", "", {}, "sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw=="],
 
