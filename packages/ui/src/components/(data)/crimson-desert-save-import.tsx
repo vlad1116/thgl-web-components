@@ -166,19 +166,19 @@ function computeGroupStats(data: SaveParseResult) {
       };
     } else if (key === "chests") {
       stats[key] = {
-        found: (data.summary as Record<string, number>).matchedChests || 0,
+        found: (data.summary as unknown as Record<string, number>).matchedChests || 0,
         total: (totals.treasure_box || 0) + (totals.collection_chest || 0) +
           (totals.sealed_artifact || 0) + (totals.chest || 0) +
           (totals.treasure_chest_level || 0) + (totals.puzzle_chest || 0),
       };
     } else if (key === "weaponDisplays") {
       stats[key] = {
-        found: (data.summary as Record<string, number>).matchedWeaponDisplays || 0,
+        found: (data.summary as unknown as Record<string, number>).matchedWeaponDisplays || 0,
         total: totals.weapon_display || 0,
       };
     } else if (key === "hiddenItems") {
       stats[key] = {
-        found: (data.summary as Record<string, number>).matchedHiddenItems || 0,
+        found: (data.summary as unknown as Record<string, number>).matchedHiddenItems || 0,
         total: totals.hidden_item || 0,
       };
     } else {
