@@ -38,6 +38,7 @@ export default async function Page({ params }: PageProps) {
           section="factions"
           dict={dict}
           locale={locale}
+          nameLabelPrefix="faction_"
         />
 
         <h2 className="text-lg font-semibold mt-8 mb-4">

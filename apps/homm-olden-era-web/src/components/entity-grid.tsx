@@ -28,12 +28,14 @@ export function EntityGrid({
   dict,
   locale = "en",
   groupLabelPrefix,
+  nameLabelPrefix,
 }: {
   entries: DatabaseEntry[];
   section: string;
   dict: Record<string, string>;
   locale?: string;
   groupLabelPrefix?: string;
+  nameLabelPrefix?: string;
 }) {
   // Group items by groupId
   const groups = new Map<string, DatabaseItem[]>();
@@ -45,6 +47,8 @@ export function EntityGrid({
     }
   }
 
+  const hideGroupHeader = groups.size === 1 && groups.has("other");
+
   return (
     <div className="space-y-6">
       {Array.from(groups.entries()).map(([groupId, items]) => {
@@ -54,13 +58,17 @@ export function EntityGrid({
 
         return (
           <div key={groupId}>
-            <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
-              {groupLabel}
-              <span className="ml-2 text-slate-600">{items.length}</span>
-            </h3>
+            {!hideGroupHeader && (
+              <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
+                {groupLabel}
+                <span className="ml-2 text-slate-600">{items.length}</span>
+              </h3>
+            )}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">
               {items.map((item) => {
-                const name = resolveDict(dict, item.id);
+                const name = nameLabelPrefix
+                  ? resolveDictWithFallback(dict, `${nameLabelPrefix}${item.id}`, item.id)
+                  : resolveDict(dict, item.id);
                 const icon =
                   item.icon && typeof item.icon === "object"
                     ? (item.icon as IconSprite)
