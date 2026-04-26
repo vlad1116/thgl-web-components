@@ -63,7 +63,7 @@ export function HeroView({
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span
-              className={`text-xs px-2 py-0.5 rounded border ${
+              className={`text-sm px-2.5 py-0.5 rounded border ${
                 props.classType === "might"
                   ? "bg-red-900/40 text-red-400 border-red-800/50"
                   : "bg-indigo-900/40 text-indigo-400 border-indigo-800/50"
@@ -73,11 +73,11 @@ export function HeroView({
             </span>
             <Link
               href={localizePath(`/db/factions/${props.faction}`, locale)}
-              className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
             >
               {resolveDict(dict, `faction_${props.faction}`)}
             </Link>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {props.costGold.toLocaleString()} gold
             </span>
           </div>
@@ -85,7 +85,7 @@ export function HeroView({
       </div>
 
       {desc && desc !== name && (
-        <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {desc}
         </p>
       )}
@@ -108,17 +108,17 @@ export function HeroView({
             {props.specialization && (
               <Link
                 href={localizePath(`/db/factions/${props.specialization}`, locale)}
-                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
               >
                 View details →
               </Link>
             )}
           </div>
-          <p className="text-sm font-medium">{specName}</p>
+          <p className="font-medium">{specName}</p>
           {specDesc &&
             specDesc !==
               `${props.specialization.replace("_specialization", "")}_spec_desc` && (
-              <p className="text-xs text-muted-foreground mt-1">{specDesc}</p>
+              <p className="text-sm text-muted-foreground mt-1">{specDesc}</p>
             )}
         </div>
       )}
@@ -138,7 +138,7 @@ export function HeroView({
                   locale={locale}
                   dict={dict}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {entry.min}–{entry.max}
                 </span>
               </div>
@@ -178,7 +178,7 @@ function StatBox({
 }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className={`text-2xl font-bold ${color} mt-0.5`}>{value}</div>

@@ -52,7 +52,7 @@ export function DetailSidebar({
   }
 
   return (
-    <nav className="sidebar-scroll w-52 shrink-0 max-lg:hidden overflow-y-auto max-h-[calc(100vh-80px)] sticky top-[70px] pr-2 text-sm">
+    <nav className="sidebar-scroll w-56 shrink-0 max-lg:hidden overflow-y-auto max-h-[calc(100vh-80px)] sticky top-[70px] pr-2">
       {Array.from(groups.entries()).map(([groupId, items]) => {
         const groupLabel = groupLabelPrefix
           ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
@@ -60,7 +60,7 @@ export function DetailSidebar({
 
         return (
           <div key={groupId} className="mb-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 px-1">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
               {groupLabel}
             </div>
             {items.map((item) => {
@@ -75,14 +75,14 @@ export function DetailSidebar({
                 <Link
                   key={item.id}
                   href={localizePath(`/db/${section}/${item.id}`, locale)}
-                  className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors ${
+                  className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors ${
                     isActive
                       ? "bg-amber-900/30 text-amber-400"
                       : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
                   }`}
                 >
-                  {icon && <SpriteIcon icon={icon} size={18} />}
-                  <span className="truncate text-xs">{name}</span>
+                  {icon && <SpriteIcon icon={icon} size={20} />}
+                  <span className="truncate text-sm">{name}</span>
                 </Link>
               );
             })}

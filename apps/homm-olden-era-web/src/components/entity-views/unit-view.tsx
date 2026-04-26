@@ -77,15 +77,15 @@ export function UnitView({
         <div>
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
+            <span className="text-sm px-2.5 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
               Tier {props.tier}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               {upgLabel}
             </span>
             <Link
               href={localizePath(`/db/factions/${props.faction}`, locale)}
-              className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
             >
               {resolveDict(dict, `faction_${props.faction}`)}
             </Link>
@@ -94,7 +94,7 @@ export function UnitView({
       </div>
 
       {desc && desc !== name && (
-        <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {desc}
         </p>
       )}
@@ -118,12 +118,12 @@ export function UnitView({
       {/* Class */}
       {props.baseClass && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">
             Class
           </h4>
           <p className="text-sm">{resolveDict(dict, props.baseClass)}</p>
           {dict[`${props.baseClass}_description`] && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {resolveDict(dict, `${props.baseClass}_description`)}
             </p>
           )}
@@ -133,7 +133,7 @@ export function UnitView({
       {/* Abilities */}
       {props.abilities?.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Abilities
           </h4>
           <div className="space-y-2">
@@ -147,7 +147,7 @@ export function UnitView({
       {/* Passives */}
       {props.passives?.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Passives
           </h4>
           <div className="space-y-2">
@@ -161,7 +161,7 @@ export function UnitView({
       {/* Alt Attacks */}
       {props.altAttacks?.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Alternative Attacks
           </h4>
           <div className="space-y-2">
@@ -215,7 +215,7 @@ function StatCell({
 }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className={`${small ? "text-xs" : "text-lg"} font-semibold ${color} mt-0.5`}>
@@ -244,10 +244,10 @@ function AbilityRow({
         <span className={passive ? "text-blue-400" : "text-amber-400"}>
           {passive ? "◇" : "◆"}
         </span>
-        <span className="text-sm font-medium">{name}</span>
+        <span className="font-medium">{name}</span>
       </div>
       {desc && (
-        <p className="text-xs text-muted-foreground mt-1 ml-5">{desc}</p>
+        <p className="text-sm text-muted-foreground mt-1 ml-5">{desc}</p>
       )}
     </div>
   );

@@ -55,7 +55,7 @@ export function SkillView({
         <div>
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
+            <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
               {isSubSkill ? "Sub-Skill" : props.skillType}
             </span>
           </div>
@@ -63,7 +63,7 @@ export function SkillView({
       </div>
 
       {desc && desc !== name && (
-        <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {desc}
         </p>
       )}
@@ -71,7 +71,7 @@ export function SkillView({
       {/* Sub-skill bonuses (simple) */}
       {isSubSkill && props.bonuses && props.bonuses.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Effects
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
@@ -80,53 +80,55 @@ export function SkillView({
         </div>
       )}
 
-      {/* Skill levels */}
+      {/* Skill levels — compact table */}
       {props.levels && props.levels.length > 0 && (
-        <div className="space-y-3">
-          {props.levels.map((level) => {
-            const levelName = resolveDict(
-              dict,
-              `${name.toLowerCase().replace(/ /g, "_")}_level_${level.level}`,
-            );
-            return (
-              <div
-                key={level.level}
-                className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
-                    Level {level.level}
-                  </span>
-                  {levelName && levelName !== `${name.toLowerCase().replace(/ /g, "_")}_level_${level.level}` && (
-                    <span className="text-sm font-medium">{levelName}</span>
-                  )}
-                </div>
+        <div className="border border-slate-800 rounded-lg overflow-hidden">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-900/60 border-b border-slate-800">
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground w-16">Level</th>
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">Effect</th>
+              </tr>
+            </thead>
+            <tbody>
+              {props.levels.map((level) => (
+                <tr
+                  key={level.level}
+                  className="border-b border-slate-800/50 last:border-0"
+                >
+                  <td className="px-4 py-3 align-top">
+                    <span className="text-sm font-semibold px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
+                      {level.level}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {level.bonuses && level.bonuses.length > 0 && (
+                      <BonusList bonuses={level.bonuses} dict={dict} />
+                    )}
 
-                {level.bonuses && level.bonuses.length > 0 && (
-                  <BonusList bonuses={level.bonuses} dict={dict} />
-                )}
-
-                {level.subSkills && level.subSkills.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-800/50">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                      Unlocks Sub-Skills
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {level.subSkills.map((ss) => (
-                        <EntityLinkCard
-                          key={ss}
-                          itemId={ss}
-                          database={database}
-                  locale={locale}
-                          dict={dict}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                    {level.subSkills && level.subSkills.length > 0 && (
+                      <div className={level.bonuses?.length ? "mt-3 pt-3 border-t border-slate-800/50" : ""}>
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                          Unlocks Sub-Skills
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {level.subSkills.map((ss) => (
+                            <EntityLinkCard
+                              key={ss}
+                              itemId={ss}
+                              database={database}
+                              locale={locale}
+                              dict={dict}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

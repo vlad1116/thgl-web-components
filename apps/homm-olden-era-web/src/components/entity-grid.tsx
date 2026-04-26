@@ -54,11 +54,11 @@ export function EntityGrid({
 
         return (
           <div key={groupId}>
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
+            <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
               {groupLabel}
               <span className="ml-2 text-slate-600">{items.length}</span>
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">
               {items.map((item) => {
                 const name = resolveDict(dict, item.id);
                 const icon =
@@ -70,10 +70,10 @@ export function EntityGrid({
                   <Link
                     key={item.id}
                     href={localizePath(`/db/${section}/${item.id}`, locale)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800/50 transition-colors group"
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded hover:bg-zinc-800/50 transition-colors group"
                   >
-                    {icon && <SpriteIcon icon={icon} size={24} />}
-                    <span className="text-sm truncate group-hover:text-amber-400 transition-colors">
+                    {icon && <SpriteIcon icon={icon} size={28} />}
+                    <span className="truncate group-hover:text-amber-400 transition-colors">
                       {name}
                     </span>
                   </Link>

@@ -63,11 +63,11 @@ export function ItemView({
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1">
             <span
-              className={`text-xs px-2 py-0.5 rounded border capitalize ${rarityStyle}`}
+              className={`text-sm px-2.5 py-0.5 rounded border capitalize ${rarityStyle}`}
             >
               {resolveDict(dict, `ui.rarity_${props.rarity}`)}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
+            <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
               {resolveDict(dict, `ui.slot_${props.slot}`)}
             </span>
             {props.itemSet && (
@@ -80,7 +80,7 @@ export function ItemView({
       </div>
 
       {desc && desc !== name && (
-        <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {desc}
         </p>
       )}
@@ -88,7 +88,7 @@ export function ItemView({
       {/* Properties */}
       <div className="grid grid-cols-3 gap-1">
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
             Value
           </div>
           <div className="text-lg font-semibold text-amber-400">
@@ -96,7 +96,7 @@ export function ItemView({
           </div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
             Cost
           </div>
           <div className="text-lg font-semibold text-slate-300">
@@ -104,7 +104,7 @@ export function ItemView({
           </div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
             Max Level
           </div>
           <div className="text-lg font-semibold text-cyan-400">
@@ -116,7 +116,7 @@ export function ItemView({
       {/* Bonuses */}
       {props.bonuses && props.bonuses.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Bonuses
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">

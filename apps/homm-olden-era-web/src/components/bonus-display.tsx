@@ -22,15 +22,15 @@ export function BonusList({
         <li key={i} className="flex items-start gap-2">
           <span className="text-amber-500 mt-0.5">&#x25C6;</span>
           <div>
-            <span className="text-sm">{formatBonus(bonus, dict)}</span>
+            <span>{formatBonus(bonus, dict)}</span>
             {bonus.upgrade && bonus.upgrade.increment !== 0 && (
-              <span className="text-xs text-muted-foreground ml-1">
+              <span className="text-sm text-muted-foreground ml-1">
                 (+{formatPercent(bonus.upgrade.increment)} per{" "}
                 {bonus.upgrade.levelStep} levels)
               </span>
             )}
             {bonus.activationLevel && (
-              <span className="text-xs text-muted-foreground ml-1">
+              <span className="text-sm text-muted-foreground ml-1">
                 (unlocks at level {bonus.activationLevel})
               </span>
             )}

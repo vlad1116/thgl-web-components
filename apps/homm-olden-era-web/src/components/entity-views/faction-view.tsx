@@ -94,14 +94,14 @@ export function FactionView({
         </div>
 
         {resolvedDesc && (
-          <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+          <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
             {resolvedDesc}
           </p>
         )}
 
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               Effects
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
@@ -130,14 +130,14 @@ export function FactionView({
         </div>
 
         {resolvedDesc && (
-          <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+          <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
             {resolvedDesc}
           </p>
         )}
 
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               Effects
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
@@ -172,14 +172,14 @@ export function FactionView({
       </div>
 
       {resolvedDesc && (
-        <p className="text-sm text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {resolvedDesc}
         </p>
       )}
 
       {props.lawTiers && props.lawTiers.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Faction Law Tiers
           </h4>
           <div className="grid grid-cols-5 gap-1">
@@ -188,7 +188,7 @@ export function FactionView({
                 key={i}
                 className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
               >
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
                   {tier.unlockAt === 0 ? "Start" : `${tier.unlockAt} pts`}
                 </div>
                 <div className="text-lg font-semibold text-amber-400">

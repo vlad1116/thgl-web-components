@@ -1,3 +1,4 @@
+import { type Metadata } from "next";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { APP_CONFIG } from "@/config";
@@ -5,8 +6,14 @@ import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { DatabaseEntryContent } from "@/components/database-entry";
 import { DetailSidebar } from "@/components/detail-sidebar";
+import { generateEntryMetadata } from "@/components/metadata";
 
 type Params = Promise<{ id: string; locale?: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { id, locale = "en" } = await params;
+  return generateEntryMetadata(locale, "factions", id);
+}
 
 export default async function EntryPage({ params }: { params: Params }) {
   const { id, locale = "en" } = await params;

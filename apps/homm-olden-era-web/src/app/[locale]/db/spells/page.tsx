@@ -1,3 +1,5 @@
+import { type Metadata } from "next";
+import { generateCategoryMetadata } from "@/components/metadata";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { APP_CONFIG } from "@/config";
@@ -8,6 +10,12 @@ import { EntityGrid } from "@/components/entity-grid";
 type PageProps = {
   params: Promise<{ locale?: string }>;
 };
+
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale = "en" } = await params;
+  return generateCategoryMetadata(locale, "spells");
+}
 
 export default async function Page({ params }: PageProps) {
   const { locale = "en" } = await params;

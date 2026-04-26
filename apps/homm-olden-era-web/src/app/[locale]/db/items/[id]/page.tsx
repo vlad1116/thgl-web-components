@@ -1,3 +1,5 @@
+import { type Metadata } from "next";
+import { generateEntryMetadata } from "@/components/metadata";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { APP_CONFIG } from "@/config";
@@ -8,6 +10,7 @@ import { DetailSidebar } from "@/components/detail-sidebar";
 
 type Params = Promise<{ id: string; locale?: string }>;
 
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {  const { id, locale = "en" } = await params;  return generateEntryMetadata(locale, "items", id);}
 export default async function EntryPage({ params }: { params: Params }) {
   const { id, locale = "en" } = await params;
   const [dict, database] = await Promise.all([
@@ -48,3 +51,4 @@ export default async function EntryPage({ params }: { params: Params }) {
     </HeaderOffset>
   );
 }
+

@@ -1,2 +1,1 @@
-export { default } from "../../../../[locale]/db/skills/[id]/page";
-export * from "../../../../[locale]/db/skills/[id]/page";
+export { default, generateMetadata } from "../../../../[locale]/db/skills/[id]/page";

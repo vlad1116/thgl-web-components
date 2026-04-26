@@ -1,12 +1,20 @@
+import { type Metadata } from "next";
+import { generateEntryMetadata } from "@/components/metadata";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { DatabaseEntryContent } from "@/components/database-entry";
-import { DetailSidebar } from "@/components/detail-sidebar";
+import { SkillTreeSidebar } from "@/components/skill-tree";
+import { buildSkillNodes } from "@/components/skill-tree-data";
 
 type Params = Promise<{ id: string; locale?: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { id, locale = "en" } = await params;
+  return generateEntryMetadata(locale, "skills", id);
+}
 
 export default async function EntryPage({ params }: { params: Params }) {
   const { id, locale = "en" } = await params;
@@ -17,9 +25,7 @@ export default async function EntryPage({ params }: { params: Params }) {
 
   const sectionLabel = resolveDict(dict, "skills");
   const entryLabel = resolveDict(dict, id);
-  const sidebarData = database.filter(
-    (item) => item.type === "skills" || item.type === "sub_skills",
-  );
+  const skillNodes = await buildSkillNodes(database, dict);
 
   return (
     <HeaderOffset full>
@@ -32,13 +38,10 @@ export default async function EntryPage({ params }: { params: Params }) {
           locale={locale}
         />
         <div className="flex gap-6">
-          <DetailSidebar
-            entries={sidebarData}
-            section="skills"
+          <SkillTreeSidebar
+            skills={skillNodes}
             activeId={id}
-            dict={dict}
             locale={locale}
-            groupLabelPrefix=""
           />
           <div className="flex-1 min-w-0">
             <DatabaseEntryContent id={id} typePrefix="skills" locale={locale} />
