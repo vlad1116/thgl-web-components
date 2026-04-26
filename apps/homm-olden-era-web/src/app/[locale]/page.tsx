@@ -26,7 +26,12 @@ export async function generateMetadata({
     description,
     keywords: APP_CONFIG.keywords,
     alternates: { canonical, languages: languageAlternates },
-    openGraph: { title, description, url: canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      images: [{ url: "https://oldenera.th.gl/opengraph-image.jpg", width: 1200, height: 630 }],
+    },
   };
 }
 

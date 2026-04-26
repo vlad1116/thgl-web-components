@@ -59,10 +59,10 @@ export function EntityGrid({
         return (
           <div key={groupId}>
             {!hideGroupHeader && (
-              <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
                 {groupLabel}
-                <span className="ml-2 text-slate-600">{items.length}</span>
-              </h3>
+                <span className="ml-2 text-slate-500">{items.length}</span>
+              </h2>
             )}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">
               {items.map((item) => {

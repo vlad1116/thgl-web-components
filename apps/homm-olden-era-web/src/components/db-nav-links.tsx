@@ -116,6 +116,7 @@ export function DbNavLinks({ locale = "en", dict = {} }: { locale?: string; dict
       <div className="sm:hidden relative" ref={mobileMenuRef}>
         <button
           onClick={() => setOverflowOpen((v) => !v)}
+          aria-label="Navigation menu"
           className="text-xs px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-zinc-800 transition-colors flex items-center gap-1"
         >
           <Menu className="w-4 h-4" />
@@ -190,6 +191,7 @@ export function DbNavLinks({ locale = "en", dict = {} }: { locale?: string; dict
         <div ref={menuRef} className="relative">
           <button
             onClick={() => setOverflowOpen((v) => !v)}
+            aria-label="More navigation links"
             className={cn(
               "text-xs px-2 py-1.5 rounded-md transition-colors",
               overflowOpen

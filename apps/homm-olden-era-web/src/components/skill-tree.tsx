@@ -53,10 +53,10 @@ export function SkillTreeList({
     <div className="space-y-6">
       {Array.from(groups.entries()).map(([groupId, items]) => (
         <div key={groupId}>
-          <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
             {groupId}
-            <span className="ml-2 text-slate-600">{items.length}</span>
-          </h3>
+            <span className="ml-2 text-slate-500">{items.length}</span>
+          </h2>
           <div className="columns-1 lg:columns-2 gap-x-6">
             {items.map((skill) => (
               <div key={skill.id} className="break-inside-avoid">
@@ -80,12 +80,13 @@ function SkillTreeItem({ skill, locale }: { skill: SkillNode; locale: string }) 
         {hasSubs ? (
           <button
             onClick={() => setOpen(!open)}
-            className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Toggle sub-skills"
+            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
           >
             <Chevron open={open} />
           </button>
         ) : (
-          <span className="w-5 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
         <Link
           href={localizePath(`/db/skills/${skill.id}`, locale)}
@@ -181,12 +182,13 @@ function SidebarSkillItem({
         {hasSubs ? (
           <button
             onClick={() => setOpen(!open)}
-            className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Toggle sub-skills"
+            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
           >
             <Chevron open={open} className="w-2.5 h-2.5" />
           </button>
         ) : (
-          <span className="w-4 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
         <Link
           href={localizePath(`/db/skills/${skill.id}`, locale)}

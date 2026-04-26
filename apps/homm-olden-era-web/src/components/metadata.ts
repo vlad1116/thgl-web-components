@@ -4,6 +4,12 @@ import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 
 const GAME_TITLE = "Heroes of Might & Magic: Olden Era";
+const OG_IMAGE = {
+  url: "https://oldenera.th.gl/opengraph-image.jpg",
+  width: 1200,
+  height: 630,
+  alt: GAME_TITLE,
+};
 
 /** Generate metadata for the homepage */
 export async function generateHomeMetadata(
@@ -22,7 +28,7 @@ export async function generateHomeMetadata(
     description,
     keywords: APP_CONFIG.keywords,
     alternates: { canonical, languages: languageAlternates },
-    openGraph: { title, description, url: canonical },
+    openGraph: { title, description, url: canonical, images: [OG_IMAGE] },
   };
 }
 
@@ -47,7 +53,7 @@ export async function generateCategoryMetadata(
     description,
     keywords: [...APP_CONFIG.keywords, sectionLabel],
     alternates: { canonical, languages: languageAlternates },
-    openGraph: { title, description, url: canonical },
+    openGraph: { title, description, url: canonical, images: [OG_IMAGE] },
   };
 }
 
@@ -89,6 +95,6 @@ export async function generateEntryMetadata(
     description,
     keywords: [...APP_CONFIG.keywords, entryName, sectionLabel],
     alternates: { canonical, languages: languageAlternates },
-    openGraph: { title, description, url: canonical },
+    openGraph: { title, description, url: canonical, images: [OG_IMAGE] },
   };
 }

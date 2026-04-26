@@ -55,7 +55,7 @@ export default async function RootLayout({
       >
         <I18NProvider dict={dict} locale={locale}>
           <Header activeApp={APP_CONFIG.title}>
-            <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}>
+            <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">
               <Brand title={APP_CONFIG.domain} />
             </Link>
 
