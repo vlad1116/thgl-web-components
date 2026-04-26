@@ -72,7 +72,7 @@ export function ItemView({
             </span>
             {props.itemSet && (
               <span className="text-xs text-amber-400">
-                Set: {resolveDict(dict, props.itemSet)}
+                {resolveDict(dict, "ui.set_prefix")} {resolveDict(dict, props.itemSet)}
               </span>
             )}
           </div>
@@ -89,7 +89,7 @@ export function ItemView({
       <div className="grid grid-cols-3 gap-1">
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Value
+            {resolveDict(dict, "ui.value")}
           </div>
           <div className="text-lg font-semibold text-amber-400">
             {props.goodsValue.toLocaleString()}
@@ -97,7 +97,7 @@ export function ItemView({
         </div>
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Cost
+            {resolveDict(dict, "ui.cost")}
           </div>
           <div className="text-lg font-semibold text-slate-300">
             {props.costBase}
@@ -105,7 +105,7 @@ export function ItemView({
         </div>
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Max Level
+            {resolveDict(dict, "ui.max_level")}
           </div>
           <div className="text-lg font-semibold text-cyan-400">
             {props.maxLevel}
@@ -117,7 +117,7 @@ export function ItemView({
       {props.bonuses && props.bonuses.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Bonuses
+            {resolveDict(dict, "ui.bonuses")}
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
             <BonusList bonuses={props.bonuses} dict={dict} />

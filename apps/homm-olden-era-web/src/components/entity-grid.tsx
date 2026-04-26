@@ -78,6 +78,7 @@ export function EntityGrid({
                   <Link
                     key={item.id}
                     href={localizePath(`/db/${section}/${item.id}`, locale)}
+                    prefetch={false}
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded hover:bg-zinc-800/50 transition-colors group"
                   >
                     {icon && <SpriteIcon icon={icon} size={28} />}

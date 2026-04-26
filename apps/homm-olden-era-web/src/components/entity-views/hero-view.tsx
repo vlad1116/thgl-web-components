@@ -69,7 +69,7 @@ export function HeroView({
                   : "bg-indigo-900/40 text-indigo-400 border-indigo-800/50"
               }`}
             >
-              {props.classType === "might" ? "Might" : "Magic"}
+              {props.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
             </span>
             <Link
               href={localizePath(`/db/factions/${props.faction}`, locale)}
@@ -78,7 +78,7 @@ export function HeroView({
               {resolveDict(dict, `faction_${props.faction}`)}
             </Link>
             <span className="text-sm text-muted-foreground">
-              {props.costGold.toLocaleString()} gold
+              {props.costGold.toLocaleString()} {resolveDict(dict, "ui.gold")}
             </span>
           </div>
         </div>
@@ -103,14 +103,14 @@ export function HeroView({
         <div className="bg-amber-950/20 border border-amber-900/30 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <h4 className="text-xs uppercase tracking-wider text-amber-500 mb-1">
-              Specialization
+              {resolveDict(dict, "ui.specialization")}
             </h4>
             {props.specialization && (
               <Link
                 href={localizePath(`/db/factions/${props.specialization}`, locale)}
                 className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
               >
-                View details →
+                {resolveDict(dict, "ui.view_details")}
               </Link>
             )}
           </div>

@@ -56,7 +56,7 @@ export function SkillView({
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
-              {isSubSkill ? "Sub-Skill" : props.skillType}
+              {isSubSkill ? resolveDict(dict, "ui.sub_skill") : props.skillType}
             </span>
           </div>
         </div>
@@ -72,7 +72,7 @@ export function SkillView({
       {isSubSkill && props.bonuses && props.bonuses.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Effects
+            {resolveDict(dict, "ui.effects")}
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
             <BonusList bonuses={props.bonuses} dict={dict} />
@@ -86,8 +86,8 @@ export function SkillView({
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-900/60 border-b border-slate-800">
-                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground w-16">Level</th>
-                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">Effect</th>
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground w-16">{resolveDict(dict, "ui.level_header")}</th>
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">{resolveDict(dict, "ui.effect_header")}</th>
               </tr>
             </thead>
             <tbody>
@@ -109,7 +109,7 @@ export function SkillView({
                     {level.subSkills && level.subSkills.length > 0 && (
                       <div className={level.bonuses?.length ? "mt-3 pt-3 border-t border-slate-800/50" : ""}>
                         <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                          Unlocks Sub-Skills
+                          {resolveDict(dict, "ui.unlocks_sub_skills")}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {level.subSkills.map((ss) => (

@@ -75,6 +75,7 @@ export function DetailSidebar({
                 <Link
                   key={item.id}
                   href={localizePath(`/db/${section}/${item.id}`, locale)}
+                  prefetch={false}
                   className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors ${
                     isActive
                       ? "bg-amber-900/30 text-amber-400"

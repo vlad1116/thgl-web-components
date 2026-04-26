@@ -36,6 +36,7 @@ export default async function EntryPage({ params }: { params: Params }) {
             { label: entryLabel },
           ]}
           locale={locale}
+          dict={dict}
         />
         <div className="flex gap-6">
           <SkillTreeSidebar

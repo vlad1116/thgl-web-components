@@ -89,6 +89,7 @@ function SkillTreeItem({ skill, locale }: { skill: SkillNode; locale: string }) 
         )}
         <Link
           href={localizePath(`/db/skills/${skill.id}`, locale)}
+          prefetch={false}
           className="flex items-center gap-2.5 px-2 py-2 rounded hover:bg-zinc-800/50 transition-colors group flex-1"
         >
           {skill.icon && <Icon icon={skill.icon} size={28} />}
@@ -108,6 +109,7 @@ function SkillTreeItem({ skill, locale }: { skill: SkillNode; locale: string }) 
             <Link
               key={sub.id}
               href={localizePath(`/db/skills/${sub.id}`, locale)}
+              prefetch={false}
               className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800/50 transition-colors group"
             >
               {sub.icon && <Icon icon={sub.icon} size={20} />}
@@ -188,6 +190,7 @@ function SidebarSkillItem({
         )}
         <Link
           href={localizePath(`/db/skills/${skill.id}`, locale)}
+          prefetch={false}
           className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors flex-1 ${
             isSkillActive
               ? "bg-amber-900/30 text-amber-400"
@@ -206,6 +209,7 @@ function SidebarSkillItem({
               <Link
                 key={sub.id}
                 href={localizePath(`/db/skills/${sub.id}`, locale)}
+                prefetch={false}
                 className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors ${
                   isSubActive
                     ? "bg-amber-900/30 text-amber-400"

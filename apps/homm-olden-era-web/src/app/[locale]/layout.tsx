@@ -59,7 +59,7 @@ export default async function RootLayout({
               <Brand title={APP_CONFIG.domain} />
             </Link>
 
-            <DbNavLinks locale={locale} />
+            <DbNavLinks locale={locale} dict={dict} />
 
             <Suspense>
               <DbSearchWrapper locale={locale} />

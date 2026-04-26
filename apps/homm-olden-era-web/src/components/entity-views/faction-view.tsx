@@ -88,7 +88,7 @@ export function FactionView({
           <div>
             <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
             <span className="text-xs px-2 py-0.5 rounded bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">
-              Specialization
+              {resolveDict(dict, "ui.specialization")}
             </span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function FactionView({
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
             <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-              Effects
+              {resolveDict(dict, "ui.effects")}
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
               <BonusList bonuses={props.bonuses} dict={dict} />
@@ -138,7 +138,7 @@ export function FactionView({
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
             <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-              Effects
+              {resolveDict(dict, "ui.effects")}
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
               <BonusList bonuses={props.bonuses} dict={dict} />
@@ -164,7 +164,7 @@ export function FactionView({
             )}
             {props.resourceName && (
               <span className="text-xs text-muted-foreground capitalize">
-                Resource: {props.resourceName}
+                {resolveDict(dict, "ui.resource_prefix")} {props.resourceName}
               </span>
             )}
           </div>
@@ -180,7 +180,7 @@ export function FactionView({
       {props.lawTiers && props.lawTiers.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Faction Law Tiers
+            {resolveDict(dict, "ui.faction_law_tiers")}
           </h4>
           <div className="grid grid-cols-5 gap-1">
             {props.lawTiers.map((tier, i) => (
@@ -189,12 +189,12 @@ export function FactionView({
                 className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
               >
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {tier.unlockAt === 0 ? "Start" : `${tier.unlockAt} pts`}
+                  {tier.unlockAt === 0 ? resolveDict(dict, "ui.start") : `${tier.unlockAt} ${resolveDict(dict, "ui.pts")}`}
                 </div>
                 <div className="text-lg font-semibold text-amber-400">
                   {tier.lawCount}
                 </div>
-                <div className="text-[10px] text-muted-foreground">laws</div>
+                <div className="text-[10px] text-muted-foreground">{resolveDict(dict, "ui.laws")}</div>
               </div>
             ))}
           </div>

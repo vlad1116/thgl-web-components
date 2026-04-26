@@ -8,26 +8,34 @@ import { MoreHorizontal, Menu } from "lucide-react";
 
 type NavItem = {
   href: string;
-  label: string;
+  labelKey: string;
+  fallback: string;
   primary?: boolean; // primary links show inline when space allows
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Home", primary: true },
-  { href: "/db/units", label: "Units", primary: true },
-  { href: "/db/heroes", label: "Heroes", primary: true },
-  { href: "/db/spells", label: "Spells", primary: true },
-  { href: "/db/items", label: "Artifacts", primary: true },
-  { href: "/db/skills", label: "Skills", primary: true },
-  { href: "/db/factions", label: "Factions", primary: true },
+  { href: "/", labelKey: "ui.nav_home", fallback: "Home", primary: true },
+  { href: "/db/units", labelKey: "ui.nav_units", fallback: "Units", primary: true },
+  { href: "/db/heroes", labelKey: "ui.nav_heroes", fallback: "Heroes", primary: true },
+  { href: "/db/spells", labelKey: "ui.nav_spells", fallback: "Spells", primary: true },
+  { href: "/db/items", labelKey: "ui.nav_artifacts", fallback: "Artifacts", primary: true },
+  { href: "/db/skills", labelKey: "ui.nav_skills", fallback: "Skills", primary: true },
+  { href: "/db/factions", labelKey: "ui.nav_factions", fallback: "Factions", primary: true },
 ];
 
-const EXTRA_LINKS: NavItem[] = [
+const EXTRA_LINKS = [
   { href: "https://th.gl/privacy", label: "Privacy Policy" },
   { href: "https://th.gl/terms", label: "Terms of Service" },
 ];
 
-export function DbNavLinks({ locale = "en" }: { locale?: string }) {
+function resolveLabel(dict: Record<string, string>, key: string, fallback: string): string {
+  const value = dict[key];
+  if (!value) return fallback;
+  if (value[0] === "@") return dict[value] ?? fallback;
+  return value;
+}
+
+export function DbNavLinks({ locale = "en", dict = {} }: { locale?: string; dict?: Record<string, string> }) {
   const pathname = usePathname();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(NAV_ITEMS.length);
@@ -81,8 +89,12 @@ export function DbNavLinks({ locale = "en" }: { locale?: string }) {
     setOverflowOpen(false);
   }, [pathname]);
 
-  const visibleItems = NAV_ITEMS.slice(0, visibleCount);
-  const overflowItems = NAV_ITEMS.slice(visibleCount);
+  const resolvedItems = NAV_ITEMS.map((item) => ({
+    ...item,
+    label: resolveLabel(dict, item.labelKey, item.fallback),
+  }));
+  const visibleItems = resolvedItems.slice(0, visibleCount);
+  const overflowItems = resolvedItems.slice(visibleCount);
   const hasOverflow = overflowItems.length > 0;
 
   return (
@@ -93,7 +105,7 @@ export function DbNavLinks({ locale = "en" }: { locale?: string }) {
         className="flex items-center gap-1 absolute -left-[9999px] opacity-0 pointer-events-none"
         aria-hidden
       >
-        {NAV_ITEMS.map((item) => (
+        {resolvedItems.map((item) => (
           <span key={item.href} className="text-xs px-2.5 py-1.5 whitespace-nowrap">
             {item.label}
           </span>
@@ -110,7 +122,7 @@ export function DbNavLinks({ locale = "en" }: { locale?: string }) {
         </button>
         {overflowOpen && (
           <div className="absolute top-full left-0 mt-1 w-48 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1">
-            {NAV_ITEMS.map((item) => {
+            {resolvedItems.map((item) => {
               const href = localizePath(item.href, locale);
               const isHome = item.href === "/";
               const isActive = isHome

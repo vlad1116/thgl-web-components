@@ -58,10 +58,10 @@ export function UnitView({
 }) {
   const upgLabel =
     props.upgradeLevel === "upgrade"
-      ? "Upgrade"
+      ? resolveDict(dict, "ui.upgrade_label")
       : props.upgradeLevel === "alt_upgrade"
-        ? "Alt. Upgrade"
-        : "Base";
+        ? resolveDict(dict, "ui.alt_upgrade")
+        : resolveDict(dict, "ui.base");
 
   // Find upgrade chain: base, _upg, _upg_alt
   const baseId = props.baseId;
@@ -78,7 +78,7 @@ export function UnitView({
           <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm px-2.5 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
-              Tier {props.tier}
+              {resolveDict(dict, "ui.tier")} {props.tier}
             </span>
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               {upgLabel}
@@ -111,15 +111,15 @@ export function UnitView({
         />
         <StatCell label={resolveDict(dict, "ui.init")} value={props.initiative} color="text-purple-400" />
         <StatCell label={resolveDict(dict, "ui.speed")} value={props.speed} color="text-cyan-400" />
-        <StatCell label="Value" value={props.squadValue} color="text-yellow-400" />
-        <StatCell label="Cost" value={props.cost} small color="text-amber-300" />
+        <StatCell label={resolveDict(dict, "ui.value")} value={props.squadValue} color="text-yellow-400" />
+        <StatCell label={resolveDict(dict, "ui.cost")} value={props.cost} small color="text-amber-300" />
       </div>
 
       {/* Class */}
       {props.baseClass && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">
-            Class
+            {resolveDict(dict, "ui.class")}
           </h4>
           <p className="text-sm">{resolveDict(dict, props.baseClass)}</p>
           {dict[`${props.baseClass}_description`] && (
@@ -134,7 +134,7 @@ export function UnitView({
       {props.abilities?.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Abilities
+            {resolveDict(dict, "ui.abilities")}
           </h4>
           <div className="space-y-2">
             {props.abilities.map((a) => (
@@ -148,7 +148,7 @@ export function UnitView({
       {props.passives?.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Passives
+            {resolveDict(dict, "ui.passives")}
           </h4>
           <div className="space-y-2">
             {props.passives.map((p) => (
@@ -162,7 +162,7 @@ export function UnitView({
       {props.altAttacks?.length > 0 && (
         <div>
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            Alternative Attacks
+            {resolveDict(dict, "ui.alt_attacks")}
           </h4>
           <div className="space-y-2">
             {props.altAttacks.map((a) => (
@@ -174,7 +174,7 @@ export function UnitView({
 
       {/* Upgrade Chain */}
       {upgradeChain.length > 1 && (
-        <RelatedSection title="Upgrade Path">
+        <RelatedSection title={resolveDict(dict, "ui.upgrade_path")}>
           <div className="flex gap-2 flex-wrap">
             {upgradeChain.map((entry) => {
               if (!entry) return null;
@@ -187,10 +187,10 @@ export function UnitView({
                   dict={dict}
                   subtitle={
                     entry.item.id === baseId
-                      ? "Base"
+                      ? resolveDict(dict, "ui.base")
                       : entry.item.id.endsWith("_upg_alt")
-                        ? "Alt. Upgrade"
-                        : "Upgrade"
+                        ? resolveDict(dict, "ui.alt_upgrade")
+                        : resolveDict(dict, "ui.upgrade_label")
                   }
                 />
               );

@@ -9,9 +9,11 @@ type Crumb = {
 export function Breadcrumb({
   crumbs,
   locale = "en",
+  dict = {},
 }: {
   crumbs: Crumb[];
   locale?: string;
+  dict?: Record<string, string>;
 }) {
   return (
     <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4 flex-wrap">
@@ -19,7 +21,7 @@ export function Breadcrumb({
         href={localizePath("/", locale)}
         className="hover:text-amber-400 transition-colors"
       >
-        Home
+        {dict["ui.nav_home"] || "Home"}
       </Link>
       {crumbs.map((crumb, i) => (
         <span key={i} className="flex items-center gap-1.5">

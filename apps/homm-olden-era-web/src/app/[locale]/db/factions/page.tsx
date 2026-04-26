@@ -30,7 +30,7 @@ export default async function Page({ params }: PageProps) {
   return (
     <HeaderOffset full>
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} />
+        <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
 
         <EntityGrid
