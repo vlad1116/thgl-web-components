@@ -142,7 +142,7 @@ export function SkillTreeSidebar({
   }
 
   return (
-    <nav className="sidebar-scroll w-56 shrink-0 max-lg:hidden overflow-y-auto max-h-[calc(100vh-80px)] sticky top-[70px] pr-2">
+    <nav className="sidebar-scroll">
       {Array.from(groups.entries()).map(([groupId, items]) => (
         <div key={groupId} className="mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">

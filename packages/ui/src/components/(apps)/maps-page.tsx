@@ -132,30 +132,30 @@ export function createMapsPage(appConfig: AppConfig) {
         />
 
         <HeaderOffset full>
-          <PageTitle
-            title={t("maps.pageTitle", { vars: { title: appConfig.title } })}
-          />
-          <nav
-            aria-label="Breadcrumb"
-            className="text-xs text-muted-foreground px-4 py-2"
-          >
-            <ol className="flex items-center gap-1">
-              <li>
-                <Link
-                  href={localizePath("/", locale)}
-                  className="hover:text-foreground transition-colors"
-                >
-                  Home
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li aria-current="page">Maps</li>
-            </ol>
-          </nav>
           <ContentLayout
             id={appConfig.name}
             header={
               <>
+                <PageTitle
+                  title={t("maps.pageTitle", { vars: { title: appConfig.title } })}
+                />
+                <nav
+                  aria-label="Breadcrumb"
+                  className="text-xs text-muted-foreground py-2"
+                >
+                  <ol className="flex items-center gap-1">
+                    <li>
+                      <Link
+                        href={localizePath("/", locale)}
+                        className="hover:text-foreground transition-colors"
+                      >
+                        Home
+                      </Link>
+                    </li>
+                    <li aria-hidden="true">/</li>
+                    <li aria-current="page">Maps</li>
+                  </ol>
+                </nav>
                 <Subtitle
                   title={t("maps.title", {
                     vars: { title: appConfig.title },

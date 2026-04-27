@@ -257,13 +257,13 @@ export function createHomePage(appConfig: AppConfig) {
           }}
         />
         <HeaderOffset full>
-          <PageTitle
-            title={t("home.pageTitle", { vars: { title: appConfig.title } })}
-          />
           <ContentLayout
             id={appConfig.name}
             header={
               <section className="space-y-6">
+                <PageTitle
+                  title={t("home.pageTitle", { vars: { title: appConfig.title } })}
+                />
                 {/* Title + intro */}
                 <div className="space-y-2">
                   <Subtitle

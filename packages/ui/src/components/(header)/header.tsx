@@ -17,12 +17,14 @@ export function Header({
   activeApp,
   settingsDialogContent,
   infoActions: _infoActions,
+  externalLinks,
   ...props
 }: {
   children: React.ReactNode;
   activeApp: string;
   settingsDialogContent?: JSX.Element;
   infoActions?: JSX.Element;
+  externalLinks?: React.ReactNode;
 } & HTMLAttributes<HTMLDivElement>): JSX.Element {
   const t = useT();
 
@@ -42,8 +44,11 @@ export function Header({
         {children}
       </nav>
 
-      {/* Social links — desktop only */}
+      {/* External + social links — desktop only */}
       <div className="hidden md:flex items-center gap-1 ml-2">
+        {externalLinks}
+      </div>
+      <div className="hidden md:flex items-center gap-1 ml-1">
         <ExternalAnchor
           className="p-2 hover:bg-muted rounded-md transition-colors"
           href="https://th.gl/discord"

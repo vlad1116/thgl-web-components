@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
+import { ContentLayout } from "@repo/ui/ads";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -29,40 +30,48 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <HeaderOffset full>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
-        <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
+      <ContentLayout
+        id={APP_CONFIG.name}
+        header={
+          <div className="max-w-7xl mx-auto px-4 pt-6">
+            <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
+            <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
+          </div>
+        }
+        content={
+          <div className="max-w-7xl mx-auto px-4 pb-6">
+            <EntityGrid
+              entries={factions}
+              section="factions"
+              dict={dict}
+              locale={locale}
+              nameLabelPrefix="faction_"
+            />
 
-        <EntityGrid
-          entries={factions}
-          section="factions"
-          dict={dict}
-          locale={locale}
-          nameLabelPrefix="faction_"
-        />
+            <h2 className="text-lg font-semibold mt-8 mb-4">
+              {resolveDict(dict, "specializations")}
+            </h2>
+            <EntityGrid
+              entries={specializations}
+              section="factions"
+              dict={dict}
+              locale={locale}
+              groupLabelPrefix="faction_"
+            />
 
-        <h2 className="text-lg font-semibold mt-8 mb-4">
-          {resolveDict(dict, "specializations")}
-        </h2>
-        <EntityGrid
-          entries={specializations}
-          section="factions"
-          dict={dict}
-          locale={locale}
-          groupLabelPrefix="faction_"
-        />
-
-        <h2 className="text-lg font-semibold mt-8 mb-4">
-          {resolveDict(dict, "faction_laws")}
-        </h2>
-        <EntityGrid
-          entries={factionLaws}
-          section="factions"
-          dict={dict}
-          locale={locale}
-          groupLabelPrefix="faction_"
-        />
-      </div>
+            <h2 className="text-lg font-semibold mt-8 mb-4">
+              {resolveDict(dict, "faction_laws")}
+            </h2>
+            <EntityGrid
+              entries={factionLaws}
+              section="factions"
+              dict={dict}
+              locale={locale}
+              groupLabelPrefix="faction_"
+            />
+          </div>
+        }
+      />
     </HeaderOffset>
   );
 }

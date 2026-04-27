@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { generateEntryMetadata } from "@/components/metadata";
 import { fetchDatabase, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
+import { ContentLayout } from "@repo/ui/ads";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -26,16 +27,9 @@ export default async function EntryPage({ params }: { params: Params }) {
 
   return (
     <HeaderOffset full>
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <Breadcrumb
-          crumbs={[
-            { label: sectionLabel, href: "/db/spells" },
-            { label: entryLabel },
-          ]}
-          locale={locale}
-          dict={dict}
-        />
-        <div className="flex gap-6">
+      <ContentLayout
+        id={APP_CONFIG.name}
+        sidebar={
           <DetailSidebar
             entries={sidebarData}
             section="spells"
@@ -44,11 +38,23 @@ export default async function EntryPage({ params }: { params: Params }) {
             locale={locale}
             groupLabelPrefix="ui.school_"
           />
-          <div className="flex-1 min-w-0">
+        }
+        header={
+          <Breadcrumb
+            crumbs={[
+              { label: sectionLabel, href: "/db/spells" },
+              { label: entryLabel },
+            ]}
+            locale={locale}
+            dict={dict}
+          />
+        }
+        content={
+          <div className="max-w-7xl mx-auto px-4 pb-6">
             <DatabaseEntryContent id={id} typePrefix="spells" locale={locale} />
           </div>
-        </div>
-      </div>
+        }
+      />
     </HeaderOffset>
   );
 }

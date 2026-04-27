@@ -70,40 +70,74 @@ export function ContentLayout({
       </div>
 
       {/* Main Content */}
-      <div
-        className={cn(
-          "relative container p-4 text-center space-y-4 mb-48",
-          sidebar && "xl:pl-[262px]",
-        )}
-      >
-        {sidebar}
-        {header}
+      {sidebar ? (
+        <div className="relative container grid grid-rows-[auto_1fr] h-[calc(100dvh-54px-16px)] px-4 pt-2 text-left overflow-hidden">
+          {/* Row 1: breadcrumb */}
+          {header}
 
-        {/* Top Banner */}
-        <ScriptLoader
-          loading={<LargeMobileBannerLoading />}
-          fallback={<LargeMobileBannerFallback />}
-        >
-          <LargeMobileBanner id={largeMobileBannerId} targeting={targeting} />
-        </ScriptLoader>
+          {/* Row 2: sidebar + content */}
+          <div className="grid xl:grid-cols-[250px_1fr] min-h-0">
+            <aside className="sidebar-scroll hidden xl:block overflow-y-auto border-r border-zinc-800/60 pr-3 py-3 min-h-0">
+              {sidebar}
+            </aside>
+            <div className="overflow-y-auto min-h-0 space-y-4 xl:pl-5">
+              {/* Top Banner */}
+              <ScriptLoader
+                loading={<LargeMobileBannerLoading />}
+                fallback={<LargeMobileBannerFallback />}
+              >
+                <LargeMobileBanner id={largeMobileBannerId} targeting={targeting} />
+              </ScriptLoader>
 
-        {content}
+              {content}
 
-        {/* Bottom Banner */}
-        <ScriptLoader
-          loading={<MobileBannerLoading />}
-          fallback={<MobileBannerFallback />}
-        >
-          <MobileBanner id={mobileBannerId} targeting={targeting} />
-          <FloatingMobileBanner
-            bannerId={mobileBannerId}
-            videoId={mobileVideoId}
-            targeting={targeting}
-          />
-        </ScriptLoader>
+              {/* Bottom Banner */}
+              <ScriptLoader
+                loading={<MobileBannerLoading />}
+                fallback={<MobileBannerFallback />}
+              >
+                <MobileBanner id={mobileBannerId} targeting={targeting} />
+                <FloatingMobileBanner
+                  bannerId={mobileBannerId}
+                  videoId={mobileVideoId}
+                  targeting={targeting}
+                />
+              </ScriptLoader>
 
-        {more}
-      </div>
+              {more}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="relative container p-4 text-center space-y-4 mb-48">
+          {header}
+
+          {/* Top Banner */}
+          <ScriptLoader
+            loading={<LargeMobileBannerLoading />}
+            fallback={<LargeMobileBannerFallback />}
+          >
+            <LargeMobileBanner id={largeMobileBannerId} targeting={targeting} />
+          </ScriptLoader>
+
+          {content}
+
+          {/* Bottom Banner */}
+          <ScriptLoader
+            loading={<MobileBannerLoading />}
+            fallback={<MobileBannerFallback />}
+          >
+            <MobileBanner id={mobileBannerId} targeting={targeting} />
+            <FloatingMobileBanner
+              bannerId={mobileBannerId}
+              videoId={mobileVideoId}
+              targeting={targeting}
+            />
+          </ScriptLoader>
+
+          {more}
+        </div>
+      )}
 
       {/* Right Ad */}
       <div>
