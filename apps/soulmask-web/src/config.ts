@@ -38,7 +38,12 @@ export const APP_CONFIG: AppConfig = {
     },
   ],
   promoLinks: [],
-  externalLinks: [],
+  externalLinks: [
+    {
+      href: "https://soulmask.gaming.tools/",
+      title: "Database",
+    },
+  ],
   keywords: [
     "Chests",
     "Dungeons",
