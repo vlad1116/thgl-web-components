@@ -74,6 +74,19 @@
     "tags": [
       "interactive_map"
     ],
+    "partners": [
+      {
+        "title": "Database",
+        "url": "https://soulmask.gaming.tools/",
+        "sprite": {
+          "fileName": "partners-4474840248067502499.webp",
+          "x": 24,
+          "y": 0,
+          "width": 24,
+          "height": 24
+        }
+      }
+    ],
     "sprite": {
       "fileName": "games-4474840248067502499.webp",
       "x": 128,
