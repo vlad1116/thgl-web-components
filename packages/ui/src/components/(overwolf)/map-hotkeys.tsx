@@ -1,7 +1,7 @@
 import { HOTKEYS } from "@repo/lib/overwolf";
 import { useEffect } from "react";
 import { useMap } from "../(interactive-map)/store";
-import { useGameState, useSettingsStore, useUserStore } from "@repo/lib";
+import { getNodeId, type Spawn, useGameState, useSettingsStore, useUserStore } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { toast } from "sonner";
 
@@ -36,14 +36,23 @@ export function MapHotkeys() {
   }, [map]);
 
   useEffect(() => {
+    let lastDiscoverTime = 0;
+    const DISCOVER_COOLDOWN = 500;
+
     const handleHotkey = (event: overwolf.settings.hotkeys.OnPressedEvent) => {
       if (event.name === HOTKEYS.DISCOVER_NODE) {
+        const now = Date.now();
+        if (now - lastDiscoverTime < DISCOVER_COOLDOWN) {
+          return;
+        }
+        lastDiscoverTime = now;
+
         const { filters } = useUserStore.getState();
         const { player } = useGameState.getState();
         if (!player) {
           return;
         }
-        const { isDiscoveredNode, setDiscoverNode } =
+        const { isDiscoveredNode, setDiscoverNode, hideDiscoveredNodes } =
           useSettingsStore.getState();
         const nodeSpawns = nodes
           .filter((node) => {
@@ -58,6 +67,9 @@ export function MapHotkeys() {
           .flatMap((n) => n.spawns.map((s) => ({ ...s, type: n.type })));
         const { spawns } = nodeSpawns.reduce(
           (nearest, spawn) => {
+            if (hideDiscoveredNodes && isDiscoveredNode(getNodeId(spawn as Spawn))) {
+              return nearest;
+            }
             const distance = Math.sqrt(
               Math.pow(player.x - spawn.p[0], 2) +
                 Math.pow(player.y - spawn.p[1], 2),
@@ -76,11 +88,7 @@ export function MapHotkeys() {
           },
         );
         spawns.forEach((spawn) => {
-          const nodeId = spawn.isPrivate
-            ? spawn.id!
-            : spawn.id?.includes("@")
-              ? spawn.id
-              : `${spawn.id ?? spawn.type}@${spawn.p[0]}:${spawn.p[1]}`;
+          const nodeId = getNodeId(spawn as Spawn);
           const isDiscovered = isDiscoveredNode(nodeId);
           setDiscoverNode(nodeId, !isDiscovered);
           toast(
