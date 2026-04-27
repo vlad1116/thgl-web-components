@@ -54,18 +54,6 @@ export const appConfig: AppConfig = {
       description: "Get help and common answers.",
       iconName: "HelpCircle",
     },
-    {
-      title: "Legal Notice",
-      href: "/legal-notice",
-      description: "",
-      iconName: "FileText",
-    },
-    {
-      title: "Privacy Policy",
-      href: "/privacy-policy",
-      description: "",
-      iconName: "ShieldCheck",
-    },
   ],
   appUrl: null,
   keywords: [
