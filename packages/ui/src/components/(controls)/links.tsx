@@ -32,6 +32,7 @@ type MeasuredItem = {
   isActive: boolean;
   isExternal?: boolean;
   isLocale?: boolean;
+  isHome?: boolean;
 };
 
 export function Links({
@@ -43,10 +44,20 @@ export function Links({
   hideReleaseNotes?: boolean;
   children?: React.ReactNode;
 }): JSX.Element {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const { locale, t } = useI18n();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(100);
+  // Force re-render after hydration to fix active state mismatch
+  const [, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const isItemActive = (item: MeasuredItem) => {
+    if (item.isExternal || item.isLocale) return false;
+    return item.isHome
+      ? pathname === "/" || pathname === `/${locale}`
+      : pathname.startsWith(item.href);
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,13 +88,9 @@ export function Links({
 
     return allLinks.map((l): MeasuredItem => {
       const href = localizePath(l.href, locale);
-      const isHome = l.href === "/";
-      const isActive = isHome
-        ? pathname === "/" || pathname === `/${locale}`
-        : pathname.startsWith(href);
-      return { key: href, href, label: t(l.title), isActive };
+      return { key: href, href, label: t(l.title), isActive: false, isHome: l.href === "/" };
     });
-  }, [appConfig.internalLinks, locale, pathname, t]);
+  }, [appConfig.internalLinks, locale, t]);
 
   // Build external items: In-Game App first (most important), then partner links, then locale last
   const externalItems = useMemo(() => {
@@ -155,7 +162,7 @@ export function Links({
   const visibleItems = allItems.slice(0, visibleCount);
   const overflowItems = allItems.slice(visibleCount);
   const hasOverflow = overflowItems.length > 0;
-  const overflowHasActive = overflowItems.some((item) => item.isActive);
+  const overflowHasActive = overflowItems.some((item) => isItemActive(item));
 
   // Check which externals are visible vs overflowed
   const visibleExternals = visibleItems.filter((i) => i.isExternal || i.isLocale);
@@ -202,7 +209,7 @@ export function Links({
         href={item.href}
         className={cn(
           "order-1 text-xs px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap",
-          item.isActive
+          isItemActive(item)
             ? "bg-amber-900/30 text-amber-400"
             : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
         )}
@@ -238,7 +245,7 @@ export function Links({
         href={item.href}
         className={cn(
           "block px-3 py-2 text-sm transition-colors",
-          item.isActive
+          isItemActive(item)
             ? "text-amber-400 bg-amber-900/20"
             : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
         )}
