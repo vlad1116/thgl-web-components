@@ -25,6 +25,15 @@ const NAV_AFTER = [
   { href: "/guides", title: "config.internalLinks.guides.title" },
 ] as const;
 
+type MeasuredItem = {
+  key: string;
+  label: string;
+  href: string;
+  isActive: boolean;
+  isExternal?: boolean;
+  isLocale?: boolean;
+};
+
 export function Links({
   appConfig,
   hideReleaseNotes,
@@ -37,13 +46,14 @@ export function Links({
   const pathname = usePathname();
   const { locale, t } = useI18n();
   const [overflowOpen, setOverflowOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(100);
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const resolvedItems = useMemo(() => {
+  // Build nav items
+  const navItems = useMemo(() => {
     const appLinks =
       appConfig.internalLinks?.filter(
         (l) =>
@@ -52,35 +62,61 @@ export function Links({
           !l.href.startsWith("/guides"),
       ) ?? [];
 
-    // Order: Home, Maps, app-specific links, Guides, In-Game App
-    const allLinks: { href: string; title: string; external?: boolean }[] = [
-      ...NAV_BEFORE,
-      ...appLinks,
-      ...NAV_AFTER,
-    ];
+    const allInternalLinks = appConfig.internalLinks ?? [];
+    const hasMap = allInternalLinks.some((l) => l.href.startsWith("/maps"));
+    const hasGuides = allInternalLinks.some((l) => l.href.startsWith("/guides"));
 
-    return allLinks.map((l) => {
+    const before = NAV_BEFORE.filter(
+      (l) => l.href === "/" || (l.href === "/maps" && hasMap),
+    );
+    const after = NAV_AFTER.filter(
+      (l) => l.href !== "/guides" || hasGuides,
+    );
+
+    const allLinks = [...before, ...appLinks, ...after];
+
+    return allLinks.map((l): MeasuredItem => {
       const href = localizePath(l.href, locale);
       const isHome = l.href === "/";
       const isActive = isHome
         ? pathname === "/" || pathname === `/${locale}`
         : pathname.startsWith(href);
-      return { href, label: t(l.title), isActive, rawHref: l.href };
+      return { key: href, href, label: t(l.title), isActive };
     });
-  }, [appConfig.internalLinks, appConfig.appUrl, locale, pathname, t]);
+  }, [appConfig.internalLinks, locale, pathname, t]);
 
-  // Measure how many links fit inline
+  // Build external items: In-Game App first (most important), then partner links, then locale last
+  const externalItems = useMemo(() => {
+    const items: MeasuredItem[] = [];
+    if (appConfig.appUrl) {
+      items.push({ key: appConfig.appUrl, href: appConfig.appUrl, label: t("links.inGameApp"), isActive: false, isExternal: true });
+    }
+    for (const { href, title } of appConfig.externalLinks ?? []) {
+      items.push({ key: href, href, label: t(title), isActive: false, isExternal: true });
+    }
+    if (children) {
+      items.push({ key: "__locale__", href: "", label: "English", isActive: false, isLocale: true });
+    }
+    return items;
+  }, [appConfig.externalLinks, appConfig.appUrl, children, t]);
+
+  // All items: nav first, then externals.
+  // Measurement goes left-to-right. When items don't fit, externals (at end) overflow first.
+  const allItems = useMemo(() => [...navItems, ...externalItems], [navItems, externalItems]);
+  const navCount = navItems.length;
+
+  // Measure how many items fit
   useEffect(() => {
     function measure() {
       if (!containerRef.current || !measureRef.current) return;
       const containerWidth = containerRef.current.offsetWidth;
-      const children = measureRef.current.children;
+      const measuredChildren = measureRef.current.children;
       let total = 0;
       let count = 0;
       const moreButtonWidth = 40;
 
-      for (let i = 0; i < children.length; i++) {
-        const childWidth = (children[i] as HTMLElement).offsetWidth + 4;
+      for (let i = 0; i < measuredChildren.length; i++) {
+        const childWidth = (measuredChildren[i] as HTMLElement).offsetWidth + 4;
         if (total + childWidth + moreButtonWidth > containerWidth) break;
         total += childWidth;
         count++;
@@ -115,30 +151,17 @@ export function Links({
     setOverflowOpen(false);
   }, [pathname]);
 
-  const visibleItems = resolvedItems.slice(0, visibleCount);
-  const overflowItems = resolvedItems.slice(visibleCount);
+  // Split visible vs overflow
+  const visibleItems = allItems.slice(0, visibleCount);
+  const overflowItems = allItems.slice(visibleCount);
   const hasOverflow = overflowItems.length > 0;
   const overflowHasActive = overflowItems.some((item) => item.isActive);
 
-  const externalContent = (
-    <>
-      {appConfig.promoLinks?.map(({ href, title }) => (
-        <Link key={href} href={localizePath(href, locale)}>
-          <Badge>{t(title)}</Badge>
-        </Link>
-      ))}
-      {appConfig.externalLinks?.map(({ href, title }) => (
-        <ExternalAnchor
-          key={href}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors"
-          href={href}
-        >
-          {t(title)}
-          <ExternalLink className="w-3 h-3 opacity-50" />
-        </ExternalAnchor>
-      ))}
-    </>
-  );
+  // Check which externals are visible vs overflowed
+  const visibleExternals = visibleItems.filter((i) => i.isExternal || i.isLocale);
+  const overflowedExternals = overflowItems.filter((i) => i.isExternal || i.isLocale);
+  const visibleNavItems = visibleItems.filter((i) => !i.isExternal && !i.isLocale);
+  const overflowedNavItems = overflowItems.filter((i) => !i.isExternal && !i.isLocale);
 
   const legalFooter = (
     <>
@@ -157,101 +180,155 @@ export function Links({
     </>
   );
 
-  const dropdownContent = (items: typeof resolvedItems, showAll = false, alignLeft = false) => (
-    <div className={cn("absolute top-full mt-1 w-52 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1", alignLeft ? "left-0" : "right-0")}>
-      {items.map((item) => (
-        <Link
-          key={item.href}
+  const renderInlineItem = (item: MeasuredItem) => {
+    if (item.isLocale) {
+      return <div key={item.key} className="order-2">{children}</div>;
+    }
+    if (item.isExternal) {
+      return (
+        <ExternalAnchor
+          key={item.key}
+          className="order-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors whitespace-nowrap"
           href={item.href}
-          className={cn(
-            "block px-3 py-2 text-sm transition-colors",
-            item.isActive
-              ? "text-amber-400 bg-amber-900/20"
-              : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
-          )}
         >
           {item.label}
-        </Link>
-      ))}
+          <ExternalLink className="w-3 h-3 opacity-50" />
+        </ExternalAnchor>
+      );
+    }
+    return (
+      <Link
+        key={item.key}
+        href={item.href}
+        className={cn(
+          "order-1 text-xs px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap",
+          item.isActive
+            ? "bg-amber-900/30 text-amber-400"
+            : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
+        )}
+      >
+        {item.label}
+      </Link>
+    );
+  };
 
-      {/* Promo/external links */}
-      {/* In-Game App — mobile only (desktop shows it in header) */}
-      {showAll && appConfig.appUrl && (
-        <>
-          <div className="border-t border-neutral-800 my-1" />
-          <ExternalAnchor
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-zinc-800 transition-colors"
-            href={appConfig.appUrl}
-          >
-            {t("links.inGameApp")}
-            <ExternalLink className="w-3 h-3 opacity-50" />
-          </ExternalAnchor>
-        </>
-      )}
-
-      {/* Promo/external links */}
-      {!!(appConfig.promoLinks?.length || appConfig.externalLinks?.length) && (
-        <div className="flex flex-wrap gap-1.5 px-3 py-2">
-          {externalContent}
+  const renderDropdownItem = (item: MeasuredItem) => {
+    if (item.isLocale) {
+      return (
+        <div key={item.key} className="flex items-center justify-center px-3 py-2">
+          {children}
         </div>
-      )}
+      );
+    }
+    if (item.isExternal) {
+      return (
+        <ExternalAnchor
+          key={item.key}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-zinc-800 transition-colors"
+          href={item.href}
+        >
+          {item.label}
+          <ExternalLink className="w-3 h-3 opacity-50" />
+        </ExternalAnchor>
+      );
+    }
+    return (
+      <Link
+        key={item.key}
+        href={item.href}
+        className={cn(
+          "block px-3 py-2 text-sm transition-colors",
+          item.isActive
+            ? "text-amber-400 bg-amber-900/20"
+            : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
+        )}
+      >
+        {item.label}
+      </Link>
+    );
+  };
 
-      {/* Locale switcher + social icons */}
-      {(showAll || (children && hasOverflow)) && (
-        <>
-          <div className="border-t border-neutral-800 my-1" />
-          <div className="flex items-center justify-center gap-1.5 px-3 py-2">
-            {(showAll || hasOverflow) && children}
-            {showAll && (
-              <>
-                <ExternalAnchor
-                  className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
-                  href="https://th.gl/discord"
-                  title="Discord"
-                >
-                  <DiscordIcon size={14} className="opacity-70" />
-                </ExternalAnchor>
-                <ExternalAnchor
-                  className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
-                  href="https://github.com/The-Hidden-Gaming-Lair"
-                  title="GitHub"
-                >
-                  <GitHubIcon size={14} className="opacity-70" />
-                </ExternalAnchor>
-                <ExternalAnchor
-                  className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
-                  href="https://www.reddit.com/r/TheHiddenGamingLair/"
-                  title="Reddit"
-                >
-                  <RedditIcon size={14} className="opacity-70" />
-                </ExternalAnchor>
-              </>
-            )}
+  const dropdownContent = (showAll = false, alignLeft = false) => {
+    // In showAll mode (mobile), show everything. Otherwise show only overflowed items.
+    const navToShow = showAll ? navItems : overflowedNavItems;
+    const extToShow = showAll ? externalItems : overflowedExternals;
+
+    return (
+      <div className={cn("absolute top-full mt-1 w-52 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1", alignLeft ? "left-0" : "right-0")}>
+        {navToShow.map(renderDropdownItem)}
+
+        {extToShow.length > 0 && (
+          <>
+            {navToShow.length > 0 && <div className="border-t border-neutral-800 my-1" />}
+            {extToShow.map(renderDropdownItem)}
+          </>
+        )}
+
+        {/* Promo links */}
+        {!!appConfig.promoLinks?.length && (
+          <div className="flex flex-wrap gap-1.5 px-3 py-2">
+            {appConfig.promoLinks.map(({ href, title }) => (
+              <Link key={href} href={localizePath(href, locale)}>
+                <Badge>{t(title)}</Badge>
+              </Link>
+            ))}
           </div>
-        </>
-      )}
+        )}
 
-      <div className="border-t border-neutral-800 my-1" />
-      {legalFooter}
-      <ScriptLoader>
-        <div className="px-3 py-1">
-          <ConsentLink />
+        {/* Social icons */}
+        <div className="border-t border-neutral-800 my-1" />
+        <div className="flex items-center justify-center gap-1.5 px-3 py-2">
+          <ExternalAnchor
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
+            href="https://th.gl/discord"
+            title="Discord"
+          >
+            <DiscordIcon size={14} className="opacity-70" />
+          </ExternalAnchor>
+          <ExternalAnchor
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
+            href="https://github.com/The-Hidden-Gaming-Lair"
+            title="GitHub"
+          >
+            <GitHubIcon size={14} className="opacity-70" />
+          </ExternalAnchor>
+          <ExternalAnchor
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-colors"
+            href="https://www.reddit.com/r/TheHiddenGamingLair/"
+            title="Reddit"
+          >
+            <RedditIcon size={14} className="opacity-70" />
+          </ExternalAnchor>
         </div>
-      </ScriptLoader>
-    </div>
-  );
+
+        <div className="border-t border-neutral-800 my-1" />
+        {legalFooter}
+        <ScriptLoader>
+          <div className="px-3 py-1">
+            <ConsentLink />
+          </div>
+        </ScriptLoader>
+      </div>
+    );
+  };
 
   return (
     <>
-      {/* Hidden measurer */}
+      {/* Hidden measurer — nav items then external items */}
       <div
         ref={measureRef}
         className="flex items-center gap-1 absolute -left-[9999px] opacity-0 pointer-events-none"
         aria-hidden
       >
-        {resolvedItems.map((item) => (
-          <span key={item.href} className="text-xs px-2.5 py-1.5 whitespace-nowrap">
-            {item.label}
+        {allItems.map((item) => (
+          <span
+            key={item.key}
+            className={cn(
+              "text-xs px-2.5 py-1.5 whitespace-nowrap",
+              item.isExternal && "font-medium px-2.5 py-1.5 border border-transparent",
+            )}
+          >
+            {item.label}{item.isExternal ? " ↗" : ""}
           </span>
         ))}
       </div>
@@ -265,28 +342,15 @@ export function Links({
         >
           <Menu className="w-4 h-4" />
         </button>
-        {overflowOpen && dropdownContent(resolvedItems, true, true)}
+        {overflowOpen && dropdownContent(true, true)}
       </div>
 
-      {/* Desktop: inline links with overflow */}
-      <div ref={containerRef} className="flex-1 hidden sm:flex items-center gap-1 min-w-0">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "text-xs px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap",
-              item.isActive
-                ? "bg-amber-900/30 text-amber-400"
-                : "text-muted-foreground hover:text-foreground hover:bg-zinc-800",
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
+      {/* Desktop: inline items with CSS order (nav=1, externals=2, more=3) */}
+      <div ref={containerRef} className="flex-1 hidden sm:flex items-center gap-1 min-w-0 flex-wrap-reverse" style={{ flexWrap: "nowrap" }}>
+        {visibleItems.map(renderInlineItem)}
 
-        {/* More/overflow button */}
-        <div ref={menuRef} className="relative">
+        {/* More/overflow button — always visible, order-3 pushes it between nav and externals visually */}
+        <div ref={menuRef} className="relative order-3">
           <button
             onClick={() => setOverflowOpen((v) => !v)}
             aria-label="More navigation links"
@@ -302,10 +366,8 @@ export function Links({
             <MoreHorizontal className="w-4 h-4" />
           </button>
 
-          {overflowOpen &&
-            dropdownContent(overflowItems, false)}
+          {overflowOpen && dropdownContent(false)}
         </div>
-
       </div>
     </>
   );

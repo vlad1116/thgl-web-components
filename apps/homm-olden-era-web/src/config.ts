@@ -24,7 +24,7 @@ export const APP_CONFIG: AppConfig = {
   internalLinks: [
     {
       href: "/db/units",
-      title: "Units Database",
+      title: "ui.nav_units",
       linkText: "Browse all Units",
       iconName: "Axe",
       description:
@@ -32,7 +32,7 @@ export const APP_CONFIG: AppConfig = {
     },
     {
       href: "/db/heroes",
-      title: "Heroes Database",
+      title: "ui.nav_heroes",
       linkText: "Browse all Heroes",
       iconName: "Trophy",
       description:
@@ -40,7 +40,7 @@ export const APP_CONFIG: AppConfig = {
     },
     {
       href: "/db/spells",
-      title: "Spells Database",
+      title: "ui.nav_spells",
       linkText: "Browse all Spells",
       iconName: "ScrollText",
       description:
@@ -48,7 +48,7 @@ export const APP_CONFIG: AppConfig = {
     },
     {
       href: "/db/items",
-      title: "Artifacts Database",
+      title: "ui.nav_artifacts",
       linkText: "Browse all Artifacts",
       iconName: "Gift",
       description:
@@ -56,7 +56,7 @@ export const APP_CONFIG: AppConfig = {
     },
     {
       href: "/db/skills",
-      title: "Skills Database",
+      title: "ui.nav_skills",
       linkText: "Browse all Skills",
       iconName: "BookOpen",
       description:
@@ -64,7 +64,7 @@ export const APP_CONFIG: AppConfig = {
     },
     {
       href: "/db/factions",
-      title: "Factions",
+      title: "ui.nav_factions",
       linkText: "Explore Factions",
       iconName: "ShieldCheck",
       description:

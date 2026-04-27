@@ -1,8 +1,7 @@
 import { AppConfig, cn, DEFAULT_LOCALE, fetchVersion } from "@repo/lib";
 import { Inter as FontSans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
-import { Account, Brand, Header, PlausibleTracker, ExternalAnchor } from "../(header)";
-import { ExternalLink } from "lucide-react";
+import { Account, Brand, Header, PlausibleTracker } from "../(header)";
 import { I18NProvider, TooltipProvider } from "../(providers)";
 import {
   SettingsDialogContent,
@@ -70,37 +69,6 @@ export function createRootLayout(appConfig: AppConfig) {
                   activeApp={appConfig.name}
                   filters={version.data.filters}
                 />
-              }
-              externalLinks={
-                <>
-                  {appConfig.supportedLocales.length > 1 && (
-                    <Suspense>
-                      <LocaleSwitcher
-                        locales={appConfig.supportedLocales}
-                        current={locale}
-                      />
-                    </Suspense>
-                  )}
-                  {appConfig.externalLinks?.map(({ href, title }) => (
-                    <ExternalAnchor
-                      key={href}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors whitespace-nowrap"
-                      href={href}
-                    >
-                      {title}
-                      <ExternalLink className="w-3 h-3 opacity-50" />
-                    </ExternalAnchor>
-                  ))}
-                  {appConfig.appUrl && (
-                    <ExternalAnchor
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border border-input bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors whitespace-nowrap"
-                      href={appConfig.appUrl}
-                    >
-                      In-Game App
-                      <ExternalLink className="w-3 h-3 opacity-50" />
-                    </ExternalAnchor>
-                  )}
-                </>
               }
             >
               <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">

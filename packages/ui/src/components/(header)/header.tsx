@@ -8,8 +8,6 @@ import { Settings } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { User } from "./user";
-import { ExternalAnchor } from "./external-anchor";
-import { DiscordIcon, GitHubIcon, RedditIcon } from "./social-icons";
 import { useT } from "../(providers)";
 
 export function Header({
@@ -17,14 +15,12 @@ export function Header({
   activeApp,
   settingsDialogContent,
   infoActions: _infoActions,
-  externalLinks,
   ...props
 }: {
   children: React.ReactNode;
   activeApp: string;
   settingsDialogContent?: JSX.Element;
   infoActions?: JSX.Element;
-  externalLinks?: React.ReactNode;
 } & HTMLAttributes<HTMLDivElement>): JSX.Element {
   const t = useT();
 
@@ -43,34 +39,6 @@ export function Header({
       <nav className="ml-2 grow flex items-center gap-2 text-sm font-bold min-w-0">
         {children}
       </nav>
-
-      {/* External + social links — desktop only */}
-      <div className="hidden md:flex items-center gap-1 ml-2">
-        {externalLinks}
-      </div>
-      <div className="hidden md:flex items-center gap-1 ml-1">
-        <ExternalAnchor
-          className="p-2 hover:bg-muted rounded-md transition-colors"
-          href="https://th.gl/discord"
-          title="Discord"
-        >
-          <DiscordIcon className="opacity-70 hover:opacity-100" />
-        </ExternalAnchor>
-        <ExternalAnchor
-          className="p-2 hover:bg-muted rounded-md transition-colors"
-          href="https://github.com/The-Hidden-Gaming-Lair"
-          title="GitHub"
-        >
-          <GitHubIcon className="opacity-70 hover:opacity-100" />
-        </ExternalAnchor>
-        <ExternalAnchor
-          className="p-2 hover:bg-muted rounded-md transition-colors"
-          href="https://www.reddit.com/r/TheHiddenGamingLair/"
-          title="Reddit"
-        >
-          <RedditIcon className="opacity-70 hover:opacity-100" />
-        </ExternalAnchor>
-      </div>
 
       {/* Action buttons — all screen sizes */}
       <div className="flex items-center gap-1 ml-2 shrink-0">
