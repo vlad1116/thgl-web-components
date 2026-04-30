@@ -97,13 +97,11 @@ export function DbSearch({
   // Keyboard shortcuts
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      // Ctrl+K or / to focus search
       if ((e.ctrlKey && e.key === "k") || (e.key === "/" && !open)) {
         e.preventDefault();
         inputRef.current?.focus();
         setOpen(true);
       }
-      // Escape to close
       if (e.key === "Escape" && open) {
         setQuery("");
         setOpen(false);

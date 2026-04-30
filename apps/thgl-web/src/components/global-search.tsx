@@ -45,9 +45,13 @@ export function GlobalSearch({
       <button
         onClick={() => setShowSearch(true)}
         aria-label="Search"
-        className="p-2 hover:bg-muted rounded-md transition"
+        className="flex items-center gap-2 h-8 rounded-md border border-neutral-700 bg-zinc-800/50 px-3 text-sm text-muted-foreground hover:text-foreground hover:border-neutral-600 transition-colors"
       >
-        <Search className="h-5 w-5 text-muted-foreground" />
+        <Search className="h-3.5 w-3.5" />
+        <span>Search</span>
+        <kbd className="inline-flex h-5 items-center rounded border border-neutral-700 bg-zinc-900 px-1.5 font-mono text-[10px] text-muted-foreground">
+          /
+        </kbd>
       </button>
       <Dialog open={showSearch} onOpenChange={() => setShowSearch(false)}>
         <DialogContent className="p-0 overflow-hidden max-w-xl">

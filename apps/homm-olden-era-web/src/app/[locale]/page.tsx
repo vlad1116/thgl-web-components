@@ -5,6 +5,7 @@ import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { ReleaseNotes } from "@repo/ui/content";
 import { APP_CONFIG } from "@/config";
+import { HeroSearch } from "@/components/hero-search";
 
 type PageProps = {
   params: Promise<{ locale?: string }>;
@@ -164,6 +165,9 @@ export default async function HomePage() {
                 )}
               </div>
             </div>
+
+            {/* Hero Search */}
+            <HeroSearch />
 
             {/* Database Sections Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
