@@ -40,11 +40,7 @@ export default async function ItemsLayout({
       slotGroups.get(groupKey)!.push({ id: item.id, name: resolveDict(dict, item.id), icon });
     }
   }
-  for (const [groupId, groupItems] of slotGroups) {
-    groups.push({ label: resolveDictWithFallback(dict, `ui.slot_${groupId}`, groupId), items: groupItems });
-  }
-
-  // Item sets group
+  // Item sets first
   if (itemSets.length > 0) {
     const setItems: { id: string; name: string; icon?: IconSprite }[] = [];
     for (const entry of itemSets) {
@@ -53,6 +49,11 @@ export default async function ItemsLayout({
       }
     }
     groups.push({ label: resolveDict(dict, "item_sets"), items: setItems });
+  }
+
+  // Then items by slot
+  for (const [groupId, groupItems] of slotGroups) {
+    groups.push({ label: resolveDictWithFallback(dict, `ui.slot_${groupId}`, groupId), items: groupItems });
   }
 
   return (
