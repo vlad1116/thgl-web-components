@@ -117,6 +117,7 @@ export function createGuidePage(appConfig: AppConfig) {
       const allSpawnArrays = await Promise.all(
         allTypeIds.map(async (typeId) => {
           const url = getApiUrl(appConfig.name, `type=${typeId}`);
+          console.log(`Fetching spawns for type ${typeId} from ${url}`);
           const response = await fetch(url);
           const buffer = await response.arrayBuffer();
           return decodeFromBuffer<Spawns>(new Uint8Array(buffer));
@@ -273,16 +274,25 @@ export function createGuidePage(appConfig: AppConfig) {
                     vars: { guide: guideTitle, title: appConfig.title },
                   })}
                 />
-                <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground py-2">
+                <nav
+                  aria-label="Breadcrumb"
+                  className="text-xs text-muted-foreground py-2"
+                >
                   <ol className="flex items-center gap-1">
                     <li>
-                      <Link href={localizePath("/", locale)} className="hover:text-foreground transition-colors">
+                      <Link
+                        href={localizePath("/", locale)}
+                        className="hover:text-foreground transition-colors"
+                      >
                         Home
                       </Link>
                     </li>
                     <li aria-hidden="true">/</li>
                     <li>
-                      <Link href={localizePath("/guides", locale)} className="hover:text-foreground transition-colors">
+                      <Link
+                        href={localizePath("/guides", locale)}
+                        className="hover:text-foreground transition-colors"
+                      >
                         Guides
                       </Link>
                     </li>
@@ -315,7 +325,12 @@ export function createGuidePage(appConfig: AppConfig) {
                 </p>
                 {version.createdAt && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    Last updated: {new Date(version.createdAt).toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })}
+                    Last updated:{" "}
+                    {new Date(version.createdAt).toLocaleDateString(locale, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
                   </p>
                 )}
               </>
