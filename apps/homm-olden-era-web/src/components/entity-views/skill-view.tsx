@@ -18,6 +18,7 @@ type SkillProps = {
     type: string;
     params: (string | number)[];
   }[];
+  classWeights?: { faction: string; classType: string; pct: number }[];
 };
 
 type IconSprite = {
@@ -76,6 +77,31 @@ export function SkillView({
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
             <BonusList bonuses={props.bonuses} dict={dict} />
+          </div>
+        </div>
+      )}
+
+      {/* Class Weights — offer rate per faction/class */}
+      {props.classWeights && props.classWeights.length > 0 && (
+        <div>
+          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            {resolveDict(dict, "ui.class_weights")}
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+            {props.classWeights.map((cw) => (
+              <div
+                key={`${cw.faction}_${cw.classType}`}
+                className="flex items-center justify-between bg-slate-900/30 border border-slate-800/50 rounded px-3 py-1.5 text-sm"
+              >
+                <span className="text-muted-foreground">
+                  {resolveDict(dict, `faction_${cw.faction}`)}{" "}
+                  <span className={cw.classType === "might" ? "text-red-400" : "text-indigo-400"}>
+                    {cw.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
+                  </span>
+                </span>
+                <span className="font-medium tabular-nums">{cw.pct}%</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

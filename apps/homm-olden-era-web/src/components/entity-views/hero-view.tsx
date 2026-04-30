@@ -19,6 +19,7 @@ type HeroProps = {
   specialization: string;
   startingArmy?: { unit: string; min: number; max: number }[];
   startSkills?: string[];
+  skillWeights?: { skill: string; weight: number; pct: number }[];
 };
 
 type IconSprite = {
@@ -156,10 +157,46 @@ export function HeroView({
                 key={skill}
                 itemId={skill}
                 database={database}
-                  locale={locale}
+                locale={locale}
                 dict={dict}
               />
             ))}
+          </div>
+        </RelatedSection>
+      )}
+
+      {/* Skill Offer Weights */}
+      {props.skillWeights && props.skillWeights.length > 0 && (
+        <RelatedSection title={resolveDict(dict, "ui.skill_weights")}>
+          <div className="space-y-1">
+            {props.skillWeights.map((sw) => {
+              const maxWeight = props.skillWeights![0].weight;
+              const barWidth = (sw.weight / maxWeight) * 100;
+              return (
+                <div
+                  key={sw.skill}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <div className="w-36 shrink-0">
+                    <EntityLink
+                      itemId={sw.skill}
+                      database={database}
+                      locale={locale}
+                      dict={dict}
+                    />
+                  </div>
+                  <div className="flex-1 h-5 bg-slate-900/50 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-amber-800/40 rounded"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
+                    {sw.pct}%
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </RelatedSection>
       )}
