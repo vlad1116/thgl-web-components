@@ -14,7 +14,7 @@ type IconSprite = {
 type DatabaseItem = {
   id: string;
   icon?: IconSprite | string;
-  props: Record<string, unknown>;
+  props?: Record<string, unknown>;
   groupId?: string;
 };
 
