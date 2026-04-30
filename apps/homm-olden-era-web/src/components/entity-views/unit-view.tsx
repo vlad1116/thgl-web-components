@@ -75,7 +75,7 @@ export function UnitView({
       <div className="flex items-center gap-4">
         {icon && <SpriteIcon icon={icon} size={64} />}
         <div>
-          <h3 className="text-3xl font-bold tracking-tight">{name}</h3>
+          <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm px-2.5 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
               {resolveDict(dict, "ui.tier")} {props.tier}
