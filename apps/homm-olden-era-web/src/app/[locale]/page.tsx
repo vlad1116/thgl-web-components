@@ -1,6 +1,12 @@
 import { type Metadata } from "next";
 import Link from "next/link";
-import { fetchDatabase, fetchVersion, getUpdateMessages, DEFAULT_LOCALE, getMetadataAlternates } from "@repo/lib";
+import {
+  fetchDatabase,
+  fetchVersion,
+  getUpdateMessages,
+  DEFAULT_LOCALE,
+  getMetadataAlternates,
+} from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { ReleaseNotes } from "@repo/ui/content";
@@ -33,7 +39,13 @@ export async function generateMetadata({
       title,
       description,
       url: canonical,
-      images: [{ url: "https://oldenera.th.gl/opengraph-image.jpg", width: 1200, height: 630 }],
+      images: [
+        {
+          url: "https://oldenera.th.gl/opengraph-image.jpg",
+          width: 1200,
+          height: 630,
+        },
+      ],
     },
   };
 }
@@ -92,9 +104,7 @@ export default async function HomePage() {
     getUpdateMessages(APP_CONFIG.name),
   ]);
 
-  const lastUpdated = version.createdAt
-    ? new Date(version.createdAt)
-    : null;
+  const lastUpdated = version.createdAt ? new Date(version.createdAt) : null;
 
   // Count items per section
   const counts = new Map<string, number>();
@@ -117,9 +127,10 @@ export default async function HomePage() {
               </h1>
               <p className="text-lg text-amber-400">Game Database</p>
               <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                Browse the complete database of units, heroes, spells, artifacts,
-                skills, and factions. All data extracted directly from the game
-                files with cross-references and localization in 14 languages.
+                Browse the complete database of units, heroes, spells,
+                artifacts, skills, and factions. All data extracted directly
+                from the game files with cross-references and localization in 14
+                languages.
               </p>
 
               {/* Stats */}
@@ -137,14 +148,18 @@ export default async function HomePage() {
                   <div className="text-2xl font-bold text-foreground tabular-nums">
                     {counts.size}
                   </div>
-                  <div className="text-xs uppercase tracking-wider">Categories</div>
+                  <div className="text-xs uppercase tracking-wider">
+                    Categories
+                  </div>
                 </div>
                 <div className="h-8 w-px bg-muted" />
                 <div className="text-center">
                   <div className="text-2xl font-bold text-foreground tabular-nums">
                     14
                   </div>
-                  <div className="text-xs uppercase tracking-wider">Languages</div>
+                  <div className="text-xs uppercase tracking-wider">
+                    Languages
+                  </div>
                 </div>
                 {lastUpdated && (
                   <>

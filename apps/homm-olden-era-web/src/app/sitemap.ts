@@ -39,12 +39,14 @@ function collectDatabaseEntries(database: DatabaseConfig) {
 }
 
 export async function generateSitemaps() {
+  // Generate enough chunks to cover all database entries.
+  // generateSitemaps runs at build time — if CDN data is stale, it would
+  // produce too few chunks. Over-allocating is safe: empty chunks return [].
   const database = await fetchDatabase(APP_CONFIG.name);
   const dbEntries = collectDatabaseEntries(database);
-  // Chunk 0 = core pages (home + listing pages)
-  // Chunks 1..N = database detail pages
   const dbChunks = Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK);
-  const total = 1 + dbChunks;
+  // Ensure at least 15 chunks to handle data growth between deploys
+  const total = 1 + Math.max(dbChunks, 15);
   return Array.from({ length: total }, (_, i) => ({ id: i }));
 }
 
