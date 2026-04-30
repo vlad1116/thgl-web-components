@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { EntityLinkCard, findItem } from "@/components/cross-link";
 
 type ItemProps = {
   slot: string;
@@ -38,6 +41,8 @@ export function ItemView({
   icon,
   props,
   dict,
+  database,
+  locale = "en",
 }: {
   name: string;
   desc: string;
@@ -47,12 +52,66 @@ export function ItemView({
   database: any[];
   locale?: string;
 }) {
+  // If this is an item set, find its member items by ID prefix
+  const isItemSet = !props.slot;
+  if (isItemSet) {
+    const memberIds: string[] = props.itemsInSet ?? [];
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
+          <span className="text-sm px-2.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-800/50 mt-1 inline-block">
+            {resolveDict(dict, "item_sets")}
+          </span>
+        </div>
+
+        {/* Set bonuses */}
+        {props.bonuses && props.bonuses.length > 0 && (
+          <div>
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "ui.set_bonus")}
+            </h4>
+            <div className="space-y-2">
+              {props.bonuses.map((tier: any, i: number) => (
+                <div key={i} className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
+                  <div className="text-sm font-medium text-amber-400 mb-1">
+                    {tier.requiredItems} {resolveDict(dict, "ui.items_in_set").toLowerCase()}
+                  </div>
+                  {tier.effects && tier.effects.length > 0 && (
+                    <BonusList bonuses={tier.effects} dict={dict} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Member items */}
+        {memberIds.length > 0 && (
+          <div>
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "ui.items_in_set")}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {memberIds.map((itemId: string) => (
+                <EntityLinkCard
+                  key={itemId}
+                  itemId={itemId}
+                  database={database}
+                  locale={locale}
+                  dict={dict}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Regular item view
   const rarityStyle = RARITY_COLORS[props.rarity] ?? RARITY_COLORS.common;
-  const narrativeKey = Object.keys(dict).find(
-    (k) =>
-      k.endsWith("_narrative") &&
-      k.startsWith(name.toLowerCase().replace(/ /g, "_")),
-  );
 
   return (
     <div className="space-y-5">
@@ -61,7 +120,7 @@ export function ItemView({
         {icon && <SpriteIcon icon={icon} size={64} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span
               className={`text-sm px-2.5 py-0.5 rounded border capitalize ${rarityStyle}`}
             >
@@ -71,9 +130,12 @@ export function ItemView({
               {resolveDict(dict, `ui.slot_${props.slot}`)}
             </span>
             {props.itemSet && (
-              <span className="text-xs text-amber-400">
+              <Link
+                href={localizePath(`/db/items/${props.itemSet}`, locale)}
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
                 {resolveDict(dict, "ui.set_prefix")} {resolveDict(dict, props.itemSet)}
-              </span>
+              </Link>
             )}
           </div>
         </div>
@@ -92,7 +154,7 @@ export function ItemView({
             {resolveDict(dict, "ui.value")}
           </div>
           <div className="text-lg font-semibold text-amber-400">
-            {props.goodsValue.toLocaleString()}
+            {props.goodsValue?.toLocaleString()}
           </div>
         </div>
         <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">

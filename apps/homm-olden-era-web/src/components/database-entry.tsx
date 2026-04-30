@@ -34,7 +34,7 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
   }
 
   // Category labels
-  for (const k of ["units", "heroes", "spells", "items", "skills", "factions",
+  for (const k of ["units", "heroes", "spells", "items", "item_sets", "skills", "factions",
     "specializations", "faction_laws", "sub_skills"]) {
     keys.add(k);
   }
@@ -126,6 +126,7 @@ export async function DatabaseEntryContent({
       id: i.id,
       icon: i.icon,
       groupId: i.groupId,
+      itemSet: i.props?.itemSet,
     })),
   }));
 
@@ -147,7 +148,7 @@ export async function DatabaseEntryContent({
       {entryType === "units" && <UnitView {...viewProps} />}
       {entryType === "heroes" && <HeroView {...viewProps} />}
       {entryType === "spells" && <SpellView {...viewProps} />}
-      {entryType === "items" && <ItemView {...viewProps} />}
+      {(entryType === "items" || entryType === "item_sets") && <ItemView {...viewProps} />}
       {(entryType === "skills" || entryType === "sub_skills") && (
         <SkillView {...viewProps} isSubSkill={entryType === "sub_skills"} />
       )}
