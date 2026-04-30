@@ -1,48 +1,35 @@
 import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict } from "@repo/lib";
-import { HeaderOffset } from "@repo/ui/header";
-import { ContentLayout } from "@repo/ui/ads";
+import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SkillTreeList } from "@/components/skill-tree";
 import { buildSkillNodes } from "@/components/skill-tree-data";
 
-type PageProps = {
-  params: Promise<{ locale?: string }>;
-};
-
+type PageProps = { params: Promise<{ locale?: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale = "en" } = await params;
+  const { locale = DEFAULT_LOCALE } = await params;
   return generateCategoryMetadata(locale, "skills");
 }
 
 export default async function Page({ params }: PageProps) {
-  const { locale = "en" } = await params;
+  const { locale = DEFAULT_LOCALE } = await params;
   const dict = await fetchDict(APP_CONFIG.name, locale);
   const database = await fetchDatabase(APP_CONFIG.name);
-
   const sectionLabel = resolveDict(dict, "skills");
   const skillNodes = await buildSkillNodes(database, dict);
 
   return (
-    <HeaderOffset full>
-      <ContentLayout
-        id={APP_CONFIG.name}
-        header={
-          <div className="max-w-7xl mx-auto px-4 pt-6">
-            <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
-            <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
-          </div>
-        }
-        content={
-          <div className="max-w-7xl mx-auto px-4 pb-6">
-            <SkillTreeList skills={skillNodes} locale={locale} />
-          </div>
-        }
-      />
-    </HeaderOffset>
+    <>
+      <div className="max-w-7xl mx-auto px-4 pt-6">
+        <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
+        <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 pb-6">
+        <SkillTreeList skills={skillNodes} locale={locale} />
+      </div>
+    </>
   );
 }

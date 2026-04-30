@@ -18,8 +18,8 @@ type IconSprite = {
   height: number;
 };
 
-// Collect all dict keys referenced by an entry's props (string values and arrays)
-function collectKeys(props: Record<string, any>, id: string, entryType: string): Set<string> {
+// Collect all dict keys referenced by an entry's props
+function collectKeys(dict: Record<string, string>, props: Record<string, any>, id: string, entryType: string): Set<string> {
   const keys = new Set<string>();
 
   // Entry-specific keys
@@ -28,19 +28,14 @@ function collectKeys(props: Record<string, any>, id: string, entryType: string):
   keys.add(`${dictKey}_desc`);
   keys.add(`${dictKey}_description`);
 
-  // All UI keys
-  for (const k of [
-    "ui.tier", "ui.base", "ui.upgrade_label", "ui.alt_upgrade", "ui.hp", "ui.atk",
-    "ui.def", "ui.dmg", "ui.init", "ui.speed", "ui.value", "ui.cost", "ui.class",
-    "ui.abilities", "ui.passives", "ui.alt_attacks", "ui.upgrade_path", "ui.related",
-    "ui.school", "ui.mana", "ui.level", "ui.target", "ui.duration", "ui.cooldown",
-    "ui.range", "ui.type", "ui.effect", "ui.slot", "ui.rarity", "ui.set_bonus",
-    "ui.items_in_set", "ui.specialization", "ui.laws", "ui.starting_hero",
-    "ui.starting_army", "ui.starting_spell", "ui.starting_skills",
-    "ui.leadership", "ui.offence", "ui.defence", "ui.spellpower", "ui.knowledge",
-    "ui.required_level", "ui.parent_skill", "ui.sub_skills",
-    "units", "heroes", "spells", "items", "skills", "factions",
-  ]) {
+  // All ui.* keys (small set, avoids maintaining a static list)
+  for (const k of Object.keys(dict)) {
+    if (k.startsWith("ui.")) keys.add(k);
+  }
+
+  // Category labels
+  for (const k of ["units", "heroes", "spells", "items", "skills", "factions",
+    "specializations", "faction_laws", "sub_skills"]) {
     keys.add(k);
   }
 
@@ -50,7 +45,6 @@ function collectKeys(props: Record<string, any>, id: string, entryType: string):
       keys.add(val);
       keys.add(`${val}_desc`);
       keys.add(`${val}_description`);
-      // Faction prefix variant
       keys.add(`faction_${val}`);
     } else if (Array.isArray(val)) {
       for (const v of val) walk(v);
@@ -136,7 +130,7 @@ export async function DatabaseEntryContent({
   }));
 
   // Slice dict to only keys needed by this entry
-  const neededKeys = collectKeys(props, item.id, entryType);
+  const neededKeys = collectKeys(dict, props, item.id, entryType);
   // Also add all item IDs from the database (for cross-link name resolution)
   for (const cat of database) {
     for (const i of cat.items) {

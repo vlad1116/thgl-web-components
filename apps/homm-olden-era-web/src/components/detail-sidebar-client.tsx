@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { localizePath } from "@repo/lib";
+import { Search, X } from "lucide-react";
 
 type IconSprite = {
   url: string;
@@ -10,12 +12,6 @@ type IconSprite = {
   y: number;
   width: number;
   height: number;
-};
-
-type SidebarItem = {
-  id: string;
-  icon?: IconSprite | string;
-  groupId?: string;
 };
 
 type SidebarGroup = {
@@ -34,10 +30,42 @@ export function DetailSidebarClient({
 }) {
   const pathname = usePathname() ?? "/";
   const activeId = pathname.split("/").pop() ?? "";
+  const [filter, setFilter] = useState("");
+
+  const query = filter.toLowerCase().trim();
+  const filteredGroups = query
+    ? groups
+        .map((g) => ({
+          ...g,
+          items: g.items.filter((i) => i.name.toLowerCase().includes(query)),
+        }))
+        .filter((g) => g.items.length > 0)
+    : groups;
 
   return (
-    <nav className="sidebar-scroll">
-      {groups.map((group) => (
+    <nav className="flex flex-col h-full">
+      <div className="shrink-0 pb-2">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter..."
+            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50"
+          />
+          {filter && (
+            <button
+              onClick={() => setFilter("")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="sidebar-scroll overflow-y-auto min-h-0">
+      {filteredGroups.map((group) => (
         <div key={group.label} className="mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
             {group.label}
@@ -75,6 +103,12 @@ export function DetailSidebarClient({
           })}
         </div>
       ))}
+      {query && filteredGroups.length === 0 && (
+        <div className="text-xs text-muted-foreground text-center py-4">
+          No matches
+        </div>
+      )}
+      </div>
     </nav>
   );
 }

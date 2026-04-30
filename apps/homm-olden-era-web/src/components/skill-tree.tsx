@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { localizePath } from "@repo/lib";
+import { Search as SearchIcon, X } from "lucide-react";
 import type { ResolvedIcon, SkillNode } from "@/components/skill-tree-data";
 
 function Icon({ icon, size }: { icon: ResolvedIcon; size: number }) {
@@ -127,22 +129,54 @@ function SkillTreeItem({ skill, locale }: { skill: SkillNode; locale: string }) 
 
 export function SkillTreeSidebar({
   skills,
-  activeId,
   locale = "en",
 }: {
   skills: SkillNode[];
-  activeId: string;
   locale?: string;
 }) {
+  const pathname = usePathname() ?? "/";
+  const activeId = pathname.split("/").pop() ?? "";
+  const [filter, setFilter] = useState("");
+
+  const query = filter.toLowerCase().trim();
+  const filteredSkills = query
+    ? skills.filter(
+        (s) =>
+          s.name.toLowerCase().includes(query) ||
+          s.subSkills.some((sub) => sub.name.toLowerCase().includes(query)),
+      )
+    : skills;
+
   const groups = new Map<string, SkillNode[]>();
-  for (const skill of skills) {
+  for (const skill of filteredSkills) {
     const group = skill.groupId ?? "other";
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group)!.push(skill);
   }
 
   return (
-    <nav className="sidebar-scroll">
+    <nav className="flex flex-col h-full">
+      <div className="shrink-0 pb-2">
+        <div className="relative">
+          <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter..."
+            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50"
+          />
+          {filter && (
+            <button
+              onClick={() => setFilter("")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="sidebar-scroll overflow-y-auto min-h-0">
       {Array.from(groups.entries()).map(([groupId, items]) => (
         <div key={groupId} className="mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
@@ -158,6 +192,12 @@ export function SkillTreeSidebar({
           ))}
         </div>
       ))}
+      {query && groups.size === 0 && (
+        <div className="text-xs text-muted-foreground text-center py-4">
+          No matches
+        </div>
+      )}
+      </div>
     </nav>
   );
 }
