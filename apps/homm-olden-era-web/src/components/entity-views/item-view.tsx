@@ -73,16 +73,34 @@ export function ItemView({
               {resolveDict(dict, "ui.set_bonus")}
             </h4>
             <div className="space-y-2">
-              {props.bonuses.map((tier: any, i: number) => (
-                <div key={i} className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-                  <div className="text-sm font-medium text-amber-400 mb-1">
-                    {tier.requiredItems} {resolveDict(dict, "ui.items_in_set").toLowerCase()}
+              {props.bonuses.map((tier: any, i: number) => {
+                // Look up the localized tier description
+                const entryId = Object.entries(dict).find(([, v]) => v === name)?.[0] ?? "";
+                const tierDesc = entryId
+                  ? resolveDict(dict, `${entryId}_tier_${tier.requiredItems}`)
+                  : undefined;
+                const hasTierDesc = tierDesc && !tierDesc.endsWith(`_tier_${tier.requiredItems}`);
+
+                return (
+                  <div key={i} className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
+                    <div className="text-sm font-medium text-amber-400 mb-1">
+                      {tier.requiredItems} {resolveDict(dict, "ui.items_in_set").toLowerCase()}
+                    </div>
+                    {hasTierDesc ? (
+                      <p className="text-sm">
+                        {tierDesc.replace(/\{(\d+)\}/g, (_: string, idx: string) => {
+                          // Substitute {0}, {1} etc. with values from the first effect's params
+                          const paramIdx = parseInt(idx);
+                          const value = tier.effects?.[0]?.params?.[paramIdx + 1];
+                          return value != null ? String(value) : `{${idx}}`;
+                        })}
+                      </p>
+                    ) : tier.effects && tier.effects.length > 0 ? (
+                      <BonusList bonuses={tier.effects} dict={dict} />
+                    ) : null}
                   </div>
-                  {tier.effects && tier.effects.length > 0 && (
-                    <BonusList bonuses={tier.effects} dict={dict} />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
