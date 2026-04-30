@@ -9,6 +9,7 @@ type ItemProps = {
   slot: string;
   rarity: string;
   itemSet?: string;
+  itemsInSet?: string[];
   goodsValue: number;
   costBase: number;
   maxLevel: number;
@@ -74,12 +75,9 @@ export function ItemView({
             </h4>
             <div className="space-y-2">
               {props.bonuses.map((tier: any, i: number) => {
-                // Look up the localized tier description
-                const entryId = Object.entries(dict).find(([, v]) => v === name)?.[0] ?? "";
-                const tierDesc = entryId
-                  ? resolveDict(dict, `${entryId}_tier_${tier.requiredItems}`)
-                  : undefined;
-                const hasTierDesc = tierDesc && !tierDesc.endsWith(`_tier_${tier.requiredItems}`);
+                // Use the desc SID to look up the localized tier description
+                const tierDesc = tier.desc ? resolveDict(dict, tier.desc) : undefined;
+                const hasTierDesc = tierDesc && tierDesc !== tier.desc;
 
                 return (
                   <div key={i} className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
@@ -89,7 +87,6 @@ export function ItemView({
                     {hasTierDesc ? (
                       <p className="text-sm">
                         {tierDesc.replace(/\{(\d+)\}/g, (_: string, idx: string) => {
-                          // Substitute {0}, {1} etc. with values from the first effect's params
                           const paramIdx = parseInt(idx);
                           const value = tier.effects?.[0]?.params?.[paramIdx + 1];
                           return value != null ? String(value) : `{${idx}}`;
