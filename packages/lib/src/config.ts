@@ -121,12 +121,12 @@ export const API_FORGE_URL = "https://api-forge.th.gl";
 // export const API_FORGE_URL = "http://localhost:3007";
 
 // API endpoints (search)
-export const DATA_FORGE_URL = "https://data.th.gl";
-// export const DATA_FORGE_URL = "http://localhost:3000";
+export const DATA_FORGE_URL = "https://api.th.gl";
+// export const DATA_FORGE_URL = "http://localhost:33033";
 
 // Static files (version.json, icons, tiles, config, dicts)
 export const DATA_FORGE_CDN_URL = "https://cdn.th.gl";
-// export const DATA_FORGE_CDN_URL = "http://localhost:3000";
+// export const DATA_FORGE_CDN_URL = "http://localhost:33033";
 
 export function getImageURL(url: string) {
   if (url.startsWith("/global_icons/game-icons")) {
