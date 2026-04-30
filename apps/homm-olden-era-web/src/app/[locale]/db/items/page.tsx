@@ -1,6 +1,7 @@
 import { type Metadata } from "next";
+import Link from "next/link";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabase, fetchDict, DEFAULT_LOCALE, localizePath } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -17,7 +18,8 @@ export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
   const dict = await fetchDict(APP_CONFIG.name, locale);
   const database = await fetchDatabase(APP_CONFIG.name);
-  const data = database.filter((item) => item.type === "items");
+  const items = database.filter((item) => item.type === "items");
+  const itemSets = database.find((item) => item.type === "item_sets");
   const sectionLabel = resolveDict(dict, "items");
 
   return (
@@ -26,8 +28,40 @@ export default async function Page({ params }: PageProps) {
         <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
       </div>
+
+      {/* Item Sets overview */}
+      {itemSets && itemSets.items.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 pb-6">
+          <h2 className="text-lg font-semibold mb-3">
+            {resolveDict(dict, "item_sets")}
+            <span className="ml-2 text-sm text-muted-foreground font-normal">{itemSets.items.length}</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
+            {itemSets.items.map((set) => {
+              const setName = resolveDict(dict, set.id);
+              const memberCount = (set.props as any)?.itemsInSet?.length ?? 0;
+              const bonusTiers = (set.props as any)?.bonuses?.length ?? 0;
+              return (
+                <Link
+                  key={set.id}
+                  href={localizePath(`/db/items/${set.id}`, locale)}
+                  className="group border border-slate-800 hover:border-amber-800/50 rounded-lg px-4 py-3 transition-all hover:bg-slate-900/50"
+                >
+                  <div className="font-medium group-hover:text-amber-400 transition-colors">
+                    {setName}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {memberCount} items · {bonusTiers} bonus {bonusTiers === 1 ? "tier" : "tiers"}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={data} section="items" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" />
+        <EntityGrid entries={items} section="items" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" />
       </div>
     </>
   );
