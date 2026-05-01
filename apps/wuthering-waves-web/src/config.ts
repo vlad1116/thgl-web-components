@@ -18,6 +18,15 @@ export const APP_CONFIG: AppConfig = {
   },
   internalLinks: [
     {
+      title: "Dimmr Plains Map",
+      description:
+        "Explore the subterranean depths beneath Lahai-Roi where the Keystone resides.",
+      href: "/maps/Dimmr%20Plains",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("wuthering-waves", "WP_3_3_RLG"),
+      linkText: "Explore the Dimmr Plains Map",
+    },
+    {
       title: "Lahai-Roi Map",
       description: "Explore the underground haven beneath the Roya Frostlands.",
       href: "/maps/Lahai-Roi",
