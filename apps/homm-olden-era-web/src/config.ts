@@ -74,11 +74,7 @@ export const APP_CONFIG: AppConfig = {
       href: "/db/buildings",
       title: "ui.nav_buildings",
       linkText: "Browse Buildings",
-<<<<<<< HEAD
       iconName: "House",
-=======
-      iconName: "Building",
->>>>>>> 78e2e84fb56c44c98e1d61ab11e6ee8167829060
       description:
         "City buildings per faction with costs, prerequisites, and unit recruitment.",
     },
