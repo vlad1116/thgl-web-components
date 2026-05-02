@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { EntityLinkCard } from "@/components/cross-link";
 
 type FactionProps = {
   biome?: string;
@@ -64,6 +67,9 @@ export function FactionView({
   icon,
   props,
   dict,
+  database,
+  locale = "en",
+  entryId,
   isFactionLaw = false,
 }: {
   name: string;
@@ -73,6 +79,7 @@ export function FactionView({
   dict: Record<string, string>;
   database: any[];
   locale?: string;
+  entryId?: string;
   isFactionLaw?: boolean;
 }) {
   const isFaction = !!props.biome;
@@ -200,6 +207,60 @@ export function FactionView({
           </div>
         </div>
       )}
+
+      {/* Faction Laws */}
+      {(() => {
+        const laws = database
+          .filter((cat: any) => cat.type === "faction_laws")
+          .flatMap((cat: any) => cat.items)
+          .filter((item: any) => item.groupId === entryId);
+        if (laws.length === 0) return null;
+        return (
+          <div>
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "faction_laws")}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {laws.map((law: any) => (
+                <EntityLinkCard
+                  key={law.id}
+                  itemId={law.id}
+                  database={database}
+                  locale={locale}
+                  dict={dict}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Specializations */}
+      {(() => {
+        const specs = database
+          .filter((cat: any) => cat.type === "specializations")
+          .flatMap((cat: any) => cat.items)
+          .filter((item: any) => item.groupId === entryId);
+        if (specs.length === 0) return null;
+        return (
+          <div>
+            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "specializations")}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {specs.map((spec: any) => (
+                <EntityLinkCard
+                  key={spec.id}
+                  itemId={spec.id}
+                  database={database}
+                  locale={locale}
+                  dict={dict}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

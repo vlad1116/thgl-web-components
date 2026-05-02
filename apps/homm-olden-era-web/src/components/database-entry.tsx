@@ -141,7 +141,7 @@ export async function DatabaseEntryContent({
   }
   const slicedDict = sliceDict(dict, neededKeys);
 
-  const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale };
+  const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id };
 
   return (
     <div className="py-4 text-left">
