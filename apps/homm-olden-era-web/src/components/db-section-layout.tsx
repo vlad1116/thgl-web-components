@@ -49,7 +49,12 @@ export async function buildSidebarGroups({
     }
   }
 
-  return Array.from(groups.entries()).map(([groupId, items]) => ({
+  // Sort groups to match the order in `types` when grouping by type
+  const sortedEntries = hasMultipleTypes
+    ? [...groups.entries()].sort((a, b) => types.indexOf(a[0]) - types.indexOf(b[0]))
+    : [...groups.entries()];
+
+  return sortedEntries.map(([groupId, items]) => ({
     label: groupLabelPrefix
       ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
       : resolveDictWithFallback(dict, groupId, groupId),
