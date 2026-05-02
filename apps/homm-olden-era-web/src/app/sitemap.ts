@@ -20,6 +20,7 @@ const TYPE_TO_SECTION: Record<string, string> = {
   factions: "factions",
   specializations: "factions",
   faction_laws: "factions",
+  buildings: "buildings",
 };
 
 /** Types that do not have detail pages */

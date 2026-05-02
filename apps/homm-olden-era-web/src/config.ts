@@ -68,7 +68,15 @@ export const APP_CONFIG: AppConfig = {
       linkText: "Explore Factions",
       iconName: "ShieldCheck",
       description:
-        "Faction overviews with faction laws, unique magics, and building trees.",
+        "Faction overviews with faction laws, specializations, and unique mechanics.",
+    },
+    {
+      href: "/db/buildings",
+      title: "ui.nav_buildings",
+      linkText: "Browse Buildings",
+      iconName: "Building",
+      description:
+        "City buildings per faction with costs, prerequisites, and unit recruitment.",
     },
   ],
   promoLinks: [],

@@ -74,7 +74,7 @@ const DB_SECTIONS = [
   },
   {
     href: "/db/items",
-    title: "Artifacts",
+    title: "Items",
     type: "items",
     icon: "◆",
     desc: "Equipment, scrolls, and item sets with bonuses and upgrade scaling.",
@@ -94,6 +94,13 @@ const DB_SECTIONS = [
     icon: "⛊",
     desc: "Faction overviews, laws, specializations, and unique mechanics.",
     extraTypes: ["specializations", "faction_laws"],
+  },
+  {
+    href: "/db/buildings",
+    title: "Buildings",
+    type: "buildings",
+    icon: "🏛",
+    desc: "City buildings per faction with costs, prerequisites, and unit recruitment.",
   },
 ];
 
