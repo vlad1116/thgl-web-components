@@ -156,11 +156,26 @@ export function ItemView({
         </div>
       </div>
 
-      {desc && desc !== name && (
-        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-          {desc}
-        </p>
-      )}
+      {(() => {
+        if (!desc || desc === name || desc.includes("_desc")) return null;
+        // Collect numeric values from bonuses for {0}, {1} substitution
+        const numericValues: string[] = [];
+        for (const b of props.bonuses ?? []) {
+          for (const p of b.params) {
+            if (/^\d+$/.test(String(p)) && !numericValues.includes(String(p))) {
+              numericValues.push(String(p));
+            }
+          }
+        }
+        const resolved = desc.replace(/\{(\d+)\}/g, (_, idx) => {
+          return numericValues[parseInt(idx)] ?? `{${idx}}`;
+        });
+        return (
+          <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+            {resolved}
+          </p>
+        );
+      })()}
 
       {/* Properties */}
       <div className="grid grid-cols-3 gap-1">

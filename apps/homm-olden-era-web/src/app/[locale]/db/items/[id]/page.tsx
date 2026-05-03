@@ -1,11 +1,12 @@
 import { type Metadata } from "next";
 import { generateEntryMetadata, generateGroupMetadata } from "@/components/metadata";
-import { fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabase, fetchDict, DEFAULT_LOCALE, localizePath } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { DatabaseEntryContent } from "@/components/database-entry";
 import { getGroupData, GroupPageContent } from "@/components/group-page";
+import Link from "next/link";
 
 type Params = Promise<{ id: string; locale?: string }>;
 
@@ -15,6 +16,7 @@ const SECTION = "items";
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id, locale = DEFAULT_LOCALE } = await params;
+  if (id === "sets") return generateGroupMetadata(locale, SECTION, "item_sets", "", "item_sets");
   const groupData = await getGroupData(TYPES, id);
   if (groupData) return generateGroupMetadata(locale, SECTION, id, GROUP_PREFIX, SECTION);
   return generateEntryMetadata(locale, SECTION, id);
@@ -22,6 +24,59 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function EntryPage({ params }: { params: Params }) {
   const { id, locale = DEFAULT_LOCALE } = await params;
+
+  // Item Sets listing page
+  if (id === "sets") {
+    const [dict, database] = await Promise.all([
+      fetchDict(APP_CONFIG.name, locale),
+      fetchDatabase(APP_CONFIG.name),
+    ]);
+    const itemSets = database.find((cat) => cat.type === "item_sets");
+    const sectionLabel = resolveDict(dict, "items");
+    const setsLabel = resolveDict(dict, "item_sets");
+
+    return (
+      <>
+        <div className="max-w-7xl mx-auto px-4 pt-6">
+          <Breadcrumb
+            crumbs={[
+              { label: sectionLabel, href: "/db/items" },
+              { label: setsLabel },
+            ]}
+            locale={locale}
+            dict={dict}
+          />
+          <h1 className="text-2xl font-bold mb-6">{setsLabel}</h1>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 pb-6">
+          {itemSets && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {itemSets.items.map((set) => {
+                const setName = resolveDict(dict, set.id);
+                const memberCount = (set.props as any)?.itemsInSet?.length ?? 0;
+                const bonusTiers = (set.props as any)?.bonuses?.length ?? 0;
+                return (
+                  <Link
+                    key={set.id}
+                    href={localizePath(`/db/items/${set.id}`, locale)}
+                    className="group border border-slate-800 hover:border-amber-800/50 rounded-lg px-4 py-3 transition-all hover:bg-slate-900/50"
+                  >
+                    <div className="font-medium group-hover:text-amber-400 transition-colors">
+                      {setName}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {memberCount} items · {bonusTiers} bonus {bonusTiers === 1 ? "tier" : "tiers"}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
   const groupData = await getGroupData(TYPES, id);
 
   if (groupData) {

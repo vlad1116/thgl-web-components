@@ -33,8 +33,10 @@ export default async function Page({ params }: PageProps) {
       {itemSets && itemSets.items.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 pb-6">
           <h2 className="text-lg font-semibold mb-3">
-            {resolveDict(dict, "item_sets")}
-            <span className="ml-2 text-sm text-muted-foreground font-normal">{itemSets.items.length}</span>
+            <Link href={localizePath("/db/items/sets", locale)} className="hover:text-amber-400 transition-colors">
+              {resolveDict(dict, "item_sets")}
+              <span className="ml-2 text-sm text-muted-foreground font-normal">{itemSets.items.length}</span>
+            </Link>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
             {itemSets.items.map((set) => {

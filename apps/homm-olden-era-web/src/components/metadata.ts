@@ -73,8 +73,10 @@ export async function generateGroupMetadata(
   // Follow @-references
   const resolved = groupLabel.startsWith("@") && dict[groupLabel] ? dict[groupLabel] : groupLabel;
 
-  const title = `${resolved} ${sectionLabel} | ${GAME_TITLE}`;
-  const description = `Browse all ${resolved.toLowerCase()} ${sectionLabel.toLowerCase()} in ${GAME_TITLE}. Complete stats, abilities, and detailed information.`;
+  const title = resolved === sectionLabel
+    ? `${resolved} | ${GAME_TITLE}`
+    : `${resolved} ${sectionLabel} | ${GAME_TITLE}`;
+  const description = `Browse all ${resolved.toLowerCase()} in ${GAME_TITLE}. Complete stats, abilities, and detailed information.`;
   const path = `/db/${section}/${groupId}`;
   const { canonical, languageAlternates } = getMetadataAlternates(
     path,

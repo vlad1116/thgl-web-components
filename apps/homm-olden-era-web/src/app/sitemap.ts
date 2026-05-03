@@ -142,6 +142,11 @@ export default async function sitemap(
       );
     }
 
+    // Item Sets page
+    entries.push(
+      makeEntry("/db/items/sets", { changeFrequency: "weekly", priority: 0.7 }),
+    );
+
     return entries;
   }
 
