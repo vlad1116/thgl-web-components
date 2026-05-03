@@ -61,7 +61,7 @@ export default async function Page({ params }: PageProps) {
       )}
 
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={items} section="items" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" />
+        <EntityGrid entries={items} section="items" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" linkGroups />
       </div>
     </>
   );

@@ -29,6 +29,7 @@ export function EntityGrid({
   locale = "en",
   groupLabelPrefix,
   nameLabelPrefix,
+  linkGroups = false,
 }: {
   entries: DatabaseEntry[];
   section: string;
@@ -36,6 +37,7 @@ export function EntityGrid({
   locale?: string;
   groupLabelPrefix?: string;
   nameLabelPrefix?: string;
+  linkGroups?: boolean;
 }) {
   // Group items by groupId
   const groups = new Map<string, DatabaseItem[]>();
@@ -47,7 +49,7 @@ export function EntityGrid({
     }
   }
 
-  const hideGroupHeader = groups.size === 1 && groups.has("other");
+  const hideGroupHeader = groups.size <= 1;
 
   return (
     <div className="space-y-6">
@@ -55,13 +57,23 @@ export function EntityGrid({
         const groupLabel = groupLabelPrefix
           ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
           : resolveDictWithFallback(dict, groupId, groupId);
+        const groupHref = linkGroups ? localizePath(`/db/${section}/${groupId}`, locale) : undefined;
 
         return (
           <div key={groupId}>
             {!hideGroupHeader && (
               <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-3 border-b border-slate-800 pb-1">
-                {groupLabel}
-                <span className="ml-2 text-slate-500">{items.length}</span>
+                {groupHref ? (
+                  <Link href={groupHref} prefetch={false} className="hover:text-amber-400 transition-colors">
+                    {groupLabel}
+                    <span className="ml-2 text-slate-500">{items.length}</span>
+                  </Link>
+                ) : (
+                  <>
+                    {groupLabel}
+                    <span className="ml-2 text-slate-500">{items.length}</span>
+                  </>
+                )}
               </h2>
             )}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">

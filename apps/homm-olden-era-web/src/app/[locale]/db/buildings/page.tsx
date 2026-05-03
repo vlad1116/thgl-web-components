@@ -27,7 +27,7 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={data} section="buildings" dict={dict} locale={locale} groupLabelPrefix="faction_" />
+        <EntityGrid entries={data} section="buildings" dict={dict} locale={locale} groupLabelPrefix="faction_" linkGroups />
       </div>
     </>
   );

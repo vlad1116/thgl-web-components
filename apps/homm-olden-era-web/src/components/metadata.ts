@@ -57,6 +57,40 @@ export async function generateCategoryMetadata(
   };
 }
 
+/** Generate metadata for a group page (e.g. /db/spells/day) */
+export async function generateGroupMetadata(
+  locale: string,
+  section: string,
+  groupId: string,
+  groupLabelPrefix: string,
+  sectionDictKey: string,
+): Promise<Metadata> {
+  const dict = await fetchDict(APP_CONFIG.name, locale);
+  const sectionLabel = resolveDict(dict, sectionDictKey);
+  const groupLabel = groupLabelPrefix
+    ? (dict[`${groupLabelPrefix}${groupId}`] ?? groupId)
+    : (dict[groupId] ?? groupId);
+  // Follow @-references
+  const resolved = groupLabel.startsWith("@") && dict[groupLabel] ? dict[groupLabel] : groupLabel;
+
+  const title = `${resolved} ${sectionLabel} | ${GAME_TITLE}`;
+  const description = `Browse all ${resolved.toLowerCase()} ${sectionLabel.toLowerCase()} in ${GAME_TITLE}. Complete stats, abilities, and detailed information.`;
+  const path = `/db/${section}/${groupId}`;
+  const { canonical, languageAlternates } = getMetadataAlternates(
+    path,
+    locale,
+    APP_CONFIG.supportedLocales,
+  );
+
+  return {
+    title,
+    description,
+    keywords: [...APP_CONFIG.keywords, resolved, sectionLabel],
+    alternates: { canonical, languages: languageAlternates },
+    openGraph: { title, description, url: canonical, images: [OG_IMAGE] },
+  };
+}
+
 /** Generate metadata for a detail page (e.g. /db/units/angel) */
 export async function generateEntryMetadata(
   locale: string,

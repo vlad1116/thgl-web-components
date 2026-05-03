@@ -36,6 +36,7 @@ export default async function Page({ params }: PageProps) {
           dict={dict}
           locale={locale}
           groupLabelPrefix="faction_"
+          linkGroups
         />
       </div>
     </>

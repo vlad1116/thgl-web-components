@@ -27,6 +27,16 @@ const TYPE_TO_SECTION: Record<string, string> = {
 /** Types that do not have detail pages */
 const SKIP_TYPES = new Set(["item_sets"]);
 
+/** Types that support group pages (section → type(s) to scan for groupIds) */
+const GROUP_PAGE_TYPES: Record<string, string[]> = {
+  units: ["units"],
+  heroes: ["heroes"],
+  spells: ["spells"],
+  items: ["items"],
+  buildings: ["buildings"],
+  "map-objects": ["map_objects"],
+};
+
 function collectDatabaseEntries(database: DatabaseConfig) {
   const entries: { section: string; id: string }[] = [];
   for (const group of database) {
@@ -35,6 +45,24 @@ function collectDatabaseEntries(database: DatabaseConfig) {
     if (!section) continue;
     for (const item of group.items) {
       entries.push({ section, id: item.id });
+    }
+  }
+  return entries;
+}
+
+function collectGroupPages(database: DatabaseConfig) {
+  const entries: { section: string; groupId: string }[] = [];
+  for (const [section, types] of Object.entries(GROUP_PAGE_TYPES)) {
+    const seen = new Set<string>();
+    for (const group of database) {
+      if (!types.includes(group.type)) continue;
+      for (const item of group.items) {
+        const gid = item.groupId;
+        if (gid && !seen.has(gid)) {
+          seen.add(gid);
+          entries.push({ section, groupId: gid });
+        }
+      }
     }
   }
   return entries;
@@ -100,6 +128,17 @@ export default async function sitemap(
     for (const link of APP_CONFIG.internalLinks || []) {
       entries.push(
         makeEntry(link.href, { changeFrequency: "daily", priority: 0.8 }),
+      );
+    }
+
+    // Group pages (e.g., /db/spells/day, /db/units/human)
+    const database = await fetchDatabase(APP_CONFIG.name);
+    for (const { section, groupId } of collectGroupPages(database)) {
+      entries.push(
+        makeEntry(`/db/${section}/${encodeURIComponent(groupId)}`, {
+          changeFrequency: "weekly",
+          priority: 0.7,
+        }),
       );
     }
 
