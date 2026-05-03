@@ -24,67 +24,59 @@ export const APP_CONFIG: AppConfig = {
   internalLinks: [
     {
       href: "/db/units",
-      title: "ui.nav_units",
-      linkText: "Browse all Units",
+      title: "config.internalLinks.units.title",
+      linkText: "config.internalLinks.units.linkText",
       iconName: "Axe",
-      description:
-        "Complete database of all units across all factions — stats, abilities, and upgrade paths.",
+      description: "config.internalLinks.units.description",
     },
     {
       href: "/db/heroes",
-      title: "ui.nav_heroes",
-      linkText: "Browse all Heroes",
+      title: "config.internalLinks.heroes.title",
+      linkText: "config.internalLinks.heroes.linkText",
       iconName: "Trophy",
-      description:
-        "All heroes with their stats, specializations, starting armies, and skills.",
+      description: "config.internalLinks.heroes.description",
     },
     {
       href: "/db/spells",
-      title: "ui.nav_spells",
-      linkText: "Browse all Spells",
+      title: "config.internalLinks.spells.title",
+      linkText: "config.internalLinks.spells.linkText",
       iconName: "ScrollText",
-      description:
-        "Battle and world spells across all magic schools — Day, Night, Primal, Space, and Neutral.",
+      description: "config.internalLinks.spells.description",
     },
     {
       href: "/db/items",
-      title: "ui.nav_artifacts",
-      linkText: "Browse all Artifacts",
+      title: "config.internalLinks.items.title",
+      linkText: "config.internalLinks.items.linkText",
       iconName: "Gift",
-      description:
-        "All artifacts, equipment, scrolls, and item sets with their bonuses and upgrade paths.",
+      description: "config.internalLinks.items.description",
     },
     {
       href: "/db/skills",
-      title: "ui.nav_skills",
-      linkText: "Browse all Skills",
+      title: "config.internalLinks.skills.title",
+      linkText: "config.internalLinks.skills.linkText",
       iconName: "BookOpen",
-      description:
-        "Hero skills and sub-skills with their progression levels and bonuses.",
+      description: "config.internalLinks.skills.description",
     },
     {
       href: "/db/factions",
-      title: "ui.nav_factions",
-      linkText: "Explore Factions",
+      title: "config.internalLinks.factions.title",
+      linkText: "config.internalLinks.factions.linkText",
       iconName: "ShieldCheck",
-      description:
-        "Faction overviews with faction laws, specializations, and unique mechanics.",
+      description: "config.internalLinks.factions.description",
     },
     {
       href: "/db/buildings",
-      title: "ui.nav_buildings",
-      linkText: "Browse Buildings",
+      title: "config.internalLinks.buildings.title",
+      linkText: "config.internalLinks.buildings.linkText",
       iconName: "House",
-      description:
-        "City buildings per faction with costs, prerequisites, and unit recruitment.",
+      description: "config.internalLinks.buildings.description",
     },
     {
       href: "/db/map-objects",
-      title: "ui.nav_map_objects",
-      linkText: "Browse Map Objects",
+      title: "config.internalLinks.map-objects.title",
+      linkText: "config.internalLinks.map-objects.linkText",
       iconName: "MapPin",
-      description:
-        "Dwellings, resource sites, adventure encounters, magic shrines, and more.",
+      description: "config.internalLinks.map-objects.description",
     },
   ],
   promoLinks: [],

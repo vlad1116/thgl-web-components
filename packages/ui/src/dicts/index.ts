@@ -54,6 +54,24 @@ const appDictionaries = {
     "zh-CN": () => import("./palia.zh-CN.json").then((mod) => mod.default),
     "zh-TW": () => import("./palia.zh-TW.json").then((mod) => mod.default),
   },
+  "homm-olden-era": {
+    en: () => import("./homm-olden-era.en.json").then((mod) => mod.default),
+    de: () => import("./homm-olden-era.de.json").then((mod) => mod.default),
+    es: () => import("./homm-olden-era.es.json").then((mod) => mod.default),
+    fr: () => import("./homm-olden-era.fr.json").then((mod) => mod.default),
+    ja: () => import("./homm-olden-era.ja.json").then((mod) => mod.default),
+    ko: () => import("./homm-olden-era.ko.json").then((mod) => mod.default),
+    pl: () => import("./homm-olden-era.pl.json").then((mod) => mod.default),
+    ru: () => import("./homm-olden-era.ru.json").then((mod) => mod.default),
+    cs: () => import("./homm-olden-era.cs.json").then((mod) => mod.default),
+    hu: () => import("./homm-olden-era.hu.json").then((mod) => mod.default),
+    tr: () => import("./homm-olden-era.tr.json").then((mod) => mod.default),
+    uk: () => import("./homm-olden-era.uk.json").then((mod) => mod.default),
+    "zh-CN": () =>
+      import("./homm-olden-era.zh-CN.json").then((mod) => mod.default),
+    "zh-TW": () =>
+      import("./homm-olden-era.zh-TW.json").then((mod) => mod.default),
+  },
   "thgl-app": {
     en: () => import("./thgl-app.en.json").then((mod) => mod.default),
     de: () => import("./thgl-app.de.json").then((mod) => mod.default),

@@ -6,12 +6,15 @@ import {
   getUpdateMessages,
   DEFAULT_LOCALE,
   getMetadataAlternates,
+  localizePath,
 } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { ReleaseNotes } from "@repo/ui/content";
+import { getFullDictionary } from "@repo/ui/dicts";
 import { APP_CONFIG } from "@/config";
 import { HeroSearch } from "@/components/hero-search";
+import { resolveDict } from "@/components/resolve-dict";
 
 type PageProps = {
   params: Promise<{ locale?: string }>;
@@ -51,71 +54,23 @@ export async function generateMetadata({
 }
 
 const DB_SECTIONS = [
-  {
-    href: "/db/units",
-    title: "Units",
-    type: "units",
-    icon: "⚔",
-    desc: "All units across all factions with stats, abilities, upgrade paths, and class descriptions.",
-  },
-  {
-    href: "/db/heroes",
-    title: "Heroes",
-    type: "heroes",
-    icon: "👑",
-    desc: "Hero stats, specializations, starting armies, and skill loadouts.",
-  },
-  {
-    href: "/db/spells",
-    title: "Spells",
-    type: "spells",
-    icon: "✦",
-    desc: "Battle and world spells across Day, Night, Primal, Space, and Neutral schools.",
-  },
-  {
-    href: "/db/items",
-    title: "Items",
-    type: "items",
-    icon: "◆",
-    desc: "Equipment, scrolls, and item sets with bonuses and upgrade scaling.",
-  },
-  {
-    href: "/db/skills",
-    title: "Skills",
-    type: "skills",
-    icon: "◎",
-    desc: "Hero skills with progression levels, sub-skills, and unlock requirements.",
-    extraTypes: ["sub_skills"],
-  },
-  {
-    href: "/db/factions",
-    title: "Factions",
-    type: "factions",
-    icon: "⛊",
-    desc: "Faction overviews, laws, specializations, and unique mechanics.",
-    extraTypes: ["specializations", "faction_laws"],
-  },
-  {
-    href: "/db/buildings",
-    title: "Buildings",
-    type: "buildings",
-    icon: "🏛",
-    desc: "City buildings per faction with costs, prerequisites, and unit recruitment.",
-  },
-  {
-    href: "/db/map-objects",
-    title: "Map Objects",
-    type: "map_objects",
-    icon: "🗺",
-    desc: "Dwellings, resource sites, adventure encounters, magic shrines, and more.",
-  },
+  { href: "/db/units", titleKey: "units", type: "units", icon: "⚔", extraTypes: [] as string[] },
+  { href: "/db/heroes", titleKey: "heroes", type: "heroes", icon: "👑", extraTypes: [] as string[] },
+  { href: "/db/spells", titleKey: "spells", type: "spells", icon: "✦", extraTypes: [] as string[] },
+  { href: "/db/items", titleKey: "items", type: "items", icon: "◆", extraTypes: [] as string[] },
+  { href: "/db/skills", titleKey: "skills", type: "skills", icon: "◎", extraTypes: ["sub_skills"] },
+  { href: "/db/factions", titleKey: "factions", type: "factions", icon: "⛊", extraTypes: ["specializations", "faction_laws"] },
+  { href: "/db/buildings", titleKey: "buildings", type: "buildings", icon: "🏛", extraTypes: [] as string[] },
+  { href: "/db/map-objects", titleKey: "map_objects", type: "map_objects", icon: "🗺", extraTypes: [] as string[] },
 ];
 
-export default async function HomePage() {
-  const [database, version, updateMessages] = await Promise.all([
+export default async function HomePage({ params }: PageProps) {
+  const { locale = DEFAULT_LOCALE } = await params;
+  const [database, version, updateMessages, dict] = await Promise.all([
     fetchDatabase(APP_CONFIG.name),
     fetchVersion(APP_CONFIG.name),
     getUpdateMessages(APP_CONFIG.name),
+    getFullDictionary(APP_CONFIG.name, locale),
   ]);
 
   const lastUpdated = version.createdAt ? new Date(version.createdAt) : null;
@@ -140,12 +95,6 @@ export default async function HomePage() {
                 Heroes of Might & Magic: Olden Era
               </h1>
               <p className="text-lg text-amber-400">Game Database</p>
-              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                Browse the complete database of units, heroes, spells,
-                artifacts, skills, and factions. All data extracted directly
-                from the game files with cross-references and localization in 14
-                languages.
-              </p>
 
               {/* Stats */}
               <div className="flex items-center justify-center gap-6 pt-2 text-muted-foreground flex-wrap">
@@ -180,7 +129,7 @@ export default async function HomePage() {
                     <div className="h-8 w-px bg-muted" />
                     <div className="text-center">
                       <div className="text-sm font-medium text-foreground">
-                        {lastUpdated.toLocaleDateString("en", {
+                        {lastUpdated.toLocaleDateString(locale, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
@@ -203,15 +152,20 @@ export default async function HomePage() {
               {DB_SECTIONS.map((section) => {
                 const count =
                   (counts.get(section.type) ?? 0) +
-                  (section.extraTypes?.reduce(
+                  section.extraTypes.reduce(
                     (sum, t) => sum + (counts.get(t) ?? 0),
                     0,
-                  ) ?? 0);
+                  );
+                const link = APP_CONFIG.internalLinks?.find(
+                  (l) => l.href === section.href,
+                );
+                const title = link ? resolveDict(dict, link.title) : resolveDict(dict, section.titleKey);
+                const desc = link?.description ? resolveDict(dict, link.description) : undefined;
 
                 return (
                   <Link
                     key={section.href}
-                    href={section.href}
+                    href={localizePath(section.href, locale)}
                     className="group relative border border-slate-800 hover:border-amber-800/50 rounded-lg p-5 transition-all hover:bg-slate-900/50"
                   >
                     <div className="flex items-start gap-3">
@@ -221,15 +175,17 @@ export default async function HomePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h2 className="text-lg font-semibold group-hover:text-amber-400 transition-colors">
-                            {section.title}
+                            {title}
                           </h2>
                           <span className="text-xs text-muted-foreground tabular-nums">
                             {count}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {section.desc}
-                        </p>
+                        {desc && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {desc}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Link>
