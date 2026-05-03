@@ -63,9 +63,21 @@ export function SkillView({
         </div>
       </div>
 
-      {desc && desc !== name && (
+      {desc && desc !== name && !desc.includes("_desc") && (
         <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-          {desc}
+          {desc.replace(/\{(\d+)\}/g, (_, idx) => {
+            // Try to resolve {0}, {1} from the first level's bonuses
+            const numericValues: string[] = [];
+            const firstLevel = props.levels?.[0];
+            if (firstLevel) {
+              for (const b of firstLevel.bonuses) {
+                for (const p of b.params) {
+                  if (/^\d+$/.test(String(p))) numericValues.push(String(p));
+                }
+              }
+            }
+            return numericValues[parseInt(idx)] ?? `{${idx}}`;
+          })}
         </p>
       )}
 
@@ -76,7 +88,7 @@ export function SkillView({
             {resolveDict(dict, "ui.effects")}
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-            <BonusList bonuses={props.bonuses} dict={dict} />
+            <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
           </div>
         </div>
       )}
@@ -129,7 +141,7 @@ export function SkillView({
                   </td>
                   <td className="px-4 py-3">
                     {level.bonuses && level.bonuses.length > 0 && (
-                      <BonusList bonuses={level.bonuses} dict={dict} />
+                      <BonusList bonuses={level.bonuses} dict={dict} locale={locale} />
                     )}
 
                     {level.subSkills && level.subSkills.length > 0 && (

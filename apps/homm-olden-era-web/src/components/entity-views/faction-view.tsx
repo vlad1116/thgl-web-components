@@ -112,7 +112,7 @@ export function FactionView({
               {resolveDict(dict, "ui.effects")}
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-              <BonusList bonuses={props.bonuses} dict={dict} />
+              <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
             </div>
           </div>
         )}
@@ -148,7 +148,7 @@ export function FactionView({
               {resolveDict(dict, "ui.effects")}
             </h4>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-              <BonusList bonuses={props.bonuses} dict={dict} />
+              <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
             </div>
           </div>
         )}

@@ -93,7 +93,7 @@ export function ItemView({
                         })}
                       </p>
                     ) : tier.effects && tier.effects.length > 0 ? (
-                      <BonusList bonuses={tier.effects} dict={dict} />
+                      <BonusList bonuses={tier.effects} dict={dict} locale={locale} />
                     ) : null}
                   </div>
                 );
@@ -212,7 +212,7 @@ export function ItemView({
             {resolveDict(dict, "ui.bonuses")}
           </h4>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-            <BonusList bonuses={props.bonuses} dict={dict} />
+            <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
           </div>
         </div>
       )}
