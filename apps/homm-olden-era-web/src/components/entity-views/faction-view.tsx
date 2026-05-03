@@ -58,6 +58,8 @@ function substituteTemplate(text: string, bonuses?: FactionProps["bonuses"]): st
   for (let i = 0; i < values.length; i++) {
     result = result.replace(`{${i}}`, values[i]);
   }
+  // Strip any remaining unresolved placeholders
+  result = result.replace(/\{(\d+)\}/g, "X");
   return result;
 }
 

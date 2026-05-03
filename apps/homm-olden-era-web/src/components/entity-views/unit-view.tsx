@@ -10,12 +10,15 @@ import {
   getHref,
 } from "@/components/cross-link";
 
+type DmgMod = { t: string; v: number };
+
 type UnitProps = {
   faction: string;
   tier: number;
   upgradeLevel: string;
   baseId: string;
   squadValue: number;
+  expBonus?: number;
   hp: number;
   offence: number;
   defence: number;
@@ -23,11 +26,32 @@ type UnitProps = {
   damageMax: number;
   initiative: number;
   speed: number;
+  nativeBiome?: string;
+  inDmgMods?: DmgMod[];
+  outDmgMods?: DmgMod[];
   cost: string;
   abilities: string[];
   passives: string[];
   altAttacks: string[];
   baseClass: string;
+};
+
+const BIOME_LABELS: Record<string, string> = {
+  Grass: "Grass",
+  Deathland: "Deathland",
+  Dirt: "Dirt",
+  Autumn: "Autumn",
+  Lava: "Lava",
+  Snow: "Snow",
+  Sand: "Sand",
+};
+
+const DMG_MOD_LABELS: Record<string, string> = {
+  shoot_attack: "Ranged",
+  melee_attack: "Melee",
+  magic_attack: "Magic",
+  magic_damage: "Magic",
+  pure_damage: "Pure",
 };
 
 type IconSprite = {
@@ -83,12 +107,18 @@ export function UnitView({
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               {upgLabel}
             </span>
-            <Link
-              href={localizePath(`/db/factions/${props.faction}`, locale)}
-              className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
-            >
-              {resolveDict(dict, `faction_${props.faction}`)}
-            </Link>
+            {findItem(database, props.faction) ? (
+              <Link
+                href={localizePath(`/db/factions/${props.faction}`, locale)}
+                className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                {resolveDict(dict, `faction_${props.faction}`)}
+              </Link>
+            ) : (
+              <span className="text-sm text-slate-300">
+                {resolveDict(dict, `faction_${props.faction}`)}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -114,6 +144,40 @@ export function UnitView({
         <StatCell label={resolveDict(dict, "ui.value")} value={props.squadValue} color="text-yellow-400" />
         <StatCell label={resolveDict(dict, "ui.cost")} value={props.cost} small color="text-amber-300" />
       </div>
+
+      {/* Extra info row: Biome, XP, Damage Mods */}
+      {(props.nativeBiome || props.expBonus || (props.inDmgMods && props.inDmgMods.length > 0) || (props.outDmgMods && props.outDmgMods.length > 0)) && (
+        <div className="flex gap-2 flex-wrap">
+          {props.nativeBiome && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-1.5 text-sm">
+              <span className="text-muted-foreground">Native Terrain: </span>
+              <span className="text-green-400">{BIOME_LABELS[props.nativeBiome] ?? props.nativeBiome}</span>
+            </div>
+          )}
+          {props.expBonus != null && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-1.5 text-sm">
+              <span className="text-muted-foreground">XP Value: </span>
+              <span className="text-yellow-400">{props.expBonus}</span>
+            </div>
+          )}
+          {props.inDmgMods && props.inDmgMods.length > 0 && props.inDmgMods.map((mod, i) => (
+            <div key={`in-${i}`} className="bg-slate-900/50 border border-slate-800 rounded px-3 py-1.5 text-sm">
+              <span className="text-muted-foreground">{DMG_MOD_LABELS[mod.t] ?? mod.t} resistance: </span>
+              <span className={mod.v < 0 ? "text-blue-400" : "text-red-400"}>
+                {mod.v < 0 ? `${Math.round(Math.abs(mod.v) * 100)}%` : `–${Math.round(mod.v * 100)}%`}
+              </span>
+            </div>
+          ))}
+          {props.outDmgMods && props.outDmgMods.length > 0 && props.outDmgMods.map((mod, i) => (
+            <div key={`out-${i}`} className="bg-slate-900/50 border border-slate-800 rounded px-3 py-1.5 text-sm">
+              <span className="text-muted-foreground">{DMG_MOD_LABELS[mod.t] ?? mod.t} damage: </span>
+              <span className={mod.v > 0 ? "text-green-400" : "text-red-400"}>
+                {mod.v > 0 ? `+${Math.round(mod.v * 100)}%` : `${Math.round(mod.v * 100)}%`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Class */}
       {props.baseClass && (
