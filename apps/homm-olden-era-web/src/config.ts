@@ -78,6 +78,14 @@ export const APP_CONFIG: AppConfig = {
       description:
         "City buildings per faction with costs, prerequisites, and unit recruitment.",
     },
+    {
+      href: "/db/map-objects",
+      title: "ui.nav_map_objects",
+      linkText: "Browse Map Objects",
+      iconName: "MapPin",
+      description:
+        "Dwellings, resource sites, adventure encounters, magic shrines, and more.",
+    },
   ],
   promoLinks: [],
   externalLinks: [],

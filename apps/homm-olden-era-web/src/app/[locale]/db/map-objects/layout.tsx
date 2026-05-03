@@ -1,0 +1,22 @@
+import { DEFAULT_LOCALE } from "@repo/lib";
+import { DbSectionLayout } from "@/components/db-section-layout";
+
+export default async function MapObjectsLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale?: string }>;
+}) {
+  const { locale = DEFAULT_LOCALE } = await params;
+  return (
+    <DbSectionLayout
+      section="map-objects"
+      types={["map_objects"]}
+      groupLabelPrefix=""
+      locale={locale}
+    >
+      {children}
+    </DbSectionLayout>
+  );
+}

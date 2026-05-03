@@ -102,6 +102,13 @@ const DB_SECTIONS = [
     icon: "🏛",
     desc: "City buildings per faction with costs, prerequisites, and unit recruitment.",
   },
+  {
+    href: "/db/map-objects",
+    title: "Map Objects",
+    type: "map_objects",
+    icon: "🗺",
+    desc: "Dwellings, resource sites, adventure encounters, magic shrines, and more.",
+  },
 ];
 
 export default async function HomePage() {

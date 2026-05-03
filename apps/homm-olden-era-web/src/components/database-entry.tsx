@@ -10,6 +10,7 @@ import { ItemView } from "@/components/entity-views/item-view";
 import { SkillView } from "@/components/entity-views/skill-view";
 import { FactionView } from "@/components/entity-views/faction-view";
 import { BuildingView } from "@/components/entity-views/building-view";
+import { MapObjectView } from "@/components/entity-views/map-object-view";
 
 type IconSprite = {
   url: string;
@@ -28,6 +29,7 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
   keys.add(dictKey);
   keys.add(`${dictKey}_desc`);
   keys.add(`${dictKey}_description`);
+  keys.add(`${dictKey}_narrative`);
 
   // All ui.* keys (small set, avoids maintaining a static list)
   for (const k of Object.keys(dict)) {
@@ -36,7 +38,7 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
 
   // Category labels
   for (const k of ["units", "heroes", "spells", "items", "item_sets", "skills", "factions",
-    "specializations", "faction_laws", "sub_skills", "buildings"]) {
+    "specializations", "faction_laws", "sub_skills", "buildings", "map_objects"]) {
     keys.add(k);
   }
 
@@ -160,6 +162,7 @@ export async function DatabaseEntryContent({
         <FactionView {...viewProps} isFactionLaw />
       )}
       {entryType === "buildings" && <BuildingView {...viewProps} />}
+      {entryType === "map_objects" && <MapObjectView {...viewProps} />}
     </div>
   );
 }

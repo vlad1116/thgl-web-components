@@ -21,6 +21,7 @@ const TYPE_TO_SECTION: Record<string, string> = {
   specializations: "factions",
   faction_laws: "factions",
   buildings: "buildings",
+  map_objects: "map-objects",
 };
 
 /** Types that do not have detail pages */
