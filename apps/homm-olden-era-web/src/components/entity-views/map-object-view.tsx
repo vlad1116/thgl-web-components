@@ -38,57 +38,102 @@ type IconSprite = {
   height: number;
 };
 
-function formatReward(type: string, params: (string | number)[]): string {
+function FormatReward({
+  type,
+  params,
+  dict,
+  database,
+  locale,
+}: {
+  type: string;
+  params: (string | number)[];
+  dict: Record<string, string>;
+  database: any[];
+  locale: string;
+}) {
   switch (type) {
     case "SideResReward": {
       const parts: string[] = [];
       for (let i = 0; i < params.length; i += 2) {
-        parts.push(`${Number(params[i + 1]).toLocaleString()} ${params[i]}`);
+        parts.push(`${Number(params[i + 1]).toLocaleString()} ${resolveDict(dict, String(params[i]))}`);
       }
-      return parts.join(", ");
+      return <>{parts.join(", ")}</>;
     }
     case "HeroExpReward":
-      return `${Number(params[0]).toLocaleString()} XP`;
     case "SideExpReward":
-      return `${Number(params[0]).toLocaleString()} XP`;
+      return <>{Number(params[0]).toLocaleString()} XP</>;
     case "HeroBoxOptionalVersionUnitReward":
-      return `Tier ${params[0]} units (choice)`;
+      return <>Tier {params[0]} units (choice)</>;
     case "HeroBoxUnitReward":
-      return `Tier ${params[0]} units`;
+      return <>Tier {params[0]} units</>;
     case "HeroStatsReward": {
       const stats: string[] = [];
       for (let i = 0; i < params.length; i += 2) {
         stats.push(`+${params[i + 1]} ${String(params[i]).replace(/([A-Z])/g, " $1").trim()}`);
       }
-      return stats.join(", ");
+      return <>{stats.join(", ")}</>;
     }
     case "HeroMagicMassAdditionReward": {
       const school = params[0] === "any" ? "" : ` ${String(params[0])}`;
       const tier = params[2] === "any" ? "" : ` tier ${params[2]}`;
-      if (school) return `All${school} spells`;
-      if (tier) return `All${tier} spells`;
-      return "All spells";
+      if (school) return <>All{school} spells</>;
+      if (tier) return <>All{tier} spells</>;
+      return <>All spells</>;
     }
     case "HeroMagicAdditionReward":
-      return `${params.length} specific spells`;
+      return <>{params.length} specific spells</>;
     case "HeroRandomItemsReward":
-      return `Random ${params[0]} artifact`;
+      return <>Random {params[0]} artifact</>;
     case "MovePointsAdditionReward":
-      return `+${params[0]} movement points`;
+      return <>+{params[0]} movement points</>;
     case "ManaAdditionReward":
-      return `+${params[0]} mana`;
+      return <>+{params[0]} mana</>;
     case "ManaPercentSettingReward":
-      return `Set mana to ${Math.round(Number(params[0]) * 100)}%`;
+      return <>Set mana to {Math.round(Number(params[0]) * 100)}%</>;
     case "SideExpToLevelUpReward":
-      return "Level up";
+    case "HeroLevelUpReward":
+      return <>Level up</>;
+    case "HeroItemReward":
+      return (
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+      );
+    case "HeroUnitsReward":
+      return (
+        <span className="inline-flex items-center gap-1">
+          {params[1] && <span>{params[1]}×</span>}
+          <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+        </span>
+      );
+    case "HeroSkillAdditionReward":
+      return (
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+      );
     case "HeroBoxUnitsReward":
-      return `Specific units: ${params.join(", ")}`;
+      return (
+        <span className="inline-flex items-center gap-1 flex-wrap">
+          {params.map((p, i) => (
+            <span key={i}>
+              {i > 0 && ", "}
+              <EntityLink itemId={String(p)} database={database} dict={dict} locale={locale} />
+            </span>
+          ))}
+        </span>
+      );
     case "HeroSkillReward":
-      return `Skill: ${params[0]}`;
+      return (
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+      );
     case "RandomHeroSkillReward":
-      return `Random skill (${params[0]} choices)`;
+      return <>Random skill ({params[0]} choices)</>;
+    case "SideRandomBuffReward": {
+      // Params: [debuffId1, debuffId2, ..., durationType, durationValue]
+      const duration = Number(params[params.length - 1]);
+      const durationType = String(params[params.length - 2]);
+      const durationLabel = durationType === "ForSeveralDays" ? `${duration} days` : `${duration} rounds`;
+      return <>Random curse ({durationLabel})</>;
+    }
     default:
-      return `${type.replace(/Reward$/, "").replace(/([A-Z])/g, " $1").trim()}: ${params.join(", ")}`;
+      return <>{type.replace(/Reward$/, "").replace(/([A-Z])/g, " $1").trim()}: {params.join(", ")}</>;
   }
 }
 
@@ -283,7 +328,7 @@ export function MapObjectView({
                         {v.rewards.map((r, j) => (
                           <span key={j}>
                             {j > 0 && " + "}
-                            {formatReward(r.type, r.params)}
+                            <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} />
                           </span>
                         ))}
                         {v.guarded && (
