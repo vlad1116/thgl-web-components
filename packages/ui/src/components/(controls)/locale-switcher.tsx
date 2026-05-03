@@ -14,10 +14,12 @@ import { cn } from "@repo/lib";
 
 const LOCALE_LABELS: Record<string, string> = {
   en: "English",
+  cs: "Čeština",
   de: "Deutsch",
   es: "Español",
   "es-MX": "Español (México)",
   fr: "Français",
+  hu: "Magyar",
   it: "Italiano",
   ja: "日本語",
   ko: "한국어",
