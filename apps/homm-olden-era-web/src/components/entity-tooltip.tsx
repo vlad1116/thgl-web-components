@@ -1,15 +1,41 @@
 "use client";
 
 import { useState, useRef, useCallback, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type TooltipData = {
   name: string;
   type: string;
   desc: string | null;
   bonuses: string[];
+  stats: string[];
 };
 
 const cache = new Map<string, TooltipData>();
+const pending = new Map<string, Promise<TooltipData | null>>();
+
+function fetchTooltip(
+  entityId: string,
+  locale: string,
+): Promise<TooltipData | null> {
+  const key = `${entityId}_${locale}`;
+  const cached = cache.get(key);
+  if (cached) return Promise.resolve(cached);
+  const existing = pending.get(key);
+  if (existing) return existing;
+  const promise = fetch(`/api/entity-tooltip?id=${entityId}&locale=${locale}`)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((d) => {
+      if (d && !d.error) {
+        cache.set(key, d);
+        return d as TooltipData;
+      }
+      return null;
+    })
+    .finally(() => pending.delete(key));
+  pending.set(key, promise);
+  return promise;
+}
 
 export function EntityTooltip({
   entityId,
@@ -23,32 +49,44 @@ export function EntityTooltip({
   const [data, setData] = useState<TooltipData | null>(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
 
   const fetchData = useCallback(() => {
-    const cached = cache.get(`${entityId}_${locale}`);
-    if (cached) {
-      setData(cached);
+    if (cache.has(`${entityId}_${locale}`)) {
+      setData(cache.get(`${entityId}_${locale}`)!);
       return;
     }
     setLoading(true);
-    fetch(`/api/entity-tooltip?id=${entityId}&locale=${locale}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((d) => {
-        if (d && !d.error) {
-          cache.set(`${entityId}_${locale}`, d);
-          setData(d);
-        }
-      })
-      .finally(() => setLoading(false));
+    fetchTooltip(entityId, locale).then((d) => {
+      if (d) setData(d);
+      setLoading(false);
+    });
   }, [entityId, locale]);
 
   const handleEnter = () => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     timerRef.current = setTimeout(() => {
       fetchData();
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const tooltipW = 288;
+        let x = rect.left;
+        // Keep within viewport
+        if (x + tooltipW > window.innerWidth - 8) {
+          x = window.innerWidth - tooltipW - 8;
+        }
+        if (x < 8) x = 8;
+        // Show above if near bottom, below otherwise
+        const spaceAbove = rect.top;
+        const y =
+          spaceAbove > 200
+            ? rect.top - 4 // above
+            : rect.bottom + 4; // below
+        setPos({ x, y: y });
+      }
       setVisible(true);
     }, 250);
   };
@@ -58,53 +96,74 @@ export function EntityTooltip({
     hideTimerRef.current = setTimeout(() => setVisible(false), 100);
   };
 
-  const hasContent = data && (data.desc || data.bonuses.length > 0);
+  const hasContent = data && (data.desc || data.bonuses.length > 0 || data.stats.length > 0);
 
   return (
-    <div
+    <span
       ref={containerRef}
-      className="relative"
+      className="inline-flex"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
       {children}
-      {visible && (hasContent || loading) && (
-        <div
-          className="absolute z-50 bottom-full left-0 mb-1.5 w-72 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-3 pointer-events-none"
-          onMouseEnter={() => {
-            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-          }}
-          onMouseLeave={handleLeave}
-        >
-          {loading && !data && (
-            <div className="text-xs text-muted-foreground">Loading...</div>
-          )}
-          {hasContent && (
-            <>
-              {data.desc && (
-                <p className="text-xs text-muted-foreground italic mb-2 line-clamp-3">
-                  {data.desc}
-                </p>
-              )}
-              {data.bonuses.length > 0 && (
-                <ul className="space-y-1">
-                  {data.bonuses.map((b, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-1.5 text-xs"
-                    >
-                      <span className="text-amber-500 mt-px shrink-0">
-                        &#x25C6;
+      {visible &&
+        (hasContent || loading) &&
+        pos &&
+        createPortal(
+          <div
+            className="fixed z-[99999] w-72 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-3 pointer-events-none"
+            style={{
+              left: pos.x,
+              top: pos.y,
+              transform:
+                containerRef.current &&
+                containerRef.current.getBoundingClientRect().top > 200
+                  ? "translateY(-100%)"
+                  : undefined,
+            }}
+          >
+            {loading && !data && (
+              <div className="text-xs text-muted-foreground">Loading...</div>
+            )}
+            {hasContent && (
+              <>
+                {data.stats.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {data.stats.map((s, i) => (
+                      <span
+                        key={i}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+                      >
+                        {s}
                       </span>
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
+                    ))}
+                  </div>
+                )}
+                {data.desc && (
+                  <p className="text-xs text-muted-foreground italic mb-2 line-clamp-3">
+                    {data.desc}
+                  </p>
+                )}
+                {data.bonuses.length > 0 && (
+                  <ul className="space-y-1">
+                    {data.bonuses.map((b, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-1.5 text-xs"
+                      >
+                        <span className="text-amber-500 mt-px shrink-0">
+                          &#x25C6;
+                        </span>
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>,
+          document.body,
+        )}
+    </span>
   );
 }

@@ -224,12 +224,13 @@ export function HeroView({
                   for (const b of ult.bonuses ?? []) {
                     for (const p of b.params ?? []) {
                       const n = parseFloat(String(p));
-                      if (!isNaN(n) && String(p) !== "true" && String(p) !== "false") {
-                        vals.push(n > 0 && n < 1 ? `${Math.round(n * 100)}%` : String(n));
+                      if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+                        const abs = Math.abs(n);
+                        vals.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}%` : String(abs));
                       }
                     }
                   }
-                  ultDesc = ultDesc.replace(/\{(\d+)\}/g, (_, idx) => vals[parseInt(idx)] ?? "X");
+                  ultDesc = ultDesc.replace(/\{(\d+)\}/g, (_, idx) => vals[parseInt(idx)] ?? "");
                 }
                 return (
                   <div key={ult.id} className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3 space-y-1.5">

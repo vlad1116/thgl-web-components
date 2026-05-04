@@ -121,9 +121,10 @@ export async function GET(request: Request) {
     for (const b of item.props?.bonuses ?? []) {
       for (const p of b.params) {
         const n = parseFloat(String(p));
-        if (!isNaN(n) && String(p) !== "true" && String(p) !== "false") {
+        if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+          const abs = Math.abs(n);
           numericValues.push(
-            n > 0 && n < 1 ? `${Math.round(n * 100)}` : String(n),
+            abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
           );
         }
       }
@@ -140,6 +141,58 @@ export async function GET(request: Request) {
     bonuses.push(formatBonus(b, dict));
   }
 
+  // Build type-specific stats preview
+  const stats: string[] = [];
+  const p = item.props ?? {};
+  switch (entryType) {
+    case "units": {
+      if (p.health) stats.push(`HP: ${p.health}`);
+      if (p.attack) stats.push(`ATK: ${p.attack}`);
+      if (p.defence) stats.push(`DEF: ${p.defence}`);
+      if (p.damageMin && p.damageMax) stats.push(`DMG: ${p.damageMin}–${p.damageMax}`);
+      if (p.tier) stats.push(`Tier ${p.tier}`);
+      break;
+    }
+    case "heroes": {
+      const faction = p.faction ? resolveDict(dict, `faction_${p.faction}`) : null;
+      if (faction && faction !== `faction_${p.faction}`) stats.push(faction);
+      if (p.classType) stats.push(p.classType === "might" ? "Might" : "Magic");
+      if (p.offence) stats.push(`ATK: ${p.offence}`);
+      if (p.defence) stats.push(`DEF: ${p.defence}`);
+      if (p.spellPower) stats.push(`SP: ${p.spellPower}`);
+      if (p.intelligence) stats.push(`INT: ${p.intelligence}`);
+      break;
+    }
+    case "spells": {
+      if (p.school) {
+        const schoolName = resolveDict(dict, `ui.school_${p.school}`);
+        stats.push(schoolName !== `ui.school_${p.school}` ? schoolName : humanizeStat(p.school as string));
+      }
+      if (p.tier) stats.push(`Tier ${p.tier}`);
+      if (p.manaCost) stats.push(`${p.manaCost} Mana`);
+      break;
+    }
+    case "items":
+    case "item_sets": {
+      if (p.slot) {
+        const slotKey = `ui.slot_${p.slot}`;
+        const resolved = resolveDict(dict, slotKey);
+        stats.push(resolved !== slotKey ? resolved : (p.slot as string).replace(/_slot$/, "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
+      }
+      if (p.rarity) stats.push(humanizeStat(p.rarity as string));
+      break;
+    }
+    case "skills":
+    case "sub_skills": {
+      if (p.skillType) stats.push(humanizeStat(p.skillType as string));
+      break;
+    }
+    case "buildings": {
+      if (p.costGold) stats.push(`${p.costGold} Gold`);
+      break;
+    }
+  }
+
   return NextResponse.json(
     {
       id,
@@ -147,6 +200,7 @@ export async function GET(request: Request) {
       type: entryType,
       desc: hasDesc ? desc : null,
       bonuses,
+      stats,
     },
     {
       headers: {

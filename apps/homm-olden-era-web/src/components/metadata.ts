@@ -3,6 +3,33 @@ import { fetchDatabase, fetchDict, getMetadataAlternates } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 
+/** Resolve {0}, {1}, ... placeholders in description text using numeric bonus params */
+function resolveTemplatePlaceholders(
+  text: string,
+  bonuses?: { type: string; params: (string | number)[] }[],
+): string {
+  if (!text.includes("{") || !bonuses?.length) return text;
+  const values: string[] = [];
+  for (const b of bonuses) {
+    for (const p of b.params) {
+      const n = parseFloat(String(p));
+      if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+        const abs = Math.abs(n);
+        values.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
+      }
+    }
+    if ((b as any).upgrade) {
+      const inc = (b as any).upgrade.increment;
+      if (typeof inc === "number" && inc !== 0) {
+        const abs = Math.abs(inc);
+        values.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
+      }
+      if ((b as any).upgrade.levelStep) values.push(String((b as any).upgrade.levelStep));
+    }
+  }
+  return text.replace(/\{(\d+)\}/g, (_, idx) => values[parseInt(idx)] ?? "");
+}
+
 const GAME_TITLE = "Heroes of Might & Magic: Olden Era";
 const OG_IMAGE = {
   url: "https://oldenera.th.gl/opengraph-image.jpg",
@@ -100,7 +127,10 @@ export async function generateEntryMetadata(
   section: string,
   id: string,
 ): Promise<Metadata> {
-  const dict = await fetchDict(APP_CONFIG.name, locale);
+  const [dict, database] = await Promise.all([
+    fetchDict(APP_CONFIG.name, locale),
+    fetchDatabase(APP_CONFIG.name),
+  ]);
 
   // Resolve name based on section type
   let entryName: string;
@@ -111,9 +141,21 @@ export async function generateEntryMetadata(
     entryName = resolveDict(dict, id);
   }
 
+  // Find item in database for bonus params
+  let itemProps: any;
+  for (const cat of database) {
+    const found = cat.items.find((i) => i.id === id);
+    if (found) { itemProps = found.props; break; }
+  }
+
   const sectionLabel = resolveDict(dict, section);
-  const desc = resolveDict(dict, section === "factions" ? `faction_${id}_desc` : `${id}_desc`);
+  let desc = resolveDict(dict, section === "factions" ? `faction_${id}_desc` : `${id}_desc`);
   const hasDesc = desc && desc !== `${id}_desc` && desc !== `faction_${id}_desc` && desc !== id;
+
+  // Resolve {0}, {1} placeholders from bonus params
+  if (hasDesc) {
+    desc = resolveTemplatePlaceholders(desc, itemProps?.bonuses ?? itemProps?.levels?.[0]?.bonuses);
+  }
 
   const title = `${entryName} | ${sectionLabel} | ${GAME_TITLE}`;
   const description = hasDesc

@@ -142,7 +142,13 @@ export function ItemView({
               {resolveDict(dict, `ui.rarity_${props.rarity}`)}
             </span>
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
-              {resolveDict(dict, `ui.slot_${props.slot}`)}
+              {(() => {
+                const slotKey = `ui.slot_${props.slot}`;
+                const resolved = resolveDict(dict, slotKey);
+                if (resolved !== slotKey) return resolved;
+                // Fallback: strip _slot suffix and humanize
+                return props.slot.replace(/_slot$/, "").replace(/_/g, " ");
+              })()}
             </span>
             {props.itemSet && (
               <Link prefetch={false}

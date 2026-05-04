@@ -2,6 +2,7 @@ import Link from "next/link";
 import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { EntityTooltip } from "@/components/entity-tooltip";
 
 type IconSprite = {
   url: string;
@@ -84,14 +85,16 @@ export function EntityLink({
       : undefined;
 
   return (
-    <Link
-      href={getHref(type, item.id, locale)}
-      prefetch={false}
-      className={`inline-flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors ${className}`}
-    >
-      {showIcon && icon && <SpriteIcon icon={icon} size={20} />}
-      <span>{name}</span>
-    </Link>
+    <EntityTooltip entityId={item.id} locale={locale}>
+      <Link
+        href={getHref(type, item.id, locale)}
+        prefetch={false}
+        className={`inline-flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors ${className}`}
+      >
+        {showIcon && icon && <SpriteIcon icon={icon} size={20} />}
+        <span>{name}</span>
+      </Link>
+    </EntityTooltip>
   );
 }
 
@@ -125,21 +128,23 @@ export function EntityLinkCard({
       : undefined;
 
   return (
-    <Link
-      href={getHref(type, item.id, locale)}
-      prefetch={false}
-      className="flex items-center gap-2 bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2 hover:border-amber-800/50 hover:bg-slate-900/50 transition-colors group"
-    >
-      {icon && <SpriteIcon icon={icon} size={32} />}
-      <div>
-        <span className="text-sm font-medium group-hover:text-amber-400 transition-colors">
-          {name}
-        </span>
-        {subtitle && (
-          <span className="block text-xs text-muted-foreground">{subtitle}</span>
-        )}
-      </div>
-    </Link>
+    <EntityTooltip entityId={item.id} locale={locale}>
+      <Link
+        href={getHref(type, item.id, locale)}
+        prefetch={false}
+        className="flex items-center gap-2 bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2 hover:border-amber-800/50 hover:bg-slate-900/50 transition-colors group"
+      >
+        {icon && <SpriteIcon icon={icon} size={32} />}
+        <div>
+          <span className="text-sm font-medium group-hover:text-amber-400 transition-colors">
+            {name}
+          </span>
+          {subtitle && (
+            <span className="block text-xs text-muted-foreground">{subtitle}</span>
+          )}
+        </div>
+      </Link>
+    </EntityTooltip>
   );
 }
 

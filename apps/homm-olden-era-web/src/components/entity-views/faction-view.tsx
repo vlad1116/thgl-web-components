@@ -39,27 +39,30 @@ type IconSprite = {
  */
 function substituteTemplate(text: string, bonuses?: FactionProps["bonuses"]): string {
   if (!bonuses || bonuses.length === 0) return text;
-  // Collect first numeric params from bonuses as template values
   const values: string[] = [];
   for (const bonus of bonuses) {
     for (const p of bonus.params) {
       const num = parseFloat(String(p));
-      if (!isNaN(num)) {
-        if (num > 0 && num < 1) {
-          values.push(`${(num * 100).toFixed(0)}%`);
+      if (!isNaN(num) && num !== 0 && String(p) !== "true" && String(p) !== "false") {
+        const abs = Math.abs(num);
+        if (abs > 0 && abs < 1) {
+          values.push(`${(abs * 100).toFixed(0)}%`);
         } else {
-          values.push(String(num));
+          values.push(String(abs));
         }
       }
     }
     if (bonus.upgrade) {
       const inc = bonus.upgrade.increment;
-      if (inc > 0 && inc < 1) {
-        values.push(`${(inc * 100).toFixed(0)}%`);
-      } else {
-        values.push(String(inc));
+      if (inc !== 0) {
+        const abs = Math.abs(inc);
+        if (abs > 0 && abs < 1) {
+          values.push(`${(abs * 100).toFixed(0)}%`);
+        } else {
+          values.push(String(abs));
+        }
       }
-      values.push(String(bonus.upgrade.levelStep));
+      if (bonus.upgrade.levelStep) values.push(String(bonus.upgrade.levelStep));
     }
   }
   let result = text;
@@ -67,7 +70,7 @@ function substituteTemplate(text: string, bonuses?: FactionProps["bonuses"]): st
     result = result.replace(`{${i}}`, values[i]);
   }
   // Strip any remaining unresolved placeholders
-  result = result.replace(/\{(\d+)\}/g, "X");
+  result = result.replace(/\{(\d+)\}/g, "");
   return result;
 }
 
