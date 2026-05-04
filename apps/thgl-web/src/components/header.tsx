@@ -33,7 +33,7 @@ export function Header() {
           />
           TH.GL
         </Link>
-        <Links appConfig={appConfig} hideReleaseNotes />
+        <Links appConfig={appConfig} />
         <div className="flex shrink-0">
           <GlobalSearch blogMeta={blogSearchMeta} faqMeta={faqSearchMeta} />
         </div>

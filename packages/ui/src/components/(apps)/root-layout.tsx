@@ -71,11 +71,14 @@ export function createRootLayout(appConfig: AppConfig) {
                 />
               }
             >
-              <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">
+              <Link
+                href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
+                aria-label="Home"
+              >
                 <Brand title={appConfig.domain} />
               </Link>
 
-              <Links appConfig={appConfig} hideReleaseNotes>
+              <Links appConfig={appConfig}>
                 {appConfig.supportedLocales.length > 1 && (
                   <Suspense>
                     <LocaleSwitcher

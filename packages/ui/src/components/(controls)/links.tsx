@@ -37,12 +37,12 @@ type MeasuredItem = {
 
 export function Links({
   appConfig,
-  hideReleaseNotes,
   children,
+  childrenDropdown,
 }: {
   appConfig: AppConfig;
-  hideReleaseNotes?: boolean;
   children?: React.ReactNode;
+  childrenDropdown?: React.ReactNode;
 }): JSX.Element {
   const pathname = usePathname() ?? "/";
   const { locale, t } = useI18n();
@@ -75,20 +75,26 @@ export function Links({
 
     const allInternalLinks = appConfig.internalLinks ?? [];
     const hasMap = allInternalLinks.some((l) => l.href.startsWith("/maps"));
-    const hasGuides = allInternalLinks.some((l) => l.href.startsWith("/guides"));
+    const hasGuides = allInternalLinks.some((l) =>
+      l.href.startsWith("/guides"),
+    );
 
     const before = NAV_BEFORE.filter(
       (l) => l.href === "/" || (l.href === "/maps" && hasMap),
     );
-    const after = NAV_AFTER.filter(
-      (l) => l.href !== "/guides" || hasGuides,
-    );
+    const after = NAV_AFTER.filter((l) => l.href !== "/guides" || hasGuides);
 
     const allLinks = [...before, ...appLinks, ...after];
 
     return allLinks.map((l): MeasuredItem => {
       const href = localizePath(l.href, locale);
-      return { key: href, href, label: t(l.title), isActive: false, isHome: l.href === "/" };
+      return {
+        key: href,
+        href,
+        label: t(l.title),
+        isActive: false,
+        isHome: l.href === "/",
+      };
     });
   }, [appConfig.internalLinks, locale, t]);
 
@@ -96,20 +102,41 @@ export function Links({
   const externalItems = useMemo(() => {
     const items: MeasuredItem[] = [];
     if (appConfig.appUrl) {
-      items.push({ key: appConfig.appUrl, href: appConfig.appUrl, label: t("links.inGameApp"), isActive: false, isExternal: true });
+      items.push({
+        key: appConfig.appUrl,
+        href: appConfig.appUrl,
+        label: t("links.inGameApp"),
+        isActive: false,
+        isExternal: true,
+      });
     }
     for (const { href, title } of appConfig.externalLinks ?? []) {
-      items.push({ key: href, href, label: t(title), isActive: false, isExternal: true });
+      items.push({
+        key: href,
+        href,
+        label: t(title),
+        isActive: false,
+        isExternal: true,
+      });
     }
     if (children) {
-      items.push({ key: "__locale__", href: "", label: "English", isActive: false, isLocale: true });
+      items.push({
+        key: "__locale__",
+        href: "",
+        label: "English",
+        isActive: false,
+        isLocale: true,
+      });
     }
     return items;
   }, [appConfig.externalLinks, appConfig.appUrl, children, t]);
 
   // All items: nav first, then externals.
   // Measurement goes left-to-right. When items don't fit, externals (at end) overflow first.
-  const allItems = useMemo(() => [...navItems, ...externalItems], [navItems, externalItems]);
+  const allItems = useMemo(
+    () => [...navItems, ...externalItems],
+    [navItems, externalItems],
+  );
   const navCount = navItems.length;
 
   // Measure how many items fit
@@ -165,10 +192,18 @@ export function Links({
   const overflowHasActive = overflowItems.some((item) => isItemActive(item));
 
   // Check which externals are visible vs overflowed
-  const visibleExternals = visibleItems.filter((i) => i.isExternal || i.isLocale);
-  const overflowedExternals = overflowItems.filter((i) => i.isExternal || i.isLocale);
-  const visibleNavItems = visibleItems.filter((i) => !i.isExternal && !i.isLocale);
-  const overflowedNavItems = overflowItems.filter((i) => !i.isExternal && !i.isLocale);
+  const visibleExternals = visibleItems.filter(
+    (i) => i.isExternal || i.isLocale,
+  );
+  const overflowedExternals = overflowItems.filter(
+    (i) => i.isExternal || i.isLocale,
+  );
+  const visibleNavItems = visibleItems.filter(
+    (i) => !i.isExternal && !i.isLocale,
+  );
+  const overflowedNavItems = overflowItems.filter(
+    (i) => !i.isExternal && !i.isLocale,
+  );
 
   const legalFooter = (
     <>
@@ -189,7 +224,11 @@ export function Links({
 
   const renderInlineItem = (item: MeasuredItem) => {
     if (item.isLocale) {
-      return <div key={item.key} className="order-2">{children}</div>;
+      return (
+        <div key={item.key} className="order-2">
+          {children}
+        </div>
+      );
     }
     if (item.isExternal) {
       return (
@@ -222,8 +261,8 @@ export function Links({
   const renderDropdownItem = (item: MeasuredItem) => {
     if (item.isLocale) {
       return (
-        <div key={item.key} className="flex items-center justify-center px-3 py-2">
-          {children}
+        <div key={item.key} className="px-1 py-1">
+          {childrenDropdown ?? children}
         </div>
       );
     }
@@ -261,12 +300,19 @@ export function Links({
     const extToShow = showAll ? externalItems : overflowedExternals;
 
     return (
-      <div className={cn("absolute top-full mt-1 w-52 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1", alignLeft ? "left-0" : "right-0")}>
+      <div
+        className={cn(
+          "absolute top-full mt-1 w-52 max-h-[min(70vh,600px)] overflow-y-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1",
+          alignLeft ? "left-0" : "right-0",
+        )}
+      >
         {navToShow.map(renderDropdownItem)}
 
         {extToShow.length > 0 && (
           <>
-            {navToShow.length > 0 && <div className="border-t border-neutral-800 my-1" />}
+            {navToShow.length > 0 && (
+              <div className="border-t border-neutral-800 my-1" />
+            )}
             {extToShow.map(renderDropdownItem)}
           </>
         )}
@@ -311,9 +357,7 @@ export function Links({
         <div className="border-t border-neutral-800 my-1" />
         {legalFooter}
         <ScriptLoader>
-          <div className="px-3 py-1">
-            <ConsentLink />
-          </div>
+          <ConsentLink />
         </ScriptLoader>
       </div>
     );
@@ -332,10 +376,12 @@ export function Links({
             key={item.key}
             className={cn(
               "text-xs px-2.5 py-1.5 whitespace-nowrap",
-              item.isExternal && "font-medium px-2.5 py-1.5 border border-transparent",
+              item.isExternal &&
+                "font-medium px-2.5 py-1.5 border border-transparent",
             )}
           >
-            {item.label}{item.isExternal ? " ↗" : ""}
+            {item.label}
+            {item.isExternal ? " ↗" : ""}
           </span>
         ))}
       </div>
@@ -353,7 +399,11 @@ export function Links({
       </div>
 
       {/* Desktop: inline items with CSS order (nav=1, externals=2, more=3) */}
-      <div ref={containerRef} className="flex-1 hidden sm:flex items-center gap-1 min-w-0 flex-wrap-reverse" style={{ flexWrap: "nowrap" }}>
+      <div
+        ref={containerRef}
+        className="flex-1 hidden sm:flex items-center gap-1 min-w-0 flex-wrap-reverse"
+        style={{ flexWrap: "nowrap" }}
+      >
         {visibleItems.map(renderInlineItem)}
 
         {/* More/overflow button — always visible, order-3 pushes it between nav and externals visually */}

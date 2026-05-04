@@ -2,7 +2,7 @@
 export { Actions } from "./actions";
 export { Links } from "./links";
 export { ErrorBoundary } from "./error-boundary";
-export { LocaleSwitcher } from "./locale-switcher";
+export { LocaleSwitcher, LocaleSwitcherInline } from "./locale-switcher";
 export { Toaster } from "./toaster";
 export { ColorPicker } from "./color-picker";
 export { IconPicker } from "./icon-picker";

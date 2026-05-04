@@ -95,3 +95,55 @@ export function LocaleSwitcher({
     </DropdownMenu>
   );
 }
+
+/** Flat list of locale links for embedding in an existing dropdown/menu */
+export function LocaleSwitcherInline({
+  locales,
+  current,
+  defaultLocale = "en",
+}: {
+  locales: string[];
+  current: string;
+  defaultLocale?: string;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSegments = pathname.split("/").filter(Boolean);
+  const currentIsLocale = locales.includes(currentSegments[0]);
+
+  return (
+    <>
+      {locales.map((locale) => {
+        const segments = [...currentSegments];
+        if (currentIsLocale) {
+          if (locale === defaultLocale) {
+            segments.shift();
+          } else {
+            segments[0] = locale;
+          }
+        } else {
+          if (locale !== defaultLocale) {
+            segments.unshift(locale);
+          }
+        }
+        const href =
+          "/" + segments.join("/") + (searchParams.size ? `?${searchParams}` : "");
+        const isActive = locale === current;
+        return (
+          <Link
+            key={locale}
+            href={href}
+            className={cn(
+              "block px-3 py-1.5 text-sm transition-colors rounded-sm",
+              isActive
+                ? "font-medium text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+            )}
+          >
+            {LOCALE_LABELS[locale] ?? locale}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
