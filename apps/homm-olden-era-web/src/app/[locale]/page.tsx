@@ -57,7 +57,7 @@ const DB_SECTIONS = [
   { href: "/db/units", titleKey: "units", type: "units", icon: "⚔", extraTypes: [] as string[] },
   { href: "/db/heroes", titleKey: "heroes", type: "heroes", icon: "👑", extraTypes: [] as string[] },
   { href: "/db/spells", titleKey: "spells", type: "spells", icon: "✦", extraTypes: [] as string[] },
-  { href: "/db/items", titleKey: "items", type: "items", icon: "◆", extraTypes: [] as string[] },
+  { href: "/db/artifacts", titleKey: "items", type: "items", icon: "◆", extraTypes: [] as string[] },
   { href: "/db/skills", titleKey: "skills", type: "skills", icon: "◎", extraTypes: ["sub_skills"] },
   { href: "/db/factions", titleKey: "factions", type: "factions", icon: "⛊", extraTypes: ["specializations", "faction_laws"] },
   { href: "/db/buildings", titleKey: "buildings", type: "buildings", icon: "🏛", extraTypes: [] as string[] },

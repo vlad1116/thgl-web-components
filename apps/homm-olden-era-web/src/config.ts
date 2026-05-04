@@ -44,7 +44,7 @@ export const APP_CONFIG: AppConfig = {
       description: "config.internalLinks.spells.description",
     },
     {
-      href: "/db/items",
+      href: "/db/artifacts",
       title: "config.internalLinks.items.title",
       linkText: "config.internalLinks.items.linkText",
       iconName: "Gift",

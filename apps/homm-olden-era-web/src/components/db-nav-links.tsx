@@ -18,7 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/db/units", labelKey: "ui.nav_units", fallback: "Units", primary: true },
   { href: "/db/heroes", labelKey: "ui.nav_heroes", fallback: "Heroes", primary: true },
   { href: "/db/spells", labelKey: "ui.nav_spells", fallback: "Spells", primary: true },
-  { href: "/db/items", labelKey: "ui.nav_artifacts", fallback: "Artifacts", primary: true },
+  { href: "/db/artifacts", labelKey: "ui.nav_artifacts", fallback: "Artifacts", primary: true },
   { href: "/db/skills", labelKey: "ui.nav_skills", fallback: "Skills", primary: true },
   { href: "/db/factions", labelKey: "ui.nav_factions", fallback: "Factions", primary: true },
 ];

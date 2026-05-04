@@ -84,14 +84,23 @@ function FormatReward({
     case "HeroMagicAdditionReward":
       return <>{params.length} specific spells</>;
     case "HeroRandomItemsReward": {
-      if (params.length <= 1) return <>Random {params[0]} artifact</>;
-      // Multiple rarities: count occurrences (e.g., ["legendary","legendary","epic","legendary"] → 3× legendary, 1× epic)
+      const artifactLink = (text: string) => (
+        <Link href={localizePath("/db/artifacts", locale)} className="text-amber-400 hover:text-amber-300 transition-colors">{text}</Link>
+      );
+      if (params.length <= 1) return <>Random {params[0]} {artifactLink("artifact")}</>;
       const rarityCounts = new Map<string, number>();
       for (const p of params) rarityCounts.set(String(p), (rarityCounts.get(String(p)) ?? 0) + 1);
-      const parts = [...rarityCounts.entries()].map(([rarity, count]) =>
-        count > 1 ? `${count}× ${rarity}` : rarity,
+      return (
+        <>
+          {[...rarityCounts.entries()].map(([rarity, count], idx) => (
+            <span key={rarity}>
+              {idx > 0 && " + "}
+              {count > 1 ? `${count}× ${rarity}` : rarity}
+            </span>
+          ))}
+          {" "}{artifactLink("artifacts")}
+        </>
       );
-      return <>{parts.join(" + ")} artifacts</>;
     }
     case "MovePointsAdditionReward":
       return <>+{params[0]} movement points</>;

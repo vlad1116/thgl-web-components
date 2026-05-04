@@ -36,9 +36,10 @@ export async function generateHomeMetadata(
 export async function generateCategoryMetadata(
   locale: string,
   section: string,
+  labelOverride?: string,
 ): Promise<Metadata> {
   const dict = await fetchDict(APP_CONFIG.name, locale);
-  const sectionLabel = resolveDict(dict, section);
+  const sectionLabel = labelOverride ?? resolveDict(dict, section);
   const title = `${sectionLabel} | ${GAME_TITLE}`;
   const description = `Browse all ${sectionLabel.toLowerCase()} in ${GAME_TITLE}. Complete stats, abilities, and detailed information.`;
   const path = `/db/${section}`;

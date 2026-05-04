@@ -146,7 +146,7 @@ export function ItemView({
             </span>
             {props.itemSet && (
               <Link
-                href={localizePath(`/db/items/${props.itemSet}`, locale)}
+                href={localizePath(`/db/artifacts/${props.itemSet}`, locale)}
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
                 {resolveDict(dict, "ui.set_prefix")} {resolveDict(dict, props.itemSet)}

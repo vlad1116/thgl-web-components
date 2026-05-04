@@ -14,7 +14,7 @@ const TYPE_TO_SECTION: Record<string, string> = {
   units: "units",
   heroes: "heroes",
   spells: "spells",
-  items: "items",
+  items: "artifacts",
   skills: "skills",
   sub_skills: "skills",
   factions: "factions",
@@ -32,7 +32,7 @@ const GROUP_PAGE_TYPES: Record<string, string[]> = {
   units: ["units"],
   heroes: ["heroes"],
   spells: ["spells"],
-  items: ["items"],
+  artifacts: ["items"],
   buildings: ["buildings"],
   "map-objects": ["map_objects"],
 };
@@ -144,7 +144,7 @@ export default async function sitemap(
 
     // Item Sets page
     entries.push(
-      makeEntry("/db/items/sets", { changeFrequency: "weekly", priority: 0.7 }),
+      makeEntry("/db/artifacts/sets", { changeFrequency: "weekly", priority: 0.7 }),
     );
 
     return entries;
