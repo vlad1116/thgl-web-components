@@ -51,7 +51,14 @@ export function listenToGEP(
       }
       setTimeout(refreshPlayerState, 50);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : (err as string);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : (err as { error?: string; reason?: string }).error ||
+              (err as { error?: string; reason?: string }).reason ||
+              "Unknown error";
       if (errorMessage !== lastPlayerError) {
         lastPlayerError = errorMessage;
         window.gameEventBus.trigger(MESSAGES.PLAYER_ERROR, errorMessage);

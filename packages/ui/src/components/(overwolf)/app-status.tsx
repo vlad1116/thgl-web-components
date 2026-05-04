@@ -14,7 +14,15 @@ import {
 
 export function AppStatus({ gameClassId }: { gameClassId: number }) {
   const [isOverlayEnabled, setIsOverlayEnabled] = useState(true);
-  const error = useGameState((state) => state.error) || "";
+  const rawError = useGameState((state) => state.error);
+  const error =
+    typeof rawError === "string"
+      ? rawError
+      : rawError
+        ? (rawError as { error?: string; reason?: string }).error ||
+          (rawError as { error?: string; reason?: string }).reason ||
+          ""
+        : "";
 
   useEffect(() => {
     overwolf.settings.games.getOverlayEnabled(gameClassId, (event) =>
