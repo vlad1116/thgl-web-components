@@ -32,6 +32,8 @@ const SECTION_MAP: Record<string, string> = {
   specializations: "factions",
   factions: "factions",
   faction_laws: "factions",
+  buildings: "buildings",
+  map_objects: "map-objects",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -45,6 +47,8 @@ const TYPE_LABELS: Record<string, string> = {
   specializations: "Specialization",
   factions: "Faction",
   faction_laws: "Faction Law",
+  buildings: "Building",
+  map_objects: "Map Object",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -58,6 +62,8 @@ const TYPE_COLORS: Record<string, string> = {
   specializations: "bg-cyan-900/40 text-cyan-400",
   factions: "bg-yellow-900/40 text-yellow-400",
   faction_laws: "bg-yellow-900/40 text-yellow-400",
+  buildings: "bg-orange-900/40 text-orange-400",
+  map_objects: "bg-teal-900/40 text-teal-400",
 };
 
 export function DbSearch({

@@ -19,6 +19,8 @@ const SECTION_MAP: Record<string, string> = {
   specializations: "factions",
   factions: "factions",
   faction_laws: "factions",
+  buildings: "buildings",
+  map_objects: "map-objects",
 };
 
 function resolveDict(dict: Record<string, string>, key: string): string {
