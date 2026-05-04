@@ -1501,6 +1501,22 @@ function MarkersContent({
     sharedIconNameLookup, // Re-resolve stale shared private icon coords
   ]);
 
+  // Update high contrast uniforms without rebuilding markers
+  useEffect(() => {
+    const markerLayer = map?.markerLayer;
+    if (!markerLayer) return;
+    markerLayer.setHighContrastMode(highContrastMode);
+    markerLayer.setHighContrastColor(highContrastColor);
+    markerLayer.setHighContrastThickness(highContrastThickness);
+    const liveMarkerLayer = map?.liveMarkerLayer;
+    if (liveMarkerLayer) {
+      liveMarkerLayer.setHighContrastMode(highContrastMode);
+      liveMarkerLayer.setHighContrastColor(highContrastColor);
+      liveMarkerLayer.setHighContrastThickness(highContrastThickness);
+    }
+    map.requestRedraw();
+  }, [map, highContrastMode, highContrastColor, highContrastThickness]);
+
   // Audio alerts when player is within range of tracked spawns.
   // Uses `spawns` directly (not spawnMapRef) because spawns is the
   // authoritative filtered list from useCoordinates() — it excludes

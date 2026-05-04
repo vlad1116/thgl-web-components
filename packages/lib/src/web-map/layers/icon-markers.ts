@@ -419,22 +419,30 @@ void main(){
   vec4 c = texture(u_tex, v_uv);
   // Apply tint color (multiply RGB, use tint alpha to blend)
   c.rgb = mix(c.rgb, c.rgb * v_tint.rgb, v_tint.a);
-  // High contrast outline: sample 8 neighbors and draw outline where current pixel is transparent but neighbor is opaque
-  // Out-of-bounds samples (outside icon sub-rect) are treated as transparent to avoid rect-edge artifacts
+  // High contrast outline: silhouette-following stroke around the icon.
+  // Counts how many of 16 radial samples hit opaque pixels — edge pixels have
+  // opaque on one side only, interior gaps are surrounded on most sides.
   if (u_hc_mode == 1) {
     vec2 texSize = vec2(textureSize(u_tex, 0));
-    vec2 uvSpan = v_uvMax - v_uvMin;
-    float px = u_hc_thickness / (uvSpan.x * texSize.x);
-    float py = u_hc_thickness / (uvSpan.y * texSize.y);
+    // Step size in UV space for thickness texels in the actual texture
+    float px = u_hc_thickness / texSize.x;
+    float py = u_hc_thickness / texSize.y;
     float neighborAlpha = 0.0;
-    // Sample 16 points in a circle for smoother outline
+    float opaqueCount = 0.0;
     for (int i = 0; i < 16; i++) {
       float angle = float(i) * 6.2831853 / 16.0;
       vec2 s = v_uv + vec2(cos(angle) * px, sin(angle) * py);
       float ib = step(v_uvMin.x, s.x) * step(s.x, v_uvMax.x) * step(v_uvMin.y, s.y) * step(s.y, v_uvMax.y);
-      neighborAlpha = max(neighborAlpha, texture(u_tex, s).a * ib);
+      float a = textureLod(u_tex, s, 0.0).a * ib;
+      neighborAlpha = max(neighborAlpha, a);
+      opaqueCount += step(0.1, a);
     }
-    if (c.a < 0.1 && neighborAlpha > 0.1) {
+    // Use mip 0 alpha to avoid sprite sheet bleed at lower mip levels
+    float baseAlpha = textureLod(u_tex, v_uv, 0.0).a;
+    // Draw outline only at silhouette edges: transparent pixel with some (not all)
+    // directions finding opaque content. Pixels surrounded on most sides are
+    // interior gaps (between wings etc.) and should stay transparent.
+    if (baseAlpha < 0.1 && neighborAlpha > 0.1 && opaqueCount < 12.0) {
       c = u_hc_color;
     }
   }
