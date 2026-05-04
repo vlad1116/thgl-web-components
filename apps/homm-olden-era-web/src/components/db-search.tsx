@@ -21,21 +21,6 @@ type SearchEntry = {
   };
 };
 
-const SECTION_MAP: Record<string, string> = {
-  units: "units",
-  heroes: "heroes",
-  spells: "spells",
-  items: "items",
-  item_sets: "items",
-  skills: "skills",
-  sub_skills: "skills",
-  specializations: "factions",
-  factions: "factions",
-  faction_laws: "factions",
-  buildings: "buildings",
-  map_objects: "map-objects",
-};
-
 const TYPE_LABELS: Record<string, string> = {
   units: "Unit",
   heroes: "Hero",
@@ -66,19 +51,36 @@ const TYPE_COLORS: Record<string, string> = {
   map_objects: "bg-teal-900/40 text-teal-400",
 };
 
-export function DbSearch({
-  entries,
-  iconsUrl,
-}: {
-  entries: SearchEntry[];
-  iconsUrl: string;
-}) {
+// Module-level cache so the index is fetched at most once per page session
+let cachedData: { entries: SearchEntry[]; iconsUrl: string } | null = null;
+let fetchPromise: Promise<{ entries: SearchEntry[]; iconsUrl: string }> | null =
+  null;
+
+function fetchSearchIndex(
+  locale: string,
+): Promise<{ entries: SearchEntry[]; iconsUrl: string }> {
+  if (cachedData) return Promise.resolve(cachedData);
+  if (fetchPromise) return fetchPromise;
+  fetchPromise = fetch(`/api/search-index?locale=${locale}`)
+    .then((res) => res.json())
+    .then((data) => {
+      cachedData = data;
+      return data;
+    });
+  return fetchPromise;
+}
+
+export function DbSearch({ locale = "en" }: { locale?: string }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [entries, setEntries] = useState<SearchEntry[]>([]);
+  const [iconsUrl, setIconsUrl] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const fuseRef = useRef<Fuse<SearchEntry> | null>(null);
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -89,16 +91,24 @@ export function DbSearch({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const fuse = useRef(
-    new Fuse(entries, {
-      keys: ["name"],
-      threshold: 0.3,
-    }),
-  );
+  // Load search index on first interaction
+  const ensureLoaded = useCallback(() => {
+    if (loaded) return;
+    fetchSearchIndex(locale).then((data) => {
+      setEntries(data.entries);
+      setIconsUrl(data.iconsUrl);
+      fuseRef.current = new Fuse(data.entries, {
+        keys: ["name"],
+        threshold: 0.3,
+      });
+      setLoaded(true);
+    });
+  }, [loaded, locale]);
 
-  const results = query.trim()
-    ? fuse.current.search(query.trim(), { limit: 12 }).map((r) => r.item)
-    : [];
+  const results =
+    query.trim() && fuseRef.current
+      ? fuseRef.current.search(query.trim(), { limit: 12 }).map((r) => r.item)
+      : [];
 
   const navigate = useCallback(
     (entry: SearchEntry) => {
@@ -115,6 +125,7 @@ export function DbSearch({
     function handleKey(e: KeyboardEvent) {
       if ((e.ctrlKey && e.key === "k") || (e.key === "/" && !open)) {
         e.preventDefault();
+        ensureLoaded();
         inputRef.current?.focus();
         setOpen(true);
       }
@@ -126,7 +137,7 @@ export function DbSearch({
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [open]);
+  }, [open, ensureLoaded]);
 
   // Close on click outside
   useEffect(() => {
@@ -171,10 +182,14 @@ export function DbSearch({
           type="text"
           value={query}
           onChange={(e) => {
+            ensureLoaded();
             setQuery(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            ensureLoaded();
+            setOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Search..."
           className="h-7 sm:h-8 w-24 sm:w-40 md:w-48 sm:focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-4 sm:pr-8 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
@@ -197,7 +212,8 @@ export function DbSearch({
       </div>
 
       {/* Results dropdown */}
-      {open && results.length > 0 &&
+      {open &&
+        results.length > 0 &&
         (() => {
           const dropdown = (
             <div
@@ -248,13 +264,14 @@ export function DbSearch({
               ))}
             </div>
           );
-          return isMobile
-            ? createPortal(dropdown, document.body)
-            : dropdown;
+          return isMobile ? createPortal(dropdown, document.body) : dropdown;
         })()}
 
       {/* No results */}
-      {open && query.trim() && results.length === 0 &&
+      {open &&
+        query.trim() &&
+        loaded &&
+        results.length === 0 &&
         (() => {
           const noResults = (
             <div

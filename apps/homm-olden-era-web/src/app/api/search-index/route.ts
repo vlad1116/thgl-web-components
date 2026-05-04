@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import {
   fetchDatabase,
   fetchDict,
@@ -6,7 +7,6 @@ import {
   localizePath,
 } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
-import { DbSearch } from "./db-search";
 
 const SECTION_MAP: Record<string, string> = {
   units: "units",
@@ -30,7 +30,10 @@ function resolveDict(dict: Record<string, string>, key: string): string {
   return value;
 }
 
-export async function DbSearchWrapper({ locale = "en" }: { locale?: string }) {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const locale = searchParams.get("locale") || "en";
+
   const [database, dict, version] = await Promise.all([
     fetchDatabase(APP_CONFIG.name),
     fetchDict(APP_CONFIG.name, locale),
@@ -46,7 +49,8 @@ export async function DbSearchWrapper({ locale = "en" }: { locale?: string }) {
   const entries = database.flatMap((category) =>
     category.items.map((item) => {
       const section = SECTION_MAP[category.type] ?? category.type;
-      const dictKey = category.type === "factions" ? `faction_${item.id}` : item.id;
+      const dictKey =
+        category.type === "factions" ? `faction_${item.id}` : item.id;
       const icon =
         item.icon && typeof item.icon === "object"
           ? (item.icon as {
@@ -69,5 +73,12 @@ export async function DbSearchWrapper({ locale = "en" }: { locale?: string }) {
     }),
   );
 
-  return <DbSearch locale={locale} />;
+  return NextResponse.json(
+    { entries, iconsUrl },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    },
+  );
 }
