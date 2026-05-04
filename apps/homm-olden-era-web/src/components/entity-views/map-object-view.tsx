@@ -8,6 +8,7 @@ type Variant = {
   chance: number;
   value?: number;
   guarded?: boolean;
+  guards?: { sid: string; count: number }[];
   rewards: { type: string; params: (string | number)[] }[];
 };
 
@@ -82,8 +83,16 @@ function FormatReward({
     }
     case "HeroMagicAdditionReward":
       return <>{params.length} specific spells</>;
-    case "HeroRandomItemsReward":
-      return <>Random {params[0]} artifact</>;
+    case "HeroRandomItemsReward": {
+      if (params.length <= 1) return <>Random {params[0]} artifact</>;
+      // Multiple rarities: count occurrences (e.g., ["legendary","legendary","epic","legendary"] → 3× legendary, 1× epic)
+      const rarityCounts = new Map<string, number>();
+      for (const p of params) rarityCounts.set(String(p), (rarityCounts.get(String(p)) ?? 0) + 1);
+      const parts = [...rarityCounts.entries()].map(([rarity, count]) =>
+        count > 1 ? `${count}× ${rarity}` : rarity,
+      );
+      return <>{parts.join(" + ")} artifacts</>;
+    }
     case "MovePointsAdditionReward":
       return <>+{params[0]} movement points</>;
     case "ManaAdditionReward":
@@ -308,38 +317,41 @@ export function MapObjectView({
           <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Possible Rewards
           </h4>
-          <div className="border border-slate-800 rounded-lg overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-900/60 border-b border-slate-800">
-                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground w-20">Chance</th>
-                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">Reward</th>
-                </tr>
-              </thead>
-              <tbody>
-                {props.variants.map((v, i) => {
-                  const pct = Math.round((v.chance / props.totalChance!) * 1000) / 10;
-                  return (
-                    <tr key={i} className="border-b border-slate-800/50 last:border-0">
-                      <td className="px-4 py-2 text-sm tabular-nums text-amber-400">
-                        {pct}%
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        {v.rewards.map((r, j) => (
-                          <span key={j}>
-                            {j > 0 && " + "}
-                            <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} />
-                          </span>
-                        ))}
-                        {v.guarded && (
-                          <span className="ml-2 text-xs text-red-400">(guarded)</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="space-y-1.5">
+            {props.variants.map((v, i) => {
+              const pct = Math.round((v.chance / props.totalChance!) * 1000) / 10;
+              return (
+                <div key={i} className="border border-slate-800/60 rounded-lg bg-slate-900/20 overflow-hidden">
+                  <div className="flex items-start gap-3 px-4 py-2.5">
+                    <span className="text-sm font-semibold tabular-nums text-amber-400 shrink-0 pt-px w-12">
+                      {pct}%
+                    </span>
+                    <div className="text-sm leading-relaxed">
+                      {v.rewards.map((r, j) => (
+                        <span key={j}>
+                          {j > 0 && " + "}
+                          <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} />
+                        </span>
+                      ))}
+                      {v.guarded && !v.guards && (
+                        <span className="ml-2 text-xs text-red-400">(guarded)</span>
+                      )}
+                    </div>
+                  </div>
+                  {v.guards && v.guards.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap px-4 py-1.5 bg-red-950/20 border-t border-red-900/20">
+                      <span className="text-xs text-red-400/70 shrink-0">Guarded by</span>
+                      {v.guards.map((g, gi) => (
+                        <span key={gi} className="inline-flex items-center gap-1">
+                          <span className="text-xs text-red-400/90 tabular-nums">{g.count}×</span>
+                          <EntityLink itemId={g.sid} database={database} dict={dict} locale={locale} showIcon={false} className="text-xs !text-red-400 hover:!text-red-300" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
