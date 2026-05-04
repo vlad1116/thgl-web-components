@@ -11,7 +11,7 @@ import { createRootLayoutMetadata } from "@repo/ui/apps";
 import { DEFAULT_LOCALE, cn, fetchVersion } from "@repo/lib";
 import { getFullDictionary, isValidLocale } from "@repo/ui/dicts";
 import { Header, Brand, Account, PlausibleTracker } from "@repo/ui/header";
-import { Links, LocaleSwitcher, Toaster } from "@repo/ui/controls";
+import { Links, LocaleSwitcher, LocaleSwitcherInline, Toaster } from "@repo/ui/controls";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { DbSearchWrapper } from "@/components/db-search-wrapper";
 
@@ -58,7 +58,19 @@ export default async function RootLayout({
               <Brand title={APP_CONFIG.domain} />
             </Link>
 
-            <Links appConfig={APP_CONFIG}>
+            <Links
+              appConfig={APP_CONFIG}
+              childrenDropdown={
+                APP_CONFIG.supportedLocales.length > 1 ? (
+                  <Suspense>
+                    <LocaleSwitcherInline
+                      locales={APP_CONFIG.supportedLocales}
+                      current={locale}
+                    />
+                  </Suspense>
+                ) : undefined
+              }
+            >
               {APP_CONFIG.supportedLocales.length > 1 && (
                 <Suspense>
                   <LocaleSwitcher
