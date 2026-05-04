@@ -310,8 +310,23 @@ function AbilityRow({
   passive?: boolean;
 }) {
   const name = resolveDict(dict, sid);
-  const descKey = sid.replace(/_name$/, "_description");
-  const desc = dict[descKey] ? resolveDict(dict, descKey) : undefined;
+  // Try multiple desc key patterns: {id}_desc, {id}_name_desc, {id_without_name}_description
+  const descCandidates = [
+    `${sid}_desc`,
+    `${sid.replace(/_name$/, "_name_desc")}`,
+    `${sid.replace(/_name$/, "_description")}`,
+  ];
+  let desc: string | undefined;
+  for (const key of descCandidates) {
+    if (dict[key]) {
+      desc = resolveDict(dict, key);
+      break;
+    }
+  }
+  // Strip unresolved {N} placeholders (ability params not yet extracted)
+  if (desc) {
+    desc = desc.replace(/\{(\d+)\}/g, "X");
+  }
 
   return (
     <div className="bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2">
@@ -322,7 +337,7 @@ function AbilityRow({
         <span className="font-medium">{name}</span>
       </div>
       {desc && (
-        <p className="text-sm text-muted-foreground mt-1 ml-5">{desc}</p>
+        <p className="text-sm text-muted-foreground mt-1 ml-5 whitespace-pre-line">{desc}</p>
       )}
     </div>
   );
