@@ -9,7 +9,7 @@ import {
   GitHubIcon,
   RedditIcon,
 } from "../(header)";
-import { ExternalLink, MoreHorizontal, Menu } from "lucide-react";
+import { ExternalLink, MoreHorizontal, ChevronsUpDown } from "lucide-react";
 import { AppConfig, localizePath, cn } from "@repo/lib";
 import { Badge } from "../ui/badge";
 import { useI18n } from "../(providers)";
@@ -386,15 +386,26 @@ export function Links({
         ))}
       </div>
 
-      {/* Mobile: hamburger menu */}
+      {/* Mobile: page switcher */}
       <div className="sm:hidden relative" ref={mobileMenuRef}>
-        <button
-          onClick={() => setOverflowOpen((v) => !v)}
-          aria-label="Navigation menu"
-          className="text-xs px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-zinc-800 transition-colors flex items-center gap-1"
-        >
-          <Menu className="w-4 h-4" />
-        </button>
+        {(() => {
+          const activeNav = navItems.find(isItemActive);
+          const activeLabel = activeNav?.label ?? navItems[0]?.label ?? "";
+          return (
+            <button
+              onClick={() => setOverflowOpen((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md border transition-colors max-w-[160px]",
+                overflowOpen
+                  ? "border-amber-800/50 bg-amber-900/20 text-amber-400"
+                  : "border-neutral-700 bg-zinc-900 text-foreground hover:border-neutral-600",
+              )}
+            >
+              <span className="truncate">{activeLabel}</span>
+              <ChevronsUpDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
+            </button>
+          );
+        })()}
         {overflowOpen && dropdownContent(true, true)}
       </div>
 

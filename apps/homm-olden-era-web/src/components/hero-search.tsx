@@ -7,7 +7,7 @@ export function HeroSearch() {
     <button
       onClick={() => {
         const input = document.querySelector<HTMLInputElement>(
-          'header input[placeholder="Search database..."]',
+          'header input[placeholder="Search..."]',
         );
         if (input) {
           input.focus();

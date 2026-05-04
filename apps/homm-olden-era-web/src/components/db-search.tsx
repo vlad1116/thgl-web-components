@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 import { Search, X } from "lucide-react";
@@ -72,6 +73,15 @@ export function DbSearch({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const fuse = useRef(
     new Fuse(entries, {
@@ -160,8 +170,8 @@ export function DbSearch({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search database..."
-          className="h-8 w-28 sm:w-40 md:w-48 focus:w-48 sm:focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
+          placeholder="Search..."
+          className="h-7 sm:h-8 w-24 sm:w-40 md:w-48 sm:focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-4 sm:pr-8 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
         />
         {query ? (
           <button
@@ -174,63 +184,87 @@ export function DbSearch({
             <X className="h-3.5 w-3.5" />
           </button>
         ) : (
-          <kbd className="absolute right-2 text-[10px] text-muted-foreground border border-neutral-700 rounded px-1 py-0.5 font-mono">
+          <kbd className="absolute right-2 text-[10px] text-muted-foreground border border-neutral-700 rounded px-1 py-0.5 font-mono hidden sm:inline">
             /
           </kbd>
         )}
       </div>
 
       {/* Results dropdown */}
-      {open && results.length > 0 && (
-        <div className="sidebar-scroll absolute top-full left-0 mt-1 w-80 max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50">
-          {results.map((entry, i) => (
-            <button
-              key={entry.id}
-              onClick={() => navigate(entry)}
-              onMouseEnter={() => setSelectedIndex(i)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                i === selectedIndex
-                  ? "bg-zinc-800"
-                  : "hover:bg-zinc-800/50"
+      {open && results.length > 0 &&
+        (() => {
+          const dropdown = (
+            <div
+              className={`sidebar-scroll max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-[99999] ${
+                isMobile
+                  ? "fixed left-2 right-2 top-14"
+                  : "absolute right-0 top-full mt-1 w-80"
               }`}
             >
-              {entry.icon && (
-                <img
-                  alt=""
-                  role="presentation"
-                  className="shrink-0 object-none w-[32px] h-[32px]"
-                  src={iconsUrl}
-                  width={entry.icon.width}
-                  height={entry.icon.height}
-                  style={{
-                    objectPosition: `-${entry.icon.x}px -${entry.icon.y}px`,
-                    zoom: 0.5,
-                  }}
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
-                  {entry.name}
-                </div>
-              </div>
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
-                  TYPE_COLORS[entry.type] ?? "bg-zinc-800 text-slate-400"
-                }`}
-              >
-                {TYPE_LABELS[entry.type] ?? entry.type}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+              {results.map((entry, i) => (
+                <button
+                  key={entry.id}
+                  onClick={() => navigate(entry)}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                    i === selectedIndex
+                      ? "bg-zinc-800"
+                      : "hover:bg-zinc-800/50"
+                  }`}
+                >
+                  {entry.icon && (
+                    <img
+                      alt=""
+                      role="presentation"
+                      className="shrink-0 object-none w-[32px] h-[32px]"
+                      src={iconsUrl}
+                      width={entry.icon.width}
+                      height={entry.icon.height}
+                      style={{
+                        objectPosition: `-${entry.icon.x}px -${entry.icon.y}px`,
+                        zoom: 0.5,
+                      }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {entry.name}
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                      TYPE_COLORS[entry.type] ?? "bg-zinc-800 text-slate-400"
+                    }`}
+                  >
+                    {TYPE_LABELS[entry.type] ?? entry.type}
+                  </span>
+                </button>
+              ))}
+            </div>
+          );
+          return isMobile
+            ? createPortal(dropdown, document.body)
+            : dropdown;
+        })()}
 
       {/* No results */}
-      {open && query.trim() && results.length === 0 && (
-        <div className="absolute top-full left-0 mt-1 w-80 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 p-4 text-center text-sm text-muted-foreground">
-          No results for &ldquo;{query}&rdquo;
-        </div>
-      )}
+      {open && query.trim() && results.length === 0 &&
+        (() => {
+          const noResults = (
+            <div
+              className={`rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-[99999] p-4 text-center text-sm text-muted-foreground ${
+                isMobile
+                  ? "fixed left-2 right-2 top-14"
+                  : "absolute right-0 top-full mt-1 w-80"
+              }`}
+            >
+              No results for &ldquo;{query}&rdquo;
+            </div>
+          );
+          return isMobile
+            ? createPortal(noResults, document.body)
+            : noResults;
+        })()}
     </div>
   );
 }
