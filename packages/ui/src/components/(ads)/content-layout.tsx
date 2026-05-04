@@ -77,10 +77,10 @@ export function ContentLayout({
 
           {/* Row 2: sidebar + content */}
           <div className="grid xl:grid-cols-[250px_1fr] min-h-0">
-            <aside className="sidebar-scroll hidden xl:block overflow-y-auto border-r border-zinc-800/60 pr-3 py-3 min-h-0">
+            <aside className="sidebar-scroll hidden xl:block overflow-y-auto border-r border-zinc-800/60 pr-3 py-3 min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
               {sidebar}
             </aside>
-            <div className="overflow-y-auto min-h-0 space-y-4 xl:pl-5">
+            <div className="overflow-y-auto min-h-0 space-y-4 xl:pl-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
               {/* Top Banner */}
               <ScriptLoader
                 loading={<LargeMobileBannerLoading />}

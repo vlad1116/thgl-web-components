@@ -302,7 +302,7 @@ export function Links({
     return (
       <div
         className={cn(
-          "absolute top-full mt-1 w-52 max-h-[min(70vh,600px)] overflow-y-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1",
+          "absolute top-full mt-1 w-52 max-h-[min(70vh,600px)] overflow-y-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-50 py-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent",
           alignLeft ? "left-0" : "right-0",
         )}
       >

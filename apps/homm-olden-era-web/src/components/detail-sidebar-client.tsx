@@ -64,7 +64,7 @@ export function DetailSidebarClient({
           )}
         </div>
       </div>
-      <div className="sidebar-scroll overflow-y-auto min-h-0">
+      <div className="sidebar-scroll overflow-y-auto min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
       {filteredGroups.map((group) => (
         <div key={group.label} className="mb-3">
           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
