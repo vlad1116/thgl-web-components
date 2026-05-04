@@ -2,12 +2,24 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
+import { MechanicTerm } from "@/components/mechanic-term";
 
 type Bonus = {
   type: string;
   params: (string | number)[];
   upgrade?: { increment: number; levelStep: number };
   activationLevel?: number;
+};
+
+/** Map heroStat param keys to mechanic term keys for tooltip links */
+const MECHANIC_STAT_MAP: Record<string, string> = {
+  luck: "luck",
+  morale: "morale",
+  offence: "offence",
+  defence: "defence",
+  spellPower: "spellpower",
+  intelligence: "intelligence",
+  mana: "mana",
 };
 
 export function BonusList({
@@ -89,6 +101,10 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
       }
       const stat = humanizeStat(statKey);
       const value = params[1];
+      const mechanicKey = MECHANIC_STAT_MAP[statKey];
+      if (mechanicKey) {
+        return <><MechanicTerm termKey={mechanicKey} locale={locale}>{stat}</MechanicTerm>: {formatValue(value)}</>;
+      }
       return `${stat}: ${formatValue(value)}`;
     }
     case "learnMagicRemoteFromMagicGuild": {

@@ -2,6 +2,7 @@ import { localizePath } from "@repo/lib";
 import Link from "next/link";
 import { resolveDict } from "@/components/resolve-dict";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { MechanicTerm } from "@/components/mechanic-term";
 import {
   EntityLink,
   EntityLinkCard,
@@ -93,10 +94,10 @@ export function HeroView({
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-1">
-        <StatBox label={resolveDict(dict, "ui.offence")} value={props.offence} color="text-red-400" />
-        <StatBox label={resolveDict(dict, "ui.def")} value={props.defence} color="text-blue-400" />
-        <StatBox label={resolveDict(dict, "ui.spell_power")} value={props.spellPower} color="text-purple-400" />
-        <StatBox label={resolveDict(dict, "ui.intelligence")} value={props.intelligence} color="text-cyan-400" />
+        <StatBox label={resolveDict(dict, "ui.offence")} value={props.offence} color="text-red-400" mechanicKey="offence" locale={locale} />
+        <StatBox label={resolveDict(dict, "ui.def")} value={props.defence} color="text-blue-400" mechanicKey="defence" locale={locale} />
+        <StatBox label={resolveDict(dict, "ui.spell_power")} value={props.spellPower} color="text-purple-400" mechanicKey="spellpower" locale={locale} />
+        <StatBox label={resolveDict(dict, "ui.intelligence")} value={props.intelligence} color="text-cyan-400" mechanicKey="intelligence" locale={locale} />
       </div>
 
       {/* Specialization — linked to factions section */}
@@ -270,15 +271,23 @@ function StatBox({
   label,
   value,
   color,
+  mechanicKey,
+  locale,
 }: {
   label: string;
   value: number;
   color: string;
+  mechanicKey?: string;
+  locale?: string;
 }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
+        {mechanicKey ? (
+          <MechanicTerm termKey={mechanicKey} locale={locale}>{label}</MechanicTerm>
+        ) : (
+          label
+        )}
       </div>
       <div className={`text-2xl font-bold ${color} mt-0.5`}>{value}</div>
     </div>

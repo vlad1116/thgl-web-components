@@ -2,6 +2,7 @@ import { localizePath } from "@repo/lib";
 import Link from "next/link";
 import { resolveDict } from "@/components/resolve-dict";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { MechanicTerm } from "@/components/mechanic-term";
 import {
   EntityLink,
   EntityLinkCard,
@@ -131,17 +132,19 @@ export function UnitView({
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-1">
-        <StatCell label={resolveDict(dict, "ui.hp")} value={props.hp} color="text-green-400" />
-        <StatCell label={resolveDict(dict, "ui.atk")} value={props.offence} color="text-red-400" />
-        <StatCell label={resolveDict(dict, "ui.def")} value={props.defence} color="text-blue-400" />
+        <StatCell label={resolveDict(dict, "ui.hp")} value={props.hp} color="text-green-400" mechanicKey="health" locale={locale} />
+        <StatCell label={resolveDict(dict, "ui.atk")} value={props.offence} color="text-red-400" mechanicKey="attack" locale={locale} />
+        <StatCell label={resolveDict(dict, "ui.def")} value={props.defence} color="text-blue-400" mechanicKey="defence" locale={locale} />
         <StatCell
           label={resolveDict(dict, "ui.dmg")}
           value={`${props.damageMin}–${props.damageMax}`}
           color="text-orange-400"
+          mechanicKey="damage"
+          locale={locale}
         />
-        <StatCell label={resolveDict(dict, "ui.init")} value={props.initiative} color="text-purple-400" />
-        <StatCell label={resolveDict(dict, "ui.speed")} value={props.speed} color="text-cyan-400" />
-        <StatCell label={resolveDict(dict, "ui.value")} value={props.squadValue} color="text-yellow-400" />
+        <StatCell label={resolveDict(dict, "ui.init")} value={props.initiative} color="text-purple-400" mechanicKey="initiative" locale={locale} />
+        <StatCell label={resolveDict(dict, "ui.speed")} value={props.speed} color="text-cyan-400" mechanicKey="speed" locale={locale} />
+        <StatCell label={resolveDict(dict, "ui.value")} value={props.squadValue} color="text-yellow-400" mechanicKey="value" locale={locale} />
         <StatCell label={resolveDict(dict, "ui.cost")} value={props.cost} small color="text-amber-300" />
       </div>
 
@@ -271,16 +274,24 @@ function StatCell({
   value,
   color = "text-foreground",
   small = false,
+  mechanicKey,
+  locale,
 }: {
   label: string;
   value: string | number;
   color?: string;
   small?: boolean;
+  mechanicKey?: string;
+  locale?: string;
 }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
+        {mechanicKey ? (
+          <MechanicTerm termKey={mechanicKey} locale={locale}>{label}</MechanicTerm>
+        ) : (
+          label
+        )}
       </div>
       <div className={`${small ? "text-xs" : "text-lg"} font-semibold ${color} mt-0.5`}>
         {value}

@@ -123,7 +123,7 @@ export default async function MechanicsPage({ params }: PageProps) {
             </div>
 
             {/* Hero Stats */}
-            <section>
+            <section id="hero-stats">
               <h2 className="text-lg font-semibold mb-3 text-amber-400">
                 Hero Stats
               </h2>
@@ -143,7 +143,7 @@ export default async function MechanicsPage({ params }: PageProps) {
             </section>
 
             {/* Unit Stats */}
-            <section>
+            <section id="unit-stats">
               <h2 className="text-lg font-semibold mb-3 text-amber-400">
                 Unit Stats
               </h2>
@@ -163,7 +163,7 @@ export default async function MechanicsPage({ params }: PageProps) {
             </section>
 
             {/* Battle Mechanics */}
-            <section>
+            <section id="battle-mechanics">
               <h2 className="text-lg font-semibold mb-3 text-amber-400">
                 Battle Mechanics
               </h2>
@@ -186,7 +186,7 @@ export default async function MechanicsPage({ params }: PageProps) {
             </section>
 
             {/* Damage Formula */}
-            <section>
+            <section id="damage-formula">
               <h2 className="text-lg font-semibold mb-3 text-amber-400">
                 Damage Formula
               </h2>
