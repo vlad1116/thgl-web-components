@@ -72,7 +72,7 @@ export function HeroView({
             >
               {props.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
             </span>
-            <Link
+            <Link prefetch={false}
               href={localizePath(`/db/factions/${props.faction}`, locale)}
               className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
             >
@@ -103,11 +103,11 @@ export function HeroView({
       {specName && specName !== props.specialization && (
         <div className="bg-amber-950/20 border border-amber-900/30 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs uppercase tracking-wider text-amber-500 mb-1">
+            <h2 className="text-xs uppercase tracking-wider text-amber-500 mb-1">
               {resolveDict(dict, "ui.specialization")}
-            </h4>
+            </h2>
             {props.specialization && (
-              <Link
+              <Link prefetch={false}
                 href={localizePath(`/db/factions/${props.specialization}`, locale)}
                 className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
               >

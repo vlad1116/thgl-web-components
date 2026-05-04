@@ -86,6 +86,7 @@ export function EntityLink({
   return (
     <Link
       href={getHref(type, item.id, locale)}
+      prefetch={false}
       className={`inline-flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors ${className}`}
     >
       {showIcon && icon && <SpriteIcon icon={icon} size={20} />}
@@ -126,6 +127,7 @@ export function EntityLinkCard({
   return (
     <Link
       href={getHref(type, item.id, locale)}
+      prefetch={false}
       className="flex items-center gap-2 bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2 hover:border-amber-800/50 hover:bg-slate-900/50 transition-colors group"
     >
       {icon && <SpriteIcon icon={icon} size={32} />}
@@ -150,9 +152,9 @@ export function RelatedSection({
 }) {
   return (
     <div>
-      <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+      <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
         {title}
-      </h4>
+      </h2>
       {children}
     </div>
   );

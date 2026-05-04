@@ -52,7 +52,7 @@ export function BonusList({
 
 function SchoolLink({ school, dict, locale, children }: { school: string; dict: Record<string, string>; locale: string; children: ReactNode }) {
   return (
-    <Link
+    <Link prefetch={false}
       href={localizePath(`/db/spells/${school}`, locale)}
       className="text-amber-400 hover:text-amber-300 transition-colors"
     >

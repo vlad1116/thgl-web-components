@@ -76,9 +76,9 @@ export function SpellView({
       {/* Mana Cost per Level */}
       {props.manaCost && props.manaCost.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.mana_cost")}
-          </h4>
+          </h2>
           <div className="flex gap-1">
             {props.manaCost.map((cost, i) => (
               <div

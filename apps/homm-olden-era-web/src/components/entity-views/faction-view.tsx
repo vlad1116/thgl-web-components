@@ -118,9 +118,9 @@ export function FactionView({
 
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "ui.effects")}
-            </h4>
+            </h2>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
               <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
             </div>
@@ -154,9 +154,9 @@ export function FactionView({
 
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "ui.effects")}
-            </h4>
+            </h2>
             <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
               <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
             </div>
@@ -196,9 +196,9 @@ export function FactionView({
 
       {props.lawTiers && props.lawTiers.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.faction_law_tiers")}
-          </h4>
+          </h2>
           <div className="grid grid-cols-5 gap-1">
             {props.lawTiers.map((tier, i) => (
               <div
@@ -221,9 +221,9 @@ export function FactionView({
       {/* Ultimate Class Skills */}
       {props.ultimateSkills && props.ultimateSkills.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Ultimate Skills
-          </h4>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {props.ultimateSkills.map((ult) => {
               const ultName = resolveDict(dict, ult.id);
@@ -275,9 +275,9 @@ export function FactionView({
         if (laws.length === 0) return null;
         return (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "faction_laws")}
-            </h4>
+            </h2>
             <div className="flex flex-wrap gap-2">
               {laws.map((law: any) => (
                 <EntityLinkCard
@@ -302,9 +302,9 @@ export function FactionView({
         if (specs.length === 0) return null;
         return (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "specializations")}
-            </h4>
+            </h2>
             <div className="flex flex-wrap gap-2">
               {specs.map((spec: any) => (
                 <EntityLinkCard

@@ -85,7 +85,7 @@ function FormatReward({
       return <>{params.length} specific spells</>;
     case "HeroRandomItemsReward": {
       const artifactLink = (text: string) => (
-        <Link href={localizePath("/db/artifacts", locale)} className="text-amber-400 hover:text-amber-300 transition-colors">{text}</Link>
+        <Link prefetch={false} href={localizePath("/db/artifacts", locale)} className="text-amber-400 hover:text-amber-300 transition-colors">{text}</Link>
       );
       if (params.length <= 1) return <>Random {params[0]} {artifactLink("artifact")}</>;
       const rarityCounts = new Map<string, number>();
@@ -266,10 +266,10 @@ export function MapObjectView({
         return (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm uppercase tracking-wider text-muted-foreground">
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground">
                 Spell Offerings
-              </h4>
-              <Link
+              </h2>
+              <Link prefetch={false}
                 href={localizePath(`/db/spells/${school}`, locale)}
                 className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
               >
@@ -323,9 +323,9 @@ export function MapObjectView({
       {/* Reward variants */}
       {props.variants && props.totalChance && props.variants.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Possible Rewards
-          </h4>
+          </h2>
           <div className="space-y-1.5">
             {props.variants.map((v, i) => {
               const pct = Math.round((v.chance / props.totalChance!) * 1000) / 10;
@@ -368,9 +368,9 @@ export function MapObjectView({
       {/* Unit recruitment */}
       {props.units && props.units.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.cat_hires")}
-          </h4>
+          </h2>
           <div className="space-y-1">
             {props.units.map((u, i) => (
               <div

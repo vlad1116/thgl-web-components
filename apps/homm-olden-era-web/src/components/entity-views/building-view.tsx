@@ -73,7 +73,7 @@ export function BuildingView({
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               {categoryLabel}
             </span>
-            <Link
+            <Link prefetch={false}
               href={localizePath(`/db/factions/${props.faction}`, locale)}
               className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
             >
@@ -92,9 +92,9 @@ export function BuildingView({
       {/* Unit Recruitment */}
       {props.units && props.units.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.cat_hires")}
-          </h4>
+          </h2>
           <div className="space-y-1">
             {props.units.map((u, i) => (
               <div
@@ -191,6 +191,7 @@ export function BuildingView({
                             return (
                               <Link
                                 key={`${req.sid}_${req.level}`}
+                                prefetch={false}
                                 href={localizePath(`/db/buildings/${reqId}`, locale)}
                                 className="block text-sm text-amber-400 hover:text-amber-300 transition-colors"
                               >

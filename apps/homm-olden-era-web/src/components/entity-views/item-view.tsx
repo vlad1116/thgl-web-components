@@ -70,9 +70,9 @@ export function ItemView({
         {/* Set bonuses */}
         {props.bonuses && props.bonuses.length > 0 && (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "ui.set_bonus")}
-            </h4>
+            </h2>
             <div className="space-y-2">
               {props.bonuses.map((tier: any, i: number) => {
                 // Use the desc SID to look up the localized tier description
@@ -105,9 +105,9 @@ export function ItemView({
         {/* Member items */}
         {memberIds.length > 0 && (
           <div>
-            <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "ui.items_in_set")}
-            </h4>
+            </h2>
             <div className="flex flex-wrap gap-2">
               {memberIds.map((itemId: string) => (
                 <EntityLinkCard
@@ -145,7 +145,7 @@ export function ItemView({
               {resolveDict(dict, `ui.slot_${props.slot}`)}
             </span>
             {props.itemSet && (
-              <Link
+              <Link prefetch={false}
                 href={localizePath(`/db/artifacts/${props.itemSet}`, locale)}
                 className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
               >
@@ -208,9 +208,9 @@ export function ItemView({
       {/* Bonuses */}
       {props.bonuses && props.bonuses.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.bonuses")}
-          </h4>
+          </h2>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
             <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
           </div>

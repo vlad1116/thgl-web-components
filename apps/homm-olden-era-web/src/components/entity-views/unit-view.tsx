@@ -108,7 +108,7 @@ export function UnitView({
               {upgLabel}
             </span>
             {findItem(database, props.faction) ? (
-              <Link
+              <Link prefetch={false}
                 href={localizePath(`/db/factions/${props.faction}`, locale)}
                 className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
               >
@@ -182,9 +182,9 @@ export function UnitView({
       {/* Class */}
       {props.baseClass && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-1">
             {resolveDict(dict, "ui.class")}
-          </h4>
+          </h2>
           <p className="text-sm">{resolveDict(dict, props.baseClass)}</p>
           {dict[`${props.baseClass}_description`] && (
             <p className="text-sm text-muted-foreground mt-1">
@@ -197,9 +197,9 @@ export function UnitView({
       {/* Abilities */}
       {props.abilities?.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.abilities")}
-          </h4>
+          </h2>
           <div className="space-y-2">
             {props.abilities.map((a) => (
               <AbilityRow key={a} sid={a} dict={dict} />
@@ -211,9 +211,9 @@ export function UnitView({
       {/* Passives */}
       {props.passives?.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.passives")}
-          </h4>
+          </h2>
           <div className="space-y-2">
             {props.passives.map((p) => (
               <AbilityRow key={p} sid={p} dict={dict} passive />
@@ -225,9 +225,9 @@ export function UnitView({
       {/* Alt Attacks */}
       {props.altAttacks?.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.alt_attacks")}
-          </h4>
+          </h2>
           <div className="space-y-2">
             {props.altAttacks.map((a) => (
               <AbilityRow key={a} sid={a} dict={dict} />

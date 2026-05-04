@@ -84,9 +84,9 @@ export function SkillView({
       {/* Sub-skill bonuses (simple) */}
       {isSubSkill && props.bonuses && props.bonuses.length > 0 && (
         <div>
-          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.effects")}
-          </h4>
+          </h2>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
             <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
           </div>
@@ -96,9 +96,9 @@ export function SkillView({
       {/* Class Weights — offer rate per faction/class */}
       {props.classWeights && props.classWeights.length > 0 && (
         <div>
-          <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.class_weights")}
-          </h4>
+          </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
             {props.classWeights.map((cw) => (
               <div
