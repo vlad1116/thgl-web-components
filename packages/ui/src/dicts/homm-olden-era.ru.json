@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Здания",
   "config.internalLinks.map-objects.title": "Объекты карты",
   "config.internalLinks.map-objects.description": "Жилища, ресурсы, приключения, магические святилища и многое другое.",
-  "config.internalLinks.map-objects.linkText": "Объекты карты"
+  "config.internalLinks.map-objects.linkText": "Объекты карты",
+  "config.internalLinks.mechanics.title": "Игровые механики",
+  "config.internalLinks.mechanics.description": "Как работают боевые характеристики, удача, мораль и формулы урона.",
+  "config.internalLinks.mechanics.linkText": "Смотреть механики"
 }

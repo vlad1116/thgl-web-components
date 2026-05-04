@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Переглянути будівлі",
   "config.internalLinks.map-objects.title": "Об'єкти карти",
   "config.internalLinks.map-objects.description": "Оселі, ресурси, пригоди, магічні святилища та інше.",
-  "config.internalLinks.map-objects.linkText": "Переглянути об'єкти карти"
+  "config.internalLinks.map-objects.linkText": "Переглянути об'єкти карти",
+  "config.internalLinks.mechanics.title": "Ігрові механіки",
+  "config.internalLinks.mechanics.description": "Як працюють бойові характеристики, удача, мораль та формули шкоди.",
+  "config.internalLinks.mechanics.linkText": "Дивитись механіки"
 }

@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "건물 보기",
   "config.internalLinks.map-objects.title": "맵 오브젝트",
   "config.internalLinks.map-objects.description": "주거지, 자원 지역, 모험 이벤트, 마법 사당 등.",
-  "config.internalLinks.map-objects.linkText": "맵 오브젝트 보기"
+  "config.internalLinks.map-objects.linkText": "맵 오브젝트 보기",
+  "config.internalLinks.mechanics.title": "게임 메카닉",
+  "config.internalLinks.mechanics.description": "전투 스탯, 행운, 사기, 데미지 공식의 작동 방식.",
+  "config.internalLinks.mechanics.linkText": "메카닉 보기"
 }

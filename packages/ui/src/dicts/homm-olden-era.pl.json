@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Przeglądaj budynki",
   "config.internalLinks.map-objects.title": "Obiekty mapy",
   "config.internalLinks.map-objects.description": "Siedliska, zasoby, spotkania przygodowe, sanktuaria magiczne i więcej.",
-  "config.internalLinks.map-objects.linkText": "Przeglądaj obiekty mapy"
+  "config.internalLinks.map-objects.linkText": "Przeglądaj obiekty mapy",
+  "config.internalLinks.mechanics.title": "Mechaniki gry",
+  "config.internalLinks.mechanics.description": "Jak działają statystyki bojowe, szczęście, morale i formuły obrażeń.",
+  "config.internalLinks.mechanics.linkText": "Zobacz mechaniki"
 }

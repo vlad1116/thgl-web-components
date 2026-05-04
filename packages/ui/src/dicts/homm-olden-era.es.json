@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Ver edificios",
   "config.internalLinks.map-objects.title": "Objetos del mapa",
   "config.internalLinks.map-objects.description": "Moradas, sitios de recursos, encuentros de aventura, santuarios mágicos y más.",
-  "config.internalLinks.map-objects.linkText": "Ver objetos del mapa"
+  "config.internalLinks.map-objects.linkText": "Ver objetos del mapa",
+  "config.internalLinks.mechanics.title": "Mecánicas del juego",
+  "config.internalLinks.mechanics.description": "Cómo funcionan las estadísticas de combate, suerte, moral y fórmulas de daño.",
+  "config.internalLinks.mechanics.linkText": "Ver mecánicas"
 }

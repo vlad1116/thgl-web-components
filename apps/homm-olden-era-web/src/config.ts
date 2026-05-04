@@ -78,6 +78,13 @@ export const APP_CONFIG: AppConfig = {
       iconName: "MapPin",
       description: "config.internalLinks.map-objects.description",
     },
+    {
+      href: "/db/mechanics",
+      title: "config.internalLinks.mechanics.title",
+      linkText: "config.internalLinks.mechanics.linkText",
+      iconName: "BookOpen",
+      description: "config.internalLinks.mechanics.description",
+    },
   ],
   promoLinks: [],
   externalLinks: [],

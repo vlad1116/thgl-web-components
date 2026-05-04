@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Voir les bâtiments",
   "config.internalLinks.map-objects.title": "Objets de carte",
   "config.internalLinks.map-objects.description": "Habitations, sites de ressources, rencontres d'aventure, sanctuaires magiques et plus.",
-  "config.internalLinks.map-objects.linkText": "Voir les objets de carte"
+  "config.internalLinks.map-objects.linkText": "Voir les objets de carte",
+  "config.internalLinks.mechanics.title": "Mécaniques de jeu",
+  "config.internalLinks.mechanics.description": "Comment fonctionnent les stats de combat, la chance, le moral et les formules de dégâts.",
+  "config.internalLinks.mechanics.linkText": "Voir les mécaniques"
 }

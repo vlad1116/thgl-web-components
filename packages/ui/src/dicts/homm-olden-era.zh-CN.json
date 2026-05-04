@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "查看建筑",
   "config.internalLinks.map-objects.title": "地图物体",
   "config.internalLinks.map-objects.description": "住所、资源点、冒险事件、魔法圣殿等。",
-  "config.internalLinks.map-objects.linkText": "查看地图物体"
+  "config.internalLinks.map-objects.linkText": "查看地图物体",
+  "config.internalLinks.mechanics.title": "游戏机制",
+  "config.internalLinks.mechanics.description": "战斗属性、幸运、士气和伤害公式的运作方式。",
+  "config.internalLinks.mechanics.linkText": "查看机制"
 }

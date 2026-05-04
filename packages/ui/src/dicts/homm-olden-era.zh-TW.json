@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "查看建築",
   "config.internalLinks.map-objects.title": "地圖物體",
   "config.internalLinks.map-objects.description": "住所、資源點、冒險事件、魔法聖殿等。",
-  "config.internalLinks.map-objects.linkText": "查看地圖物體"
+  "config.internalLinks.map-objects.linkText": "查看地圖物體",
+  "config.internalLinks.mechanics.title": "遊戲機制",
+  "config.internalLinks.mechanics.description": "戰鬥屬性、幸運、士氣和傷害公式的運作方式。",
+  "config.internalLinks.mechanics.linkText": "查看機制"
 }

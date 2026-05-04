@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Binaları gör",
   "config.internalLinks.map-objects.title": "Harita Nesneleri",
   "config.internalLinks.map-objects.description": "Konutlar, kaynak alanları, macera karşılaşmaları, büyü tapınakları ve daha fazlası.",
-  "config.internalLinks.map-objects.linkText": "Harita nesnelerini gör"
+  "config.internalLinks.map-objects.linkText": "Harita nesnelerini gör",
+  "config.internalLinks.mechanics.title": "Oyun Mekanikleri",
+  "config.internalLinks.mechanics.description": "Savaş istatistikleri, şans, moral ve hasar formüllerinin işleyişi.",
+  "config.internalLinks.mechanics.linkText": "Mekanikleri gör"
 }

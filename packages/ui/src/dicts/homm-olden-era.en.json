@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Browse Buildings",
   "config.internalLinks.map-objects.title": "Map Objects",
   "config.internalLinks.map-objects.description": "Dwellings, resource sites, adventure encounters, magic shrines, and more.",
-  "config.internalLinks.map-objects.linkText": "Browse Map Objects"
+  "config.internalLinks.map-objects.linkText": "Browse Map Objects",
+  "config.internalLinks.mechanics.title": "Game Mechanics",
+  "config.internalLinks.mechanics.description": "How combat stats, luck, morale, and damage formulas work.",
+  "config.internalLinks.mechanics.linkText": "Learn Mechanics"
 }

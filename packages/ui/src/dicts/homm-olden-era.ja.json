@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "建物を見る",
   "config.internalLinks.map-objects.title": "マップオブジェクト",
   "config.internalLinks.map-objects.description": "住居、資源地、冒険イベント、魔法の祠など。",
-  "config.internalLinks.map-objects.linkText": "マップオブジェクトを見る"
+  "config.internalLinks.map-objects.linkText": "マップオブジェクトを見る",
+  "config.internalLinks.mechanics.title": "ゲームメカニクス",
+  "config.internalLinks.mechanics.description": "戦闘ステータス、運、士気、ダメージ計算式の仕組み。",
+  "config.internalLinks.mechanics.linkText": "メカニクスを見る"
 }

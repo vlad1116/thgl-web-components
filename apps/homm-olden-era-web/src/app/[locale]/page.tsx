@@ -192,6 +192,24 @@ export default async function HomePage({ params }: PageProps) {
                 );
               })}
             </div>
+
+            {/* Guides */}
+            <div className="text-left">
+              <Link
+                href={localizePath("/db/mechanics", locale)}
+                className="group flex items-start gap-3 border border-slate-800 hover:border-amber-800/50 rounded-lg p-5 transition-all hover:bg-slate-900/50"
+              >
+                <span className="text-2xl mt-0.5 opacity-70 group-hover:opacity-100 transition-opacity">📖</span>
+                <div>
+                  <h2 className="text-lg font-semibold group-hover:text-amber-400 transition-colors">
+                    Game Mechanics
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    How combat stats, luck, morale, damage formulas, and other systems work.
+                  </p>
+                </div>
+              </Link>
+            </div>
           </section>
         }
         content={<ReleaseNotes updateMessages={updateMessages} />}

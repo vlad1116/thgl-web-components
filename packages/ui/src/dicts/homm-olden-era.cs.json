@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Zobrazit budovy",
   "config.internalLinks.map-objects.title": "Objekty mapy",
   "config.internalLinks.map-objects.description": "Obydlí, zdroje, dobrodružná setkání, magické svatyně a další.",
-  "config.internalLinks.map-objects.linkText": "Zobrazit objekty mapy"
+  "config.internalLinks.map-objects.linkText": "Zobrazit objekty mapy",
+  "config.internalLinks.mechanics.title": "Herní mechaniky",
+  "config.internalLinks.mechanics.description": "Jak fungují bojové statistiky, štěstí, morálka a vzorce poškození.",
+  "config.internalLinks.mechanics.linkText": "Zobrazit mechaniky"
 }

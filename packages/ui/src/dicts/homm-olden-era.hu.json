@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Épületek megtekintése",
   "config.internalLinks.map-objects.title": "Térképobjektumok",
   "config.internalLinks.map-objects.description": "Lakhelyek, erőforrás-helyek, kalandok, mágikus szentélyek és még több.",
-  "config.internalLinks.map-objects.linkText": "Térképobjektumok"
+  "config.internalLinks.map-objects.linkText": "Térképobjektumok",
+  "config.internalLinks.mechanics.title": "Játékmechanikák",
+  "config.internalLinks.mechanics.description": "Hogyan működnek a harci értékek, szerencse, morál és sebzési képletek.",
+  "config.internalLinks.mechanics.linkText": "Mechanikák"
 }

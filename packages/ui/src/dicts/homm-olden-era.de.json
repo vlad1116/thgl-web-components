@@ -22,5 +22,8 @@
   "config.internalLinks.buildings.linkText": "Gebäude ansehen",
   "config.internalLinks.map-objects.title": "Kartenobjekte",
   "config.internalLinks.map-objects.description": "Behausungen, Ressourcen, Abenteuer, Magieschreine und mehr.",
-  "config.internalLinks.map-objects.linkText": "Kartenobjekte ansehen"
+  "config.internalLinks.map-objects.linkText": "Kartenobjekte ansehen",
+  "config.internalLinks.mechanics.title": "Spielmechaniken",
+  "config.internalLinks.mechanics.description": "Wie Kampfwerte, Glück, Moral und Schadensformeln funktionieren.",
+  "config.internalLinks.mechanics.linkText": "Mechaniken ansehen"
 }

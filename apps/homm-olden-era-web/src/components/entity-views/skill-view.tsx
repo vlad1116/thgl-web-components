@@ -2,6 +2,7 @@ import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
 import { EntityLinkCard } from "@/components/cross-link";
+import { EntityTooltip } from "@/components/entity-tooltip";
 
 type SkillProps = {
   skillType: string;
@@ -66,17 +67,18 @@ export function SkillView({
       {desc && desc !== name && !desc.includes("_desc") && (
         <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
           {desc.replace(/\{(\d+)\}/g, (_, idx) => {
-            // Try to resolve {0}, {1} from the first level's bonuses
             const numericValues: string[] = [];
-            const firstLevel = props.levels?.[0];
-            if (firstLevel) {
-              for (const b of firstLevel.bonuses) {
-                for (const p of b.params) {
-                  if (/^\d+$/.test(String(p))) numericValues.push(String(p));
+            // Collect numeric params from levels (skills) or direct bonuses (sub-skills)
+            const bonusSources = props.levels?.[0]?.bonuses ?? props.bonuses ?? [];
+            for (const b of bonusSources) {
+              for (const p of b.params) {
+                const n = parseFloat(String(p));
+                if (!isNaN(n) && String(p) !== "true" && String(p) !== "false") {
+                  numericValues.push(n > 0 && n < 1 ? `${Math.round(n * 100)}` : String(n));
                 }
               }
             }
-            return numericValues[parseInt(idx)] ?? `{${idx}}`;
+            return numericValues[parseInt(idx)] ?? "";
           })}
         </p>
       )}
@@ -151,13 +153,14 @@ export function SkillView({
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {level.subSkills.map((ss) => (
-                            <EntityLinkCard
-                              key={ss}
-                              itemId={ss}
-                              database={database}
-                              locale={locale}
-                              dict={dict}
-                            />
+                            <EntityTooltip key={ss} entityId={ss} locale={locale}>
+                              <EntityLinkCard
+                                itemId={ss}
+                                database={database}
+                                locale={locale}
+                                dict={dict}
+                              />
+                            </EntityTooltip>
                           ))}
                         </div>
                       </div>
