@@ -32,7 +32,7 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
       </div>
 
-      {/* Item Sets overview */}
+      {/* Artifact Sets overview */}
       {itemSets && itemSets.items.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 pb-6">
           <h2 className="text-lg font-semibold mb-3">
