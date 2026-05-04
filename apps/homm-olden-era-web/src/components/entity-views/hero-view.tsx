@@ -200,6 +200,67 @@ export function HeroView({
           </div>
         </RelatedSection>
       )}
+
+      {/* Ultimate Class Skills for this hero's faction + class */}
+      {(() => {
+        const factionEntry = database
+          .filter((cat: any) => cat.type === "factions")
+          .flatMap((cat: any) => cat.items)
+          .find((f: any) => f.id === props.faction);
+        const ultimates = (factionEntry?.props as any)?.ultimateSkills?.filter(
+          (u: any) => u.classType === props.classType,
+        );
+        if (!ultimates?.length) return null;
+        return (
+          <RelatedSection title="Ultimate Skills">
+            <div className="space-y-2">
+              {ultimates.map((ult: any) => {
+                const ultName = resolveDict(dict, ult.id);
+                let ultDesc = resolveDict(dict, `${ult.id}_desc`);
+                const hasDesc = ultDesc && ultDesc !== `${ult.id}_desc`;
+                // Resolve {0}, {1} from bonus params
+                if (hasDesc) {
+                  const vals: string[] = [];
+                  for (const b of ult.bonuses ?? []) {
+                    for (const p of b.params ?? []) {
+                      const n = parseFloat(String(p));
+                      if (!isNaN(n) && String(p) !== "true" && String(p) !== "false") {
+                        vals.push(n > 0 && n < 1 ? `${Math.round(n * 100)}%` : String(n));
+                      }
+                    }
+                  }
+                  ultDesc = ultDesc.replace(/\{(\d+)\}/g, (_, idx) => vals[parseInt(idx)] ?? "X");
+                }
+                return (
+                  <div key={ult.id} className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3 space-y-1.5">
+                    <div className="font-medium">{ultName}</div>
+                    {hasDesc && (
+                      <p className="text-xs text-muted-foreground">{ultDesc}</p>
+                    )}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-xs text-muted-foreground shrink-0">Requires:</span>
+                      {ult.requiredSkills.map((req: any, ri: number) => (
+                        <span key={ri} className="inline-flex items-center">
+                          {ri > 0 && <span className="text-slate-600 mx-0.5">·</span>}
+                          <EntityLink
+                            itemId={req.skill}
+                            database={database}
+                            dict={dict}
+                            locale={locale}
+                            showIcon={false}
+                            className="text-xs"
+                          />
+                        </span>
+                      ))}
+                      <span className="text-xs text-muted-foreground">(all Lv.{ult.requiredSkills[0]?.level})</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </RelatedSection>
+        );
+      })()}
     </div>
   );
 }

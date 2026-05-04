@@ -3,12 +3,20 @@ import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
-import { EntityLinkCard } from "@/components/cross-link";
+import { EntityLink, EntityLinkCard } from "@/components/cross-link";
+
+type UltimateSkill = {
+  id: string;
+  classType: string;
+  requiredSkills: { skill: string; level: number }[];
+  bonuses: { type: string; params: (string | number)[] }[];
+};
 
 type FactionProps = {
   biome?: string;
   resourceName?: string;
   lawTiers?: { unlockAt: number; lawCount: number }[];
+  ultimateSkills?: UltimateSkill[];
   faction?: string;
   bonuses?: {
     type: string;
@@ -206,6 +214,54 @@ export function FactionView({
                 <div className="text-[10px] text-muted-foreground">{resolveDict(dict, "ui.laws")}</div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Ultimate Class Skills */}
+      {props.ultimateSkills && props.ultimateSkills.length > 0 && (
+        <div>
+          <h4 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            Ultimate Skills
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {props.ultimateSkills.map((ult) => {
+              const ultName = resolveDict(dict, ult.id);
+              const ultDesc = resolveDict(dict, `${ult.id}_desc`);
+              const hasDesc = ultDesc && ultDesc !== `${ult.id}_desc`;
+              return (
+                <div key={ult.id} className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{ultName}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded border ${ult.classType === "might" ? "text-red-400 border-red-800/50 bg-red-900/20" : "text-indigo-400 border-indigo-800/50 bg-indigo-900/20"}`}>
+                      {ult.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
+                    </span>
+                  </div>
+                  {hasDesc && (
+                    <p className="text-xs text-muted-foreground">
+                      {substituteTemplate(ultDesc, ult.bonuses)}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-xs text-muted-foreground shrink-0">Requires:</span>
+                    {ult.requiredSkills.map((req, ri) => (
+                      <span key={ri} className="inline-flex items-center">
+                        {ri > 0 && <span className="text-slate-600 mx-0.5">·</span>}
+                        <EntityLink
+                          itemId={req.skill}
+                          database={database}
+                          dict={dict}
+                          locale={locale}
+                          showIcon={false}
+                          className="text-xs"
+                        />
+                      </span>
+                    ))}
+                    <span className="text-xs text-muted-foreground">(all at Lv.{ult.requiredSkills[0]?.level})</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -130,6 +130,8 @@ export async function DatabaseEntryContent({
       icon: i.icon,
       groupId: i.groupId,
       itemSet: i.props?.itemSet,
+      // Keep ultimateSkills for hero→faction cross-reference
+      ...(cat.type === "factions" && i.props?.ultimateSkills ? { props: { ultimateSkills: i.props.ultimateSkills } } : {}),
     })),
   }));
 
@@ -139,7 +141,14 @@ export async function DatabaseEntryContent({
   for (const cat of database) {
     for (const i of cat.items) {
       neededKeys.add(i.id);
-      if (cat.type === "factions") neededKeys.add(`faction_${i.id}`);
+      if (cat.type === "factions") {
+        neededKeys.add(`faction_${i.id}`);
+        // Add ultimate skill IDs for hero→faction cross-reference
+        for (const ult of (i.props as any)?.ultimateSkills ?? []) {
+          neededKeys.add(ult.id);
+          neededKeys.add(`${ult.id}_desc`);
+        }
+      }
     }
   }
   const slicedDict = sliceDict(dict, neededKeys);
