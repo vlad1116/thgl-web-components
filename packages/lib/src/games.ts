@@ -132,6 +132,14 @@ export const games: Array<Game> = [
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
+    id: "conan-exiles",
+    discordId: "conan-exiles",
+    title: "Conan Exiles",
+    logo: "https://www.th.gl/global_icons/conan-exiles.webp",
+    web: "https://conanexiles.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "duet-night-abyss",
     discordId: "duet-night-abyss",
     title: "Duet Night Abyss",
