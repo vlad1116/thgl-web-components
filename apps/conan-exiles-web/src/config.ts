@@ -40,7 +40,12 @@ export const APP_CONFIG: AppConfig = {
     },
   ],
   promoLinks: [],
-  externalLinks: [],
+  externalLinks: [
+    {
+      href: "https://conanexiles.gaming.tools/",
+      title: "Database",
+    },
+  ],
   keywords: [
     "Camps",
     "Dungeons",
