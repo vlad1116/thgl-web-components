@@ -66,6 +66,17 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
     }
   }
 
+  // Skill level description keys (e.g. skill_faction_humans_level_1_desc)
+  if ((entryType === "skills" || entryType === "sub_skills") && Array.isArray(props.levels)) {
+    for (const lvl of props.levels) {
+      const level = lvl?.level;
+      if (typeof level === "number") {
+        keys.add(`${id}_level_${level}`);
+        keys.add(`${id}_level_${level}_desc`);
+      }
+    }
+  }
+
   return keys;
 }
 
@@ -125,14 +136,42 @@ export async function DatabaseEntryContent({
   // Strip database to only id/icon/type for cross-link lookups
   const liteDatabase = database.map((cat) => ({
     type: cat.type,
-    items: cat.items.map((i) => ({
-      id: i.id,
-      icon: i.icon,
-      groupId: i.groupId,
-      itemSet: i.props?.itemSet,
-      // Keep ultimateSkills for hero→faction cross-reference
-      ...(cat.type === "factions" && i.props?.ultimateSkills ? { props: { ultimateSkills: i.props.ultimateSkills } } : {}),
-    })),
+    items: cat.items.map((i) => {
+      // Include building data (faction, category, prerequisites) when viewing a faction
+      // so the FactionView can render a build tree
+      if (
+        entryType === "factions" &&
+        cat.type === "buildings" &&
+        (i.props as any)?.faction === item.id
+      ) {
+        const lvls = ((i.props as any).levels ?? []).map((lvl: any) => ({
+          name: lvl.name,
+          icon: lvl.icon,
+          costs: lvl.costs,
+          prerequisites: lvl.prerequisites,
+          nodePos: lvl.nodePos,
+        }));
+        return {
+          id: i.id,
+          icon: i.icon,
+          groupId: i.groupId,
+          props: {
+            faction: (i.props as any).faction,
+            category: (i.props as any).category,
+            sid: (i.props as any).sid,
+            levels: lvls,
+          },
+        };
+      }
+      return {
+        id: i.id,
+        icon: i.icon,
+        groupId: i.groupId,
+        itemSet: i.props?.itemSet,
+        // Keep ultimateSkills for hero→faction cross-reference
+        ...(cat.type === "factions" && i.props?.ultimateSkills ? { props: { ultimateSkills: i.props.ultimateSkills } } : {}),
+      };
+    }),
   }));
 
   // Slice dict to only keys needed by this entry
@@ -150,6 +189,34 @@ export async function DatabaseEntryContent({
         }
       }
     }
+  }
+
+  // For faction pages: add building label keys so the build tree can render names
+  if (entryType === "factions") {
+    for (const cat of database) {
+      if (cat.type !== "buildings") continue;
+      for (const i of cat.items) {
+        if ((i.props as any)?.faction !== item.id) continue;
+        neededKeys.add(i.id);
+        for (const lvl of ((i.props as any).levels ?? [])) {
+          if (lvl.name) neededKeys.add(lvl.name);
+        }
+      }
+    }
+    // Also UI labels used by the build tree
+    neededKeys.add("ui.cat_mains");
+    neededKeys.add("ui.cat_taverns");
+    neededKeys.add("ui.cat_markets");
+    neededKeys.add("ui.cat_artifactMarkets");
+    neededKeys.add("ui.cat_hires");
+    neededKeys.add("ui.cat_magicGuilds");
+    neededKeys.add("ui.cat_banks");
+    neededKeys.add("ui.cat_walls");
+    neededKeys.add("ui.cat_intelligences");
+    neededKeys.add("ui.cat_trainingRanges");
+    neededKeys.add("ui.cat_graals");
+    neededKeys.add("ui.building_costs");
+    neededKeys.add("ui.building_requires");
   }
   const slicedDict = sliceDict(dict, neededKeys);
 

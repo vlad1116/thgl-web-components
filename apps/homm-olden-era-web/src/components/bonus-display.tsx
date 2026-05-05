@@ -124,7 +124,8 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
       return `Unit ${stat}: ${formatValue(value)}`;
     }
     case "battleSubskillBonus": {
-      const buffName = resolveDict(dict, params[1] as string);
+      const rawKey = params[1] as string;
+      const buffName = resolveBuffName(dict, rawKey);
       return `Battle bonus: ${buffName}`;
     }
     case "heroBattleAbility": {
@@ -180,6 +181,31 @@ function resolveName(dict: Record<string, string>, key: string): string {
   const withName = resolveDict(dict, `${key}_name`);
   if (withName !== `${key}_name`) return withName;
   return humanizeStat(key);
+}
+
+/**
+ * Resolve buff/ability bonus name. Game data uses keys like
+ * `skill_formation_1_bonus` or `skill_siege_attack_siege_ability_bonus_1`,
+ * but display strings live under `sub_skill_*` keys. Try multiple patterns.
+ */
+function resolveBuffName(dict: Record<string, string>, key: string): string {
+  // Try direct key first
+  if (dict[key]) return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
+
+  // Pattern 1: skill_X_N_bonus → sub_skill_X_N
+  let m = key.match(/^skill_(.+)_(\d+)_bonus$/);
+  if (m) {
+    const candidate = `sub_skill_${m[1]}_${m[2]}`;
+    if (dict[candidate]) return resolveDict(dict, candidate);
+  }
+  // Pattern 2: skill_X_..._bonus_N → sub_skill_X_N
+  m = key.match(/^skill_([^_]+)_.*_bonus_(\d+)$/);
+  if (m) {
+    const candidate = `sub_skill_${m[1]}_${m[2]}`;
+    if (dict[candidate]) return resolveDict(dict, candidate);
+  }
+  // Fall back to direct resolution (returns key if not found)
+  return resolveDict(dict, key);
 }
 
 function formatValue(value: string | number): string {

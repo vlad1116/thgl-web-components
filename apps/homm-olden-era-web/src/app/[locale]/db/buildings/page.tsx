@@ -24,10 +24,13 @@ export default async function Page({ params }: PageProps) {
     <>
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
-        <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
+        <h1 className="text-2xl font-bold mb-2">{sectionLabel}</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          Click a faction header to see its full build tree.
+        </p>
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={data} section="buildings" dict={dict} locale={locale} groupLabelPrefix="faction_" linkGroups />
+        <EntityGrid entries={data} section="buildings" dict={dict} locale={locale} groupLabelPrefix="faction_" linkGroups groupSection="factions" />
       </div>
     </>
   );

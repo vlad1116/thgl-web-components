@@ -9,6 +9,7 @@ type TooltipData = {
   desc: string | null;
   bonuses: string[];
   stats: string[];
+  extras?: { label: string; value: string }[];
 };
 
 const cache = new Map<string, TooltipData>();
@@ -96,7 +97,12 @@ export function EntityTooltip({
     hideTimerRef.current = setTimeout(() => setVisible(false), 100);
   };
 
-  const hasContent = data && (data.desc || data.bonuses.length > 0 || data.stats.length > 0);
+  const hasContent =
+    data &&
+    (data.desc ||
+      data.bonuses.length > 0 ||
+      data.stats.length > 0 ||
+      (data.extras && data.extras.length > 0));
 
   return (
     <span
@@ -155,6 +161,16 @@ export function EntityTooltip({
                           &#x25C6;
                         </span>
                         <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {data.extras && data.extras.length > 0 && (
+                  <ul className={`space-y-1 ${data.bonuses.length > 0 || data.desc ? "mt-2 pt-2 border-t border-slate-800/50" : ""}`}>
+                    {data.extras.map((e, i) => (
+                      <li key={i} className="text-xs">
+                        <span className="text-muted-foreground">{e.label}: </span>
+                        <span className="text-slate-200">{e.value}</span>
                       </li>
                     ))}
                   </ul>

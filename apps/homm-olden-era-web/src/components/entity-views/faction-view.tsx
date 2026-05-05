@@ -4,6 +4,7 @@ import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
 import { EntityLink, EntityLinkCard } from "@/components/cross-link";
+import { BuildTree } from "@/components/build-tree";
 
 type UltimateSkill = {
   id: string;
@@ -322,6 +323,16 @@ export function FactionView({
           </div>
         );
       })()}
+
+      {/* Town Build Tree */}
+      {entryId && (
+        <BuildTree
+          factionId={entryId}
+          database={database as any}
+          dict={dict}
+          locale={locale}
+        />
+      )}
     </div>
   );
 }

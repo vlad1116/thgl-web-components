@@ -11,33 +11,33 @@ const MECHANICS: Record<
 > = {
   attack: {
     label: "Attack",
-    anchor: "hero-stats",
-    desc: "Each point of Attack above the target's Defense adds +5% damage (up to +300%).",
+    anchor: "unit-stats",
+    desc: "Damage formula: DM = (20 + Attack) / (20 + Defense). Minimum modifier is 0.",
   },
   offence: {
     label: "Attack",
-    anchor: "hero-stats",
-    desc: "Each point of Attack above the target's Defense adds +5% damage (up to +300%).",
+    anchor: "unit-stats",
+    desc: "Damage formula: DM = (20 + Attack) / (20 + Defense). Minimum modifier is 0.",
   },
   defence: {
     label: "Defense",
-    anchor: "hero-stats",
-    desc: "Each point of Defense above the attacker's Attack reduces damage by ~2.5%.",
+    anchor: "unit-stats",
+    desc: "Damage formula: DM = (20 + Attack) / (20 + Defense). Minimum modifier is 0.",
   },
   defense: {
     label: "Defense",
-    anchor: "hero-stats",
-    desc: "Each point of Defense above the attacker's Attack reduces damage by ~2.5%.",
+    anchor: "unit-stats",
+    desc: "Damage formula: DM = (20 + Attack) / (20 + Defense). Minimum modifier is 0.",
   },
   spellpower: {
     label: "Spell Power",
     anchor: "hero-stats",
-    desc: "Increases spell effectiveness — damage, healing, duration, and area of effect.",
+    desc: "Enhances the strength of the hero's spells — increases their Damage and the duration of applied effects.",
   },
   intelligence: {
-    label: "Intelligence",
+    label: "Knowledge",
     anchor: "hero-stats",
-    desc: "Each point adds 10 mana to the hero's maximum mana pool.",
+    desc: "Increases the hero's maximum mana by 10 for each point of Knowledge.",
   },
   health: {
     label: "Health",
@@ -62,12 +62,12 @@ const MECHANICS: Record<
   luck: {
     label: "Luck",
     anchor: "battle-mechanics",
-    desc: "Each point gives 6% chance for a Lucky Strike (+50% damage) or Unlucky Strike (−50%). Range: −3 to +3.",
+    desc: "Each point above 0 gives a 6% chance to deal 150% damage (Lucky Strike). Each point below 0 gives a 6% chance to deal 50% damage (Unlucky Strike). Default hero range −5 to +5; per-creature ranges vary.",
   },
   morale: {
     label: "Morale",
     anchor: "battle-mechanics",
-    desc: "Each point gives 6% chance for a bonus action or lost turn. Mixing factions reduces Morale. Range: −3 to +3.",
+    desc: "Each point above 0 gives a 4% chance for an extra turn. Each point below 0 gives a 4% chance to skip a turn. Default hero range −5 to +5; mixing factions reduces Morale.",
   },
   mana: {
     label: "Mana",

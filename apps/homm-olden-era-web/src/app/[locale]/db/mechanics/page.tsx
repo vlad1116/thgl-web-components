@@ -29,22 +29,22 @@ const stats = [
   {
     name: "Attack",
     color: "text-red-400",
-    desc: "Increases damage dealt by the hero's units. Each point of Attack above the target's Defense adds +5% damage (up to +300%).",
+    desc: "The hero increases the Attack of all creatures in their army by the value of their own Attack attribute. This bonus directly affects the Damage those creatures deal in battle.",
   },
   {
     name: "Defense",
     color: "text-blue-400",
-    desc: "Reduces damage taken by the hero's units. Each point of Defense above the attacker's Attack reduces damage by ~2.5%.",
+    desc: "The hero increases the Defense of all creatures in their army by the value of their own Defense attribute. This reduces the Damage those creatures take in battle.",
   },
   {
     name: "Spell Power",
     color: "text-purple-400",
-    desc: "Increases the effectiveness of spells cast by the hero. Affects damage, healing, duration, and area of effect depending on the spell.",
+    desc: "Enhances the strength of the hero's spells, increasing both their Damage and the duration of applied effects.",
   },
   {
-    name: "Intelligence",
+    name: "Knowledge",
     color: "text-cyan-400",
-    desc: "Determines the hero's maximum mana pool. Each point of Intelligence adds 10 mana. Higher mana allows casting more spells per battle.",
+    desc: "Increases the hero's maximum mana by 10 for each point of Knowledge (formerly called Intelligence in earlier HoMM titles).",
   },
 ];
 
@@ -55,19 +55,24 @@ const unitStats = [
     desc: "Total hit points for each creature in the stack. When a creature's HP reaches 0, it dies. Only the top creature in a stack can be partially damaged.",
   },
   {
-    name: "Damage",
+    name: "Attack & Defense",
     color: "text-red-400",
-    desc: "The range of base damage each creature deals per attack (e.g. 50–75). Actual damage is modified by Attack vs Defense difference and other bonuses.",
+    desc: "The damage formula is DM = (20 + attacker's Attack) / (20 + target's Defense). Minimum modifier is 0 — Defense can never make a unit invulnerable.",
+  },
+  {
+    name: "Damage",
+    color: "text-orange-400",
+    desc: "The range of base damage each creature deals per attack (e.g. 50–75). Final damage is multiplied by the Attack/Defense formula above.",
   },
   {
     name: "Initiative",
     color: "text-yellow-400",
-    desc: "Determines turn order in combat. Higher initiative units act first. If initiative values are equal, the defending army acts first.",
+    desc: "Determines the turn order in battle. The higher it is, the earlier the stack acts.",
   },
   {
     name: "Speed",
     color: "text-amber-400",
-    desc: "How many tiles a unit can move per turn on the combat grid. Flying units ignore obstacles and can reach any tile within their speed range.",
+    desc: "Determines the stack's movement range in battle. The higher it is, the farther they can move. It is also a secondary parameter affecting turn order.",
   },
   {
     name: "Value",
@@ -80,27 +85,27 @@ const battleMechanics = [
   {
     name: "Luck",
     icon: "🍀",
-    desc: "Each point of Luck gives a 6% chance to trigger a Lucky Strike (dealing +50% damage) or an Unlucky Strike (dealing –50% damage) during combat. Luck ranges from –3 to +3. At +3 Luck, there's an 18% chance for a Lucky Strike and 0% for Unlucky.",
+    desc: "By default, every point of Luck above zero grants a 6% chance to deal 150% Damage (Lucky Strike). Every point below zero grants a 6% chance to deal 50% Damage (Unlucky Strike). The default hero range is –5 to +5; each creature has its own minimum and maximum Luck based on its type and traits.",
   },
   {
     name: "Morale",
     icon: "⚡",
-    desc: "Each point of Morale gives a 6% chance for a unit to get a bonus action (extra turn) or lose a turn. Morale ranges from –3 to +3. Mixing creature types from different factions reduces Morale. At +3, there's an 18% chance for a bonus turn.",
+    desc: "By default, every point of Morale above zero grants a 4% chance to take an extra turn. Every point below zero grants a 4% chance to skip a turn. The default hero range is –5 to +5; each creature has its own minimum and maximum Morale. Armies with creatures from many factions take morale penalties (1 faction: +1, 2: +0, 3: −1, 4: −2, 5: −3, 6: −4, 7: −5).",
   },
   {
     name: "Retaliation",
     icon: "🔄",
-    desc: "When a melee unit is attacked, it automatically retaliates once. Each unit can only retaliate once per round unless it has the 'Unlimited Retaliation' passive. Ranged units do not retaliate against melee attacks at close range.",
+    desc: "Standard Melee Attacks provoke counterattacks. Some units have a 'no counterattack' melee attack so enemies do not counterattack. Ranged units, when attacked in melee, switch to a weaker melee attack — and their retaliation also uses that weaker attack.",
   },
   {
-    name: "Ranged Penalty",
+    name: "Ranged Attacks",
     icon: "🏹",
-    desc: "Ranged units deal full damage at close and medium range. At long range (more than half the battlefield), damage is reduced by 50%. Ranged units deal reduced damage in melee combat.",
+    desc: "Ranged units can attack at any range, but at close (adjacent) range they are replaced with a weaker Melee attack (with a damage reduction). Targets at long distance also take reduced Damage per hex beyond a threshold (capped). Some ranged units (e.g. with 'no_close' or 'no_range' variants) avoid one or both penalties.",
   },
   {
     name: "Magic Schools",
     icon: "✦",
-    desc: "Spells belong to five schools: Day, Night, Primal, Space, and Neutral. Heroes learn spells from Magic Guilds or through skills. Spell effectiveness scales with Spell Power. The Magic Guild in each town offers spells based on the town type.",
+    desc: "Spells belong to schools (Day, Night, Primal, Space, and Neutral). Heroes learn spells from Magic Guilds or through skills. Spell effectiveness scales with Spell Power. The Magic Guild in each town offers spells based on the town type.",
   },
 ];
 

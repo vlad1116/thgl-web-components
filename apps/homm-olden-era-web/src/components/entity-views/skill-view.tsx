@@ -38,6 +38,7 @@ export function SkillView({
   database,
   locale = "en",
   isSubSkill = false,
+  entryId,
 }: {
   name: string;
   desc: string;
@@ -47,6 +48,7 @@ export function SkillView({
   database: any[];
   locale?: string;
   isSubSkill?: boolean;
+  entryId?: string;
 }) {
   return (
     <div className="space-y-5">
@@ -130,42 +132,78 @@ export function SkillView({
               </tr>
             </thead>
             <tbody>
-              {props.levels.map((level) => (
-                <tr
-                  key={level.level}
-                  className="border-b border-slate-800/50 last:border-0"
-                >
-                  <td className="px-4 py-3 align-top">
-                    <span className="text-sm font-semibold px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
-                      {level.level}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {level.bonuses && level.bonuses.length > 0 && (
-                      <BonusList bonuses={level.bonuses} dict={dict} locale={locale} />
-                    )}
+              {props.levels.map((level) => {
+                // Per-level description (e.g. skill_faction_humans_level_1_desc)
+                let levelDesc: string | undefined;
+                if (entryId) {
+                  const key = `${entryId}_level_${level.level}_desc`;
+                  const resolved = dict[key] ? resolveDict(dict, key) : undefined;
+                  if (resolved && resolved !== key) {
+                    // Strip unresolved {N} placeholders and HTML tags
+                    levelDesc = resolved
+                      .replace(/<[^>]+>/g, "")
+                      .replace(/\{(\d+)\}/g, "X")
+                      .trim();
+                  }
+                }
 
-                    {level.subSkills && level.subSkills.length > 0 && (
-                      <div className={level.bonuses?.length ? "mt-3 pt-3 border-t border-slate-800/50" : ""}>
-                        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                          {resolveDict(dict, "ui.unlocks_sub_skills")}
+                // Filter out battleSubskillBonus rows whose buff key resolves to itself (no dict entry)
+                const visibleBonuses = (level.bonuses ?? []).filter((b) => {
+                  if (b.type !== "battleSubskillBonus") return true;
+                  const buffKey = b.params[1] as string;
+                  if (dict[buffKey]) return true;
+                  // Try transform patterns
+                  const m1 = buffKey.match(/^skill_(.+)_(\d+)_bonus$/);
+                  if (m1 && dict[`sub_skill_${m1[1]}_${m1[2]}`]) return true;
+                  const m2 = buffKey.match(/^skill_([^_]+)_.*_bonus_(\d+)$/);
+                  if (m2 && dict[`sub_skill_${m2[1]}_${m2[2]}`]) return true;
+                  // Suppress: redundant with levelDesc or unresolvable
+                  return false;
+                });
+
+                return (
+                  <tr
+                    key={level.level}
+                    className="border-b border-slate-800/50 last:border-0"
+                  >
+                    <td className="px-4 py-3 align-top">
+                      <span className="text-sm font-semibold px-2 py-0.5 rounded bg-amber-900/40 text-amber-400 border border-amber-800/50">
+                        {level.level}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {levelDesc && (
+                        <p className="text-sm text-muted-foreground mb-2 whitespace-pre-line">
+                          {levelDesc}
+                        </p>
+                      )}
+
+                      {visibleBonuses.length > 0 && (
+                        <BonusList bonuses={visibleBonuses} dict={dict} locale={locale} />
+                      )}
+
+                      {level.subSkills && level.subSkills.length > 0 && (
+                        <div className={(visibleBonuses.length || levelDesc) ? "mt-3 pt-3 border-t border-slate-800/50" : ""}>
+                          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            {resolveDict(dict, "ui.unlocks_sub_skills")}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {level.subSkills.map((ss) => (
+                              <EntityLinkCard
+                                key={ss}
+                                itemId={ss}
+                                database={database}
+                                locale={locale}
+                                dict={dict}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {level.subSkills.map((ss) => (
-                            <EntityLinkCard
-                              key={ss}
-                              itemId={ss}
-                              database={database}
-                              locale={locale}
-                              dict={dict}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

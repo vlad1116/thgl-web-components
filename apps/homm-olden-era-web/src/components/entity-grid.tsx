@@ -2,6 +2,7 @@ import Link from "next/link";
 import { localizePath } from "@repo/lib";
 import { resolveDict, resolveDictWithFallback } from "@/components/resolve-dict";
 import { SpriteIcon } from "@/components/sprite-icon";
+import { EntityTooltip } from "@/components/entity-tooltip";
 
 type IconSprite = {
   url: string;
@@ -30,6 +31,7 @@ export function EntityGrid({
   groupLabelPrefix,
   nameLabelPrefix,
   linkGroups = false,
+  groupSection,
 }: {
   entries: DatabaseEntry[];
   section: string;
@@ -38,6 +40,8 @@ export function EntityGrid({
   groupLabelPrefix?: string;
   nameLabelPrefix?: string;
   linkGroups?: boolean;
+  /** Section path used when linkGroups is true (defaults to `section`). */
+  groupSection?: string;
 }) {
   // Group items by groupId
   const groups = new Map<string, DatabaseItem[]>();
@@ -57,7 +61,7 @@ export function EntityGrid({
         const groupLabel = groupLabelPrefix
           ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
           : resolveDictWithFallback(dict, groupId, groupId);
-        const groupHref = linkGroups ? localizePath(`/db/${section}/${groupId}`, locale) : undefined;
+        const groupHref = linkGroups ? localizePath(`/db/${groupSection ?? section}/${groupId}`, locale) : undefined;
 
         return (
           <div key={groupId}>
@@ -87,17 +91,18 @@ export function EntityGrid({
                     : undefined;
 
                 return (
-                  <Link
-                    key={item.id}
-                    href={localizePath(`/db/${section}/${item.id}`, locale)}
-                    prefetch={false}
-                    className="flex items-center gap-2.5 px-2.5 py-2 rounded hover:bg-zinc-800/50 transition-colors group"
-                  >
-                    {icon && <SpriteIcon icon={icon} size={28} />}
-                    <span className="truncate group-hover:text-amber-400 transition-colors">
-                      {name}
-                    </span>
-                  </Link>
+                  <EntityTooltip key={item.id} entityId={item.id} locale={locale}>
+                    <Link
+                      href={localizePath(`/db/${section}/${item.id}`, locale)}
+                      prefetch={false}
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded hover:bg-zinc-800/50 transition-colors group w-full"
+                    >
+                      {icon && <SpriteIcon icon={icon} size={28} />}
+                      <span className="truncate group-hover:text-amber-400 transition-colors">
+                        {name}
+                      </span>
+                    </Link>
+                  </EntityTooltip>
                 );
               })}
             </div>

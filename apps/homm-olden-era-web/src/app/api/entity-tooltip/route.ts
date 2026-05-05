@@ -9,6 +9,21 @@ function resolveDict(dict: Record<string, string>, key: string): string {
   return value;
 }
 
+function resolveBuffName(dict: Record<string, string>, key: string): string {
+  if (dict[key]) return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
+  let m = key.match(/^skill_(.+)_(\d+)_bonus$/);
+  if (m) {
+    const candidate = `sub_skill_${m[1]}_${m[2]}`;
+    if (dict[candidate]) return resolveDict(dict, candidate);
+  }
+  m = key.match(/^skill_([^_]+)_.*_bonus_(\d+)$/);
+  if (m) {
+    const candidate = `sub_skill_${m[1]}_${m[2]}`;
+    if (dict[candidate]) return resolveDict(dict, candidate);
+  }
+  return resolveDict(dict, key);
+}
+
 function humanizeStat(key: string): string {
   return key
     .replace(/([A-Z])/g, " $1")
@@ -66,7 +81,7 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string {
       return `Unit ${humanizeStat(params[0] as string)}: ${formatValue(params[1])}`;
     }
     case "battleSubskillBonus":
-      return `Battle bonus: ${resolveDict(dict, params[1] as string)}`;
+      return `Battle bonus: ${resolveBuffName(dict, params[1] as string)}`;
     case "heroBattleAbility":
       return `Battle ability: ${resolveDict(dict, params[0] as string)}`;
     case "heroWorldAbility":
@@ -141,6 +156,9 @@ export async function GET(request: Request) {
     bonuses.push(formatBonus(b, dict));
   }
 
+  // Extra info lines (e.g. hero specialization, starting army, starting skills)
+  const extras: { label: string; value: string }[] = [];
+
   // Build type-specific stats preview
   const stats: string[] = [];
   const p = item.props ?? {};
@@ -161,6 +179,23 @@ export async function GET(request: Request) {
       if (p.defence) stats.push(`DEF: ${p.defence}`);
       if (p.spellPower) stats.push(`SP: ${p.spellPower}`);
       if (p.intelligence) stats.push(`INT: ${p.intelligence}`);
+
+      if (p.specialization) {
+        const specName = resolveDict(dict, p.specialization as string);
+        if (specName !== p.specialization) extras.push({ label: "Specialization", value: specName });
+      }
+      if (Array.isArray(p.startSkills) && p.startSkills.length > 0) {
+        const names = (p.startSkills as string[])
+          .map((s) => resolveDict(dict, s))
+          .filter((n, i, arr) => n !== (p.startSkills as string[])[i]);
+        if (names.length > 0) extras.push({ label: "Starting Skills", value: names.join(", ") });
+      }
+      if (Array.isArray(p.startingArmy) && p.startingArmy.length > 0) {
+        const army = (p.startingArmy as { unit: string; min: number; max: number }[])
+          .map((a) => `${a.min}–${a.max} ${resolveDict(dict, a.unit)}`)
+          .join(", ");
+        extras.push({ label: "Starting Army", value: army });
+      }
       break;
     }
     case "spells": {
@@ -191,6 +226,14 @@ export async function GET(request: Request) {
       if (p.costGold) stats.push(`${p.costGold} Gold`);
       break;
     }
+    case "specializations": {
+      // Specializations tied to a hero/faction via groupId
+      if (item.groupId) {
+        const factionName = resolveDict(dict, `faction_${item.groupId}`);
+        if (factionName !== `faction_${item.groupId}`) stats.push(factionName);
+      }
+      break;
+    }
   }
 
   return NextResponse.json(
@@ -201,6 +244,7 @@ export async function GET(request: Request) {
       desc: hasDesc ? desc : null,
       bonuses,
       stats,
+      extras,
     },
     {
       headers: {
