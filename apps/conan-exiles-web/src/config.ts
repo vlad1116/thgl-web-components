@@ -3,7 +3,7 @@ import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 export const APP_CONFIG: AppConfig = {
   name: "conan-exiles",
   title: "Conan Exiles",
-  domain: "conan-exiles",
+  domain: "conanexiles",
   supportedLocales: [
     "en",
     "de",
