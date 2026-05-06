@@ -1,18 +1,8 @@
+import { cache } from "react";
 import type { MarkerOptions } from "./types";
 import type { Region } from "./coordinates";
 import type { Drawing, PrivateNode } from "./settings";
 import { Game } from "./games";
-
-// Conditional import of Next.js cache - only available in Next.js environments
-let unstable_cache: typeof import("next/cache").unstable_cache | undefined;
-
-try {
-  const nextCache = await import("next/cache");
-  unstable_cache = nextCache.unstable_cache;
-} catch {
-  // Not in a Next.js environment (e.g., Vite), caching will be disabled
-  unstable_cache = undefined;
-}
 
 export type IconName =
   | "House"
@@ -97,7 +87,6 @@ export type Version = {
     tiles: TilesConfig;
     globalFilters: GlobalFiltersConfig;
     typesIdMap: Record<string, string>;
-    database: DatabaseConfig;
     drawings: DrawingsConfig;
   };
   more: {
@@ -156,29 +145,12 @@ export function getOpenGraphImageUrl(appName: string, mapName: string): string {
   return `${DATA_FORGE_CDN_URL}/${appName}/map-tiles/${mapName}/opengraph-image.jpg`;
 }
 
-// Helper to conditionally apply unstable_cache if available (Next.js), otherwise return the function as-is
-function conditionalCache<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  keys: string[],
-  options: { revalidate: number },
-): T {
-  if (unstable_cache) {
-    return unstable_cache(fn, keys, options) as T;
-  }
-  // In non-Next.js environments (Vite), just return the function without caching
-  return fn;
-}
-
-export const fetchVersion = conditionalCache(
-  async (appName: string): Promise<Version> => {
-    const res = await fetch(getAppUrl(appName, "/version.json"));
-    return res.json();
-  },
-  ["version"],
-  {
-    revalidate: 60,
-  },
-);
+export const fetchVersion = cache(async (appName: string): Promise<Version> => {
+  const res = await fetch(getAppUrl(appName, "/version.json"), {
+    next: { revalidate: 60 },
+  });
+  return res.json();
+});
 
 // Cache for version lookup maps to avoid recreating them on each call
 const versionCacheMap = new WeakMap<
@@ -352,13 +324,14 @@ export function getIconsUrl(
   return getAppUrl(appName, `/icons/${icon}`);
 }
 
-export const fetchDict = conditionalCache(
+export const fetchDict = cache(
   async (
     appName: string,
     locale: string = "en",
   ): Promise<Record<string, string>> => {
     const res = await fetch(
       `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
+      { next: { revalidate: 60 } },
     );
     if (!res.ok) {
       throw new Error(
@@ -367,35 +340,25 @@ export const fetchDict = conditionalCache(
     }
     return res.json();
   },
-  ["dict"],
-  {
-    revalidate: 60,
-  },
 );
 
-export const fetchDatabase = conditionalCache(
+export const fetchDatabase = cache(
   async (appName: string): Promise<DatabaseConfig> => {
     const res = await fetch(
       `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
+      { next: { revalidate: 60 } },
     );
     return res.json();
-  },
-  ["database"],
-  {
-    revalidate: 60,
   },
 );
 
-export const fetchTiles = conditionalCache(
+export const fetchTiles = cache(
   async (appName: string): Promise<TilesConfig> => {
     const res = await fetch(
       `${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`,
+      { next: { revalidate: 60 } },
     );
     return res.json();
-  },
-  ["tiles"],
-  {
-    revalidate: 60,
   },
 );
 
