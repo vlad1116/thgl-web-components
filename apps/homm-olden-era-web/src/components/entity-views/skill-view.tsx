@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { BonusList } from "@/components/bonus-display";
 import { SpriteIcon } from "@/components/sprite-icon";
@@ -19,7 +22,59 @@ type SkillProps = {
     params: (string | number)[];
   }[];
   classWeights?: { faction: string; classType: string; pct: number }[];
+  /** Skills referenced by this skill's sub-skill descriptions (e.g. "doubled if the hero knows X") */
+  compatibleWith?: { id: string; via: string[] }[];
+  /** For sub-skills: the skill ids referenced as synergies in this sub-skill's description */
+  synergiesWith?: string[];
 };
+
+/**
+ * Replace quoted skill names like "Nightshade Magic" with hyperlinks.
+ * Uses the dict to look up display names and matches case-insensitively.
+ */
+function renderDescWithSkillLinks(
+  desc: string,
+  database: any[],
+  dict: Record<string, string>,
+  locale: string,
+): ReactNode {
+  // Build name → id map from skills in the database
+  const skillsCat = database.find((c) => c.type === "skills");
+  if (!skillsCat) return desc;
+  const nameToId = new Map<string, string>();
+  for (const s of skillsCat.items) {
+    const name = resolveDict(dict, s.id);
+    if (name && name !== s.id) {
+      nameToId.set(name.trim().toLowerCase(), s.id);
+    }
+  }
+  // Match curly + straight double quotes
+  const re = /([“"„«])([^”"‟»]+?)([”"‟»])/g;
+  const parts: ReactNode[] = [];
+  let lastIdx = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(desc)) !== null) {
+    const lookup = m[2].trim().replace(/[.,]$/, "").toLowerCase();
+    const skillId = nameToId.get(lookup);
+    if (!skillId) continue;
+    if (m.index > lastIdx) parts.push(desc.slice(lastIdx, m.index));
+    parts.push(
+      <Link
+        key={key++}
+        prefetch={false}
+        href={localizePath(`/db/skills/${skillId}`, locale)}
+        className="text-amber-400 hover:text-amber-300 underline decoration-dotted underline-offset-2 transition-colors"
+      >
+        {m[2]}
+      </Link>,
+    );
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx === 0) return desc;
+  if (lastIdx < desc.length) parts.push(desc.slice(lastIdx));
+  return <>{parts}</>;
+}
 
 type IconSprite = {
   url: string;
@@ -65,23 +120,49 @@ export function SkillView({
         </div>
       </div>
 
-      {desc && desc !== name && !desc.includes("_desc") && (
-        <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-          {desc.replace(/\{(\d+)\}/g, (_, idx) => {
-            const numericValues: string[] = [];
-            const bonusSources = props.levels?.[0]?.bonuses ?? props.bonuses ?? [];
-            for (const b of bonusSources) {
-              for (const p of b.params) {
-                const n = parseFloat(String(p));
-                if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
-                  const abs = Math.abs(n);
-                  numericValues.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
-                }
+      {desc && desc !== name && !desc.includes("_desc") && (() => {
+        const substituted = desc.replace(/\{(\d+)\}/g, (_, idx) => {
+          const numericValues: string[] = [];
+          const bonusSources = props.levels?.[0]?.bonuses ?? props.bonuses ?? [];
+          for (const b of bonusSources) {
+            for (const p of b.params) {
+              const n = parseFloat(String(p));
+              if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+                const abs = Math.abs(n);
+                numericValues.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
               }
             }
-            return numericValues[parseInt(idx)] ?? "";
-          })}
-        </p>
+          }
+          return numericValues[parseInt(idx)] ?? "";
+        });
+        return (
+          <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+            {renderDescWithSkillLinks(substituted, database, dict, locale)}
+          </p>
+        );
+      })()}
+
+      {/* Compatible With — synergies parsed from sub-skill descriptions */}
+      {!isSubSkill && props.compatibleWith && props.compatibleWith.length > 0 && (
+        <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-3">
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            Compatible With
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {props.compatibleWith.map((c) => (
+              <EntityLinkCard
+                key={c.id}
+                itemId={c.id}
+                database={database}
+                locale={locale}
+                dict={dict}
+              />
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Skills referenced as synergies in this skill&rsquo;s sub-skill descriptions (e.g. &ldquo;doubled if the hero knows&hellip;&rdquo;).
+          </p>
+        </div>
       )}
 
       {/* Sub-skill bonuses (simple) */}
@@ -174,7 +255,7 @@ export function SkillView({
                     <td className="px-4 py-3">
                       {levelDesc && (
                         <p className="text-sm text-muted-foreground mb-2 whitespace-pre-line">
-                          {levelDesc}
+                          {renderDescWithSkillLinks(levelDesc, database, dict, locale)}
                         </p>
                       )}
 

@@ -99,6 +99,47 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
         if (cost === 0) return <><SchoolLink school={school} dict={dict} locale={locale}>{schoolName}</SchoolLink> spell cost reduction unlocked</>;
         return <><SchoolLink school={school} dict={dict} locale={locale}>{schoolName}</SchoolLink> spell cost: –{Math.round(cost * 100)}%</>;
       }
+      if (statKey === "magicCostSidSet") {
+        // [type, spellSid, costDelta, ?]
+        const spellId = params[1] as string;
+        const spellName = resolveDict(dict, spellId);
+        const cost = Number(params[2]);
+        const sign = cost < 0 ? "–" : "+";
+        return <>{spellName} mana cost: {sign}{Math.abs(cost)}</>;
+      }
+      if (statKey === "spellPowerSchoolSet") {
+        const school = params[1] as string;
+        const schoolName = resolveSchool(dict, school);
+        const value = Number(params[2]);
+        return <><SchoolLink school={school} dict={dict} locale={locale}>{schoolName}</SchoolLink> Spell Power: {value > 0 ? "+" : ""}{value}</>;
+      }
+      if (statKey === "magicCounterSet") {
+        // [type, school, ...flags] — internal mechanism, summarize compactly
+        const school = params[1] as string;
+        const schoolName = resolveSchool(dict, school);
+        return <>Counters <SchoolLink school={school} dict={dict} locale={locale}>{schoolName}</SchoolLink> magic</>;
+      }
+      if (statKey === "heroResPercentSet") {
+        // [type, "all" or specific resource, value]
+        const target = params[1] as string;
+        const value = Number(params[2]);
+        const label = target === "all" ? "All resources" : humanizeStat(target);
+        return `${label}: ${value > 0 ? "+" : ""}${Math.round(value * 100)}%`;
+      }
+      if (statKey === "outDmgMultipliersSet") {
+        // [type, damageType, isAdditive?, value]
+        const dmgType = humanizeStat(params[1] as string);
+        const value = Number(params[3]);
+        return `${dmgType}: ${value > 0 ? "+" : ""}${Math.round(value * 100)}%`;
+      }
+      if (statKey === "energyValuesSet") {
+        // [type, faction/pool, ...values] — internal energy thresholds
+        return null;
+      }
+      if (statKey?.startsWith?.("enable")) {
+        // Boolean flags ("enableMagicStealing", etc.) — described in desc text
+        return null;
+      }
       const stat = humanizeStat(statKey);
       const value = params[1];
       const mechanicKey = MECHANIC_STAT_MAP[statKey];
@@ -107,6 +148,53 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
       }
       return `${stat}: ${formatValue(value)}`;
     }
+    case "heroActionBonusAddition":
+      // Each sub-skill describes its action bonus in its own desc text;
+      // the raw "action_bonus_sub_skill_X" id has no display name. Suppress.
+      return null;
+    case "heroMagicAddition": {
+      const spellId = params[0] as string;
+      const spellName = resolveDict(dict, spellId);
+      return `Grants spell: ${spellName}`;
+    }
+    case "heroMagicAdditionMass": {
+      // params: [school|"any", tier|"any", count]
+      const school = params[0] as string;
+      const tier = params[1];
+      const count = params[2];
+      const schoolLabel = school === "any" ? "" : ` ${resolveSchool(dict, school)}`;
+      const tierLabel = tier === "any" ? "" : ` tier ${tier}`;
+      return `Grants ${count}${schoolLabel}${tierLabel} spell(s)`;
+    }
+    case "heroStatMap": {
+      const stat = humanizeStat(params[0] as string);
+      return `${stat} (map): ${formatValue(params[1])}`;
+    }
+    case "sideRes":
+      return `${humanizeStat(params[0] as string)}: +${params[1]}`;
+    case "sideFactionRes":
+      return `Faction resource: +${params[0]}`;
+    case "heroExp":
+      return params[0] === "true" ? "Bonus hero experience" : "Hero experience";
+    case "astrologyExp":
+      return `Astrology XP: +${params[0]}`;
+    case "heroScouting":
+      return `Scouting range: +${params[0]}`;
+    case "restoreManaAfterBattle":
+      return `Restores ${params[0]} mana after battle`;
+    case "cityUnitsIncrement":
+      return `Weekly city units: +${params[0]}/${params[1]}`;
+    case "cityUnitsIncrementPerWhenHeroInCity":
+      return `City units (in-city): +${Math.round(Number(params[1]) * 100)}%`;
+    case "battleMechModBonus":
+      // [mechanic, modifier, buffSid] — too internal to summarize meaningfully
+      return null;
+    case "startBattleUnitsCountBonus":
+    case "startBattleUnfrozenUnitCountBonus":
+      return `Bonus units at battle start: +${Math.round(Number(params[1]) * 100)}%`;
+    case "heroUnfrozenMovementRestoreBonus":
+    case "heroUnfrozenBattleBonus":
+      return `${humanizeStat(params[0] as string)}: ${formatValue(params[1])}`;
     case "learnMagicRemoteFromMagicGuild": {
       const school = params[0] as string;
       const schoolName = resolveSchool(dict, school);

@@ -48,7 +48,7 @@ function formatValue(value: string | number): string {
 
 type Bonus = { type: string; params: (string | number)[] };
 
-function formatBonus(bonus: Bonus, dict: Record<string, string>): string {
+function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null {
   const { type, params } = bonus;
   switch (type) {
     case "heroStatBattle":
@@ -72,6 +72,36 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string {
         if (cost === 0) return `${schoolName} spell cost reduction`;
         return `${schoolName} spell cost: –${Math.round(cost * 100)}%`;
       }
+      if (statKey === "magicCostSidSet") {
+        const spellName = resolveDict(dict, params[1] as string);
+        const cost = Number(params[2]);
+        const sign = cost < 0 ? "–" : "+";
+        return `${spellName} mana cost: ${sign}${Math.abs(cost)}`;
+      }
+      if (statKey === "spellPowerSchoolSet") {
+        const school = params[1] as string;
+        const schoolName = resolveDict(dict, `ui.school_${school}`);
+        const value = Number(params[2]);
+        return `${schoolName} Spell Power: ${value > 0 ? "+" : ""}${value}`;
+      }
+      if (statKey === "magicCounterSet") {
+        const school = params[1] as string;
+        const schoolName = resolveDict(dict, `ui.school_${school}`);
+        return `Counters ${schoolName} magic`;
+      }
+      if (statKey === "heroResPercentSet") {
+        const target = params[1] as string;
+        const value = Number(params[2]);
+        const label = target === "all" ? "All resources" : humanizeStat(target);
+        return `${label}: ${value > 0 ? "+" : ""}${Math.round(value * 100)}%`;
+      }
+      if (statKey === "outDmgMultipliersSet") {
+        const dmgType = humanizeStat(params[1] as string);
+        const value = Number(params[3]);
+        return `${dmgType}: ${value > 0 ? "+" : ""}${Math.round(value * 100)}%`;
+      }
+      if (statKey === "energyValuesSet") return null;
+      if (statKey?.startsWith?.("enable")) return null;
       return `${humanizeStat(statKey)}: ${formatValue(params[1])}`;
     }
     case "unitStat": {
@@ -89,7 +119,44 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string {
     case "modifyMagic":
       return `Modifies spell: ${resolveDict(dict, params[0] as string)}`;
     case "addMagicToBook":
+    case "heroMagicAddition":
       return `Grants spell: ${resolveDict(dict, params[0] as string)}`;
+    case "heroMagicAdditionMass": {
+      const school = params[0] as string;
+      const tier = params[1];
+      const count = params[2];
+      const schoolLabel = school === "any" ? "" : ` ${resolveDict(dict, `ui.school_${school}`)}`;
+      const tierLabel = tier === "any" ? "" : ` tier ${tier}`;
+      return `Grants ${count}${schoolLabel}${tierLabel} spell(s)`;
+    }
+    case "heroActionBonusAddition":
+      return null;
+    case "heroStatMap":
+      return `${humanizeStat(params[0] as string)} (map): ${formatValue(params[1])}`;
+    case "sideRes":
+      return `${humanizeStat(params[0] as string)}: +${params[1]}`;
+    case "sideFactionRes":
+      return `Faction resource: +${params[0]}`;
+    case "heroExp":
+      return params[0] === "true" ? "Bonus hero experience" : "Hero experience";
+    case "astrologyExp":
+      return `Astrology XP: +${params[0]}`;
+    case "heroScouting":
+      return `Scouting range: +${params[0]}`;
+    case "restoreManaAfterBattle":
+      return `Restores ${params[0]} mana after battle`;
+    case "cityUnitsIncrement":
+      return `Weekly city units: +${params[0]}/${params[1]}`;
+    case "cityUnitsIncrementPerWhenHeroInCity":
+      return `City units (in-city): +${Math.round(Number(params[1]) * 100)}%`;
+    case "battleMechModBonus":
+      return null;
+    case "startBattleUnitsCountBonus":
+    case "startBattleUnfrozenUnitCountBonus":
+      return `Bonus units at battle start: +${Math.round(Number(params[1]) * 100)}%`;
+    case "heroUnfrozenMovementRestoreBonus":
+    case "heroUnfrozenBattleBonus":
+      return `${humanizeStat(params[0] as string)}: ${formatValue(params[1])}`;
     default:
       return `${humanizeStat(type)}: ${params.map((p) => typeof p === "string" ? humanizeStat(p) : formatValue(p)).join(", ")}`;
   }
@@ -150,10 +217,11 @@ export async function GET(request: Request) {
     );
   }
 
-  // Format bonuses as plain text
+  // Format bonuses as plain text (skipping suppressed/internal types)
   const bonuses: string[] = [];
   for (const b of item.props?.bonuses ?? []) {
-    bonuses.push(formatBonus(b, dict));
+    const formatted = formatBonus(b, dict);
+    if (formatted) bonuses.push(formatted);
   }
 
   // Extra info lines (e.g. hero specialization, starting army, starting skills)
