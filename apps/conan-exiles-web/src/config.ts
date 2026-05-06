@@ -2,7 +2,7 @@ import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
 
 export const APP_CONFIG: AppConfig = {
   name: "conan-exiles",
-  title: "Conan Exiles",
+  title: "Conan Exiles Enhanced",
   domain: "conanexiles",
   supportedLocales: [
     "en",
@@ -46,8 +46,10 @@ export const APP_CONFIG: AppConfig = {
       title: "Database",
     },
   ],
+  // Keywords used in <meta name="keywords">, page descriptions, and OG tags.
+  // The app title is interpolated separately, so don't repeat "Conan Exiles
+  // Enhanced" here.
   keywords: [
-    "Conan Exiles Enhanced",
     "Exiled Lands",
     "Isle of Siptah",
     "Camps",

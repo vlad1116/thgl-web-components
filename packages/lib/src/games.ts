@@ -134,7 +134,7 @@ export const games: Array<Game> = [
   {
     id: "conan-exiles",
     discordId: "conan-exiles",
-    title: "Conan Exiles",
+    title: "Conan Exiles Enhanced",
     logo: "https://www.th.gl/global_icons/conan-exiles.webp",
     web: "https://conanexiles.th.gl",
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
