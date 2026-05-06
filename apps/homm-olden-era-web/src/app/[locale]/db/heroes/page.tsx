@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -17,7 +17,7 @@ export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
   const [dict, database, version] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchVersion(APP_CONFIG.name),
   ]);
   const data = database.filter((item) => item.type === "heroes");

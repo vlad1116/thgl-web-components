@@ -1,7 +1,7 @@
 import { type Metadata } from "next";
 import Link from "next/link";
 import {
-  fetchDatabase,
+  fetchDatabaseIndex,
   fetchVersion,
   getUpdateMessages,
   DEFAULT_LOCALE,
@@ -67,7 +67,7 @@ const DB_SECTIONS = [
 export default async function HomePage({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
   const [database, version, updateMessages, dict] = await Promise.all([
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchVersion(APP_CONFIG.name),
     getUpdateMessages(APP_CONFIG.name),
     getFullDictionary(APP_CONFIG.name, locale),
@@ -78,6 +78,7 @@ export default async function HomePage({ params }: PageProps) {
   // Count items per section
   const counts = new Map<string, number>();
   for (const entry of database) {
+    if (entry.type.startsWith("_")) continue;
     counts.set(entry.type, (counts.get(entry.type) ?? 0) + entry.items.length);
   }
 

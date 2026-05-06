@@ -10,6 +10,10 @@ import {
   findItem,
   getHref,
 } from "@/components/cross-link";
+import {
+  ResourceCostList,
+  buildResourceIconLookup,
+} from "@/components/resource-cost";
 
 type DmgMod = { t: string; v: number };
 
@@ -30,7 +34,7 @@ type UnitProps = {
   nativeBiome?: string;
   inDmgMods?: DmgMod[];
   outDmgMods?: DmgMod[];
-  cost: string;
+  cost: { name: string; cost: number }[];
   abilities: string[];
   passives: string[];
   altAttacks: string[];
@@ -90,6 +94,8 @@ export function UnitView({
         ? resolveDict(dict, "ui.alt_upgrade")
         : resolveDict(dict, "ui.base");
 
+  const resourceIcons = buildResourceIconLookup(database);
+
   // Find upgrade chain: base, _upg, _upg_alt
   const baseId = props.baseId;
   const upgradeChain = [baseId, `${baseId}_upg`, `${baseId}_upg_alt`]
@@ -147,8 +153,23 @@ export function UnitView({
         <StatCell label={resolveDict(dict, "ui.init")} value={props.initiative} color="text-purple-400" mechanicKey="initiative" locale={locale} />
         <StatCell label={resolveDict(dict, "ui.speed")} value={props.speed} color="text-cyan-400" mechanicKey="speed" locale={locale} />
         <StatCell label={resolveDict(dict, "ui.value")} value={props.squadValue} color="text-yellow-400" mechanicKey="value" locale={locale} />
-        <StatCell label={resolveDict(dict, "ui.cost")} value={props.cost} small color="text-amber-300" />
       </div>
+
+      {/* Cost row */}
+      {props.cost?.length > 0 && (
+        <div className="flex items-center gap-3 bg-slate-900/50 border border-slate-800 rounded px-3 py-2">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            {resolveDict(dict, "ui.cost")}
+          </span>
+          <ResourceCostList
+            costs={props.cost}
+            resourceIcons={resourceIcons}
+            iconsHash={iconsHash}
+            dict={dict}
+            size={20}
+          />
+        </div>
+      )}
 
       {/* Extra info row: Biome, XP, Damage Mods */}
       {(props.nativeBiome || props.expBonus || (props.inDmgMods && props.inDmgMods.length > 0) || (props.outDmgMods && props.outDmgMods.length > 0)) && (

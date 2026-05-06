@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchDatabase, fetchDict } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDatabaseType, fetchDict } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 
 function resolveDict(dict: Record<string, string>, key: string): string {
@@ -171,21 +171,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  const [database, dict] = await Promise.all([
-    fetchDatabase(APP_CONFIG.name),
+  const [index, dict] = await Promise.all([
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchDict(APP_CONFIG.name, locale),
   ]);
 
-  // Find the entity across all categories
+  // Locate the entity's type via index, then fetch only that type for full props
   let item: any;
   let entryType = "";
-  for (const cat of database) {
-    const found = cat.items.find((i: any) => i.id === id);
-    if (found) {
-      item = found;
+  for (const cat of index) {
+    if (cat.items.some((i: any) => i.id === id)) {
       entryType = cat.type;
       break;
     }
+  }
+  if (entryType) {
+    const fullCat = await fetchDatabaseType(APP_CONFIG.name, entryType);
+    item = fullCat.items.find((i: any) => i.id === id);
   }
 
   if (!item) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  fetchDatabase,
+  fetchDatabaseIndex,
   fetchDict,
   fetchVersion,
   getIconsUrl,
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   const locale = searchParams.get("locale") || "en";
 
   const [database, dict, version] = await Promise.all([
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchDict(APP_CONFIG.name, locale),
     fetchVersion(APP_CONFIG.name),
   ]);
@@ -46,7 +46,9 @@ export async function GET(request: Request) {
     version.more.icons,
   );
 
-  const entries = database.flatMap((category) =>
+  const entries = database
+    .filter((category) => !category.type.startsWith("_"))
+    .flatMap((category) =>
     category.items.map((item) => {
       const section = SECTION_MAP[category.type] ?? category.type;
       const dictKey =

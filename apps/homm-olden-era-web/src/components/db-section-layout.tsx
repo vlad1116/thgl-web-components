@@ -1,4 +1,4 @@
-import { fetchDatabase, fetchDict, fetchVersion, getIconsUrl, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDict, fetchVersion, getIconsUrl, DEFAULT_LOCALE } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { APP_CONFIG } from "@/config";
@@ -20,7 +20,7 @@ export async function buildSidebarGroups({
 }) {
   const [dict, database, version] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchVersion(APP_CONFIG.name),
   ]);
 

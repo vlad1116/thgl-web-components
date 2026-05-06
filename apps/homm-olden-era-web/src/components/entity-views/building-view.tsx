@@ -3,6 +3,10 @@ import { localizePath } from "@repo/lib";
 import { resolveDict } from "@/components/resolve-dict";
 import { SpriteIcon } from "@/components/sprite-icon";
 import { EntityLink } from "@/components/cross-link";
+import {
+  ResourceCostList,
+  buildResourceIconLookup,
+} from "@/components/resource-cost";
 
 type BuildingProps = {
   faction: string;
@@ -29,17 +33,6 @@ type IconSprite = {
   height: number;
 };
 
-const RESOURCE_COLORS: Record<string, string> = {
-  gold: "text-amber-400",
-  wood: "text-green-400",
-  ore: "text-slate-300",
-  dust: "text-purple-400",
-  crystal: "text-cyan-400",
-  gems: "text-emerald-400",
-  sulfur: "text-orange-400",
-  mercury: "text-slate-400",
-};
-
 export function BuildingView({
   name,
   desc,
@@ -63,6 +56,7 @@ export function BuildingView({
 }) {
   const categoryLabel = resolveDict(dict, `ui.cat_${props.category}`);
   const factionLabel = resolveDict(dict, `faction_${props.faction}`);
+  const resourceIcons = buildResourceIconLookup(database);
 
   return (
     <div className="space-y-5">
@@ -164,16 +158,12 @@ export function BuildingView({
                       </div>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="flex flex-wrap gap-x-3 gap-y-1">
-                        {level.costs.map((cost) => (
-                          <span
-                            key={cost.name}
-                            className={`text-sm ${RESOURCE_COLORS[cost.name] ?? "text-slate-300"}`}
-                          >
-                            {cost.cost.toLocaleString()} {cost.name}
-                          </span>
-                        ))}
-                      </div>
+                      <ResourceCostList
+                        costs={level.costs}
+                        resourceIcons={resourceIcons}
+                        iconsHash={iconsHash}
+                        dict={dict}
+                      />
                       {hasDesc && (
                         <p className="text-xs text-muted-foreground mt-1">
                           {levelDesc.replace(/\{(\d+)\}/g, (_, idx) => {

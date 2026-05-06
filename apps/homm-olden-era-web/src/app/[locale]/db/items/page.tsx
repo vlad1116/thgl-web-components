@@ -1,7 +1,7 @@
 import { type Metadata } from "next";
 import Link from "next/link";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE, localizePath } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, fetchVersion, DEFAULT_LOCALE, localizePath } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -16,13 +16,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const [dict, database, version] = await Promise.all([
+  const [dict, index, itemSets, version] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
+    fetchDatabaseType(APP_CONFIG.name, "item_sets"),
     fetchVersion(APP_CONFIG.name),
   ]);
-  const items = database.filter((item) => item.type === "items");
-  const itemSets = database.find((item) => item.type === "item_sets");
+  const items = index.filter((item) => item.type === "items");
   const sectionLabel = resolveDict(dict, "items");
   const iconsHash = version.more.icons;
 

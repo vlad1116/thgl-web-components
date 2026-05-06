@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import {
-  fetchDatabase,
+  fetchDatabaseIndex,
   type DatabaseConfig,
   DEFAULT_LOCALE,
   localizePath,
@@ -40,6 +40,7 @@ const GROUP_PAGE_TYPES: Record<string, string[]> = {
 function collectDatabaseEntries(database: DatabaseConfig) {
   const entries: { section: string; id: string }[] = [];
   for (const group of database) {
+    if (group.type.startsWith("_")) continue;
     if (SKIP_TYPES.has(group.type)) continue;
     const section = TYPE_TO_SECTION[group.type];
     if (!section) continue;
@@ -69,7 +70,7 @@ function collectGroupPages(database: DatabaseConfig) {
 }
 
 export async function generateSitemaps() {
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const database = await fetchDatabaseIndex(APP_CONFIG.name);
   const dbEntries = collectDatabaseEntries(database);
   const dbChunks = Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK);
   const total = 1 + dbChunks;
@@ -132,7 +133,7 @@ export default async function sitemap(
     }
 
     // Group pages (e.g., /db/spells/day, /db/units/human)
-    const database = await fetchDatabase(APP_CONFIG.name);
+    const database = await fetchDatabaseIndex(APP_CONFIG.name);
     for (const { section, groupId } of collectGroupPages(database)) {
       entries.push(
         makeEntry(`/db/${section}/${encodeURIComponent(groupId)}`, {
@@ -151,7 +152,7 @@ export default async function sitemap(
   }
 
   // Database detail page chunks
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const database = await fetchDatabaseIndex(APP_CONFIG.name);
   const dbEntries = collectDatabaseEntries(database);
   const chunkIndex = id - 1;
   const start = chunkIndex * ENTRIES_PER_CHUNK;

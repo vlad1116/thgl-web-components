@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { type Database } from "@repo/ui/providers";
-import { fetchDatabase, fetchDict, fetchVersion } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, fetchVersion, type DatabaseConfig } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { UnitView } from "@/components/entity-views/unit-view";
@@ -40,6 +39,13 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
   for (const k of ["units", "heroes", "spells", "items", "item_sets", "skills", "factions",
     "specializations", "faction_laws", "sub_skills", "buildings", "map_objects"]) {
     keys.add(k);
+  }
+
+  // Resource labels for cost rows (gold, gemstones, …) — used by units, heroes, buildings.
+  if (entryType === "units" || entryType === "heroes" || entryType === "buildings") {
+    for (const r of ["gold", "wood", "ore", "dust", "crystals", "gemstones", "mercury"]) {
+      keys.add(`resource_${r}`);
+    }
   }
 
   // Recursively collect string values from props (faction IDs, ability IDs, etc.)
@@ -105,31 +111,52 @@ export async function DatabaseEntryContent({
   typePrefix: string;
   locale?: string;
 }) {
-  const [database, dict, version] = await Promise.all([
-    fetchDatabase(APP_CONFIG.name),
+  // 1. Fetch the index + dict + version in parallel.
+  // 2. Resolve which type the entry belongs to (typePrefix may be a section
+  //    that maps to multiple types — e.g. "items" can match items or item_sets).
+  // 3. Fetch the full props for that one type only.
+  // 4. For faction entries, additionally fetch buildings (for the build tree).
+  const [index, dict, version] = await Promise.all([
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchDict(APP_CONFIG.name, locale),
     fetchVersion(APP_CONFIG.name),
   ]);
   const iconsHash = version.more.icons;
 
-  let item: Database[number]["items"][number] | undefined;
   let entryType: string = typePrefix;
-
   if (id) {
-    const category = database.find((cat) =>
+    const matchingType = index.find((cat) =>
       cat.items.some((i) => i.id === id),
-    ) as Database[number] | undefined;
-    if (!category) notFound();
-    item = category.items.find((i) => i.id === id);
-    entryType = category.type;
-    if (!item) notFound();
-  } else {
-    const category = database.find(
-      (cat) => cat.type === typePrefix,
-    ) as Database[number] | undefined;
-    if (!category || !category.items[0]) notFound();
-    item = category.items[0];
+    )?.type;
+    if (!matchingType) notFound();
+    entryType = matchingType;
   }
+
+  // Faction views render a per-faction build tree, so we fetch buildings too.
+  const needsBuildings = entryType === "factions";
+  const [entryCat, buildingsCat] = await Promise.all([
+    fetchDatabaseType(APP_CONFIG.name, entryType),
+    needsBuildings
+      ? fetchDatabaseType(APP_CONFIG.name, "buildings")
+      : Promise.resolve(null),
+  ]);
+
+  let item: DatabaseConfig[number]["items"][number] | undefined;
+  if (id) {
+    item = entryCat.items.find((i) => i.id === id);
+  } else {
+    item = entryCat.items[0];
+  }
+  if (!item) notFound();
+
+  // Compose a single database for cross-link lookups: index for ids/icons
+  // across all types, plus full buildings when on a faction page.
+  const database: DatabaseConfig = buildingsCat
+    ? [
+        ...index.filter((cat) => cat.type !== "buildings"),
+        buildingsCat,
+      ]
+    : index;
 
   const dictKey = entryType === "factions" ? `faction_${item.id}` : item.id;
   const name = resolveDict(dict, dictKey);

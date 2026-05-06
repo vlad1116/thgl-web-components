@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -16,10 +16,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const dict = await fetchDict(APP_CONFIG.name, locale);
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const [dict, skillsCat, indexDb] = await Promise.all([
+    fetchDict(APP_CONFIG.name, locale),
+    fetchDatabaseType(APP_CONFIG.name, "skills"),
+    fetchDatabaseIndex(APP_CONFIG.name),
+  ]);
   const sectionLabel = resolveDict(dict, "skills");
-  const skillNodes = await buildSkillNodes(database, dict);
+  const skillNodes = await buildSkillNodes([skillsCat, ...indexDb.filter((c) => c.type === "sub_skills")], dict);
 
   return (
     <>

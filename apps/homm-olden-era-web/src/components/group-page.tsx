@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict, resolveDictWithFallback } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -10,7 +10,7 @@ import { EntityGrid } from "@/components/entity-grid";
  * Returns the matching entries filtered to that group, or null if not a group.
  */
 export async function getGroupData(types: string[], groupId: string) {
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const database = await fetchDatabaseIndex(APP_CONFIG.name);
   const matching = database.filter((cat) => types.includes(cat.type));
 
   // Check if any items have this groupId

@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, fetchDatabase, fetchDict } from "@repo/lib";
+import { DEFAULT_LOCALE, fetchDatabaseIndex, fetchDatabaseType, fetchDict } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { APP_CONFIG } from "@/config";
@@ -13,11 +13,15 @@ export default async function SkillsLayout({
   params: Promise<{ locale?: string }>;
 }) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const [dict, database] = await Promise.all([
+  const [dict, skillsCat, indexDb] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseType(APP_CONFIG.name, "skills"),
+    fetchDatabaseIndex(APP_CONFIG.name),
   ]);
-  const skillNodes = await buildSkillNodes(database, dict);
+  const skillNodes = await buildSkillNodes(
+    [skillsCat, ...indexDb.filter((c) => c.type === "sub_skills")],
+    dict,
+  );
 
   return (
     <HeaderOffset full>

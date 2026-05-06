@@ -8,6 +8,10 @@ import {
   EntityLinkCard,
   RelatedSection,
 } from "@/components/cross-link";
+import {
+  ResourceCost,
+  buildResourceIconLookup,
+} from "@/components/resource-cost";
 
 type HeroProps = {
   faction: string;
@@ -51,6 +55,7 @@ export function HeroView({
   locale?: string;
   iconsHash?: string;
 }) {
+  const resourceIcons = buildResourceIconLookup(database);
   const specName = props.specialization
     ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec`)
     : undefined;
@@ -81,9 +86,14 @@ export function HeroView({
             >
               {resolveDict(dict, `faction_${props.faction}`)}
             </Link>
-            <span className="text-sm text-muted-foreground">
-              {props.costGold.toLocaleString()} {resolveDict(dict, "ui.gold")}
-            </span>
+            <ResourceCost
+              name="gold"
+              amount={props.costGold}
+              resourceIcons={resourceIcons}
+              iconsHash={iconsHash}
+              dict={dict}
+              size={18}
+            />
           </div>
         </div>
       </div>

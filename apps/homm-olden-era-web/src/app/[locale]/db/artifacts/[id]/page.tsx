@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { generateEntryMetadata, generateGroupMetadata } from "@/components/metadata";
-import { fetchDatabase, DEFAULT_LOCALE, localizePath } from "@repo/lib";
+import { fetchDatabaseType, DEFAULT_LOCALE, localizePath } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
@@ -28,11 +28,10 @@ export default async function EntryPage({ params }: { params: Params }) {
 
   // Item Sets listing page
   if (id === "sets") {
-    const [dict, database] = await Promise.all([
+    const [dict, itemSets] = await Promise.all([
       getFullDictionary(APP_CONFIG.name, locale),
-      fetchDatabase(APP_CONFIG.name),
+      fetchDatabaseType(APP_CONFIG.name, "item_sets"),
     ]);
-    const itemSets = database.find((cat) => cat.type === "item_sets");
     const sectionLabel = resolveDict(dict, "config.internalLinks.items.title");
     const setsLabel = resolveDict(dict, "item_sets");
 

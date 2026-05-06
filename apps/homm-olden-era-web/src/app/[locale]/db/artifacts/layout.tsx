@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, fetchDatabase, fetchDict, fetchVersion, getIconsUrl } from "@repo/lib";
+import { DEFAULT_LOCALE, fetchDatabaseIndex, fetchDict, fetchVersion, getIconsUrl } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { APP_CONFIG } from "@/config";
@@ -17,7 +17,7 @@ export default async function ItemsLayout({
   const { locale = DEFAULT_LOCALE } = await params;
   const [dict, database, version] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
     fetchVersion(APP_CONFIG.name),
   ]);
 

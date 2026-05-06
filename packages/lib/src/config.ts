@@ -352,6 +352,37 @@ export const fetchDatabase = cache(
   },
 );
 
+/**
+ * Fetch the slim per-type index when the app's database is split into multiple
+ * files (e.g. when it would otherwise exceed Next.js's 2 MB fetch cache limit).
+ * Each item carries `id`, `icon`, `groupId` and any small lite props the data
+ * pipeline opted in to. Use this for sidebars, search indices and cross-link
+ * lookups across all types.
+ */
+export const fetchDatabaseIndex = cache(
+  async (appName: string): Promise<DatabaseConfig> => {
+    const res = await fetch(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.index.json`,
+      { next: { revalidate: 60 } },
+    );
+    return res.json();
+  },
+);
+
+/**
+ * Fetch a single type's full database entry (one `{type, items}` category with
+ * full `props` per item). Pair with `fetchDatabaseIndex` for cross-link data.
+ */
+export const fetchDatabaseType = cache(
+  async (appName: string, type: string): Promise<DatabaseConfig[number]> => {
+    const res = await fetch(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.${type}.json`,
+      { next: { revalidate: 60 } },
+    );
+    return res.json();
+  },
+);
+
 export const fetchTiles = cache(
   async (appName: string): Promise<TilesConfig> => {
     const res = await fetch(

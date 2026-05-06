@@ -1,5 +1,5 @@
 import { type Metadata } from "next";
-import { fetchDatabase, fetchDict, getMetadataAlternates } from "@repo/lib";
+import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, getMetadataAlternates } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 
@@ -127,9 +127,9 @@ export async function generateEntryMetadata(
   section: string,
   id: string,
 ): Promise<Metadata> {
-  const [dict, database] = await Promise.all([
+  const [dict, index] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
-    fetchDatabase(APP_CONFIG.name),
+    fetchDatabaseIndex(APP_CONFIG.name),
   ]);
 
   // Resolve name based on section type
@@ -141,11 +141,14 @@ export async function generateEntryMetadata(
     entryName = resolveDict(dict, id);
   }
 
-  // Find item in database for bonus params
+  // Locate the entry's type via index, then fetch only that type's full data
   let itemProps: any;
-  for (const cat of database) {
-    const found = cat.items.find((i) => i.id === id);
-    if (found) { itemProps = found.props; break; }
+  const matchingType = index.find((cat) =>
+    cat.items.some((i) => i.id === id),
+  )?.type;
+  if (matchingType) {
+    const cat = await fetchDatabaseType(APP_CONFIG.name, matchingType);
+    itemProps = cat.items.find((i) => i.id === id)?.props;
   }
 
   const sectionLabel = resolveDict(dict, section);
