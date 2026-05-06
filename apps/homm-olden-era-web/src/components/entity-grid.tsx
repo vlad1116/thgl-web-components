@@ -32,6 +32,7 @@ export function EntityGrid({
   nameLabelPrefix,
   linkGroups = false,
   groupSection,
+  iconsHash,
 }: {
   entries: DatabaseEntry[];
   section: string;
@@ -42,6 +43,7 @@ export function EntityGrid({
   linkGroups?: boolean;
   /** Section path used when linkGroups is true (defaults to `section`). */
   groupSection?: string;
+  iconsHash?: string;
 }) {
   // Group items by groupId
   const groups = new Map<string, DatabaseItem[]>();
@@ -97,7 +99,7 @@ export function EntityGrid({
                       prefetch={false}
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded hover:bg-zinc-800/50 transition-colors group w-full"
                     >
-                      {icon && <SpriteIcon icon={icon} size={28} />}
+                      {icon && <SpriteIcon icon={icon} size={28} iconsHash={iconsHash} />}
                       <span className="truncate group-hover:text-amber-400 transition-colors">
                         {name}
                       </span>

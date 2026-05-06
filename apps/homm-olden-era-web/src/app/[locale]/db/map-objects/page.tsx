@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -15,10 +15,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const dict = await fetchDict(APP_CONFIG.name, locale);
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const [dict, database, version] = await Promise.all([
+    fetchDict(APP_CONFIG.name, locale),
+    fetchDatabase(APP_CONFIG.name),
+    fetchVersion(APP_CONFIG.name),
+  ]);
   const data = database.filter((item) => item.type === "map_objects");
   const sectionLabel = resolveDict(dict, "map_objects");
+  const iconsHash = version.more.icons;
 
   return (
     <>
@@ -27,7 +31,7 @@ export default async function Page({ params }: PageProps) {
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={data} section="map-objects" dict={dict} locale={locale} linkGroups />
+        <EntityGrid entries={data} section="map-objects" dict={dict} locale={locale} linkGroups iconsHash={iconsHash} />
       </div>
     </>
   );

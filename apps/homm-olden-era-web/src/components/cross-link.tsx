@@ -60,6 +60,7 @@ export function EntityLink({
   showIcon = true,
   className = "",
   locale = "en",
+  iconsHash,
 }: {
   itemId: string;
   database: DatabaseEntry[];
@@ -67,6 +68,7 @@ export function EntityLink({
   showIcon?: boolean;
   className?: string;
   locale?: string;
+  iconsHash?: string;
 }) {
   const found = findItem(database, itemId);
   if (!found) {
@@ -91,7 +93,7 @@ export function EntityLink({
         prefetch={false}
         className={`inline-flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition-colors ${className}`}
       >
-        {showIcon && icon && <SpriteIcon icon={icon} size={20} />}
+        {showIcon && icon && <SpriteIcon icon={icon} size={20} iconsHash={iconsHash} />}
         <span>{name}</span>
       </Link>
     </EntityTooltip>
@@ -104,12 +106,14 @@ export function EntityLinkCard({
   dict,
   subtitle,
   locale = "en",
+  iconsHash,
 }: {
   itemId: string;
   database: DatabaseEntry[];
   dict: Record<string, string>;
   subtitle?: string;
   locale?: string;
+  iconsHash?: string;
 }) {
   const found = findItem(database, itemId);
   if (!found) {
@@ -134,7 +138,7 @@ export function EntityLinkCard({
         prefetch={false}
         className="flex items-center gap-2 bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2 hover:border-amber-800/50 hover:bg-slate-900/50 transition-colors group"
       >
-        {icon && <SpriteIcon icon={icon} size={32} />}
+        {icon && <SpriteIcon icon={icon} size={32} iconsHash={iconsHash} />}
         <div>
           <span className="text-sm font-medium group-hover:text-amber-400 transition-colors">
             {name}

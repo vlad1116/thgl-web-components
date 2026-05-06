@@ -1,7 +1,7 @@
 import { type Metadata } from "next";
 import Link from "next/link";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, DEFAULT_LOCALE, localizePath } from "@repo/lib";
+import { fetchDatabase, fetchVersion, DEFAULT_LOCALE, localizePath } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
@@ -17,13 +17,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const [dict, database] = await Promise.all([
+  const [dict, database, version] = await Promise.all([
     getFullDictionary(APP_CONFIG.name, locale),
     fetchDatabase(APP_CONFIG.name),
+    fetchVersion(APP_CONFIG.name),
   ]);
   const items = database.filter((item) => item.type === "items");
   const itemSets = database.find((item) => item.type === "item_sets");
   const sectionLabel = resolveDict(dict, "config.internalLinks.items.title");
+  const iconsHash = version.more.icons;
 
   return (
     <>
@@ -66,7 +68,7 @@ export default async function Page({ params }: PageProps) {
       )}
 
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={items} section="artifacts" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" linkGroups />
+        <EntityGrid entries={items} section="artifacts" dict={dict} locale={locale} groupLabelPrefix="ui.slot_" linkGroups iconsHash={iconsHash} />
       </div>
     </>
   );

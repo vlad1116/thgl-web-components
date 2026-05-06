@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict, resolveDictWithFallback } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -43,9 +43,10 @@ export async function GroupPageContent({
   groupLabelPrefix: string;
   locale?: string;
 }) {
-  const [dict, entries] = await Promise.all([
+  const [dict, entries, version] = await Promise.all([
     fetchDict(APP_CONFIG.name, locale),
     getGroupData(types, groupId),
+    fetchVersion(APP_CONFIG.name),
   ]);
 
   if (!entries) notFound();
@@ -54,6 +55,7 @@ export async function GroupPageContent({
   const groupLabel = groupLabelPrefix
     ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
     : resolveDictWithFallback(dict, groupId, groupId);
+  const iconsHash = version.more.icons;
 
   return (
     <>
@@ -69,7 +71,7 @@ export async function GroupPageContent({
         <h1 className="text-2xl font-bold mb-6">{groupLabel}</h1>
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <EntityGrid entries={entries} section={section} dict={dict} locale={locale} />
+        <EntityGrid entries={entries} section={section} dict={dict} locale={locale} iconsHash={iconsHash} />
       </div>
     </>
   );

@@ -40,6 +40,7 @@ export function HeroView({
   dict,
   database,
   locale = "en",
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -48,6 +49,7 @@ export function HeroView({
   dict: Record<string, string>;
   database: any[];
   locale?: string;
+  iconsHash?: string;
 }) {
   const specName = props.specialization
     ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec`)
@@ -60,7 +62,7 @@ export function HeroView({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

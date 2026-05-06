@@ -31,6 +31,7 @@ export function SpellView({
   icon,
   props,
   dict,
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -39,6 +40,7 @@ export function SpellView({
   dict: Record<string, string>;
   database: any[];
   locale?: string;
+  iconsHash?: string;
 }) {
   const schoolStyle = SCHOOL_COLORS[props.school] ?? SCHOOL_COLORS.neutral;
 
@@ -46,7 +48,7 @@ export function SpellView({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1">

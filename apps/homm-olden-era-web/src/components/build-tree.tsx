@@ -82,11 +82,13 @@ export function BuildTree({
   database,
   dict,
   locale = "en",
+  iconsHash,
 }: {
   factionId: string;
   database: DatabaseEntry[];
   dict: Record<string, string>;
   locale?: string;
+  iconsHash?: string;
 }) {
   const layout = useMemo(() => {
     const cat = database.find((c) => c.type === "buildings");
@@ -256,7 +258,7 @@ export function BuildTree({
                 }}
               >
                 {node.icon && typeof node.icon === "object" && (
-                  <SpriteIcon icon={node.icon as IconSprite} size={36} />
+                  <SpriteIcon icon={node.icon as IconSprite} size={36} iconsHash={iconsHash} />
                 )}
                 <div className="text-[11px] leading-tight text-center w-full line-clamp-2">
                   {node.name}

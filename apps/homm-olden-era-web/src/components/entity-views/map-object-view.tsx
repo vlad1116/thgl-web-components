@@ -173,6 +173,7 @@ export function MapObjectView({
   database,
   locale = "en",
   entryId,
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -182,6 +183,7 @@ export function MapObjectView({
   database: any[];
   locale?: string;
   entryId?: string;
+  iconsHash?: string;
 }) {
   const groupLabel = resolveDict(dict, props.group);
   const rawDesc = desc && desc !== name && !desc.includes("_desc") && !desc.includes("_description")
@@ -195,7 +197,7 @@ export function MapObjectView({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

@@ -44,6 +44,7 @@ export function ItemView({
   dict,
   database,
   locale = "en",
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -52,6 +53,7 @@ export function ItemView({
   dict: Record<string, string>;
   database: any[];
   locale?: string;
+  iconsHash?: string;
 }) {
   // If this is an item set, find its member items by ID prefix
   const isItemSet = !props.slot;
@@ -132,7 +134,7 @@ export function ItemView({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

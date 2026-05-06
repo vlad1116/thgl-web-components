@@ -49,6 +49,7 @@ export function BuildingView({
   database,
   locale = "en",
   entryId,
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -58,6 +59,7 @@ export function BuildingView({
   database: any[];
   locale?: string;
   entryId?: string;
+  iconsHash?: string;
 }) {
   const categoryLabel = resolveDict(dict, `ui.cat_${props.category}`);
   const factionLabel = resolveDict(dict, `faction_${props.faction}`);
@@ -66,7 +68,7 @@ export function BuildingView({
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">

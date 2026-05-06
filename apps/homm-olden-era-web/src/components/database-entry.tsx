@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Database } from "@repo/ui/providers";
-import { fetchDatabase, fetchDict } from "@repo/lib";
+import { fetchDatabase, fetchDict, fetchVersion } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { UnitView } from "@/components/entity-views/unit-view";
@@ -105,8 +105,12 @@ export async function DatabaseEntryContent({
   typePrefix: string;
   locale?: string;
 }) {
-  const database = await fetchDatabase(APP_CONFIG.name);
-  const dict = await fetchDict(APP_CONFIG.name, locale);
+  const [database, dict, version] = await Promise.all([
+    fetchDatabase(APP_CONFIG.name),
+    fetchDict(APP_CONFIG.name, locale),
+    fetchVersion(APP_CONFIG.name),
+  ]);
+  const iconsHash = version.more.icons;
 
   let item: Database[number]["items"][number] | undefined;
   let entryType: string = typePrefix;
@@ -220,7 +224,7 @@ export async function DatabaseEntryContent({
   }
   const slicedDict = sliceDict(dict, neededKeys);
 
-  const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id };
+  const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id, iconsHash };
 
   return (
     <div className="py-4 text-left">

@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 import { generateCategoryMetadata } from "@/components/metadata";
-import { fetchDatabase, fetchDict, DEFAULT_LOCALE } from "@repo/lib";
+import { fetchDatabase, fetchDict, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { APP_CONFIG } from "@/config";
 import { resolveDict } from "@/components/resolve-dict";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -17,11 +17,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const dict = await fetchDict(APP_CONFIG.name, locale);
-  const database = await fetchDatabase(APP_CONFIG.name);
+  const [dict, database, version] = await Promise.all([
+    fetchDict(APP_CONFIG.name, locale),
+    fetchDatabase(APP_CONFIG.name),
+    fetchVersion(APP_CONFIG.name),
+  ]);
   const data = database.filter((item) => item.type === "units");
-
   const sectionLabel = resolveDict(dict, "units");
+  const iconsHash = version.more.icons;
 
   return (
     <>
@@ -37,6 +40,7 @@ export default async function Page({ params }: PageProps) {
           locale={locale}
           groupLabelPrefix="faction_"
           linkGroups
+          iconsHash={iconsHash}
         />
       </div>
     </>

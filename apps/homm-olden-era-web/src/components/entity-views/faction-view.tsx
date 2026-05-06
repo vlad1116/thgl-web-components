@@ -85,6 +85,7 @@ export function FactionView({
   locale = "en",
   entryId,
   isFactionLaw = false,
+  iconsHash,
 }: {
   name: string;
   desc: string;
@@ -95,6 +96,7 @@ export function FactionView({
   locale?: string;
   entryId?: string;
   isFactionLaw?: boolean;
+  iconsHash?: string;
 }) {
   const isFaction = !!props.biome;
   const isSpecialization = !isFaction && !isFactionLaw;
@@ -105,7 +107,7 @@ export function FactionView({
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-4">
-          {icon && <SpriteIcon icon={icon} size={64} />}
+          {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
             <span className="text-xs px-2 py-0.5 rounded bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">
@@ -139,7 +141,7 @@ export function FactionView({
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-4">
-          {icon && <SpriteIcon icon={icon} size={64} />}
+          {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
             {props.faction && (
@@ -174,7 +176,7 @@ export function FactionView({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} size={64} />}
+        {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -290,6 +292,7 @@ export function FactionView({
                   database={database}
                   locale={locale}
                   dict={dict}
+                  iconsHash={iconsHash}
                 />
               ))}
             </div>
@@ -317,6 +320,7 @@ export function FactionView({
                   database={database}
                   locale={locale}
                   dict={dict}
+                  iconsHash={iconsHash}
                 />
               ))}
             </div>
@@ -331,6 +335,7 @@ export function FactionView({
           database={database as any}
           dict={dict}
           locale={locale}
+          iconsHash={iconsHash}
         />
       )}
     </div>
