@@ -23,7 +23,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Exiled Lands Map",
       description:
-        "Navigate Conan Exiles' Exiled Lands with our interactive map. Find camps, creatures, dungeons, chests, and more.",
+        "Navigate the Exiled Lands in Conan Exiles Enhanced (UE5). Find camps, dungeons, caves, vistas, wildlife, NPC factions, iron ore deposits, and more.",
       href: "/maps/Exiled%20Lands",
       iconName: "Map",
       bgImage: getPreviewImageUrl("conan-exiles", "ExiledLands", "2"),
@@ -32,7 +32,7 @@ export const APP_CONFIG: AppConfig = {
     {
       title: "Isle of Siptah Map",
       description:
-        "Explore the Isle of Siptah with our interactive map. Discover vaults, surge altars, camps, and creatures.",
+        "Explore the Isle of Siptah in Conan Exiles Enhanced. Find vaults, surge altars, camps, wildlife, and resource clusters.",
       href: "/maps/Isle%20of%20Siptah",
       iconName: "Map",
       bgImage: getPreviewImageUrl("conan-exiles", "IsleOfSiptah", "2"),
@@ -47,14 +47,34 @@ export const APP_CONFIG: AppConfig = {
     },
   ],
   keywords: [
+    "Conan Exiles Enhanced",
+    "Exiled Lands",
+    "Isle of Siptah",
     "Camps",
     "Dungeons",
     "Caves",
+    "Vaults",
+    "Surge Altars",
     "Wildlife",
+    "Bosses",
     "Thralls",
+    "NPCs",
     "Chests",
+    "Iron Ore",
+    "Resources",
+    "Brimstone",
+    "Crystal",
+    "Map Markers",
     "Emotes",
     "Recipes",
   ],
-  topFilters: ["cave", "dungeon", "ruins", "chest_metal", "wildlife_boss"],
+  topFilters: [
+    "cave",
+    "dungeon",
+    "ruins",
+    "chest_metal",
+    "wildlife_boss",
+    "res_iron_ore",
+    "res_crystal",
+  ],
 };
