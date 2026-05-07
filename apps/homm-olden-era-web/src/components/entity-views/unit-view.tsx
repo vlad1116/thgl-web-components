@@ -275,6 +275,7 @@ export function UnitView({
                   database={database}
                   locale={locale}
                   dict={dict}
+                  iconsHash={iconsHash}
                   subtitle={
                     entry.item.id === baseId
                       ? resolveDict(dict, "ui.base")

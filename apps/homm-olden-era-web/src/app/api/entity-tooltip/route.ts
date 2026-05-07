@@ -234,11 +234,38 @@ export async function GET(request: Request) {
   const p = item.props ?? {};
   switch (entryType) {
     case "units": {
-      if (p.health) stats.push(`HP: ${p.health}`);
-      if (p.attack) stats.push(`ATK: ${p.attack}`);
-      if (p.defence) stats.push(`DEF: ${p.defence}`);
-      if (p.damageMin && p.damageMax) stats.push(`DMG: ${p.damageMin}–${p.damageMax}`);
+      // For an upgrade, compare each stat against the base unit and append a delta.
+      let base: any = null;
+      if (p.baseId && p.upgradeLevel && p.upgradeLevel !== "base") {
+        const fullCat = await fetchDatabaseType(APP_CONFIG.name, "units");
+        base = fullCat.items.find((i: any) => i.id === p.baseId)?.props ?? null;
+      }
+      const fmtStat = (label: string, value: number, baseValue?: number): string => {
+        if (typeof baseValue === "number" && baseValue !== value) {
+          const delta = value - baseValue;
+          const sign = delta > 0 ? "+" : "";
+          return `${label}: ${value} (${sign}${delta})`;
+        }
+        return `${label}: ${value}`;
+      };
       if (p.tier) stats.push(`Tier ${p.tier}`);
+      if (p.hp != null) stats.push(fmtStat("HP", p.hp, base?.hp));
+      if (p.offence != null) stats.push(fmtStat("ATK", p.offence, base?.offence));
+      if (p.defence != null) stats.push(fmtStat("DEF", p.defence, base?.defence));
+      if (p.damageMin != null && p.damageMax != null) {
+        const dmg = `${p.damageMin}–${p.damageMax}`;
+        if (base && (base.damageMin !== p.damageMin || base.damageMax !== p.damageMax)) {
+          const dMin = p.damageMin - base.damageMin;
+          const dMax = p.damageMax - base.damageMax;
+          const sMin = dMin > 0 ? "+" : "";
+          const sMax = dMax > 0 ? "+" : "";
+          stats.push(`DMG: ${dmg} (${sMin}${dMin}/${sMax}${dMax})`);
+        } else {
+          stats.push(`DMG: ${dmg}`);
+        }
+      }
+      if (p.initiative != null) stats.push(fmtStat("INI", p.initiative, base?.initiative));
+      if (p.speed != null) stats.push(fmtStat("SPD", p.speed, base?.speed));
       break;
     }
     case "heroes": {

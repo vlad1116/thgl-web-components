@@ -45,12 +45,14 @@ function FormatReward({
   dict,
   database,
   locale,
+  iconsHash,
 }: {
   type: string;
   params: (string | number)[];
   dict: Record<string, string>;
   database: any[];
   locale: string;
+  iconsHash?: string;
 }) {
   switch (type) {
     case "SideResReward": {
@@ -113,18 +115,18 @@ function FormatReward({
       return <>Level up</>;
     case "HeroItemReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
       );
     case "HeroUnitsReward":
       return (
         <span className="inline-flex items-center gap-1">
           {params[1] && <span>{params[1]}×</span>}
-          <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+          <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
         </span>
       );
     case "HeroSkillAdditionReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
       );
     case "HeroBoxUnitsReward":
       return (
@@ -132,14 +134,14 @@ function FormatReward({
           {params.map((p, i) => (
             <span key={i}>
               {i > 0 && ", "}
-              <EntityLink itemId={String(p)} database={database} dict={dict} locale={locale} />
+              <EntityLink itemId={String(p)} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
             </span>
           ))}
         </span>
       );
     case "HeroSkillReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} />
+        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
       );
     case "RandomHeroSkillReward":
       return <>Random skill ({params[0]} choices)</>;
@@ -341,7 +343,7 @@ export function MapObjectView({
                       {v.rewards.map((r, j) => (
                         <span key={j}>
                           {j > 0 && " + "}
-                          <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} />
+                          <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} iconsHash={iconsHash} />
                         </span>
                       ))}
                       {v.guarded && !v.guards && (
@@ -355,7 +357,7 @@ export function MapObjectView({
                       {v.guards.map((g, gi) => (
                         <span key={gi} className="inline-flex items-center gap-1">
                           <span className="text-xs text-red-400/90 tabular-nums">{g.count}×</span>
-                          <EntityLink itemId={g.sid} database={database} dict={dict} locale={locale} showIcon={false} className="text-xs !text-red-400 hover:!text-red-300" />
+                          <EntityLink itemId={g.sid} database={database} dict={dict} locale={locale} iconsHash={iconsHash} showIcon={false} className="text-xs !text-red-400 hover:!text-red-300" />
                         </span>
                       ))}
                     </div>
@@ -387,6 +389,7 @@ export function MapObjectView({
                       database={database}
                       locale={locale}
                       dict={dict}
+                      iconsHash={iconsHash}
                     />
                   ))}
                 </div>

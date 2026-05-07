@@ -258,6 +258,7 @@ export function FactionView({
                           database={database}
                           dict={dict}
                           locale={locale}
+                          iconsHash={iconsHash}
                           showIcon={false}
                           className="text-xs"
                         />

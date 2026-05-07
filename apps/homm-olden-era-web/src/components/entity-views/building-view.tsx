@@ -105,6 +105,7 @@ export function BuildingView({
                       database={database}
                       locale={locale}
                       dict={dict}
+                      iconsHash={iconsHash}
                     />
                   ))}
                 </div>

@@ -118,6 +118,7 @@ export function ItemView({
                   database={database}
                   locale={locale}
                   dict={dict}
+                  iconsHash={iconsHash}
                 />
               ))}
             </div>

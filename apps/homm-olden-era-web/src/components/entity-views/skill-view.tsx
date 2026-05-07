@@ -158,6 +158,7 @@ export function SkillView({
                 database={database}
                 locale={locale}
                 dict={dict}
+                iconsHash={iconsHash}
               />
             ))}
           </div>
@@ -278,6 +279,7 @@ export function SkillView({
                                 database={database}
                                 locale={locale}
                                 dict={dict}
+                                iconsHash={iconsHash}
                               />
                             ))}
                           </div>

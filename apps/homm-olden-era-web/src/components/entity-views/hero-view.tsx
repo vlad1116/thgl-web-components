@@ -151,6 +151,7 @@ export function HeroView({
                   database={database}
                   locale={locale}
                   dict={dict}
+                  iconsHash={iconsHash}
                 />
                 <span className="text-sm text-muted-foreground">
                   {entry.min}–{entry.max}
@@ -172,6 +173,7 @@ export function HeroView({
                 database={database}
                 locale={locale}
                 dict={dict}
+                iconsHash={iconsHash}
               />
             ))}
           </div>
@@ -196,6 +198,7 @@ export function HeroView({
                       database={database}
                       locale={locale}
                       dict={dict}
+                      iconsHash={iconsHash}
                     />
                   </div>
                   <div className="flex-1 h-5 bg-slate-900/50 rounded overflow-hidden">
@@ -261,6 +264,7 @@ export function HeroView({
                             database={database}
                             dict={dict}
                             locale={locale}
+                            iconsHash={iconsHash}
                             showIcon={false}
                             className="text-xs"
                           />
