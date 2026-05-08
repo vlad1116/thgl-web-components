@@ -104,9 +104,12 @@ export function VillagersWeeklyWants({
   showGifts?: boolean;
 }) {
   const t = useT();
+  const sortedVillagers = [...villagers].sort((a, b) =>
+    t(a.type).localeCompare(t(b.type)),
+  );
   return (
     <div className="space-y-1">
-      {villagers.map((villager) => {
+      {sortedVillagers.map((villager) => {
         return (
           <div key={villager.persistId} className={`flex items-center`}>
             <Tooltip delayDuration={200}>
