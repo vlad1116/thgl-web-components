@@ -1,0 +1,70 @@
+name: Deploy games-web Container
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/games-web/**"
+      - "packages/lib/**"
+      - "packages/ui/**"
+      - "packages/tailwind-config/**"
+      - "packages/typescript-config/**"
+      - "packages/eslint-config/**"
+      - "package.json"
+      - "bun.lock"
+      - "turbo.json"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-games-web
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/games-web
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image name lowercase
+        run: echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/games-web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ github.sha }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update Magic Container
+        if: vars.BUNNY_GAMES_WEB_APP_ID != ''
+        uses: BunnyWay/actions/container-update-image@main
+        with:
+          app_id: ${{ vars.BUNNY_GAMES_WEB_APP_ID }}
+          api_key: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
+          container: ${{ vars.BUNNY_GAMES_WEB_CONTAINER_NAME }}
+          image_tag: ${{ github.sha }}
