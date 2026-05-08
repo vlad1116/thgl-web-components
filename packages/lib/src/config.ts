@@ -1,4 +1,3 @@
-import { cache } from "react";
 import type { MarkerOptions } from "./types";
 import type { Region } from "./coordinates";
 import type { Drawing, PrivateNode } from "./settings";
@@ -145,12 +144,12 @@ export function getOpenGraphImageUrl(appName: string, mapName: string): string {
   return `${DATA_FORGE_CDN_URL}/${appName}/map-tiles/${mapName}/opengraph-image.jpg`;
 }
 
-export const fetchVersion = cache(async (appName: string): Promise<Version> => {
+export async function fetchVersion(appName: string): Promise<Version> {
   const res = await fetch(getAppUrl(appName, "/version.json"), {
     next: { revalidate: 60 },
   });
   return res.json();
-});
+}
 
 // Cache for version lookup maps to avoid recreating them on each call
 const versionCacheMap = new WeakMap<
@@ -324,33 +323,27 @@ export function getIconsUrl(
   return getAppUrl(appName, `/icons/${icon}`);
 }
 
-export const fetchDict = cache(
-  async (
-    appName: string,
-    locale: string = "en",
-  ): Promise<Record<string, string>> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
-      { next: { revalidate: 60 } },
-    );
-    if (!res.ok) {
-      throw new Error(
-        `Failed to fetch dict ${appName}/${locale}: ${res.status}`,
-      );
-    }
-    return res.json();
-  },
-);
+export async function fetchDict(
+  appName: string,
+  locale: string = "en",
+): Promise<Record<string, string>> {
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
+    { next: { revalidate: 60 } },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch dict ${appName}/${locale}: ${res.status}`);
+  }
+  return res.json();
+}
 
-export const fetchDatabase = cache(
-  async (appName: string): Promise<DatabaseConfig> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
-      { next: { revalidate: 60 } },
-    );
-    return res.json();
-  },
-);
+export async function fetchDatabase(appName: string): Promise<DatabaseConfig> {
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
+    { next: { revalidate: 60 } },
+  );
+  return res.json();
+}
 
 /**
  * Fetch the slim per-type index when the app's database is split into multiple
@@ -359,39 +352,38 @@ export const fetchDatabase = cache(
  * pipeline opted in to. Use this for sidebars, search indices and cross-link
  * lookups across all types.
  */
-export const fetchDatabaseIndex = cache(
-  async (appName: string): Promise<DatabaseConfig> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/config/database.index.json`,
-      { next: { revalidate: 60 } },
-    );
-    return res.json();
-  },
-);
+export async function fetchDatabaseIndex(
+  appName: string,
+): Promise<DatabaseConfig> {
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/config/database.index.json`,
+    { next: { revalidate: 60 } },
+  );
+  return res.json();
+}
 
 /**
  * Fetch a single type's full database entry (one `{type, items}` category with
  * full `props` per item). Pair with `fetchDatabaseIndex` for cross-link data.
  */
-export const fetchDatabaseType = cache(
-  async (appName: string, type: string): Promise<DatabaseConfig[number]> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/config/database.${type}.json`,
-      { next: { revalidate: 60 } },
-    );
-    return res.json();
-  },
-);
+export async function fetchDatabaseType(
+  appName: string,
+  type: string,
+): Promise<DatabaseConfig[number]> {
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/config/database.${type}.json`,
+    { next: { revalidate: 60 } },
+  );
+  return res.json();
+}
 
-export const fetchTiles = cache(
-  async (appName: string): Promise<TilesConfig> => {
-    const res = await fetch(
-      `${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`,
-      { next: { revalidate: 60 } },
-    );
-    return res.json();
-  },
-);
+export async function fetchTiles(appName: string): Promise<TilesConfig> {
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`,
+    { next: { revalidate: 60 } },
+  );
+  return res.json();
+}
 
 export type GlobalFiltersConfig = Array<{
   group: string;
