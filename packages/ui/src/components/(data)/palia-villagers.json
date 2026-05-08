@@ -180,5 +180,12 @@
     "type": "thesalesman",
     "typeId": "BP_Villager_Zeki_C",
     "icon": "thesalesman.webp"
+  },
+  {
+    "villagerCoreId": 10043,
+    "persistId": 10043,
+    "type": "thelostboy",
+    "typeId": "BP_Villager_TheLostBoy_C",
+    "icon": "thelostboy.webp"
   }
 ]

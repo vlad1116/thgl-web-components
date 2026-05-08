@@ -33,7 +33,10 @@ export function PaliaWeeklyWants() {
     fetchWeeklyWants().then(setData).catch(console.error);
   }, []);
 
-  const totalGifts = Object.values(data?.weeklyWants ?? {}).length;
+  const totalGifts = Object.values(data?.weeklyWants ?? {}).reduce(
+    (sum, items) => sum + items.length,
+    0,
+  );
   const totalGifted =
     character?.giftHistory.filter((g) => {
       const villager = villagers.find(
@@ -262,6 +265,8 @@ export type API_WEEKLY_WANTS = {
     thearcheologist: ITEMS;
     theplumehound: ITEMS;
     thewatcher: ITEMS;
+    thegardener: ITEMS;
+    thelostboy: ITEMS;
   };
 };
 

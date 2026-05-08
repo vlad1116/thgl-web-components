@@ -24,6 +24,7 @@ export {
   PaliaWeeklyWants,
   VillagersWeeklyWants,
   villagers,
+  itemIcons,
   type WEEKLY_WANTS,
   type API_WEEKLY_WANTS,
   type REWARD_LEVEL,
