@@ -48,6 +48,15 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
     }
   }
 
+  // Hero pages render the specialization name + description inline using
+  // `{baseId}_spec` / `{baseId}_spec_desc` keys (separate from the spec entry's own
+  // `{id}_specialization_desc` key). Both can be @-pointers, so we keep both.
+  if (entryType === "heroes" && typeof props.specialization === "string") {
+    const baseId = (props.specialization as string).replace("_specialization", "");
+    keys.add(`${baseId}_spec`);
+    keys.add(`${baseId}_spec_desc`);
+  }
+
   // Recursively collect string values from props (faction IDs, ability IDs, etc.)
   function walk(val: any) {
     if (typeof val === "string") {
@@ -133,11 +142,16 @@ export async function DatabaseEntryContent({
   }
 
   // Faction views render a per-faction build tree, so we fetch buildings too.
+  // Hero pages need the matching specialization's bonuses for inline desc resolution.
   const needsBuildings = entryType === "factions";
-  const [entryCat, buildingsCat] = await Promise.all([
+  const needsSpecializations = entryType === "heroes";
+  const [entryCat, buildingsCat, specializationsCat] = await Promise.all([
     fetchDatabaseType(APP_CONFIG.name, entryType),
     needsBuildings
       ? fetchDatabaseType(APP_CONFIG.name, "buildings")
+      : Promise.resolve(null),
+    needsSpecializations
+      ? fetchDatabaseType(APP_CONFIG.name, "specializations")
       : Promise.resolve(null),
   ]);
 
@@ -192,6 +206,22 @@ export async function DatabaseEntryContent({
             sid: (i.props as any).sid,
             levels: lvls,
           },
+        };
+      }
+      // Keep bonuses for the hero's own specialization (used to resolve {0}/{1}
+      // placeholders in the inline description on the hero page).
+      if (
+        entryType === "heroes" &&
+        cat.type === "specializations" &&
+        specializationsCat &&
+        i.id === (item.props as any)?.specialization
+      ) {
+        const specFull = specializationsCat.items.find((s) => s.id === i.id);
+        return {
+          id: i.id,
+          icon: i.icon,
+          groupId: i.groupId,
+          props: { bonuses: (specFull?.props as any)?.bonuses ?? [] },
         };
       }
       return {

@@ -35,6 +35,44 @@ type IconSprite = {
   height: number;
 };
 
+type SpecBonus = {
+  params: (string | number)[];
+  upgrade?: { increment: number; levelStep?: number };
+};
+
+/**
+ * Resolve {0}, {1}, … placeholders in a specialization description using its
+ * bonus params. The dict text typically already contains the `%` suffix (e.g.
+ * "+{0}% Movement"), so we push the bare number and let the template carry the
+ * unit. Mirrors the entity-tooltip route's algorithm.
+ */
+function substituteSpecTemplate(text: string, bonuses?: SpecBonus[]): string {
+  if (!bonuses || bonuses.length === 0) return text.replace(/\{(\d+)\}/g, "");
+  const values: string[] = [];
+  for (const bonus of bonuses) {
+    for (const p of bonus.params) {
+      const num = parseFloat(String(p));
+      if (!isNaN(num) && num !== 0 && String(p) !== "true" && String(p) !== "false") {
+        const abs = Math.abs(num);
+        values.push(abs > 0 && abs < 1 ? String(Math.round(abs * 100)) : String(abs));
+      }
+    }
+    if (bonus.upgrade) {
+      const inc = bonus.upgrade.increment;
+      if (inc !== 0) {
+        const abs = Math.abs(inc);
+        values.push(abs > 0 && abs < 1 ? String(Math.round(abs * 100)) : String(abs));
+      }
+      if (bonus.upgrade.levelStep) values.push(String(bonus.upgrade.levelStep));
+    }
+  }
+  let result = text;
+  for (let i = 0; i < values.length; i++) {
+    result = result.replace(`{${i}}`, values[i]);
+  }
+  return result.replace(/\{(\d+)\}/g, "");
+}
+
 
 export function HeroView({
   name,
@@ -59,8 +97,19 @@ export function HeroView({
   const specName = props.specialization
     ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec`)
     : undefined;
-  const specDesc = props.specialization
+  const rawSpecDesc = props.specialization
     ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec_desc`)
+    : undefined;
+  // Locate the specialization entry's bonuses (carried in the lite database for
+  // the hero's own spec only) and use them to fill in {0}/{1} placeholders.
+  const specBonuses = props.specialization
+    ? ((database
+        .find((c: any) => c.type === "specializations")
+        ?.items?.find((i: any) => i.id === props.specialization)?.props as any)
+        ?.bonuses as { params: (string | number)[]; upgrade?: { increment: number; levelStep?: number } }[] | undefined)
+    : undefined;
+  const specDesc = rawSpecDesc
+    ? substituteSpecTemplate(rawSpecDesc, specBonuses)
     : undefined;
 
   return (
@@ -129,8 +178,8 @@ export function HeroView({
             )}
           </div>
           <p className="font-medium">{specName}</p>
-          {specDesc &&
-            specDesc !==
+          {rawSpecDesc &&
+            rawSpecDesc !==
               `${props.specialization.replace("_specialization", "")}_spec_desc` && (
               <p className="text-sm text-muted-foreground mt-1">{specDesc}</p>
             )}
