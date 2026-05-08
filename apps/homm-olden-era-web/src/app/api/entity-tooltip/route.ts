@@ -9,9 +9,33 @@ function resolveDict(dict: Record<string, string>, key: string): string {
   return value;
 }
 
+/**
+ * Resolve buff sid to a display name. Game data uses internal sids without
+ * direct dict entries; this function tries progressively wider patterns so we
+ * never expose a raw sid in the UI. Mirrors the resolver in
+ * `components/bonus-display.tsx`.
+ */
 function resolveBuffName(dict: Record<string, string>, key: string): string {
   if (dict[key]) return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
-  let m = key.match(/^skill_(.+)_(\d+)_bonus$/);
+
+  // skill_<parent>_sub_skill_<id>_<variant>_bonus → translated variant label.
+  let m = key.match(/^skill_.+?_sub_skill_[a-z0-9_]+?_(warrior|mage|campaign|arena)_bonus$/);
+  if (m) return resolveDict(dict, `ui.variant_${m[1]}`);
+
+  // <sub_skill_id>_bonus → sub-skill name
+  m = key.match(/^(sub_skill_[a-z0-9_]+?)_bonus$/);
+  if (m && dict[m[1]]) return resolveDict(dict, m[1]);
+
+  // <sub_skill_id>_(offence|defence) → "<Name> (<translated side>)"
+  m = key.match(/^(sub_skill_[a-z0-9_]+?)_(offence|defence)$/);
+  if (m && dict[m[1]]) {
+    const sub = resolveDict(dict, m[1]);
+    const side = resolveDict(dict, `ui.side_${m[2]}`);
+    return `${sub} (${side})`;
+  }
+
+  // Legacy patterns kept for compatibility
+  m = key.match(/^skill_(.+)_(\d+)_bonus$/);
   if (m) {
     const candidate = `sub_skill_${m[1]}_${m[2]}`;
     if (dict[candidate]) return resolveDict(dict, candidate);
@@ -21,7 +45,19 @@ function resolveBuffName(dict: Record<string, string>, key: string): string {
     const candidate = `sub_skill_${m[1]}_${m[2]}`;
     if (dict[candidate]) return resolveDict(dict, candidate);
   }
-  return resolveDict(dict, key);
+
+  // Humanize trailing tokens rather than expose the raw sid.
+  const tail = key.replace(/^skill_[^_]+(?:_[^_]+)*?_(?=(?:warrior|mage|campaign|arena|bonus|offence|defence))/i, "");
+  return humanizeStat(tail !== key ? tail : key);
+}
+
+/**
+ * Strip simple HTML tags (e.g. <b>, <i>) so dict text renders cleanly as plain
+ * text. The detail pages and tooltip render via plain JSX, not HTML, so any
+ * embedded markup would otherwise show up literally.
+ */
+function stripHtml(text: string): string {
+  return text.replace(/<\/?[a-zA-Z][^>]*>/g, "");
 }
 
 function humanizeStat(key: string): string {
@@ -111,16 +147,16 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null 
       return `Unit ${humanizeStat(params[0] as string)}: ${formatValue(params[1])}`;
     }
     case "battleSubskillBonus":
-      return `Battle bonus: ${resolveBuffName(dict, params[1] as string)}`;
+      return `${resolveDict(dict, "ui.battle_bonus")}: ${resolveBuffName(dict, params[1] as string)}`;
     case "heroBattleAbility":
-      return `Battle ability: ${resolveDict(dict, params[0] as string)}`;
+      return `${resolveDict(dict, "ui.battle_ability")}: ${resolveDict(dict, params[0] as string)}`;
     case "heroWorldAbility":
-      return `World ability: ${resolveDict(dict, params[0] as string)}`;
+      return `${resolveDict(dict, "ui.world_ability")}: ${resolveDict(dict, params[0] as string)}`;
     case "modifyMagic":
-      return `Modifies spell: ${resolveDict(dict, params[0] as string)}`;
+      return `${resolveDict(dict, "ui.modifies_spell")}: ${resolveDict(dict, params[0] as string)}`;
     case "addMagicToBook":
     case "heroMagicAddition":
-      return `Grants spell: ${resolveDict(dict, params[0] as string)}`;
+      return `${resolveDict(dict, "ui.grants_spell")}: ${resolveDict(dict, params[0] as string)}`;
     case "heroMagicAdditionMass": {
       const school = params[0] as string;
       const tier = params[1];
@@ -215,15 +251,16 @@ export async function GET(request: Request) {
     }
     desc = desc.replace(
       /\{(\d+)\}/g,
-      (_, idx: string) => numericValues[parseInt(idx)] ?? "",
+      (_, idx: string) => numericValues[parseInt(idx)] ?? "?",
     );
   }
+  if (hasDesc) desc = stripHtml(desc);
 
   // Format bonuses as plain text (skipping suppressed/internal types)
   const bonuses: string[] = [];
   for (const b of item.props?.bonuses ?? []) {
     const formatted = formatBonus(b, dict);
-    if (formatted) bonuses.push(formatted);
+    if (formatted) bonuses.push(stripHtml(formatted));
   }
 
   // Extra info lines (e.g. hero specialization, starting army, starting skills)

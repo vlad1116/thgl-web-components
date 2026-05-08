@@ -347,9 +347,12 @@ function AbilityRow({
       break;
     }
   }
-  // Strip unresolved {N} placeholders (ability params not yet extracted)
   if (desc) {
-    desc = desc.replace(/\{(\d+)\}/g, "X");
+    // Per-passive params aren't extracted yet, so leave a visible marker for
+    // unresolved placeholders rather than the misleading "X".
+    desc = desc.replace(/\{(\d+)\}/g, "?");
+    // Strip simple HTML tags (<b>, <i>, …) since we render via plain JSX.
+    desc = desc.replace(/<\/?[a-zA-Z][^>]*>/g, "");
   }
 
   return (

@@ -155,7 +155,7 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
     case "heroMagicAddition": {
       const spellId = params[0] as string;
       const spellName = resolveDict(dict, spellId);
-      return `Grants spell: ${spellName}`;
+      return `${resolveDict(dict, "ui.grants_spell")}: ${spellName}`;
     }
     case "heroMagicAdditionMass": {
       // params: [school|"any", tier|"any", count]
@@ -214,25 +214,25 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>, locale: string)
     case "battleSubskillBonus": {
       const rawKey = params[1] as string;
       const buffName = resolveBuffName(dict, rawKey);
-      return `Battle bonus: ${buffName}`;
+      return `${resolveDict(dict, "ui.battle_bonus")}: ${buffName}`;
     }
     case "heroBattleAbility": {
       const abilityName = resolveName(dict, params[0] as string);
-      return `Battle ability: ${abilityName}`;
+      return `${resolveDict(dict, "ui.battle_ability")}: ${abilityName}`;
     }
     case "heroWorldAbility": {
       const abilityName = resolveName(dict, params[0] as string);
-      return `World ability: ${abilityName}`;
+      return `${resolveDict(dict, "ui.world_ability")}: ${abilityName}`;
     }
     case "modifyMagic": {
       const spellId = params[0] as string;
       const spellName = resolveDict(dict, spellId);
-      return `Modifies spell: ${spellName}`;
+      return `${resolveDict(dict, "ui.modifies_spell")}: ${spellName}`;
     }
     case "addMagicToBook": {
       const spellId = params[0] as string;
       const spellName = resolveDict(dict, spellId);
-      return `Grants spell: ${spellName}`;
+      return `${resolveDict(dict, "ui.grants_spell")}: ${spellName}`;
     }
     default: {
       const formattedParams = params
@@ -272,28 +272,51 @@ function resolveName(dict: Record<string, string>, key: string): string {
 }
 
 /**
- * Resolve buff/ability bonus name. Game data uses keys like
- * `skill_formation_1_bonus` or `skill_siege_attack_siege_ability_bonus_1`,
- * but display strings live under `sub_skill_*` keys. Try multiple patterns.
+ * Resolve buff/ability bonus name. Game data uses internal sids that don't
+ * have direct dict entries — display strings live under `sub_skill_*` keys
+ * or are encoded as variant suffixes (warrior/mage/campaign/arena). Try
+ * progressively wider patterns and humanize the trailing tokens as a last
+ * resort so we never expose a raw sid like `skill_warrior_and_mage_..._bonus`.
  */
 function resolveBuffName(dict: Record<string, string>, key: string): string {
-  // Try direct key first
+  // 1. Direct key
   if (dict[key]) return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
 
-  // Pattern 1: skill_X_N_bonus → sub_skill_X_N
-  let m = key.match(/^skill_(.+)_(\d+)_bonus$/);
+  // 2. skill_<parent>_sub_skill_<id>_<variant>_bonus → translated variant
+  //    label (the suffix encodes which hero ability the buff applies to).
+  //    On the sub-skill's own page repeating its name would be redundant.
+  let m = key.match(/^skill_.+?_sub_skill_[a-z0-9_]+?_(warrior|mage|campaign|arena)_bonus$/);
+  if (m) return resolveDict(dict, `ui.variant_${m[1]}`);
+
+  // 3. <sub_skill_id>_bonus → sub-skill name
+  m = key.match(/^(sub_skill_[a-z0-9_]+?)_bonus$/);
+  if (m && dict[m[1]]) return resolveDict(dict, m[1]);
+
+  // 4. <sub_skill_id>_(offence|defence) → "<Name> (<translated side>)"
+  m = key.match(/^(sub_skill_[a-z0-9_]+?)_(offence|defence)$/);
+  if (m && dict[m[1]]) {
+    const sub = resolveDict(dict, m[1]);
+    const side = resolveDict(dict, `ui.side_${m[2]}`);
+    return `${sub} (${side})`;
+  }
+
+  // 5. skill_X_N_bonus → sub_skill_X_N (legacy pattern)
+  m = key.match(/^skill_(.+)_(\d+)_bonus$/);
   if (m) {
     const candidate = `sub_skill_${m[1]}_${m[2]}`;
     if (dict[candidate]) return resolveDict(dict, candidate);
   }
-  // Pattern 2: skill_X_..._bonus_N → sub_skill_X_N
+  // 6. skill_X_..._bonus_N → sub_skill_X_N (legacy pattern)
   m = key.match(/^skill_([^_]+)_.*_bonus_(\d+)$/);
   if (m) {
     const candidate = `sub_skill_${m[1]}_${m[2]}`;
     if (dict[candidate]) return resolveDict(dict, candidate);
   }
-  // Fall back to direct resolution (returns key if not found)
-  return resolveDict(dict, key);
+
+  // 7. Last resort: humanize the trailing tokens. This is locale-naïve and
+  //    will surface English-cased words for any sid that isn't covered above.
+  const tail = key.replace(/^skill_[^_]+(?:_[^_]+)*?_(?=(?:warrior|mage|campaign|arena|bonus|offence|defence))/i, "");
+  return humanizeStat(tail !== key ? tail : key);
 }
 
 function formatValue(value: string | number): string {
