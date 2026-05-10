@@ -20,21 +20,16 @@ const nextConfig = {
       },
     ],
   },
-  // Override Next.js's default Cache-Control: no-cache for dynamic routes.
-  // Routes need headers() to read the Host, so they can't be statically
-  // pre-rendered — but the response is identical for all visitors of a
-  // given (host, path) pair, so we can let Bunny edge-cache aggressively.
+  // Tell Bunny it can edge-cache dynamic responses despite Next.js sending
+  // Cache-Control: no-cache. The browser still revalidates (correct), but
+  // Bunny serves from edge for up to 60s + 5min stale.
   //
-  // Cache-Control is for browsers (revalidate on every visit).
-  // CDN-Cache-Control is for Bunny (cache 60s, serve stale up to 5 min).
+  // We don't override Cache-Control: Next's default "no-cache" is what we
+  // want for browsers — store but revalidate (304 from edge).
   headers: async () => [
     {
       source: "/:path*",
       headers: [
-        {
-          key: "Cache-Control",
-          value: "public, max-age=0, must-revalidate",
-        },
         {
           key: "CDN-Cache-Control",
           value: "public, s-maxage=60, stale-while-revalidate=300",
