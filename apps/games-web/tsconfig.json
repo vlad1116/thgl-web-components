@@ -19,7 +19,6 @@
     ".next/types/**/*.ts",
     ".eslintrc.js",
     "*.config.js",
-    "*.config.ts",
-    "middleware.ts"
+    "*.config.ts"
   ]
 }
