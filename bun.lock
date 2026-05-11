@@ -604,31 +604,6 @@
         "vite": "catalog:",
       },
     },
-    "apps/satisfactory-web": {
-      "name": "satisfactory-web",
-      "version": "0.0.0",
-      "dependencies": {
-        "@repo/lib": "workspace:*",
-        "@repo/ui": "workspace:*",
-        "fuse.js": "catalog:",
-        "next": "catalog:",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-      },
-      "devDependencies": {
-        "@next/eslint-plugin-next": "catalog:",
-        "@repo/eslint-config": "workspace:*",
-        "@repo/tailwind-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "catalog:",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "autoprefixer": "catalog:",
-        "postcss": "catalog:",
-        "tailwindcss": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "apps/soulframe-web": {
       "name": "soulframe-web",
       "version": "0.0.0",
@@ -2895,8 +2870,6 @@
     "safer-buffer": ["safer-buffer@2.1.2", "", {}, "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg=="],
 
     "satisfactory-overwolf": ["satisfactory-overwolf@workspace:apps/satisfactory-overwolf"],
-
-    "satisfactory-web": ["satisfactory-web@workspace:apps/satisfactory-web"],
 
     "saxes": ["saxes@6.0.0", "", { "dependencies": { "xmlchars": "^2.2.0" } }, "sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA=="],
 
