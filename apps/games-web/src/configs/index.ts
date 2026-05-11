@@ -4,6 +4,7 @@ import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { grounded2 } from "./grounded2";
 import { nightCrows } from "./night-crows";
+import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
@@ -18,6 +19,7 @@ const ALL_CONFIGS: AppConfig[] = [
   conanExiles,
   grounded2,
   nightCrows,
+  rsdragonwilds,
   satisfactory,
   soulframe,
   soulmask,
