@@ -1,1 +1,1 @@
-export { default, generateMetadata, viewport, revalidate } from "../[locale]/layout";
+export { default, generateMetadata, viewport } from "../[locale]/layout";

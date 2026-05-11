@@ -16,8 +16,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return createRootLayoutMetadata(config);
 }
 
-export const revalidate = 60;
-
 export default async function Layout(
   props: Parameters<ReturnType<typeof createRootLayout>>[0],
 ) {

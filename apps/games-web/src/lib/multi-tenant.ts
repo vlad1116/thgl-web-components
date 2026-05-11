@@ -23,17 +23,3 @@ export function multiTenant<P, R, A extends unknown[] = []>(
     return factory(config, ...extraArgs)(props);
   };
 }
-
-/**
- * Variant for factories that return a value directly instead of a function
- * (e.g. createRobots, createSitemap), used for files like robots.ts.
- */
-export function multiTenantValue<R, A extends unknown[] = []>(
-  factory: (appConfig: AppConfig, ...rest: A) => R,
-  ...extraArgs: A
-): () => Promise<R> {
-  return async () => {
-    const config = await getAppConfig();
-    return factory(config, ...extraArgs);
-  };
-}
