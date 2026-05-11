@@ -254,7 +254,7 @@ export function Player({
         window.history.pushState({}, "", `/maps/${t(player.mapName)}`);
       }
     }
-  }, [player?.mapName]);
+  }, [!!map, player?.mapName]);
 
   // Audio alert range circle
   const showAudioAlertRange = useSettingsStore(
