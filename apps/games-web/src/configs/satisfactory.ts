@@ -1,0 +1,19 @@
+import { type AppConfig } from "@repo/lib";
+
+export const satisfactory: AppConfig = {
+  name: "satisfactory",
+  title: "Satisfactory",
+  domain: "satisfactory",
+  supportedLocales: ["en"],
+  appUrl: "https://www.th.gl/companion-app",
+  markerOptions: {
+    radius: 6,
+    playerIcon: "player.webp",
+    imageSprite: true,
+    zPos: {
+      xyMaxDistance: 15000,
+      zDistance: 400,
+    },
+  },
+  keywords: ["Mercer Spheres", "Resource Nodes", "Power Slugs", "Hard Drives"],
+};
