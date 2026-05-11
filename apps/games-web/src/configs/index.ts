@@ -3,38 +3,48 @@ import { avowed } from "./avowed";
 import { nightCrows } from "./night-crows";
 
 /**
- * Registry of all app configs that this multi-tenant deployment serves.
- * Add a new game by importing its config and adding it here.
- *
- * The key is the AppConfig.name (used as canonical app slug).
+ * All app configs that this multi-tenant deployment serves.
+ * Add a new game by importing its config and adding it to this array.
  */
-export const APP_CONFIGS: Record<string, AppConfig> = {
-  avowed,
-  "night-crows": nightCrows,
-};
+const ALL_CONFIGS: AppConfig[] = [avowed, nightCrows];
 
 /**
- * Resolve an app config from a hostname like "avowed.th.gl" or "avowed.localhost:3100".
- * Returns null if the hostname doesn't match a registered app.
+ * Registry keyed by hostname subdomain (AppConfig.domain). This is what
+ * appears in the URL — e.g. "nightcrows" for nightcrows.th.gl, even when
+ * the canonical AppConfig.name uses a different slug ("night-crows").
+ */
+const BY_DOMAIN: Record<string, AppConfig> = Object.fromEntries(
+  ALL_CONFIGS.map((c) => [c.domain, c]),
+);
+
+/**
+ * Registry keyed by AppConfig.name (canonical slug used internally).
+ */
+const BY_NAME: Record<string, AppConfig> = Object.fromEntries(
+  ALL_CONFIGS.map((c) => [c.name, c]),
+);
+
+/**
+ * Resolve an app config from a hostname like "avowed.th.gl" or
+ * "nightcrows.localhost:3100". Returns null if the hostname doesn't
+ * match a registered app.
  */
 export function getAppConfigByHost(host: string): AppConfig | null {
-  // Strip port and trailing dot
   const cleanHost = host.split(":")[0].replace(/\.$/, "");
-  // First subdomain segment is the app slug
-  const slug = cleanHost.split(".")[0];
-  return APP_CONFIGS[slug] ?? null;
+  const subdomain = cleanHost.split(".")[0];
+  return BY_DOMAIN[subdomain] ?? null;
 }
 
 /**
- * Resolve an app config from its canonical slug.
+ * Resolve an app config from its canonical slug (AppConfig.name).
  */
 export function getAppConfigBySlug(slug: string): AppConfig | null {
-  return APP_CONFIGS[slug] ?? null;
+  return BY_NAME[slug] ?? null;
 }
 
 /**
- * List all registered app slugs.
+ * List all registered apps.
  */
-export function getRegisteredApps(): string[] {
-  return Object.keys(APP_CONFIGS);
+export function getRegisteredApps(): AppConfig[] {
+  return ALL_CONFIGS;
 }
