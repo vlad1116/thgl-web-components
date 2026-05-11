@@ -578,32 +578,6 @@
         "vite": "catalog:",
       },
     },
-    "apps/soulmask-web": {
-      "name": "soulmask-web",
-      "version": "0.0.0",
-      "dependencies": {
-        "@repo/lib": "workspace:*",
-        "@repo/ui": "workspace:*",
-        "fuse.js": "catalog:",
-        "next": "catalog:",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-      },
-      "devDependencies": {
-        "@next/eslint-plugin-next": "catalog:",
-        "@repo/eslint-config": "workspace:*",
-        "@repo/next-config": "workspace:*",
-        "@repo/tailwind-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "catalog:",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "autoprefixer": "catalog:",
-        "postcss": "catalog:",
-        "tailwindcss": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "apps/starsand-island-web": {
       "name": "starsand-island-web",
       "version": "0.0.0",
@@ -2858,8 +2832,6 @@
     "slash": ["slash@3.0.0", "", {}, "sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q=="],
 
     "sonner": ["sonner@1.5.0", "", { "peerDependencies": { "react": "^18.0.0", "react-dom": "^18.0.0" } }, "sha512-FBjhG/gnnbN6FY0jaNnqZOMmB73R+5IiyYAw8yBj7L54ER7HB3fOSE5OFiQiE2iXWxeXKvg6fIP4LtVppHEdJA=="],
-
-    "soulmask-web": ["soulmask-web@workspace:apps/soulmask-web"],
 
     "source-map": ["source-map@0.8.0-beta.0", "", { "dependencies": { "whatwg-url": "^7.0.0" } }, "sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA=="],
 
