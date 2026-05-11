@@ -5,6 +5,7 @@ import { conanExiles } from "./conan-exiles";
 import { grounded2 } from "./grounded2";
 import { nightCrows } from "./night-crows";
 import { satisfactory } from "./satisfactory";
+import { soulframe } from "./soulframe";
 
 /**
  * All app configs that this multi-tenant deployment serves.
@@ -17,6 +18,7 @@ const ALL_CONFIGS: AppConfig[] = [
   grounded2,
   nightCrows,
   satisfactory,
+  soulframe,
 ];
 
 /**
