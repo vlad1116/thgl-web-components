@@ -24,9 +24,8 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const path = url.pathname;
 
-  // Rewrite per-game static assets (favicon, OG images for home + custom pages)
+  // Rewrite per-game OG images (favicon is shared, served from app/favicon.ico)
   if (
-    path === "/favicon.ico" ||
     path === "/opengraph-image.jpg" ||
     path === "/activities-tracker/opengraph-image.jpg"
   ) {
