@@ -1,12 +1,13 @@
 import { type AppConfig } from "@repo/lib";
 import { avowed } from "./avowed";
+import { chronoOdyssey } from "./chrono-odyssey";
 import { nightCrows } from "./night-crows";
 
 /**
  * All app configs that this multi-tenant deployment serves.
  * Add a new game by importing its config and adding it to this array.
  */
-const ALL_CONFIGS: AppConfig[] = [avowed, nightCrows];
+const ALL_CONFIGS: AppConfig[] = [avowed, chronoOdyssey, nightCrows];
 
 /**
  * Registry keyed by hostname subdomain (AppConfig.domain). This is what
