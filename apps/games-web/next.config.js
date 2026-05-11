@@ -20,16 +20,18 @@ const nextConfig = {
       },
     ],
   },
-  // Tell Bunny it can edge-cache dynamic responses despite Next.js sending
-  // Cache-Control: no-cache. The browser still revalidates (correct), but
-  // Bunny serves from edge for up to 60s + 5min stale.
-  //
-  // We don't override Cache-Control: Next's default "no-cache" is what we
-  // want for browsers — store but revalidate (304 from edge).
+  // Next.js sends Cache-Control: private, no-cache, no-store, ... on dynamic
+  // routes. The `private` directive tells CDNs not to cache in shared caches,
+  // overriding our intent. Strip it: replace with `public, must-revalidate`
+  // (browser revalidates; edge is allowed to cache via CDN-Cache-Control).
   headers: async () => [
     {
       source: "/:path*",
       headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=0, must-revalidate",
+        },
         {
           key: "CDN-Cache-Control",
           value: "public, s-maxage=60, stale-while-revalidate=300",
