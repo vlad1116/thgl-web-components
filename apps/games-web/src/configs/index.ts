@@ -1,5 +1,6 @@
 import { type AppConfig } from "@repo/lib";
 import { avowed } from "./avowed";
+import { nightCrows } from "./night-crows";
 
 /**
  * Registry of all app configs that this multi-tenant deployment serves.
@@ -9,6 +10,7 @@ import { avowed } from "./avowed";
  */
 export const APP_CONFIGS: Record<string, AppConfig> = {
   avowed,
+  "night-crows": nightCrows,
 };
 
 /**

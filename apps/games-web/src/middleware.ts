@@ -24,8 +24,12 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const path = url.pathname;
 
-  // Rewrite per-game static assets
-  if (path === "/favicon.ico" || path === "/opengraph-image.jpg") {
+  // Rewrite per-game static assets (favicon, OG images for home + custom pages)
+  if (
+    path === "/favicon.ico" ||
+    path === "/opengraph-image.jpg" ||
+    path === "/activities-tracker/opengraph-image.jpg"
+  ) {
     url.pathname = `/games/${config.name}${path}`;
     return NextResponse.rewrite(url);
   }
