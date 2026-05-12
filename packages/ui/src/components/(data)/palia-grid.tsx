@@ -27,6 +27,10 @@ const elderwoodGrid = [
   [-29989 - elderwoodPadding, -55068 - elderwoodPadding],
   [52008 + elderwoodPadding, 26929 + elderwoodPadding],
 ] as [[number, number], [number, number]];
+const royalHighlandsGrid = [
+  [-26159, 3801],
+  [185839, 215799],
+] as [[number, number], [number, number]];
 
 const gridBoundsMap: Record<string, [[number, number], [number, number]]> = {
   VillageWorld: villageGrid,
@@ -34,6 +38,7 @@ const gridBoundsMap: Record<string, [[number, number], [number, number]]> = {
   MajiMarket: fairgroundsGrid,
   HousingPlot: housingGrid,
   AZ2_Root: elderwoodGrid,
+  AZ3_Root: royalHighlandsGrid,
 };
 
 export function PaliaGrid({ force }: { force?: boolean }) {
