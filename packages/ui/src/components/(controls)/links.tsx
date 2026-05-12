@@ -75,14 +75,11 @@ export function Links({
 
     const allInternalLinks = appConfig.internalLinks ?? [];
     const hasMap = allInternalLinks.some((l) => l.href.startsWith("/maps"));
-    const hasGuides = allInternalLinks.some((l) =>
-      l.href.startsWith("/guides"),
-    );
 
     const before = NAV_BEFORE.filter(
       (l) => l.href === "/" || (l.href === "/maps" && hasMap),
     );
-    const after = NAV_AFTER.filter((l) => l.href !== "/guides" || hasGuides);
+    const after = [...NAV_AFTER];
 
     const allLinks = [...before, ...appLinks, ...after];
 

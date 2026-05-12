@@ -86,7 +86,7 @@ export async function generateMetadata({
 }
 
 export default async function WeeklyWants({ params }: PageProps) {
-  const { locale } = await params;
+  const locale = (await params).locale ?? "en";
   const dict = await getStaticDictionary(APP_CONFIG.name, locale);
   const t = getT(dict);
 

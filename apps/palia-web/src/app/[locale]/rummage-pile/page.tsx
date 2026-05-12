@@ -61,7 +61,7 @@ export async function generateMetadata({
 }
 
 export default async function RummagePile({ params }: PageProps) {
-  const { locale } = await params;
+  const locale = (await params).locale ?? "en";
   const dict = await getStaticDictionary(APP_CONFIG.name, locale);
   const t = getT(dict);
   const version = await fetchVersion(APP_CONFIG.name);
