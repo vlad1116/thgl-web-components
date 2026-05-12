@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-08T20:58:59.785Z",
+  "generatedAt": "2026-05-12T08:25:16.966Z",
   "locales": [
     "en",
     "de",
@@ -50,6 +50,18 @@
         "zh-CN": "杂物堆",
         "zh-TW": "雜物堆"
       },
+      "pool_royalHighlands": {
+        "en": "Campsite Rummage Pile",
+        "de": "Campsite-Wühlhaufen",
+        "es": "Montón de Campamento",
+        "fr": "Tas de Campement",
+        "it": "Cumulo del Campo",
+        "ja": "キャンプ地のガラクタの山",
+        "ko": "야영지 뒤적거리는 더미",
+        "pt-BR": "Pilha de Acampamento",
+        "zh-CN": "营地杂物堆",
+        "zh-TW": "營地雜物堆"
+      },
       "location_kilima": {
         "en": "Kilima Village",
         "de": "Kilima-Dorf",
@@ -85,6 +97,18 @@
         "pt-BR": "Bosque Ancião",
         "zh-CN": "长者森林",
         "zh-TW": "長者森林"
+      },
+      "location_royalHighlands": {
+        "en": "Royal Highlands",
+        "de": "Königliches Hochland",
+        "es": "Tierras Altas Reales",
+        "fr": "Hautes Terres Royales",
+        "it": "Altopiani Reali",
+        "ja": "ロイヤルハイランド",
+        "ko": "로열 하이랜드",
+        "pt-BR": "Terras Altas Reais",
+        "zh-CN": "皇家高地",
+        "zh-TW": "皇家高地"
       },
       "label_recipe": {
         "en": "Recipe",
@@ -663,6 +687,66 @@
         "pt-BR": "Summer Stripe Cooler",
         "zh-CN": "Summer Stripe Cooler",
         "zh-TW": "Summer Stripe Cooler"
+      },
+      "DA_ItemType_Decor_Snow_Summer_04_furniture_Umbrella": {
+        "en": "Snowy Parsol",
+        "de": "Snowy Parsol",
+        "es": "Snowy Parsol",
+        "fr": "Snowy Parsol",
+        "it": "Snowy Parsol",
+        "ja": "Snowy Parsol",
+        "ko": "Snowy Parsol",
+        "pt-BR": "Snowy Parsol",
+        "zh-CN": "Snowy Parsol",
+        "zh-TW": "Snowy Parsol"
+      },
+      "DA_ItemType_Decor_Snow_Community_14_Glamping_Canopy": {
+        "en": "Snowy Pavilion",
+        "de": "Snowy Pavilion",
+        "es": "Snowy Pavilion",
+        "fr": "Snowy Pavilion",
+        "it": "Snowy Pavilion",
+        "ja": "Snowy Pavilion",
+        "ko": "Snowy Pavilion",
+        "pt-BR": "Snowy Pavilion",
+        "zh-CN": "Snowy Pavilion",
+        "zh-TW": "Snowy Pavilion"
+      },
+      "DA_ItemType_Decor_Snow_Yard_CliffIsland_05": {
+        "en": "Snowy Lawn #3",
+        "de": "Snowy Lawn #3",
+        "es": "Snowy Lawn #3",
+        "fr": "Snowy Lawn #3",
+        "it": "Snowy Lawn #3",
+        "ja": "Snowy Lawn #3",
+        "ko": "Snowy Lawn #3",
+        "pt-BR": "Snowy Lawn #3",
+        "zh-CN": "Snowy Lawn #3",
+        "zh-TW": "Snowy Lawn #3"
+      },
+      "DA_ItemType_Decor_Snow_Yard_CliffIsland_04": {
+        "en": "Snowy Lawn #2",
+        "de": "Snowy Lawn #2",
+        "es": "Snowy Lawn #2",
+        "fr": "Snowy Lawn #2",
+        "it": "Snowy Lawn #2",
+        "ja": "Snowy Lawn #2",
+        "ko": "Snowy Lawn #2",
+        "pt-BR": "Snowy Lawn #2",
+        "zh-CN": "Snowy Lawn #2",
+        "zh-TW": "Snowy Lawn #2"
+      },
+      "DA_ItemType_Decor_Snow_Yard_CliffIsland_03": {
+        "en": "Snowy Lawn #1",
+        "de": "Snowy Lawn #1",
+        "es": "Snowy Lawn #1",
+        "fr": "Snowy Lawn #1",
+        "it": "Snowy Lawn #1",
+        "ja": "Snowy Lawn #1",
+        "ko": "Snowy Lawn #1",
+        "pt-BR": "Snowy Lawn #1",
+        "zh-CN": "Snowy Lawn #1",
+        "zh-TW": "Snowy Lawn #1"
       },
       "DA_ItemType_Winterlights_SnowmanPresent": {
         "en": "Sandy Paws Present",
@@ -1359,6 +1443,366 @@
         "pt-BR": "Criatura de Wartorn",
         "zh-CN": "战乱生物",
         "zh-TW": "被戰爭摧殘的生物"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_2P_A": {
+        "en": "Amadeus' Weapon #1",
+        "de": "Amadeus' Waffe 1",
+        "es": "Arma de Amadeus n.º 1",
+        "fr": "Arme d’Amadeus #1",
+        "it": "Arma di Amadeus 1",
+        "ja": "アマデウスの武器#1",
+        "ko": "아마데우스의 무기 #1",
+        "pt-BR": "Arma de Amadeus N.º 1",
+        "zh-CN": "阿玛迪乌斯的武器 #1",
+        "zh-TW": "阿瑪迪斯的武器#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_2P_B": {
+        "en": "Amadeus' Weapon #2",
+        "de": "Amadeus' Waffe 2",
+        "es": "Arma de Amadeus n.º 2",
+        "fr": "Arme d’Amadeus #2",
+        "it": "Arma di Amadeus 2",
+        "ja": "アマデウスの武器#2",
+        "ko": "아마데우스의 무기 #2",
+        "pt-BR": "Arma de Amadeus N.º 2",
+        "zh-CN": "阿玛迪乌斯的武器 #2",
+        "zh-TW": "阿瑪迪斯的武器#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_2P_B": {
+        "en": "Halward's Glass #2",
+        "de": "Halwards Glas 2",
+        "es": "Vaso de Halward n.º 2",
+        "fr": "Verre d’Halward #2",
+        "it": "Vetro di Halward 2",
+        "ja": "ハルワードのガラス器#2",
+        "ko": "할워즈의 유리 #2",
+        "pt-BR": "Vidro de Halward N.º 2",
+        "zh-CN": "哈尔沃德的玻璃 #2",
+        "zh-TW": "哈沃德的玻璃製品#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_2P_A": {
+        "en": "Halward's Glass #1",
+        "de": "Halwards Glas 1",
+        "es": "Vaso de Halward n.º 1",
+        "fr": "Verre d’Halward #1",
+        "it": "Vetro di Halward 1",
+        "ja": "ハルワードのガラス器#1",
+        "ko": "할워즈의 유리 #1",
+        "pt-BR": "Vidro de Halward N.º 1",
+        "zh-CN": "哈尔沃德的玻璃 #1",
+        "zh-TW": "哈沃德的玻璃製品#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_2P_B": {
+        "en": "Belafontine's Mask #2",
+        "de": "Belafontines Maske 2",
+        "es": "Máscara de Belafontine n.º 2",
+        "fr": "Masque de Belafontine #2",
+        "it": "Maschera di Belafontaine 2",
+        "ja": "ベラフォンテーンのマスク#2",
+        "ko": "벨라폰테인이 가면 #2",
+        "pt-BR": "Máscara de Belafontine N.º 2",
+        "zh-CN": "贝拉丰汀的面具 #2",
+        "zh-TW": "貝拉芳緹的面具#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_2P_A": {
+        "en": "Belafontine's Mask #1",
+        "de": "Belafontines Maske 1",
+        "es": "Máscara de Belafontine n.º 1",
+        "fr": "Masque de Belafontine #1",
+        "it": "Maschera di Belafontaine 1",
+        "ja": "ベラフォンテーンのマスク#1",
+        "ko": "벨라폰테인이 가면 #1",
+        "pt-BR": "Máscara de Belafontine N.º 1",
+        "zh-CN": "贝拉丰汀的面具 #1",
+        "zh-TW": "貝拉芳緹的面具#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_3P_C": {
+        "en": "Amadeus' Roulette #3",
+        "de": "Amadeus' Roulette 3",
+        "es": "Ruleta de Amadeus n.º 3",
+        "fr": "Roulette d’Amadeus #3",
+        "it": "Roulette di Amadeus 3",
+        "ja": "アマデウスのルーレット#3",
+        "ko": "아마데우스의 룰렛 #3",
+        "pt-BR": "Roleta de Amadeus N.º 3",
+        "zh-CN": "阿玛迪乌斯的轮盘 #3",
+        "zh-TW": "阿瑪迪斯的輪盤#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_3P_B": {
+        "en": "Amadeus' Roulette #2",
+        "de": "Amadeus' Roulette 2",
+        "es": "Ruleta de Amadeus n.º 2",
+        "fr": "Roulette d’Amadeus #2",
+        "it": "Roulette di Amadeus 2",
+        "ja": "アマデウスのルーレット#2",
+        "ko": "아마데우스의 룰렛 #2",
+        "pt-BR": "Roleta de Amadeus N.º 2",
+        "zh-CN": "阿玛迪乌斯的轮盘 #2",
+        "zh-TW": "阿瑪迪斯的輪盤#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_3P_A": {
+        "en": "Amadeus' Roulette #1",
+        "de": "Amadeus' Roulette 1",
+        "es": "Ruleta de Amadeus n.º 1",
+        "fr": "Roulette d’Amadeus #1",
+        "it": "Roulette di Amadeus 1",
+        "ja": "アマデウスのルーレット#1",
+        "ko": "아마데우스의 룰렛 #1",
+        "pt-BR": "Roleta de Amadeus N.º 1",
+        "zh-CN": "阿玛迪乌斯的轮盘 #1",
+        "zh-TW": "阿瑪迪斯的輪盤#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_3P_C": {
+        "en": "Halward's Device #3",
+        "de": "Halwards Gerät 3",
+        "es": "Dispositivo de Halward n.º 3",
+        "fr": "Dispositif d’Halward #3",
+        "it": "Dispositivo di Halward 3",
+        "ja": "ハルワードの装置#3",
+        "ko": "할워즈의 장치 #3",
+        "pt-BR": "Dispositivo de Halward N.º 3",
+        "zh-CN": "哈尔沃德的装置 #3",
+        "zh-TW": "哈沃德的裝置#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_3P_B": {
+        "en": "Halward's Device #2",
+        "de": "Halwards Gerät 2",
+        "es": "Dispositivo de Halward n.º 2",
+        "fr": "Dispositif d’Halward #2",
+        "it": "Dispositivo di Halward 2",
+        "ja": "ハルワードの装置#2",
+        "ko": "할워즈의 장치 #2",
+        "pt-BR": "Dispositivo de Halward N.º 2",
+        "zh-CN": "哈尔沃德的装置 #2",
+        "zh-TW": "哈沃德的裝置#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_3P_A": {
+        "en": "Halward's Device #1",
+        "de": "Halwards Gerät 1",
+        "es": "Dispositivo de Halward n.º 1",
+        "fr": "Dispositif d’Halward #1",
+        "it": "Dispositivo di Halward 1",
+        "ja": "ハルワードの装置#1",
+        "ko": "할워즈의 장치 #1",
+        "pt-BR": "Dispositivo de Halward N.º 1",
+        "zh-CN": "哈尔沃德的装置 #1",
+        "zh-TW": "哈沃德的裝置#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_3P_C": {
+        "en": "Belafontine's Beloved #3",
+        "de": "Belafontines Geliebter 3",
+        "es": "Amado de Belafontine n.º 3",
+        "fr": "Précieux de Belafontine #3",
+        "it": "Prediletto di Belafontaine 3",
+        "ja": "ベラフォンテーンの愛するもの#3",
+        "ko": "벨라폰테인이 아끼는 대상 #3",
+        "pt-BR": "Amado de Belafontine N.º 3",
+        "zh-CN": "贝拉丰汀的挚爱 #3",
+        "zh-TW": "貝拉芳緹的摯愛#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_3P_B": {
+        "en": "Belafontine's Beloved #2",
+        "de": "Belafontines Geliebter 2",
+        "es": "Amado de Belafontine n.º 2",
+        "fr": "Précieux de Belafontine #2",
+        "it": "Prediletto di Belafontaine 2",
+        "ja": "ベラフォンテーンの愛するもの#2",
+        "ko": "벨라폰테인이 아끼는 대상 #2",
+        "pt-BR": "Amado de Belafontine N.º 2",
+        "zh-CN": "贝拉丰汀的挚爱 #2",
+        "zh-TW": "貝拉芳緹的摯愛#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_3P_A": {
+        "en": "Belafontine's Beloved #1",
+        "de": "Belafontines Geliebter 1",
+        "es": "Amado de Belafontine n.º 1",
+        "fr": "Précieux de Belafontine #1",
+        "it": "Prediletto di Belafontaine 1",
+        "ja": "ベラフォンテーンの愛するもの#1",
+        "ko": "벨라폰테인이 아끼는 대상 #1",
+        "pt-BR": "Amado de Belafontine N.º 1",
+        "zh-CN": "贝拉丰汀的挚爱 #1",
+        "zh-TW": "貝拉芳緹的摯愛#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Eloine_3P_C": {
+        "en": "Eloine's Clock #3",
+        "de": "Eloines Uhr 3",
+        "es": "Reloj de Eloine n.º 3",
+        "fr": "Horloge d’Éloine #3",
+        "it": "Orologio di Eloine 3",
+        "ja": "イロイーンの時計#3",
+        "ko": "엘로인의 시계 #3",
+        "pt-BR": "Relógio da Eloine N.º 3",
+        "zh-CN": "伊洛因的钟 #3",
+        "zh-TW": "厄羅因的時鐘#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Eloine_3P_B": {
+        "en": "Eloine's Clock #2",
+        "de": "Eloines Uhr 2",
+        "es": "Reloj de Eloine n.º 2",
+        "fr": "Horloge d’Éloine #2",
+        "it": "Orologio di Eloine 2",
+        "ja": "イロイーンの時計#2",
+        "ko": "엘로인의 시계 #2",
+        "pt-BR": "Relógio da Eloine N.º 2",
+        "zh-CN": "伊洛因的钟 #2",
+        "zh-TW": "厄羅因的時鐘#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Eloine_3P_A": {
+        "en": "Eloine's Clock #1",
+        "de": "Eloines Uhr 1",
+        "es": "Reloj de Eloine n.º 1",
+        "fr": "Horloge d’Éloine #1",
+        "it": "Orologio di Eloine 1",
+        "ja": "イロイーンの時計#1",
+        "ko": "엘로인의 시계 #1",
+        "pt-BR": "Relógio da Eloine N.º 1",
+        "zh-CN": "伊洛因的钟 #1",
+        "zh-TW": "厄羅因的時鐘#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_4P_D": {
+        "en": "Amadeus' Crest #4",
+        "de": "Amadeus' Wappen 4",
+        "es": "Blasón de Amadeus n.º 4",
+        "fr": "Écusson d’Amadeus #4",
+        "it": "Stemma di Amadeus 4",
+        "ja": "アマデウスの紋章#4",
+        "ko": "아마데우스의 문장 #4",
+        "pt-BR": "Brasão de Amadeus N.º 4",
+        "zh-CN": "阿玛迪乌斯的纹章 #4",
+        "zh-TW": "阿瑪迪斯的族徽#4"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_4P_C": {
+        "en": "Amadeus' Crest #3",
+        "de": "Amadeus' Wappen 3",
+        "es": "Blasón de Amadeus n.º 3",
+        "fr": "Écusson d’Amadeus #3",
+        "it": "Stemma di Amadeus 3",
+        "ja": "アマデウスの紋章#3",
+        "ko": "아마데우스의 문장 #3",
+        "pt-BR": "Brasão de Amadeus N.º 3",
+        "zh-CN": "阿玛迪乌斯的纹章 #3",
+        "zh-TW": "阿瑪迪斯的族徽#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_4P_B": {
+        "en": "Amadeus' Crest #2",
+        "de": "Amadeus' Wappen 2",
+        "es": "Blasón de Amadeus n.º 2",
+        "fr": "Écusson d’Amadeus #2",
+        "it": "Stemma di Amadeus 2",
+        "ja": "アマデウスの紋章#2",
+        "ko": "아마데우스의 문장 #2",
+        "pt-BR": "Brasão de Amadeus N.º 2",
+        "zh-CN": "阿玛迪乌斯的纹章 #2",
+        "zh-TW": "阿瑪迪斯的族徽#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Amadeus_4P_A": {
+        "en": "Amadeus' Crest #1",
+        "de": "Amadeus' Wappen 1",
+        "es": "Blasón de Amadeus n.º 1",
+        "fr": "Écusson d’Amadeus #1",
+        "it": "Stemma di Amadeus 1",
+        "ja": "アマデウスの紋章#1",
+        "ko": "아마데우스의 문장 #1",
+        "pt-BR": "Brasão de Amadeus N.º 1",
+        "zh-CN": "阿玛迪乌斯的纹章 #1",
+        "zh-TW": "阿瑪迪斯的族徽#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_4P_D": {
+        "en": "Halward's Crest #4",
+        "de": "Halwards Wappen 4",
+        "es": "Blasón de Halward n.º 4",
+        "fr": "Écusson d’Halward #4",
+        "it": "Stemma di Halward 4",
+        "ja": "ハルワードの紋章#4",
+        "ko": "할워즈의 문장 #4",
+        "pt-BR": "Brasão de Halward N.º 4",
+        "zh-CN": "哈尔沃德的纹章 #4",
+        "zh-TW": "哈沃德的族徽#4"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_4P_C": {
+        "en": "Halward's Crest #3",
+        "de": "Halwards Wappen 3",
+        "es": "Blasón de Halward n.º 3",
+        "fr": "Écusson d’Halward #3",
+        "it": "Stemma di Halward 3",
+        "ja": "ハルワードの紋章#3",
+        "ko": "할워즈의 문장 #3",
+        "pt-BR": "Brasão de Halward N.º 3",
+        "zh-CN": "哈尔沃德的纹章 #3",
+        "zh-TW": "哈沃德的族徽#３"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_4P_B": {
+        "en": "Halward's Crest #2",
+        "de": "Halwards Wappen 2",
+        "es": "Blasón de Halward n.º 2",
+        "fr": "Écusson d’Halward #2",
+        "it": "Stemma di Halward 2",
+        "ja": "ハルワードの紋章#2",
+        "ko": "할워즈의 문장 #2",
+        "pt-BR": "Brasão de Halward N.º 2",
+        "zh-CN": "哈尔沃德的纹章 #2",
+        "zh-TW": "哈沃德的族徽#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Halward_4P_A": {
+        "en": "Halward's Crest #1",
+        "de": "Halwards Wappen 1",
+        "es": "Blasón de Halward n.º 1",
+        "fr": "Écusson d’Halward #1",
+        "it": "Stemma di Halward 1",
+        "ja": "ハルワードの紋章#1",
+        "ko": "할워즈의 문장 #1",
+        "pt-BR": "Brasão de Halward N.º 1",
+        "zh-CN": "哈尔沃德的纹章 #1",
+        "zh-TW": "哈沃德的族徽#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_4P_A": {
+        "en": "Belafontine's Crest #1",
+        "de": "Belafontines Wappen 1",
+        "es": "Blasón de Belafontine n.º 1",
+        "fr": "Écusson de Belafontin  #1",
+        "it": "Stemma di Belafontaine 1",
+        "ja": "ベラフォンテーンの紋章#1",
+        "ko": "벨라폰테인이 문장 #1",
+        "pt-BR": "Brasão de Belafontine N.º 1",
+        "zh-CN": "贝拉丰汀的纹章 #1",
+        "zh-TW": "貝拉芳緹的族徽#1"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_4P_B": {
+        "en": "Belafontine's Crest #2",
+        "de": "Belafontines Wappen 2",
+        "es": "Blasón de Belafontine n.º 2",
+        "fr": "Écusson de Belafontine #2",
+        "it": "Stemma di Belafontaine 2",
+        "ja": "ベラフォンテーンの紋章#2",
+        "ko": "벨라폰테인이 문장 #2",
+        "pt-BR": "Brasão de Belafontine N.º 2",
+        "zh-CN": "贝拉丰汀的纹章 #2",
+        "zh-TW": "貝拉芳緹的族徽#2"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_4P_C": {
+        "en": "Belafontine's Crest #3",
+        "de": "Belafontines Wappen 3",
+        "es": "Blasón de Belafontine n.º 3",
+        "fr": "Écusson de Belafontine #3",
+        "it": "Stemma di Belafontaine 3",
+        "ja": "ベラフォンテーンの紋章#3",
+        "ko": "벨라폰테인이 문장 #3",
+        "pt-BR": "Brasão de Belafontine N.º 3",
+        "zh-CN": "贝拉丰汀的纹章 #3",
+        "zh-TW": "貝拉芳緹的族徽#3"
+      },
+      "DA_ItemType_AZ3_Artifact_Belafontine_4P_D": {
+        "en": "Belafontine's Crest #4",
+        "de": "Belafontines Wappen 4",
+        "es": "Blasón de Belafontine n.º 4",
+        "fr": "Écusson de Belafontine #4",
+        "it": "Stemma di Belafontaine 4",
+        "ja": "ベラフォンテーンの紋章#4",
+        "ko": "벨라폰테인이 문장 #4",
+        "pt-BR": "Brasão de Belafontine N.º 4",
+        "zh-CN": "贝拉丰汀的纹章 #4",
+        "zh-TW": "貝拉芳緹的族徽#4"
       }
     }
   },
@@ -1371,7 +1815,7 @@
           "id": "DA_ItemType_QuestItem_BahariBoyzRecord",
           "name": "Bahari Boyz Record",
           "weight": 300,
-          "chance": "22.9%",
+          "chance": "22.6%",
           "icon": "WT_Icon_FIQ_Kilima_BahariBoyzRecord",
           "isRecipe": false,
           "isQuest": true,
@@ -1381,7 +1825,7 @@
           "id": "DA_ItemType_Questitem_QuillPen",
           "name": "Fancy Quill Pen",
           "weight": 300,
-          "chance": "22.9%",
+          "chance": "22.6%",
           "icon": "WT_Icon_FIQ_Kilima_LuckyQuill",
           "isRecipe": false,
           "isQuest": true,
@@ -1391,7 +1835,7 @@
           "id": "DA_ItemType_QuestItem_BrokenFlowBulb",
           "name": "Odd Wooden Box",
           "weight": 300,
-          "chance": "22.9%",
+          "chance": "22.6%",
           "icon": "Icon_Lootbox_Decor",
           "isRecipe": false,
           "isQuest": true,
@@ -1401,7 +1845,7 @@
           "id": "DA_ItemType_Questitem_MysteriousRuin",
           "name": "Small Handheld Device",
           "weight": 300,
-          "chance": "22.9%",
+          "chance": "22.6%",
           "icon": "Icon_Quest_CommunicationDevice",
           "isRecipe": false,
           "isQuest": true,
@@ -1573,6 +2017,56 @@
           "isRecipe": true,
           "isQuest": false,
           "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_Decor_Snow_Yard_CliffIsland_03",
+          "name": "Snowy Lawn #1",
+          "weight": 3,
+          "chance": "0.2%",
+          "icon": "WT_Icon_Decor_Snow_Yard_CliffIsland_03",
+          "isRecipe": true,
+          "isQuest": false,
+          "isSeasonal": true
+        },
+        {
+          "id": "DA_ItemType_Decor_Snow_Yard_CliffIsland_04",
+          "name": "Snowy Lawn #2",
+          "weight": 3,
+          "chance": "0.2%",
+          "icon": "WT_Icon_Decor_Snow_Yard_CliffIsland_04",
+          "isRecipe": true,
+          "isQuest": false,
+          "isSeasonal": true
+        },
+        {
+          "id": "DA_ItemType_Decor_Snow_Yard_CliffIsland_05",
+          "name": "Snowy Lawn #3",
+          "weight": 3,
+          "chance": "0.2%",
+          "icon": "WT_Icon_Decor_Snow_Yard_CliffIsland_05",
+          "isRecipe": true,
+          "isQuest": false,
+          "isSeasonal": true
+        },
+        {
+          "id": "DA_ItemType_Decor_Snow_Summer_04_furniture_Umbrella",
+          "name": "Snowy Parsol",
+          "weight": 3,
+          "chance": "0.2%",
+          "icon": "WT_Icon_Decor_Snow_04_Furniture_Umbrella",
+          "isRecipe": true,
+          "isQuest": false,
+          "isSeasonal": true
+        },
+        {
+          "id": "DA_ItemType_Decor_Snow_Community_14_Glamping_Canopy",
+          "name": "Snowy Pavilion",
+          "weight": 3,
+          "chance": "0.2%",
+          "icon": "WT_Icon_Decor_Snow_Community_14_Glamping_Canopy",
+          "isRecipe": true,
+          "isQuest": false,
+          "isSeasonal": true
         },
         {
           "id": "DA_ItemType_Decor_Summer_02_furniture_PicnicBench",
@@ -1846,7 +2340,7 @@
           "isSeasonal": false
         }
       ],
-      "totalWeight": 1310
+      "totalWeight": 1325
     },
     "beachTrash": {
       "nameKey": "pool_beachTrash",
@@ -1951,7 +2445,7 @@
           "rarity": "Epic",
           "isRecipe": false,
           "isQuest": false,
-          "isSeasonal": false
+          "isSeasonal": true
         },
         {
           "id": "DA_ItemType_Forage_Flower_BriarDaisy",
@@ -2416,7 +2910,7 @@
           "rarity": "Epic",
           "isRecipe": false,
           "isQuest": false,
-          "isSeasonal": false
+          "isSeasonal": true
         },
         {
           "id": "DA_ItemType_Artifact_SmallB1",
@@ -2750,6 +3244,343 @@
         }
       ],
       "totalWeight": 33
+    },
+    "royalHighlands": {
+      "nameKey": "pool_royalHighlands",
+      "locationKey": "location_royalHighlands",
+      "items": [
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_4P_A",
+          "name": "Amadeus' Crest #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_Sigil_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_4P_B",
+          "name": "Amadeus' Crest #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_Sigil_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_4P_C",
+          "name": "Amadeus' Crest #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_Sigil_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_4P_D",
+          "name": "Amadeus' Crest #4",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_Sigil_D",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_3P_A",
+          "name": "Amadeus' Roulette #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_RouletteWheel_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_3P_B",
+          "name": "Amadeus' Roulette #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_RouletteWheel_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_3P_C",
+          "name": "Amadeus' Roulette #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_RouletteWheel_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_2P_A",
+          "name": "Amadeus' Weapon #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_AntiTankGun_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Amadeus_2P_B",
+          "name": "Amadeus' Weapon #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Amadeus_AntiTankGun_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_3P_A",
+          "name": "Belafontine's Beloved #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_CherishedPlant_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_3P_B",
+          "name": "Belafontine's Beloved #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_CherishedPlant_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_3P_C",
+          "name": "Belafontine's Beloved #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_CherishedPlant_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_4P_A",
+          "name": "Belafontine's Crest #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_Sigil_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_4P_B",
+          "name": "Belafontine's Crest #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_Sigil_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_4P_C",
+          "name": "Belafontine's Crest #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_Sigil_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_4P_D",
+          "name": "Belafontine's Crest #4",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_Sigil_D",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_2P_A",
+          "name": "Belafontine's Mask #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_CeremonialMask_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Belafontine_2P_B",
+          "name": "Belafontine's Mask #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Bellafontine_CeremonialMask_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Eloine_3P_A",
+          "name": "Eloine's Clock #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Eloine_SurrealClock_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Eloine_3P_B",
+          "name": "Eloine's Clock #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Eloine_SurrealClock_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Eloine_3P_C",
+          "name": "Eloine's Clock #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Eloine_SurrealClock_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_4P_A",
+          "name": "Halward's Crest #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_Sigil_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_4P_B",
+          "name": "Halward's Crest #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_Sigil_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_4P_C",
+          "name": "Halward's Crest #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_Sigil_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_4P_D",
+          "name": "Halward's Crest #4",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_Sigil_D",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_3P_A",
+          "name": "Halward's Device #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_RedLightMask_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_3P_B",
+          "name": "Halward's Device #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_RedLightMask_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_3P_C",
+          "name": "Halward's Device #3",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_RedLightMask_C",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_2P_A",
+          "name": "Halward's Glass #1",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_BlenderCup_A",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        },
+        {
+          "id": "DA_ItemType_AZ3_Artifact_Halward_2P_B",
+          "name": "Halward's Glass #2",
+          "weight": 1,
+          "chance": "3.3%",
+          "icon": "WT_Artifact_Halward_BlenderCup_B",
+          "rarity": "Rare",
+          "isRecipe": false,
+          "isQuest": false,
+          "isSeasonal": false
+        }
+      ],
+      "totalWeight": 30
     }
   }
 }

@@ -9,6 +9,7 @@ import {
   TreesIcon,
   UmbrellaIcon,
   HomeIcon,
+  MountainIcon,
   ArrowUpDown,
   PlusIcon,
   MinusIcon,
@@ -113,6 +114,11 @@ const tabs = [
     id: "elderwood",
     icon: TreesIcon,
     poolKey: "elderwood",
+  },
+  {
+    id: "royalHighlands",
+    icon: MountainIcon,
+    poolKey: "royalHighlands",
   },
 ];
 
@@ -367,12 +373,14 @@ const poolNameKeys: Record<string, string> = {
   chapaaNest: "rummagePile.pool.chapaaNest",
   beachTrash: "rummagePile.pool.beachTrash",
   elderwood: "rummagePile.pool.elderwood",
+  royalHighlands: "rummagePile.pool.royalHighlands",
 };
 
 const locationKeys: Record<string, string> = {
   chapaaNest: "rummagePile.location.kilima",
   beachTrash: "rummagePile.location.bahari",
   elderwood: "rummagePile.location.elderwood",
+  royalHighlands: "rummagePile.location.royalHighlands",
 };
 
 export default function LootTables({

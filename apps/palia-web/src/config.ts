@@ -8,6 +8,14 @@ export const APP_CONFIG: AppConfig = {
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
+      href: "/maps/Royal%20Highlands",
+      title: "config.internalLinks.royalHighlands.title",
+      description: "config.internalLinks.royalHighlands.description",
+      linkText: "config.internalLinks.royalHighlands.linkText",
+      iconName: "Map",
+      bgImage: getPreviewImageUrl("palia", "AZ3_Root"),
+    },
+    {
       href: "/maps/Elderwood",
       title: "config.internalLinks.elderwood.title",
       description: "config.internalLinks.elderwood.description",

@@ -11,6 +11,7 @@ import {
   HomeIcon,
   UmbrellaIcon,
   TreesIcon,
+  MountainIcon,
 } from "lucide-react";
 import { type Spawns, useT } from "@repo/ui/providers";
 import { Skeleton } from "@repo/ui/data";
@@ -31,6 +32,8 @@ export default function PileMapClient({
   stableNodes,
   icon,
   stableNodeIcon,
+  campsiteNodes,
+  campsiteIcon,
   tiles,
   icons,
   locale,
@@ -39,6 +42,8 @@ export default function PileMapClient({
   stableNodes: Spawns;
   icon: FiltersConfig[number]["values"][number]["icon"];
   stableNodeIcon: FiltersConfig[number]["values"][number]["icon"];
+  campsiteNodes: Spawns;
+  campsiteIcon: FiltersConfig[number]["values"][number]["icon"];
   tiles: TilesConfig;
   icons: string;
   locale: string;
@@ -49,7 +54,9 @@ export default function PileMapClient({
   const mapParam = searchParams.get("map");
   const isBahariBay = mapParam === "bahari-bay";
   const isElderwood = mapParam === "elderwood";
-  const isKillimaValley = !isBahariBay && !isElderwood;
+  const isRoyalHighlands = mapParam === "royal-highlands";
+  const isKillimaValley =
+    !isBahariBay && !isElderwood && !isRoyalHighlands;
   const timedLootPiles = deobfuscateAndDecode<TimedLootPiles>(
     encodedTimedLootPiles,
   );
@@ -76,7 +83,7 @@ export default function PileMapClient({
 
   let targetSpawns: SimpleSpawn[];
   let mapName;
-  let timestamp;
+  let timestamp: number | undefined;
   if (isKillimaValley) {
     targetSpawns = timedLootPiles.BP_ChapaaPile_C
       ? [
@@ -115,6 +122,20 @@ export default function PileMapClient({
       ) || [];
     mapName = "AZ2_Root";
     timestamp = timedLootPiles.BP_RummagePile_Breakable_Elderwood_C.timestamp;
+  } else if (isRoyalHighlands) {
+    // No live tracking yet — show all 14 pre-placed campsite locations.
+    // 2 are active per real-world day (rotation at 12:00 server time).
+    targetSpawns = campsiteNodes
+      .filter((s) => s.mapName === "AZ3_Root")
+      .map((s) => ({
+        id: s.id,
+        name: t("campsite"),
+        p: s.p,
+        type: s.type,
+        icon: campsiteIcon,
+      }));
+    mapName = "AZ3_Root";
+    timestamp = undefined;
   } else {
     notFound();
   }
@@ -152,7 +173,9 @@ export default function PileMapClient({
     ? "/maps/Kilima%20Village"
     : isBahariBay
       ? "/maps/Bahari%20Bay"
-      : "/maps/Elderwood";
+      : isElderwood
+        ? "/maps/Elderwood"
+        : "/maps/Royal%20Highlands";
 
   const maps = [
     {
@@ -172,6 +195,12 @@ export default function PileMapClient({
       labelKey: "rummagePile.map.elderwood",
       icon: TreesIcon,
       active: isElderwood,
+    },
+    {
+      id: "royal-highlands",
+      labelKey: "rummagePile.map.royalHighlands",
+      icon: MountainIcon,
+      active: isRoyalHighlands,
     },
   ];
 
@@ -211,15 +240,21 @@ export default function PileMapClient({
 
       {/* Status Bar */}
       <div className="flex flex-wrap items-center justify-center gap-4">
-        {/* Live Indicator */}
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-400 border border-emerald-500/20">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          {t("rummagePile.map.live")} •{" "}
-          {formatRelativeTime(new Date(timestamp))}
-        </div>
+        {/* Live Indicator (only when live tracking is available) */}
+        {timestamp !== undefined ? (
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-400 border border-emerald-500/20">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            {t("rummagePile.map.live")} •{" "}
+            {formatRelativeTime(new Date(timestamp))}
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm text-amber-400 border border-amber-500/20">
+            {t("rummagePile.map.allLocations")}
+          </div>
+        )}
 
         {/* Full Map Link */}
         <Link
