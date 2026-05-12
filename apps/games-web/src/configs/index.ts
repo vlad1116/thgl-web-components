@@ -8,6 +8,7 @@ import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
+import { starsandIsland } from "./starsand-island";
 
 /**
  * All app configs that this multi-tenant deployment serves.
@@ -23,6 +24,7 @@ const ALL_CONFIGS: AppConfig[] = [
   satisfactory,
   soulframe,
   soulmask,
+  starsandIsland,
 ];
 
 /**
