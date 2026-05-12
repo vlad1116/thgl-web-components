@@ -84,6 +84,8 @@ const gameEventsPlugin = await initGameEventsPlugin<PaliaEventsPlugin>(
       return "AdventureZoneWorld";
     } else if (actor.path.includes("Maps/AZ2")) {
       return "AZ2_Root";
+    } else if (actor.path.includes("Maps/AZ3")) {
+      return "AZ3_Root";
     } else if (
       actor.path.includes("Maps/MajiMarket") ||
       actor.path.includes("Maps/Events/Village_Fairgrounds")
