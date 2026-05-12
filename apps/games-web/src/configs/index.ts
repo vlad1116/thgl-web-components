@@ -3,6 +3,7 @@ import { avowed } from "./avowed";
 import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { grounded2 } from "./grounded2";
+import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
 import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
@@ -19,6 +20,7 @@ const ALL_CONFIGS: AppConfig[] = [
   chronoOdyssey,
   conanExiles,
   grounded2,
+  infinityNikki,
   nightCrows,
   rsdragonwilds,
   satisfactory,
