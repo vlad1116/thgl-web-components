@@ -420,9 +420,7 @@ export function CoordinatesProvider({
       dict,
     );
 
-    const resultNodes = debug
-      ? customNodes.concat(actorNodes)
-      : customNodes.concat(realStaticNodes, actorNodes);
+    const resultNodes = customNodes.concat(realStaticNodes, actorNodes);
 
     return { nodes: resultNodes, pendingDiscoveryUpdates: discoveryUpdates };
   }, [
