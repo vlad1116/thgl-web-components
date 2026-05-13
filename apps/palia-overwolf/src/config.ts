@@ -16,5 +16,6 @@ export const APP_CONFIG: OverwolfAppConfig = {
       xyMaxDistance: 15000,
       zDistance: 400,
     },
+    clusterPrecision: 5,
   },
 };

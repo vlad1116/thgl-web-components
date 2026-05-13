@@ -4,7 +4,18 @@ export const APP_CONFIG: AppConfig = {
   name: "palia",
   title: "Palia",
   domain: "palia",
-  supportedLocales: ["en", "de", "es", "fr", "it", "ja", "ko", "pt-BR", "zh-CN", "zh-TW"],
+  supportedLocales: [
+    "en",
+    "de",
+    "es",
+    "fr",
+    "it",
+    "ja",
+    "ko",
+    "pt-BR",
+    "zh-CN",
+    "zh-TW",
+  ],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
@@ -80,6 +91,7 @@ export const APP_CONFIG: AppConfig = {
       xyMaxDistance: 15000,
       zDistance: 400,
     },
+    clusterPrecision: 5,
   },
   keywords: ["Rummage Pile", "Plushies", "Elderwood"],
 };

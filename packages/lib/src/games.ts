@@ -323,6 +323,7 @@ export const games: Array<Game> = [
           xyMaxDistance: 15000,
           zDistance: 400,
         },
+        clusterPrecision: 5,
       },
       games: [
         {
@@ -815,6 +816,7 @@ export type Game = {
         xyMaxDistance: number;
         zDistance: number;
       };
+      clusterPrecision?: number;
       coordinateCopyFormat?: string;
     };
     games: {
