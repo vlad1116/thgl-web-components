@@ -96,20 +96,6 @@ export default async function RummagePile({ params }: PageProps) {
     .find((f) => f.group === "locations")!
     .values.find((v) => v.id === "stable")!.icon;
 
-  const campsiteUrl = getApiUrl("palia", "q=campsite");
-  const campsiteResponse = await fetch(campsiteUrl, {
-    next: {
-      revalidate: 300, // Auto-revalidate every 5 minutes
-    },
-  });
-  const campsiteBuffer = await campsiteResponse.arrayBuffer();
-  const campsiteNodes = decodeFromBuffer<Spawns>(
-    new Uint8Array(campsiteBuffer),
-  );
-  const campsiteIcon = version.data.filters
-    .find((f) => f.group === "timed_events")!
-    .values.find((v) => v.id === "campsite")!.icon;
-
   const encodedTimedLootPiles = encodeAndObfuscate(data);
 
   const pageTitle = t("rummagePile.meta.title");
@@ -184,8 +170,6 @@ export default async function RummagePile({ params }: PageProps) {
                 encodedTimedLootPiles={encodedTimedLootPiles}
                 stableNodes={stableNodes}
                 stableNodeIcon={stableNodeIcon}
-                campsiteNodes={campsiteNodes}
-                campsiteIcon={campsiteIcon}
                 icon={rummagePileIcon}
                 tiles={version.data.tiles}
                 icons={version.more.icons}

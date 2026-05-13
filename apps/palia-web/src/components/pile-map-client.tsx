@@ -32,8 +32,6 @@ export default function PileMapClient({
   stableNodes,
   icon,
   stableNodeIcon,
-  campsiteNodes,
-  campsiteIcon,
   tiles,
   icons,
   locale,
@@ -42,8 +40,6 @@ export default function PileMapClient({
   stableNodes: Spawns;
   icon: FiltersConfig[number]["values"][number]["icon"];
   stableNodeIcon: FiltersConfig[number]["values"][number]["icon"];
-  campsiteNodes: Spawns;
-  campsiteIcon: FiltersConfig[number]["values"][number]["icon"];
   tiles: TilesConfig;
   icons: string;
   locale: string;
@@ -123,19 +119,15 @@ export default function PileMapClient({
     mapName = "AZ2_Root";
     timestamp = timedLootPiles.BP_RummagePile_Breakable_Elderwood_C.timestamp;
   } else if (isRoyalHighlands) {
-    // No live tracking yet — show all 14 pre-placed campsite locations.
-    // 2 are active per real-world day (rotation at 12:00 server time).
-    targetSpawns = campsiteNodes
-      .filter((s) => s.mapName === "AZ3_Root")
-      .map((s) => ({
-        id: s.id,
-        name: t("campsite"),
-        p: s.p,
-        type: s.type,
-        icon: campsiteIcon,
-      }));
+    targetSpawns =
+      timedLootPiles.BP_Campsite_RummagePile_C?.positions.map((p, i) => ({
+        id: "campsite_pile_" + i,
+        name: t("campsite_pile"),
+        icon,
+        p: p,
+      })) || [];
     mapName = "AZ3_Root";
-    timestamp = undefined;
+    timestamp = timedLootPiles.BP_Campsite_RummagePile_C?.timestamp;
   } else {
     notFound();
   }
