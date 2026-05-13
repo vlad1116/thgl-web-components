@@ -224,7 +224,12 @@ export default function PileMapClient({
 
       {/* Map Display */}
       <PileMapDynamic
-        spawns={[...targetSpawns, ...stableSpawns]}
+        spawns={[...stableSpawns, ...targetSpawns]}
+        center={
+          targetSpawns.length > 0
+            ? [targetSpawns[0].p[0], targetSpawns[0].p[1]]
+            : undefined
+        }
         mapName={mapName}
         tiles={tiles}
         icons={icons}

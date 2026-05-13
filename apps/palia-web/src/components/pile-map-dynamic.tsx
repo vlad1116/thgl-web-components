@@ -13,19 +13,17 @@ import { APP_CONFIG } from "@/config";
 export default function PileMapDynamic({
   mapName,
   spawns,
+  center,
   tiles,
   icons,
 }: {
   mapName: string;
   spawns: SimpleSpawn[];
+  center?: [number, number];
   tiles: TilesConfig;
   icons: string;
 }): JSX.Element {
   const mapRef = useRef<SimpleWebMapRef | null>(null);
-
-  // Use first spawn as center (the pile)
-  const center: [number, number] | undefined =
-    spawns.length > 0 ? [spawns[0].p[0], spawns[0].p[1]] : undefined;
 
   return (
     <div className="h-64 md:h-96 mt-4">
