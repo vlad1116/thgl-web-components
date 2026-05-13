@@ -2,6 +2,7 @@ import { type AppConfig } from "@repo/lib";
 import { avowed } from "./avowed";
 import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
+import { crimsonDesert } from "./crimson-desert";
 import { grounded2 } from "./grounded2";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
@@ -19,6 +20,7 @@ const ALL_CONFIGS: AppConfig[] = [
   avowed,
   chronoOdyssey,
   conanExiles,
+  crimsonDesert,
   grounded2,
   infinityNikki,
   nightCrows,
