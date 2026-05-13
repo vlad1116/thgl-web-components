@@ -33,12 +33,23 @@ const elderwoodGrid = [
   [52008 + elderwoodPadding, 26929 + elderwoodPadding],
 ] as [[number, number], [number, number]];
 
-const gridBoundsMap: Record<string, [[number, number], [number, number]]> = {
-  VillageWorld: villageGrid,
-  AdventureZoneWorld: bayGrid,
-  MajiMarket: fairgroundsGrid,
-  HousingPlot: housingGrid,
-  AZ2_Root: elderwoodGrid,
+const royalHighlandsGrid = [
+  [-20249, 8098],
+  [183150, 211205],
+] as [[number, number], [number, number]];
+
+type GridConfig = {
+  bounds: [[number, number], [number, number]];
+  divisions?: number;
+};
+
+const gridBoundsMap: Record<string, GridConfig> = {
+  VillageWorld: { bounds: villageGrid },
+  AdventureZoneWorld: { bounds: bayGrid },
+  MajiMarket: { bounds: fairgroundsGrid },
+  HousingPlot: { bounds: housingGrid },
+  AZ2_Root: { bounds: elderwoodGrid },
+  AZ3_Root: { bounds: royalHighlandsGrid, divisions: 11 },
 };
 
 export function PaliaWebGrid({
@@ -59,14 +70,14 @@ export function PaliaWebGrid({
       return;
     }
 
-    const bounds = gridBoundsMap[mapName];
-    if (!bounds) {
+    const config = gridBoundsMap[mapName];
+    if (!config) {
       return;
     }
 
     const gridLayer = new GridLayer({
-      bounds,
-      divisions: 10,
+      bounds: config.bounds,
+      divisions: config.divisions ?? 10,
       color: "#ffffff",
       opacity: 0.6,
       showLabels: true,
