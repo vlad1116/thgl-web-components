@@ -9,9 +9,18 @@ import type { Viewport } from "next";
 import { APP_CONFIG } from "@/config";
 import { createRootLayoutMetadata } from "@repo/ui/apps";
 import { DEFAULT_LOCALE, cn, fetchVersion } from "@repo/lib";
-import { getFullDictionary, getStaticDictionary, isValidLocale } from "@repo/ui/dicts";
+import {
+  getFullDictionary,
+  getStaticDictionary,
+  isValidLocale,
+} from "@repo/ui/dicts";
 import { Header, Brand, Account, PlausibleTracker } from "@repo/ui/header";
-import { Links, LocaleSwitcher, LocaleSwitcherInline, Toaster } from "@repo/ui/controls";
+import {
+  Links,
+  LocaleSwitcher,
+  LocaleSwitcherInline,
+  Toaster,
+} from "@repo/ui/controls";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { DbSearch } from "@/components/db-search";
 
@@ -43,7 +52,8 @@ function sliceClientDict(
   // Add any config link keys that might come from the CDN dict
   for (const link of APP_CONFIG.internalLinks ?? []) {
     if (fullDict[link.title]) result[link.title] = fullDict[link.title];
-    if (link.description && fullDict[link.description]) result[link.description] = fullDict[link.description];
+    if (link.description && fullDict[link.description])
+      result[link.description] = fullDict[link.description];
   }
   for (const link of APP_CONFIG.externalLinks ?? []) {
     if (fullDict[link.title]) result[link.title] = fullDict[link.title];
@@ -85,7 +95,10 @@ export default async function RootLayout({
       >
         <I18NProvider dict={clientDict} locale={locale}>
           <Header activeApp={APP_CONFIG.title}>
-            <Link href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`} aria-label="Home">
+            <Link
+              href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
+              aria-label="Home"
+            >
               <Brand title={APP_CONFIG.domain} />
             </Link>
 
@@ -101,6 +114,7 @@ export default async function RootLayout({
                   </Suspense>
                 ) : undefined
               }
+              hasMap={false}
             >
               {APP_CONFIG.supportedLocales.length > 1 && (
                 <Suspense>
