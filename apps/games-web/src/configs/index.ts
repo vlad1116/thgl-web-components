@@ -12,6 +12,7 @@ import { satisfactory } from "./satisfactory";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
 import { starsandIsland } from "./starsand-island";
+import { wutheringWaves } from "./wuthering-waves";
 
 /**
  * All app configs that this multi-tenant deployment serves.
@@ -31,6 +32,7 @@ const ALL_CONFIGS: AppConfig[] = [
   soulframe,
   soulmask,
   starsandIsland,
+  wutheringWaves,
 ];
 
 /**
