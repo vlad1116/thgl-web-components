@@ -37,10 +37,13 @@ type MeasuredItem = {
 
 export function Links({
   appConfig,
+  hasMap,
   children,
   childrenDropdown,
 }: {
   appConfig: AppConfig;
+  /** Whether the game has any maps (derived from version.data.tiles in the layout). */
+  hasMap: boolean;
   children?: React.ReactNode;
   childrenDropdown?: React.ReactNode;
 }): JSX.Element {
@@ -73,9 +76,6 @@ export function Links({
           !l.href.startsWith("/guides"),
       ) ?? [];
 
-    const allInternalLinks = appConfig.internalLinks ?? [];
-    const hasMap = allInternalLinks.some((l) => l.href.startsWith("/maps"));
-
     const before = NAV_BEFORE.filter(
       (l) => l.href === "/" || (l.href === "/maps" && hasMap),
     );
@@ -93,7 +93,7 @@ export function Links({
         isHome: l.href === "/",
       };
     });
-  }, [appConfig.internalLinks, locale, t]);
+  }, [appConfig.internalLinks, hasMap, locale, t]);
 
   // Build external items: In-Game App first (most important), then partner links, then locale last
   const externalItems = useMemo(() => {

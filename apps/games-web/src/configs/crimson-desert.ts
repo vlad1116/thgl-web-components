@@ -36,19 +36,8 @@ export const crimsonDesert: AppConfig = {
       zDistance: 5,
     },
   },
-  internalLinks: [
-    {
-      title: "Crimson Desert Map",
-      description:
-        "Navigate the Continent of Pywel with our interactive map featuring Abyss Cressets, treasures, shops, gathering nodes, and more.",
-      href: "/maps/Continent%20of%20Pywel",
-      iconName: "Map",
-      // Inlined getPreviewImageUrl("crimson-desert", "OpenWorld")
-      bgImage:
-        "https://cdn.th.gl/crimson-desert/map-tiles/OpenWorld/preview.webp",
-      linkText: "Explore the Map",
-    },
-  ],
+  // No internalLinks: map cards are auto-generated from version.data.tiles
+  // (Pywel + Abyss). Header "Maps" link now derives from hasMap in layout.
   keywords: [
     "Pywel",
     "Abyss Cresset",

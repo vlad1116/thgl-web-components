@@ -78,7 +78,10 @@ export function createRootLayout(appConfig: AppConfig) {
                 <Brand title={appConfig.domain} />
               </Link>
 
-              <Links appConfig={appConfig}>
+              <Links
+                appConfig={appConfig}
+                hasMap={Object.keys(version.data.tiles ?? {}).length > 0}
+              >
                 {appConfig.supportedLocales.length > 1 && (
                   <Suspense>
                     <LocaleSwitcher
