@@ -6,6 +6,7 @@ import { crimsonDesert } from "./crimson-desert";
 import { grounded2 } from "./grounded2";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
+import { paxDei } from "./pax-dei";
 import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
 import { soulframe } from "./soulframe";
@@ -24,6 +25,7 @@ const ALL_CONFIGS: AppConfig[] = [
   grounded2,
   infinityNikki,
   nightCrows,
+  paxDei,
   rsdragonwilds,
   satisfactory,
   soulframe,
