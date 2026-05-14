@@ -60,11 +60,62 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Bunny's official BunnyWay/actions/container-update-image@main is a
+      # single-shot fetch that throws an UnhandledPromiseRejection on 5xx
+      # responses, which we've seen multiple times. Replace it with a curl
+      # loop that retries on transient errors.
       - name: Update Magic Container
         if: vars.BUNNY_GAMES_WEB_APP_ID != ''
-        uses: BunnyWay/actions/container-update-image@main
-        with:
-          app_id: ${{ vars.BUNNY_GAMES_WEB_APP_ID }}
-          api_key: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
-          container: ${{ vars.BUNNY_GAMES_WEB_CONTAINER_NAME }}
-          image_tag: ${{ github.sha }}
+        env:
+          APP_ID: ${{ vars.BUNNY_GAMES_WEB_APP_ID }}
+          API_KEY: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
+          CONTAINER_NAME: ${{ vars.BUNNY_GAMES_WEB_CONTAINER_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # 1. Look up containerId by name
+          APP_JSON=$(curl -fsS \
+            -H "AccessKey: $API_KEY" \
+            "https://api.bunny.net/mc/apps/$APP_ID")
+          CONTAINER_ID=$(echo "$APP_JSON" \
+            | jq -r --arg n "$CONTAINER_NAME" \
+                '.containerTemplates[] | select(.name == $n) | .id')
+          if [ -z "$CONTAINER_ID" ] || [ "$CONTAINER_ID" = "null" ]; then
+            echo "Container '$CONTAINER_NAME' not found in app $APP_ID" >&2
+            exit 1
+          fi
+          echo "Updating container '$CONTAINER_NAME' ($CONTAINER_ID) → $IMAGE_TAG"
+
+          # 2. PATCH with retry on 5xx
+          BODY=$(jq -nc \
+            --arg id "$CONTAINER_ID" \
+            --arg tag "$IMAGE_TAG" \
+            '{id: $id, imageTag: $tag}')
+
+          for attempt in 1 2 3 4 5; do
+            HTTP=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+              -X PATCH \
+              -H "AccessKey: $API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$BODY" \
+              "https://api.bunny.net/mc/apps/$APP_ID/containers/$CONTAINER_ID")
+
+            if [ "$HTTP" = "200" ] || [ "$HTTP" = "204" ]; then
+              echo "Update succeeded on attempt $attempt"
+              exit 0
+            fi
+
+            echo "Attempt $attempt: HTTP $HTTP"
+            cat /tmp/resp.txt
+            echo
+            # Retry on 5xx and 429; bail on 4xx (other than 429)
+            if [ "$HTTP" -lt 500 ] && [ "$HTTP" != "429" ]; then
+              echo "Non-retryable error, giving up" >&2
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+
+          echo "Update failed after 5 attempts" >&2
+          exit 1
