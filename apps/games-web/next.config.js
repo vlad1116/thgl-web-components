@@ -55,6 +55,10 @@ const nextConfig = {
     },
     {
       source: "/:path*",
+      // Skip this rule for RSC requests — the rule above sets no-store
+      // for them. Without this `missing` guard, both rules match and the
+      // later one overrides, breaking the carve-out.
+      missing: [{ type: "header", key: "rsc" }],
       headers: [
         {
           key: "Cache-Control",
