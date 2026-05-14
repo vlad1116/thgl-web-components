@@ -10,7 +10,7 @@ import {
   LocaleSwitcher,
 } from "../(controls)";
 import Link from "next/link";
-import { getFullDictionary, isValidLocale } from "../../dicts";
+import { getStaticDictionary, isValidLocale } from "../../dicts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -48,8 +48,13 @@ export function createRootLayout(appConfig: AppConfig) {
       notFound();
     }
 
+    // Only ship UI strings to the client (~6KB) — game-specific dict (up
+    // to ~1MB for big games) bloats every page's RSC payload. Server pages
+    // that need game ID translations still call getFullDictionary directly.
+    // Pages with client-side game ID translation (map page) wrap their
+    // content in a nested I18NProvider with the full dict.
     const [dict, version] = await Promise.all([
-      getFullDictionary(appConfig.name, locale),
+      getStaticDictionary(appConfig.name, locale),
       fetchVersion(appConfig.name),
     ]);
 

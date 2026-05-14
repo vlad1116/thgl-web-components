@@ -10,7 +10,7 @@ import {
   localizePath,
   translate,
 } from "@repo/lib";
-import { CoordinatesProvider } from "../(providers)";
+import { CoordinatesProvider, I18NProvider } from "../(providers)";
 import { HeaderOffset, PageTitle } from "../(header)";
 import { FullMapDynamic } from "../(dynamic)/full-map-dynamic";
 import { MarkersSearch } from "../(controls)/markers-search";
@@ -281,6 +281,10 @@ export function createMapPage(
             ],
           }}
         />
+        {/* Root layout ships only the static UI dict to keep page weight
+            small. Map markers / filters / search need to translate game IDs
+            client-side, so wrap the map subtree with the full dict here. */}
+        <I18NProvider dict={dict} locale={locale}>
         <CoordinatesProvider
           appName={appConfig.name}
           staticDrawings={version.data.drawings}
@@ -328,6 +332,7 @@ export function createMapPage(
             <ZoneDetailsPanel appName={appConfig.name} />
           </HeaderOffset>
         </CoordinatesProvider>
+        </I18NProvider>
       </>
     );
   };
