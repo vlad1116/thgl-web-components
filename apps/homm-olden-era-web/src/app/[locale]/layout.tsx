@@ -94,7 +94,7 @@ export default async function RootLayout({
         )}
       >
         <I18NProvider dict={clientDict} locale={locale}>
-          <Header activeApp={APP_CONFIG.title}>
+          <Header activeApp={APP_CONFIG.title} settingsTitle={dict["settings"]}>
             <Link
               href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
               aria-label="Home"

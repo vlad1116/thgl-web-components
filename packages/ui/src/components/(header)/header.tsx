@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@repo/lib";
 import { HTMLAttributes } from "react";
 import { FilterDetectionWarning } from "../(ads)";
@@ -8,22 +6,19 @@ import { Settings } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { User } from "./user";
-import { useT } from "../(providers)";
 
 export function Header({
   children,
   activeApp,
   settingsDialogContent,
-  infoActions: _infoActions,
+  settingsTitle,
   ...props
 }: {
   children: React.ReactNode;
   activeApp: string;
   settingsDialogContent?: JSX.Element;
-  infoActions?: JSX.Element;
+  settingsTitle: string;
 } & HTMLAttributes<HTMLDivElement>): JSX.Element {
-  const t = useT();
-
   return (
     <header
       className={cn(
@@ -44,7 +39,7 @@ export function Header({
       <div className="flex items-center gap-1 ml-2 shrink-0">
         {settingsDialogContent && (
           <Dialog>
-            <Button asChild size="icon" title={t("settings")} variant="outline">
+            <Button asChild size="icon" title={settingsTitle} variant="outline">
               <DialogTrigger>
                 <Settings className="h-4 w-4" />
               </DialogTrigger>

@@ -75,6 +75,7 @@ export function createRootLayout(appConfig: AppConfig) {
                   filters={version.data.filters}
                 />
               }
+              settingsTitle={dict["settings"]}
             >
               <Link
                 href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
