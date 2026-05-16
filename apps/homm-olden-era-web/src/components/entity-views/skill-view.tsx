@@ -95,6 +95,7 @@ export function SkillView({
   isSubSkill = false,
   entryId,
   iconsHash,
+  parentSkill,
 }: {
   name: string;
   desc: string;
@@ -106,6 +107,9 @@ export function SkillView({
   isSubSkill?: boolean;
   entryId?: string;
   iconsHash?: string;
+  /** For sub-skill pages: the parent skill that unlocks this sub-skill, and
+   *  the skill level at which it appears (1=Basic, 2=Advanced, 3=Expert). */
+  parentSkill?: { id: string; level: number } | null;
 }) {
   return (
     <div className="space-y-5">
@@ -114,10 +118,24 @@ export function SkillView({
         {icon && <SpriteIcon icon={icon} size={64} iconsHash={iconsHash} />}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
               {isSubSkill ? resolveDict(dict, "ui.sub_skill") : props.skillType}
             </span>
+            {isSubSkill && parentSkill && (() => {
+              const parentName = resolveDict(dict, parentSkill.id);
+              const levelLabel = ["Basic", "Advanced", "Expert"][parentSkill.level - 1]
+                ?? `Lv. ${parentSkill.level}`;
+              return (
+                <Link
+                  href={localizePath(`/db/skills/${parentSkill.id}`, locale)}
+                  prefetch={false}
+                  className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  {parentName} ({levelLabel})
+                </Link>
+              );
+            })()}
           </div>
         </div>
       </div>

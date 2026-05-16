@@ -143,15 +143,20 @@ export async function DatabaseEntryContent({
 
   // Faction views render a per-faction build tree, so we fetch buildings too.
   // Hero pages need the matching specialization's bonuses for inline desc resolution.
+  // Sub-skill pages need the parent skill so we can show which skill they belong to.
   const needsBuildings = entryType === "factions";
   const needsSpecializations = entryType === "heroes";
-  const [entryCat, buildingsCat, specializationsCat] = await Promise.all([
+  const needsSkills = entryType === "sub_skills";
+  const [entryCat, buildingsCat, specializationsCat, skillsCat] = await Promise.all([
     fetchDatabaseType(APP_CONFIG.name, entryType),
     needsBuildings
       ? fetchDatabaseType(APP_CONFIG.name, "buildings")
       : Promise.resolve(null),
     needsSpecializations
       ? fetchDatabaseType(APP_CONFIG.name, "specializations")
+      : Promise.resolve(null),
+    needsSkills
+      ? fetchDatabaseType(APP_CONFIG.name, "skills")
       : Promise.resolve(null),
   ]);
 
@@ -279,6 +284,30 @@ export async function DatabaseEntryContent({
     neededKeys.add("ui.building_costs");
     neededKeys.add("ui.building_requires");
   }
+  // Resolve a sub-skill's parent skill (the skill whose `levels[].subSkills`
+  // includes this sub-skill's id). Used by the skill view to render a
+  // "belongs to" link on sub-skill pages.
+  let parentSkill: { id: string; level: number } | null = null;
+  if (entryType === "sub_skills" && skillsCat) {
+    for (const skill of skillsCat.items) {
+      const levels = ((skill.props as any)?.levels ?? []) as {
+        level: number;
+        subSkills?: string[];
+      }[];
+      for (const lvl of levels) {
+        if (lvl.subSkills?.includes(item.id)) {
+          parentSkill = { id: skill.id, level: lvl.level };
+          break;
+        }
+      }
+      if (parentSkill) break;
+    }
+    if (parentSkill) {
+      // Keep the parent skill's dict keys (name + level label) survives slicing.
+      neededKeys.add(parentSkill.id);
+      neededKeys.add(`${parentSkill.id}_level_${parentSkill.level}`);
+    }
+  }
   const slicedDict = sliceDict(dict, neededKeys);
 
   const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id, iconsHash };
@@ -290,7 +319,11 @@ export async function DatabaseEntryContent({
       {entryType === "spells" && <SpellView {...viewProps} />}
       {(entryType === "items" || entryType === "item_sets") && <ItemView {...viewProps} />}
       {(entryType === "skills" || entryType === "sub_skills") && (
-        <SkillView {...viewProps} isSubSkill={entryType === "sub_skills"} />
+        <SkillView
+          {...viewProps}
+          isSubSkill={entryType === "sub_skills"}
+          parentSkill={parentSkill}
+        />
       )}
       {(entryType === "factions" || entryType === "specializations") && (
         <FactionView {...viewProps} />
