@@ -4,6 +4,7 @@ import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { crimsonDesert } from "./crimson-desert";
 import { grounded2 } from "./grounded2";
+import { hogwartsLegacy } from "./hogwarts-legacy";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
 import { paxDei } from "./pax-dei";
@@ -24,6 +25,7 @@ const ALL_CONFIGS: AppConfig[] = [
   conanExiles,
   crimsonDesert,
   grounded2,
+  hogwartsLegacy,
   infinityNikki,
   nightCrows,
   paxDei,
