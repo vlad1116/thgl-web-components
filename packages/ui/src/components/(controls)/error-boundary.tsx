@@ -51,6 +51,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
 
+            {this.state.error?.message && (
+              <div className="p-3 rounded border border-destructive/30 bg-destructive/10">
+                <p className="text-sm font-mono text-foreground break-words">
+                  {this.state.error.name && this.state.error.name !== "Error"
+                    ? `${this.state.error.name}: `
+                    : ""}
+                  {this.state.error.message}
+                </p>
+              </div>
+            )}
+
             <Button
               onClick={() => window.location.reload()}
               className="w-full sm:w-auto"
