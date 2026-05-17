@@ -660,11 +660,6 @@ For group coordination and guild planning, you’ll find:
 
 > ![Add Drawing](/images/dune-drawing-dialog.webp)
 
-## 🛠️ Private Servers Are Live
-
-Want to explore Arrakis with friends or set up your own RP or PvP events?  
-[**Private servers**](https://duneawakening.th.gl/private-servers) are available — powered by [**xREALM**](https://xrealm.com) and integrated into TH.GL.  
-
 ## 📚 Need More Info?
 
 For a detailed **item and recipe database**, check out [**dune.gaming.tools**](https://dune.gaming.tools/) — a fantastic resource built by a fellow developer.

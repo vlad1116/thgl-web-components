@@ -78,21 +78,7 @@ export const APP_CONFIG: AppConfig = {
       iconName: "Map",
       bgImage: getPreviewImageUrl("dune-awakening", "cb_overland_s_06"),
     },
-    {
-      href: "/private-servers",
-      title: "config.internalLinks.private.title",
-      description: "config.internalLinks.private.description",
-      linkText: "config.internalLinks.private.linkText",
-      iconName: "Server",
-      bgImage: "/private-servers-tile.webp",
-    },
   ],
-  // promoLinks: [
-  //   {
-  //     href: "/private-servers",
-  //     title: "config.promo.save10.title",
-  //   },
-  // ],
   externalLinks: [
     {
       href: "https://dune.gaming.tools/",
