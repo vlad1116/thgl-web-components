@@ -3,6 +3,7 @@ import { avowed } from "./avowed";
 import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { crimsonDesert } from "./crimson-desert";
+import { duneAwakening } from "./dune-awakening";
 import { grounded2 } from "./grounded2";
 import { hogwartsLegacy } from "./hogwarts-legacy";
 import { infinityNikki } from "./infinity-nikki";
@@ -25,6 +26,7 @@ const ALL_CONFIGS: AppConfig[] = [
   chronoOdyssey,
   conanExiles,
   crimsonDesert,
+  duneAwakening,
   grounded2,
   hogwartsLegacy,
   infinityNikki,

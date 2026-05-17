@@ -33,6 +33,14 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Per-game raw assets bundled under public/games/<slug>/. Used by game
+  // components that reference root-relative paths (e.g. dune-awakening's
+  // <DuneHeatmaps> loads "/heatmaps/<name>.webp").
+  if (path.startsWith("/heatmaps/")) {
+    url.pathname = `/games/${config.name}${path}`;
+    return NextResponse.rewrite(url);
+  }
+
   const headers = new Headers(req.headers);
   headers.set("x-thgl-app", config.name);
 
