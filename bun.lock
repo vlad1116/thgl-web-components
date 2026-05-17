@@ -221,31 +221,6 @@
         "vite": "catalog:",
       },
     },
-    "apps/hogwarts-legacy-web": {
-      "name": "hogwarts-legacy-web",
-      "version": "0.0.0",
-      "dependencies": {
-        "@repo/lib": "workspace:*",
-        "@repo/ui": "workspace:*",
-        "fuse.js": "catalog:",
-        "next": "catalog:",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-      },
-      "devDependencies": {
-        "@next/eslint-plugin-next": "catalog:",
-        "@repo/eslint-config": "workspace:*",
-        "@repo/tailwind-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "catalog:",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "autoprefixer": "catalog:",
-        "postcss": "catalog:",
-        "tailwindcss": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "apps/homm-olden-era-web": {
       "name": "homm-olden-era-web",
       "version": "0.0.0",
@@ -1892,8 +1867,6 @@
     "hastscript": ["hastscript@9.0.1", "", { "dependencies": { "@types/hast": "^3.0.0", "comma-separated-tokens": "^2.0.0", "hast-util-parse-selector": "^4.0.0", "property-information": "^7.0.0", "space-separated-tokens": "^2.0.0" } }, "sha512-g7df9rMFX/SPi34tyGCyUBREQoKkapwdY/T04Qn9TDWfHhAYt4/I0gMVirzK5wEzeUqIjEB+LXC/ypb7Aqno5w=="],
 
     "hogwarts-legacy-overwolf": ["hogwarts-legacy-overwolf@workspace:apps/hogwarts-legacy-overwolf"],
-
-    "hogwarts-legacy-web": ["hogwarts-legacy-web@workspace:apps/hogwarts-legacy-web"],
 
     "homm-olden-era-web": ["homm-olden-era-web@workspace:apps/homm-olden-era-web"],
 
