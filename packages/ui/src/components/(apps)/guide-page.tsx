@@ -1,5 +1,6 @@
 import {
   AppConfig,
+  games,
   getApiUrl,
   decodeFromBuffer,
   DEFAULT_LOCALE,
@@ -341,7 +342,10 @@ export function createGuidePage(appConfig: AppConfig) {
                 maps={maps}
                 tiles={version.data.tiles}
                 appName={appConfig.name}
-                additionalTooltip={appConfig.game?.additionalTooltip}
+                additionalTooltip={
+                  games.find((g) => g.id === appConfig.name)
+                    ?.additionalTooltip ?? appConfig.game?.additionalTooltip
+                }
                 typeGroupLabels={typeGroupLabels}
               />
             }

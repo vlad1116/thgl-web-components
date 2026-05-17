@@ -7,6 +7,7 @@ import { grounded2 } from "./grounded2";
 import { hogwartsLegacy } from "./hogwarts-legacy";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
+import { palworld } from "./palworld";
 import { paxDei } from "./pax-dei";
 import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
@@ -28,6 +29,7 @@ const ALL_CONFIGS: AppConfig[] = [
   hogwartsLegacy,
   infinityNikki,
   nightCrows,
+  palworld,
   paxDei,
   rsdragonwilds,
   satisfactory,
