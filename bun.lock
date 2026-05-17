@@ -375,31 +375,6 @@
         "vite": "catalog:",
       },
     },
-    "apps/palworld-web": {
-      "name": "palworld-web",
-      "version": "0.0.0",
-      "dependencies": {
-        "@repo/lib": "workspace:*",
-        "@repo/ui": "workspace:*",
-        "fuse.js": "catalog:",
-        "next": "catalog:",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-      },
-      "devDependencies": {
-        "@next/eslint-plugin-next": "catalog:",
-        "@repo/eslint-config": "workspace:*",
-        "@repo/tailwind-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "catalog:",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "autoprefixer": "catalog:",
-        "postcss": "catalog:",
-        "tailwindcss": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "apps/pax-dei-overwolf": {
       "name": "pax-dei-overwolf",
       "version": "0.0.0",
@@ -2397,8 +2372,6 @@
     "palia-web": ["palia-web@workspace:apps/palia-web"],
 
     "palworld-overwolf": ["palworld-overwolf@workspace:apps/palworld-overwolf"],
-
-    "palworld-web": ["palworld-web@workspace:apps/palworld-web"],
 
     "parent-module": ["parent-module@1.0.1", "", { "dependencies": { "callsites": "^3.0.0" } }, "sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g=="],
 
