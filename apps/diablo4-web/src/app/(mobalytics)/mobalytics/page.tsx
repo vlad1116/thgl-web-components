@@ -2,7 +2,6 @@ import { MarkersSearch } from "@repo/ui/markers-search";
 import { CoordinatesProvider } from "@repo/ui/providers";
 import type { Metadata } from "next";
 import { fetchDict, fetchVersion, translate } from "@repo/lib";
-import { Diablo4Events } from "@repo/ui/data";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
 import { APP_CONFIG } from "@/config";
 
@@ -45,7 +44,6 @@ export default async function Home() {
           lastMapUpdate={version.createdAt}
           appName={APP_CONFIG.name}
           tileOptions={version.data.tiles}
-          additionalFilters={<Diablo4Events />}
           embed
           iconsPath={version.more.icons}
           mapEnTitles={Object.fromEntries(

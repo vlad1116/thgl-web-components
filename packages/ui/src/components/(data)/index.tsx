@@ -6,8 +6,6 @@ export { SingleComment, type Comment, type CommentImage } from "./comment";
 export { Comments } from "./comments";
 export { CustomActivities } from "./custom-activities";
 export { DataTable, type ColumnDef } from "./data-table";
-export { Diablo4Events, type RECENT_EVENTS } from "./diablo4-events";
-export { D4Settings, useD4SettingsStore } from "./diablo4-settings";
 export { DuneAltitude } from "./dune-altitude";
 export { DuneDeepDesertGrid } from "./dune-deep-desert-grid";
 export { DuneHeatmaps } from "./dune-heatmaps";

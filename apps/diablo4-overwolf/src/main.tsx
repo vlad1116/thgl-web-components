@@ -13,7 +13,6 @@ import { Dict, fetchDict, fetchVersion } from "@repo/lib";
 import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
 import { APP_CONFIG } from "./config";
 import { App } from "@repo/ui/overwolf";
-import { D4Settings, Diablo4Events } from "@repo/ui/data";
 
 logVersion();
 
@@ -34,9 +33,6 @@ if (el) {
         filters={version.data.filters}
         regions={version.data.regions}
         tiles={version.data.tiles}
-        additionalFilters={<Diablo4Events />}
-        lockedWindowComponents={<Diablo4Events portal />}
-        moreSettings={<D4Settings />}
         version={version}
       />
     </React.StrictMode>,

@@ -154,7 +154,6 @@
     "externally_connectable": {
       "matches": [
         "https://*.th.gl",
-        "https://d4armory.io",
         "http://localhost:6000"
       ]
     },
