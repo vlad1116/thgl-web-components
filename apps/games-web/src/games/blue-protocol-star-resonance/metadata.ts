@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getMetadataAlternates } from "@repo/lib";
 import { blueProtocolStarResonance } from "@/configs/blue-protocol-star-resonance";
-import { type BpsrSection } from "./sections";
+import type { WikiSection } from "@/lib/db/wiki";
 
 const APP = blueProtocolStarResonance;
 const GAME_TITLE = APP.title;
@@ -47,20 +47,20 @@ function buildMeta({
 }
 
 export function sectionMetadata(
-  section: BpsrSection,
+  section: WikiSection,
   locale: string,
 ): Metadata {
   return buildMeta({
     locale,
-    path: `/db/${section.segment}`,
+    path: section.href,
     title: `${section.label} – ${GAME_TITLE}`,
     description: section.tagline,
-    keywords: [...APP.keywords, ...section.keywords],
+    keywords: [...APP.keywords, ...(section.keywords ?? [])],
   });
 }
 
 export function entryMetadata(
-  section: BpsrSection,
+  section: WikiSection,
   id: string,
   entryTitle: string,
   entryExcerpt: string,
@@ -68,9 +68,9 @@ export function entryMetadata(
 ): Metadata {
   return buildMeta({
     locale,
-    path: `/db/${section.segment}/${id}`,
+    path: `${section.href}/${id}`,
     title: `${entryTitle} – ${section.label} – ${GAME_TITLE}`,
     description: entryExcerpt.slice(0, 160),
-    keywords: [...APP.keywords, ...section.keywords, entryTitle],
+    keywords: [...APP.keywords, ...(section.keywords ?? []), entryTitle],
   });
 }

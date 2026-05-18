@@ -25,9 +25,22 @@ export function DetailSidebarClient({
   locale = "en",
 }: {
   groups: SidebarGroup[];
+  /**
+   * URL stem to prefix item links with. Accepts either:
+   *   - a bare segment ("units"), expanded to "/db/units/<id>"
+   *   - a full path ("/remnants" or "/db/remnants"), used verbatim with
+   *     "/<id>" appended.
+   *
+   * The path form lets games keep legacy URLs (e.g. once-human's
+   * `/db/remnants/<id>`) without forcing every consumer to think in
+   * "section segments".
+   */
   section: string;
   locale?: string;
 }) {
+  // Build the per-item base path once: leading slash means the caller
+  // passed a full stem; anything else is a bare segment under /db/.
+  const itemBase = section.startsWith("/") ? section : `/db/${section}`;
   const pathname = usePathname() ?? "/";
   const activeId = pathname.split("/").pop() ?? "";
   const [filter, setFilter] = useState("");
@@ -75,7 +88,7 @@ export function DetailSidebarClient({
             return (
               <Link
                 key={item.id}
-                href={localizePath(`/db/${section}/${item.id}`, locale)}
+                href={localizePath(`${itemBase}/${item.id}`, locale)}
                 prefetch={false}
                 className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors ${
                   isActive

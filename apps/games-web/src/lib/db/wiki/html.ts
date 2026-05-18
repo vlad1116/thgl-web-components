@@ -1,10 +1,10 @@
 /**
- * BPSR content is HTML (with `<br>`, `<b>`, etc.) authored upstream. We
+ * Wiki content is HTML (with `<br>`, `<b>`, etc.) authored upstream. We
  * render it via `dangerouslySetInnerHTML` on detail pages, but for
  * listing previews we need a plain-text excerpt.
  */
 
-/** Strip every tag and decode the few HTML entities BPSR content actually uses. */
+/** Strip every tag and decode the few HTML entities the content actually uses. */
 export function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")

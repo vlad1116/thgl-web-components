@@ -8,7 +8,7 @@ import { findEntry } from "@/games/blue-protocol-star-resonance/data";
 import { BPSR_SECTIONS } from "@/games/blue-protocol-star-resonance/sections";
 import { EntryDetail } from "@/games/blue-protocol-star-resonance/entry-detail";
 import { entryMetadata } from "@/games/blue-protocol-star-resonance/metadata";
-import { excerpt } from "@/games/blue-protocol-star-resonance/html";
+import { excerpt } from "@/lib/db/wiki";
 import { blueProtocolStarResonance } from "@/configs/blue-protocol-star-resonance";
 
 type Params = Promise<{ id: string; locale?: string }>;
@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: Params }) {
       <JSONLDScript
         json={entityPageJsonLd({
           appConfig: blueProtocolStarResonance,
-          section: SECTION.segment,
+          section: SECTION.href,
           sectionLabel: SECTION.label,
           entityId: id,
           entityName: found.item.props.title,

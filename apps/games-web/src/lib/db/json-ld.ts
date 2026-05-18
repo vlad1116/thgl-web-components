@@ -13,6 +13,19 @@ function baseUrl(appConfig: AppConfig): string {
 }
 
 /**
+ * Normalise the `section` argument to a leading-slash URL stem.
+ * Accepts either:
+ *   - a bare segment like `"units"` — expanded to `"/db/units"` for
+ *     backwards compatibility with the homm callsites.
+ *   - a full path like `"/db/dictionary"` or `"/remnants"` — used
+ *     verbatim. This lets games that don't live under `/db/` (e.g.
+ *     during a URL migration) reuse the same JSON-LD helpers.
+ */
+function sectionStem(section: string): string {
+  return section.startsWith("/") ? section : `/db/${section}`;
+}
+
+/**
  * CollectionPage schema for `/db/<section>` listing pages.
  *
  * `items` is the list of entity entries shown on the page (id + display
@@ -40,7 +53,8 @@ export function collectionPageJsonLd({
   locale?: string;
 }): Record<string, unknown> {
   const localePath = locale === "en" ? "" : `/${locale}`;
-  const url = `${baseUrl(appConfig)}${localePath}/db/${section}`;
+  const stem = sectionStem(section);
+  const url = `${baseUrl(appConfig)}${localePath}${stem}`;
 
   return {
     "@context": "https://schema.org",
@@ -61,7 +75,7 @@ export function collectionPageJsonLd({
         "@type": "ListItem",
         position: i + 1,
         name: item.name,
-        url: `${baseUrl(appConfig)}${localePath}/db/${section}/${encodeURIComponent(item.id)}`,
+        url: `${baseUrl(appConfig)}${localePath}${stem}/${encodeURIComponent(item.id)}`,
       })),
     },
   };
@@ -94,7 +108,7 @@ export function entityPageJsonLd({
   locale?: string;
 }): Record<string, unknown> {
   const localePath = locale === "en" ? "" : `/${locale}`;
-  const url = `${baseUrl(appConfig)}${localePath}/db/${section}/${encodeURIComponent(entityId)}`;
+  const url = `${baseUrl(appConfig)}${localePath}${sectionStem(section)}/${encodeURIComponent(entityId)}`;
 
   return {
     "@context": "https://schema.org",

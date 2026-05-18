@@ -1,33 +1,12 @@
+import type { WikiSection } from "@/lib/db/wiki";
+
 /**
- * BPSR DB section metadata.
- *
- * Three sections (dictionary, reading-books, story) each gather a set of
- * underlying `database.json` categories that share a type prefix
- * (`dictionary_*`, `reading_books_*`, `story_episode_*`). Configuration
- * lives here so the listing pages, detail pages, sidebar builder, and
- * sitemap stay in sync.
+ * BPSR wiki sections. Each entry pulls items from every
+ * `database.json` category whose `type` starts with `typePrefix`.
  */
-
-export type BpsrSection = {
-  /** URL segment under /db/ */
-  segment: "dictionary" | "reading-books" | "story";
-  /** Display label rendered in breadcrumbs and headings */
-  label: string;
-  /** One-sentence description rendered under the hero */
-  tagline: string;
-  /** Glyph rendered on the section landing hero */
-  icon: string;
-  /** Tailwind colour classes used by the category-pill accent */
-  accent: string;
-  /** Match every `database` category whose type starts with this prefix */
-  typePrefix: string;
-  /** SEO keywords appended to the standard config.keywords */
-  keywords: string[];
-};
-
-export const BPSR_SECTIONS: Record<string, BpsrSection> = {
+export const BPSR_SECTIONS = {
   dictionary: {
-    segment: "dictionary",
+    href: "/db/dictionary",
     label: "Lore Dictionary",
     tagline:
       "An encyclopedia of lore, concepts, and historical events in Blue Protocol: Star Resonance.",
@@ -37,7 +16,7 @@ export const BPSR_SECTIONS: Record<string, BpsrSection> = {
     keywords: ["Lore Dictionary", "Encyclopedia", "World Lore", "History", "Concepts"],
   },
   "reading-books": {
-    segment: "reading-books",
+    href: "/db/reading-books",
     label: "Reading Books",
     tagline:
       "A comprehensive collection of books, letters, posters, and records found throughout Blue Protocol: Star Resonance.",
@@ -47,7 +26,7 @@ export const BPSR_SECTIONS: Record<string, BpsrSection> = {
     keywords: ["Reading Books", "Lore Books", "Travel Guides", "Letters", "Collectibles"],
   },
   story: {
-    segment: "story",
+    href: "/db/story",
     label: "Story Episodes",
     tagline:
       "Follow the epic story of Blue Protocol: Star Resonance through detailed episode summaries and quest phases.",
@@ -56,20 +35,6 @@ export const BPSR_SECTIONS: Record<string, BpsrSection> = {
     typePrefix: "story_episode_",
     keywords: ["Story Episodes", "Main Story", "Quest Phases", "Lore", "Campaign"],
   },
-};
+} as const satisfies Record<string, WikiSection>;
 
-/**
- * Humanise the trailing portion of a category type for display in the
- * sidebar / breadcrumb (e.g. `dictionary_historical_events` →
- * `Historical Events`). Used when the dict lookup for the full type key
- * returns nothing.
- */
-export function humanizeCategory(catType: string, typePrefix: string): string {
-  const trimmed = catType.startsWith(typePrefix)
-    ? catType.slice(typePrefix.length)
-    : catType;
-  return trimmed
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
-}
+export type BpsrSectionKey = keyof typeof BPSR_SECTIONS;

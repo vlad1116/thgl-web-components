@@ -46,7 +46,7 @@ export default async function Page({ params }: PageProps) {
       <JSONLDScript
         json={collectionPageJsonLd({
           appConfig: blueProtocolStarResonance,
-          section: SECTION.segment,
+          section: SECTION.href,
           sectionLabel: SECTION.label,
           description: SECTION.tagline,
           items: groups.flatMap((g) =>
@@ -57,7 +57,7 @@ export default async function Page({ params }: PageProps) {
       />
       <SectionJsonLd
         appConfig={blueProtocolStarResonance}
-        section={SECTION.segment}
+        section={SECTION.href}
         sectionLabel={SECTION.label}
         description={SECTION.tagline}
         dict={{}}
