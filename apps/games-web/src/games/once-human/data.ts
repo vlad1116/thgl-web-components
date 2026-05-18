@@ -20,6 +20,13 @@ export type OnceHumanItemProps = {
   title1?: string;
   title2?: string;
   title3?: string;
+  /**
+   * Optional in-world [x, y] coordinate. Echoes-of-stardust entries
+   * ship coordinates so the detail page can pin them on the map; the
+   * old once-human-web rendered the map and the migration restores
+   * the feature parity.
+   */
+  location?: [number, number] | null;
 };
 
 export function loadSection(section: WikiSection, locale = "en") {

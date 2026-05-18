@@ -31,6 +31,7 @@ export { PalworldCoordinates } from "./palworld-coordinates";
 export { Ping } from "./ping";
 export { PremiumAlert } from "./premium-alert";
 export { Sidebar, CollapsibleTrigger } from "./sidebar";
+export { default as SimpleMapDynamic } from "./simple-map-dynamic";
 export { SpawnsList } from "./spawns-list";
 export { Troops, type Troops as TroopsType } from "./troops";
 export { AuthAlert } from "./auth-alert";

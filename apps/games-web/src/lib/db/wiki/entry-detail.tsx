@@ -22,6 +22,7 @@ export function WikiEntryDetail({
   locale = "en",
   renderHeaderMeta,
   metaRows,
+  footer,
 }: {
   section: WikiSection;
   item: WikiItem;
@@ -40,6 +41,12 @@ export function WikiEntryDetail({
    * `title3`.
    */
   metaRows?: Array<{ label: string; value: string }>;
+  /**
+   * Extra content rendered between the body and the prev/next nav.
+   * Once-human uses this slot for the in-world location map when an
+   * entry carries `props.location`.
+   */
+  footer?: ReactNode;
 }) {
   const { props } = item;
 
@@ -91,6 +98,8 @@ export function WikiEntryDetail({
         className="prose prose-invert max-w-none text-muted-foreground whitespace-break-spaces leading-relaxed"
         dangerouslySetInnerHTML={{ __html: props.content }}
       />
+
+      {footer}
 
       {(neighbors.prev || neighbors.next) && (
         <nav className="flex items-stretch justify-between gap-2 pt-6 border-t border-slate-800">

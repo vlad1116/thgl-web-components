@@ -1,13 +1,46 @@
+import { fetchTiles, type TilesConfig } from "@repo/lib";
 import { WikiEntryDetail, type WikiItem, type WikiSection } from "@/lib/db/wiki";
 import type { OnceHumanItemProps } from "./data";
+import { EntryMap } from "./entry-map";
 
 /**
- * Once-Human entry-detail wrapper. Remnants entries carry the author
- * (`title1`), location (`title2`), and date (`title3`) on top of the
- * usual title/description/content — surface those as a metadata block
- * above the body so the in-game journal voice reads correctly.
+ * Type guard for the [x, y] coordinate pair upstream entries ship as
+ * `props.location`. Some entries omit it, others occasionally ship
+ * `null` or a malformed value — defensive checks here keep the map
+ * render path safe.
  */
-export function OnceHumanEntryDetail({
+function hasLocation(
+  props: OnceHumanItemProps,
+): props is OnceHumanItemProps & { location: [number, number] } {
+  return (
+    Array.isArray(props.location) &&
+    props.location.length === 2 &&
+    typeof props.location[0] === "number" &&
+    typeof props.location[1] === "number"
+  );
+}
+
+let tilesPromise: Promise<TilesConfig> | null = null;
+function getTiles(): Promise<TilesConfig> {
+  // Cached at the module level — the tiles config doesn't change at
+  // runtime, and once-human entry pages routinely hit it.
+  if (!tilesPromise) tilesPromise = fetchTiles("once-human");
+  return tilesPromise;
+}
+
+/**
+ * Once-Human entry-detail wrapper.
+ *
+ * Surfaces two pieces of game-specific metadata on top of the generic
+ * WikiEntryDetail:
+ *   - the author/location/date triple (`title1`/`title2`/`title3`) as
+ *     a definition list above the body — letters and field notes read
+ *     correctly with this preamble.
+ *   - a single-pin map at the bottom for entries that ship in-world
+ *     coordinates (`props.location`). Restores parity with the
+ *     old once-human-web echoes-of-stardust detail page.
+ */
+export async function OnceHumanEntryDetail({
   section,
   item,
   neighbors,
@@ -26,6 +59,19 @@ export function OnceHumanEntryDetail({
   if (p.title2) metaRows.push({ label: "Location", value: p.title2 });
   if (p.title3) metaRows.push({ label: "Date", value: p.title3 });
 
+  let footer: React.ReactNode = null;
+  if (hasLocation(p)) {
+    const tiles = await getTiles();
+    footer = (
+      <EntryMap
+        id={item.id}
+        name={p.title}
+        location={p.location}
+        tiles={tiles}
+      />
+    );
+  }
+
   return (
     <WikiEntryDetail
       section={section}
@@ -34,6 +80,7 @@ export function OnceHumanEntryDetail({
       siblings={siblings}
       locale={locale}
       metaRows={metaRows.length > 0 ? metaRows : undefined}
+      footer={footer}
     />
   );
 }
