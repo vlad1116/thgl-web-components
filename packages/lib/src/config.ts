@@ -79,6 +79,15 @@ export type DbAppConfig = {
     type: string;
     /** Extra entry types whose item counts should be added to this section. */
     extraTypes?: string[];
+    /**
+     * Match every database category whose `type` starts with this prefix.
+     * Used by games that ship one category per sub-group (e.g. BPSR's
+     * `dictionary_historical_events`, `dictionary_concepts`, ...) instead
+     * of a single category per section. When set, the section's URL
+     * receives every matching entry; `type`/`extraTypes` are still honoured
+     * for exact matches alongside.
+     */
+    typePrefix?: string;
     /** Glyph rendered to the left of the card title. */
     icon: string;
     /** Optional description. If absent, falls back to the matching internalLink description. */

@@ -17,7 +17,14 @@ export function SectionJsonLd({
   dict,
   database,
   types,
+  typePrefixes,
   nameLabelPrefixByType,
+  /**
+   * Optional resolver for an item's display name when the dict key is
+   * absent. Used by BPSR (`item.props.title` carries the name; the dict
+   * doesn't).
+   */
+  resolveName,
   locale = "en",
 }: {
   appConfig: AppConfig;
@@ -26,19 +33,32 @@ export function SectionJsonLd({
   description: string;
   dict: Record<string, string>;
   database: DatabaseConfig;
-  /** Entry types whose items should appear in the ItemList */
-  types: string[];
+  /** Exact entry types whose items should appear in the ItemList */
+  types?: string[];
+  /**
+   * Type prefixes — any category whose `type` starts with one of these
+   * contributes its items (e.g. `["dictionary_"]`).
+   */
+  typePrefixes?: string[];
   /** Optional per-type prefix when looking up display names (e.g. {factions: "faction_"}). */
   nameLabelPrefixByType?: Record<string, string>;
+  resolveName?: (item: DatabaseConfig[number]["items"][number]) =>
+    | string
+    | undefined;
   locale?: string;
 }) {
   const items: Array<{ id: string; name: string }> = [];
   for (const cat of database) {
-    if (!types.includes(cat.type)) continue;
+    const exactMatch = types?.includes(cat.type) ?? false;
+    const prefixMatch =
+      typePrefixes?.some((p) => cat.type.startsWith(p)) ?? false;
+    if (!exactMatch && !prefixMatch) continue;
     const prefix = nameLabelPrefixByType?.[cat.type] ?? "";
     for (const item of cat.items) {
+      const fromResolver = resolveName?.(item);
       const dictKey = prefix ? `${prefix}${item.id}` : item.id;
-      items.push({ id: item.id, name: resolveDict(dict, dictKey) });
+      const name = fromResolver ?? resolveDict(dict, dictKey);
+      items.push({ id: item.id, name });
     }
   }
 

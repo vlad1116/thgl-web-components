@@ -1,4 +1,5 @@
 import { type Activity } from "@repo/ui/providers";
+import { blueProtocolStarResonanceActivities } from "./blue-protocol-star-resonance-activities";
 import { nightCrowsActivities } from "./night-crows-activities";
 
 /**
@@ -6,5 +7,6 @@ import { nightCrowsActivities } from "./night-crows-activities";
  * Add a new game by importing its activities array and adding it here.
  */
 export const ACTIVITIES_BY_GAME: Record<string, Activity[]> = {
+  "blue-protocol-star-resonance": blueProtocolStarResonanceActivities,
   "night-crows": nightCrowsActivities,
 };

@@ -1,5 +1,6 @@
 import { type AppConfig } from "@repo/lib";
 import { avowed } from "./avowed";
+import { blueProtocolStarResonance } from "./blue-protocol-star-resonance";
 import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { crimsonDesert } from "./crimson-desert";
@@ -24,6 +25,7 @@ import { wutheringWaves } from "./wuthering-waves";
  */
 const ALL_CONFIGS: AppConfig[] = [
   avowed,
+  blueProtocolStarResonance,
   chronoOdyssey,
   conanExiles,
   crimsonDesert,

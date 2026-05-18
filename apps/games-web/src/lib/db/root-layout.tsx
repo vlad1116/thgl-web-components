@@ -14,6 +14,7 @@ import {
   Toaster,
 } from "@repo/ui/controls";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
+import { SettingsDialogContent } from "@repo/ui/controls";
 import {
   getFullDictionary,
   getStaticDictionary,
@@ -52,13 +53,18 @@ function sliceClientDict(
 }
 
 /**
- * Root layout factory for database-mode apps (e.g. homm-olden-era).
- * Differs from `createRootLayout`:
- *   - DbSearch input in the header instead of a Settings dialog button.
- *   - Hides the /guides link via `hasGuides={false}` (DB sites have no
- *     guide-style filter taxonomy).
- *   - Ships the full game dictionary (sliced for client) so DB pages
- *     can resolve entity names without an additional fetch.
+ * Root layout factory for apps that ship a DB (`appConfig.db` set).
+ *
+ * Two flavours are picked automatically from `version.data.filters`:
+ *
+ *   - **DB-only** (homm-olden-era): no filters → no Settings dialog,
+ *     no /guides link, just the DbSearch input in the header.
+ *   - **Hybrid** (blue-protocol-star-resonance): has filters →
+ *     keeps the Settings dialog and /guides link from the standard
+ *     map layout, and adds the DbSearch input alongside.
+ *
+ * Either flavour ships the full game dictionary (sliced for client) so
+ * DB pages can resolve entity names without an additional fetch.
  */
 export function createDbRootLayout(appConfig: AppConfig) {
   return async function RootLayout({
@@ -82,6 +88,9 @@ export function createDbRootLayout(appConfig: AppConfig) {
 
     const clientDict = sliceClientDict(appConfig, dict, staticDict);
     const dbConfig = appConfig.db;
+    // Hybrid mode: game ships filters (and therefore /guides + Settings).
+    // DB-only sites like homm have an empty filter list → drop both.
+    const hasFilters = version.data.filters.length > 0;
 
     return (
       <html lang={locale}>
@@ -92,7 +101,18 @@ export function createDbRootLayout(appConfig: AppConfig) {
           )}
         >
           <I18NProvider dict={clientDict} locale={locale}>
-            <Header activeApp={appConfig.title} settingsTitle={dict["settings"]}>
+            <Header
+              activeApp={appConfig.title}
+              settingsTitle={dict["settings"]}
+              settingsDialogContent={
+                hasFilters ? (
+                  <SettingsDialogContent
+                    activeApp={appConfig.name}
+                    filters={version.data.filters}
+                  />
+                ) : undefined
+              }
+            >
               <Link
                 href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
                 aria-label="Home"
@@ -113,7 +133,7 @@ export function createDbRootLayout(appConfig: AppConfig) {
                   ) : undefined
                 }
                 hasMap={Object.keys(version.data.tiles ?? {}).length > 0}
-                hasGuides={false}
+                hasGuides={hasFilters}
               >
                 {appConfig.supportedLocales.length > 1 && (
                   <Suspense>
@@ -127,7 +147,11 @@ export function createDbRootLayout(appConfig: AppConfig) {
 
               <DbSearch
                 locale={locale}
-                placeholder={dict["db.searchPlaceholder"] ?? "Search..."}
+                placeholder={
+                  dbConfig?.searchPlaceholder ??
+                  dict["db.searchPlaceholder"] ??
+                  "Search..."
+                }
                 typeLabels={dbConfig?.typeLabels}
                 typeColors={dbConfig?.typeColors}
               />

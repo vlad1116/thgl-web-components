@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import {
   AppConfig,
   DatabaseConfig,
+  fetchDatabase,
   fetchDatabaseIndex,
   fetchDict,
   fetchVersion,
@@ -10,6 +11,27 @@ import {
 import { DEFAULT_LOCALE, localizePath, translate } from "./i18n";
 import { decodeFromBuffer } from "./cbor";
 import { type Spawn } from "./coordinates";
+
+/**
+ * Resolve the database snapshot for sitemap walks. Prefer the slim
+ * `database.index.json` (homm, others that split their data) but fall
+ * back to the full `database.json` for games that ship a single file
+ * (BPSR). Treat a network failure on both as "empty database" so the
+ * sitemap continues to render the non-DB chunks.
+ */
+async function fetchDatabaseForSitemap(
+  appName: string,
+): Promise<DatabaseConfig> {
+  try {
+    return await fetchDatabaseIndex(appName);
+  } catch {
+    try {
+      return await fetchDatabase(appName);
+    } catch {
+      return [];
+    }
+  }
+}
 
 type NodesCoordinates = {
   type: string;
@@ -241,11 +263,11 @@ export function createSitemapIndex(appConfig: AppConfig) {
 
     let dbChunks = 0;
     if (appConfig.db) {
-      const database = await fetchDatabaseIndex(appConfig.name).catch(
+      const database = await fetchDatabaseForSitemap(appConfig.name).catch(
         () => [] as DatabaseConfig,
       );
-      const typeToSection = buildDbTypeToSection(appConfig);
-      const dbEntries = collectDbEntries(database, typeToSection);
+      const resolveSection = buildSectionResolver(appConfig);
+      const dbEntries = collectDbEntries(database, resolveSection);
       dbChunks = dbEntries.length > 0
         ? Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK)
         : 0;
@@ -270,28 +292,41 @@ export function createSitemapIndex(appConfig: AppConfig) {
 }
 
 /**
- * Build the lookup that maps each database entry type to its public /db
- * URL segment. Driven by `appConfig.db.homeSections` so apps stay in
- * control — the canonical `units → /db/units` table lives in their
- * config, not in this generic builder.
+ * Build a resolver that maps each database entry `cat.type` to its public
+ * `/db` URL segment. Driven by `appConfig.db.homeSections` — supports
+ * both exact-match (`type`, `extraTypes`) and prefix-match (`typePrefix`)
+ * so games like BPSR can declare one section over many subcategory types
+ * (`dictionary_*`, `reading_books_*`, `story_episode_*`).
+ *
+ * Returns `null` for any type not declared by a section.
  */
-function buildDbTypeToSection(appConfig: AppConfig): Record<string, string> {
+function buildSectionResolver(
+  appConfig: AppConfig,
+): (catType: string) => string | null {
   const sections = appConfig.db?.homeSections ?? [];
-  const map: Record<string, string> = {};
+  const exact = new Map<string, string>();
+  const prefixes: Array<{ prefix: string; segment: string }> = [];
   for (const section of sections) {
     const segment = section.href.replace(/^\/db\//, "").replace(/\/.*$/, "");
-    map[section.type] = segment;
-    for (const extra of section.extraTypes ?? []) {
-      map[extra] = segment;
+    exact.set(section.type, segment);
+    for (const extra of section.extraTypes ?? []) exact.set(extra, segment);
+    if (section.typePrefix) {
+      prefixes.push({ prefix: section.typePrefix, segment });
     }
   }
-  return map;
+  return (catType) => {
+    if (exact.has(catType)) return exact.get(catType)!;
+    for (const { prefix, segment } of prefixes) {
+      if (catType.startsWith(prefix)) return segment;
+    }
+    return null;
+  };
 }
 
 /** Collect every (section, entityId) pair that has a detail page. */
 function collectDbEntries(
   database: DatabaseConfig,
-  typeToSection: Record<string, string>,
+  resolveSection: (catType: string) => string | null,
 ): { section: string; id: string }[] {
   const entries: { section: string; id: string }[] = [];
   for (const cat of database) {
@@ -299,7 +334,7 @@ function collectDbEntries(
     // item_sets share routes with `items` (/db/artifacts/<id>); skip to
     // avoid double-emitting the same URL via two categories.
     if (cat.type === "item_sets") continue;
-    const section = typeToSection[cat.type];
+    const section = resolveSection(cat.type);
     if (!section) continue;
     for (const item of cat.items) {
       entries.push({ section, id: item.id });
@@ -311,13 +346,13 @@ function collectDbEntries(
 /** Unique (section, groupId) pairs for `/db/<section>/<groupId>` pages. */
 function collectDbGroupPages(
   database: DatabaseConfig,
-  typeToSection: Record<string, string>,
+  resolveSection: (catType: string) => string | null,
 ): { section: string; groupId: string }[] {
   const seen = new Set<string>();
   const entries: { section: string; groupId: string }[] = [];
   for (const cat of database) {
     if (cat.type.startsWith("_")) continue;
-    const section = typeToSection[cat.type];
+    const section = resolveSection(cat.type);
     if (!section) continue;
     for (const item of cat.items) {
       const gid = item.groupId;
@@ -375,11 +410,11 @@ export function createGenerateSitemaps(appConfig: AppConfig) {
 
     let dbChunks = 0;
     if (appConfig.db) {
-      const database = await fetchDatabaseIndex(appConfig.name).catch(
+      const database = await fetchDatabaseForSitemap(appConfig.name).catch(
         () => [] as DatabaseConfig,
       );
-      const typeToSection = buildDbTypeToSection(appConfig);
-      const dbEntries = collectDbEntries(database, typeToSection);
+      const resolveSection = buildSectionResolver(appConfig);
+      const dbEntries = collectDbEntries(database, resolveSection);
       dbChunks = dbEntries.length > 0
         ? Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK)
         : 0;
@@ -427,9 +462,9 @@ export function createSitemap(appConfig: AppConfig) {
       ? Math.ceil(markersForCount.length / ENTRIES_PER_CHUNK)
       : 0;
     const dbStartId = markerStartId + markerChunks;
-    const typeToSection = appConfig.db
-      ? buildDbTypeToSection(appConfig)
-      : {};
+    const resolveSection = appConfig.db
+      ? buildSectionResolver(appConfig)
+      : () => null;
 
     if (id === 0) {
       // Core pages: home, maps, internal links (no guides — they have their own chunks)
@@ -475,10 +510,10 @@ export function createSitemap(appConfig: AppConfig) {
       // item-sets landing page. Detail pages live in the dedicated
       // dbChunks range below.
       if (appConfig.db) {
-        const database = await fetchDatabaseIndex(appConfig.name).catch(
+        const database = await fetchDatabaseForSitemap(appConfig.name).catch(
           () => [] as DatabaseConfig,
         );
-        const groupPages = collectDbGroupPages(database, typeToSection);
+        const groupPages = collectDbGroupPages(database, resolveSection);
         for (const { section, groupId } of groupPages) {
           addEntry(entries, `/db/${section}/${encodeURIComponent(groupId)}`, {
             changeFrequency: "weekly",
@@ -605,10 +640,10 @@ export function createSitemap(appConfig: AppConfig) {
       }
     } else if (appConfig.db) {
       // DB detail-page chunk: one entry per database entity id.
-      const database = await fetchDatabaseIndex(appConfig.name).catch(
+      const database = await fetchDatabaseForSitemap(appConfig.name).catch(
         () => [] as DatabaseConfig,
       );
-      const dbEntries = collectDbEntries(database, typeToSection);
+      const dbEntries = collectDbEntries(database, resolveSection);
       const dbChunkIndex = id - dbStartId;
       const start = dbChunkIndex * ENTRIES_PER_CHUNK;
       const chunk = dbEntries.slice(start, start + ENTRIES_PER_CHUNK);
