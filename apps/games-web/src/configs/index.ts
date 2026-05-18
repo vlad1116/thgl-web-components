@@ -13,6 +13,7 @@ import { hommOldenEra } from "./homm-olden-era";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
 import { onceHuman } from "./once-human";
+import { palia } from "./palia";
 import { palworld } from "./palworld";
 import { paxDei } from "./pax-dei";
 import { rsdragonwilds } from "./rsdragonwilds";
@@ -41,6 +42,7 @@ const ALL_CONFIGS: AppConfig[] = [
   infinityNikki,
   nightCrows,
   onceHuman,
+  palia,
   palworld,
   paxDei,
   rsdragonwilds,

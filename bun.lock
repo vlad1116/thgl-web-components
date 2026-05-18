@@ -170,31 +170,6 @@
         "vite": "catalog:",
       },
     },
-    "apps/palia-web": {
-      "name": "palia-web",
-      "version": "0.0.0",
-      "dependencies": {
-        "@repo/lib": "workspace:*",
-        "@repo/ui": "workspace:*",
-        "fuse.js": "catalog:",
-        "next": "catalog:",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-      },
-      "devDependencies": {
-        "@next/eslint-plugin-next": "catalog:",
-        "@repo/eslint-config": "workspace:*",
-        "@repo/tailwind-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "catalog:",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "autoprefixer": "catalog:",
-        "postcss": "catalog:",
-        "tailwindcss": "catalog:",
-        "typescript": "catalog:",
-      },
-    },
     "apps/palworld-overwolf": {
       "name": "palworld-overwolf",
       "version": "0.0.0",
@@ -2202,8 +2177,6 @@
     "package-json-from-dist": ["package-json-from-dist@1.0.1", "", {}, "sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw=="],
 
     "palia-overwolf": ["palia-overwolf@workspace:apps/palia-overwolf"],
-
-    "palia-web": ["palia-web@workspace:apps/palia-web"],
 
     "palworld-overwolf": ["palworld-overwolf@workspace:apps/palworld-overwolf"],
 
