@@ -1,7 +1,6 @@
 {
   "eslint.workingDirectories": [
     "./apps/once-human-overwolf",
-    "./apps/once-human-web",
     "./apps/palworld-overwolf",
     "./apps/palworld-web",
     "./apps/thgl-overwolf",

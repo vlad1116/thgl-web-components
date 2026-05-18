@@ -41,11 +41,53 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Once-human: legacy section URLs (/weapons, /remnants, etc.) moved
+  // under /db/* during the games-web migration. Permanent-redirect the
+  // old paths so external links + Search Console history stay intact.
+  if (config.name === "once-human") {
+    const legacy = ONCE_HUMAN_LEGACY_REDIRECTS.find((r) =>
+      r.test.test(path),
+    );
+    if (legacy) {
+      url.pathname = path.replace(legacy.test, legacy.replacement);
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   const headers = new Headers(req.headers);
   headers.set("x-thgl-app", config.name);
 
   return NextResponse.next({ request: { headers } });
 }
+
+/**
+ * Map every old once-human-web top-level section path to its new
+ * `/db/*` home. Entries are tried in order, so list the most specific
+ * patterns (with `/:id`) before the bare section index.
+ *
+ * The regex uses a leading anchor so we don't accidentally rewrite
+ * arbitrary substrings — only the exact path stem matches.
+ */
+const ONCE_HUMAN_LEGACY_REDIRECTS: Array<{
+  test: RegExp;
+  replacement: string;
+}> = [
+  { test: /^\/weapons(\/.*)?$/, replacement: "/db/weapons$1" },
+  { test: /^\/remnants(\/.*)?$/, replacement: "/db/remnants$1" },
+  {
+    test: /^\/regional-records(\/.*)?$/,
+    replacement: "/db/regional-records$1",
+  },
+  {
+    test: /^\/echoes-of-stardust(\/.*)?$/,
+    replacement: "/db/echoes-of-stardust$1",
+  },
+  { test: /^\/mod-locations(\/.*)?$/, replacement: "/db/mod-locations$1" },
+  {
+    test: /^\/deviant-locations(\/.*)?$/,
+    replacement: "/db/deviant-locations$1",
+  },
+];
 
 export const config = {
   // Run middleware on everything except Next internals and robots
