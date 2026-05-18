@@ -118,7 +118,6 @@ export function createGuidePage(appConfig: AppConfig) {
       const allSpawnArrays = await Promise.all(
         allTypeIds.map(async (typeId) => {
           const url = getApiUrl(appConfig.name, `type=${typeId}`);
-          console.log(`Fetching spawns for type ${typeId} from ${url}`);
           const response = await fetch(url);
           const buffer = await response.arrayBuffer();
           return decodeFromBuffer<Spawns>(new Uint8Array(buffer));
