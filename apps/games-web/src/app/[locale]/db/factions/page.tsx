@@ -5,6 +5,7 @@ import { requireApp } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
 import { EntityGrid } from "@/lib/db/entity-grid";
+import { SectionJsonLd } from "@/lib/db/section-jsonld";
 
 type PageProps = { params: Promise<{ locale?: string }> };
 
@@ -31,6 +32,17 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
+      <SectionJsonLd
+        appConfig={appConfig}
+        section="factions"
+        sectionLabel={sectionLabel}
+        description={`Browse all ${sectionLabel.toLowerCase()} in ${appConfig.title}.`}
+        dict={dict}
+        database={database}
+        types={["factions", "specializations", "faction_laws"]}
+        nameLabelPrefixByType={{ factions: "faction_" }}
+        locale={locale}
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>

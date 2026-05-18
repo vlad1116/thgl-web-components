@@ -4,6 +4,7 @@ import { generateCategoryMetadata } from "@/games/homm-olden-era/metadata";
 import { requireApp } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
+import { SectionJsonLd } from "@/lib/db/section-jsonld";
 import { SkillTreeList } from "@/games/homm-olden-era/skill-tree";
 import { buildSkillNodes } from "@/games/homm-olden-era/skill-tree-data";
 
@@ -31,6 +32,16 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
+      <SectionJsonLd
+        appConfig={appConfig}
+        section="skills"
+        sectionLabel={sectionLabel}
+        description={`Browse all ${sectionLabel.toLowerCase()} in ${appConfig.title}.`}
+        dict={dict}
+        database={[skillsCat, ...indexDb.filter((c) => c.type === "sub_skills")]}
+        types={["skills", "sub_skills"]}
+        locale={locale}
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <Breadcrumb crumbs={[{ label: sectionLabel }]} locale={locale} dict={dict} />
         <h1 className="text-2xl font-bold mb-6">{sectionLabel}</h1>

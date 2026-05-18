@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, fetchVersion, type DatabaseConfig } from "@repo/lib";
+import { JSONLDScript } from "@repo/ui/apps";
 import { resolveDict } from "@/lib/db/resolve-dict";
+import { entityPageJsonLd } from "@/lib/db/json-ld";
+import { hommOldenEra } from "@/configs/homm-olden-era";
 import { UnitView } from "@/games/homm-olden-era/entity-views/unit-view";
 import { HeroView } from "@/games/homm-olden-era/entity-views/hero-view";
 import { SpellView } from "@/games/homm-olden-era/entity-views/spell-view";
@@ -275,27 +278,60 @@ export async function DatabaseEntryContent({
 
   const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id, iconsHash };
 
+  // Section segment for the public URL — drives JSON-LD `url` and is
+  // independent of the internal database type (e.g. items/item_sets both
+  // live under /db/artifacts/<id>).
+  const SECTION_BY_TYPE: Record<string, string> = {
+    units: "units",
+    heroes: "heroes",
+    spells: "spells",
+    items: "artifacts",
+    item_sets: "artifacts",
+    skills: "skills",
+    sub_skills: "skills",
+    factions: "factions",
+    specializations: "factions",
+    faction_laws: "factions",
+    buildings: "buildings",
+    map_objects: "map-objects",
+  };
+  const sectionSegment = SECTION_BY_TYPE[entryType] ?? entryType;
+  const sectionLabel = resolveDict(dict, sectionSegment);
+
   return (
-    <div className="py-4 text-left">
-      {entryType === "units" && <UnitView {...viewProps} />}
-      {entryType === "heroes" && <HeroView {...viewProps} />}
-      {entryType === "spells" && <SpellView {...viewProps} />}
-      {(entryType === "items" || entryType === "item_sets") && <ItemView {...viewProps} />}
-      {(entryType === "skills" || entryType === "sub_skills") && (
-        <SkillView
-          {...viewProps}
-          isSubSkill={entryType === "sub_skills"}
-          parentSkill={parentSkill}
-        />
-      )}
-      {(entryType === "factions" || entryType === "specializations") && (
-        <FactionView {...viewProps} />
-      )}
-      {entryType === "faction_laws" && (
-        <FactionView {...viewProps} isFactionLaw />
-      )}
-      {entryType === "buildings" && <BuildingView {...viewProps} />}
-      {entryType === "map_objects" && <MapObjectView {...viewProps} />}
-    </div>
+    <>
+      <JSONLDScript
+        json={entityPageJsonLd({
+          appConfig: hommOldenEra,
+          section: sectionSegment,
+          sectionLabel,
+          entityId: item.id,
+          entityName: name,
+          description: desc !== `${dictKey}_desc` ? desc : undefined,
+          locale,
+        })}
+      />
+      <div className="py-4 text-left">
+        {entryType === "units" && <UnitView {...viewProps} />}
+        {entryType === "heroes" && <HeroView {...viewProps} />}
+        {entryType === "spells" && <SpellView {...viewProps} />}
+        {(entryType === "items" || entryType === "item_sets") && <ItemView {...viewProps} />}
+        {(entryType === "skills" || entryType === "sub_skills") && (
+          <SkillView
+            {...viewProps}
+            isSubSkill={entryType === "sub_skills"}
+            parentSkill={parentSkill}
+          />
+        )}
+        {(entryType === "factions" || entryType === "specializations") && (
+          <FactionView {...viewProps} />
+        )}
+        {entryType === "faction_laws" && (
+          <FactionView {...viewProps} isFactionLaw />
+        )}
+        {entryType === "buildings" && <BuildingView {...viewProps} />}
+        {entryType === "map_objects" && <MapObjectView {...viewProps} />}
+      </div>
+    </>
   );
 }

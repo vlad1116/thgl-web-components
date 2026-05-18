@@ -12,6 +12,7 @@ import {
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
 import { ReleaseNotes } from "@repo/ui/content";
+import { JSONLDScript } from "@repo/ui/apps";
 import { getFullDictionary } from "@repo/ui/dicts";
 import { HeroSearch } from "@/lib/db/hero-search";
 import { resolveDict } from "@/lib/db/resolve-dict";
@@ -90,12 +91,39 @@ export function createDbHomePage(appConfig: AppConfig) {
     }
     const totalItems = Array.from(counts.values()).reduce((a, b) => a + b, 0);
 
+    const baseUrl = `https://${appConfig.domain}.th.gl`;
+    const description = `Complete database for ${appConfig.title} — ${totalItems.toLocaleString()} entries across ${counts.size} categories.`;
+
     return (
-      <HeaderOffset full>
-        <ContentLayout
-          id={appConfig.name}
-          header={
-            <section className="space-y-8">
+      <>
+        <JSONLDScript
+          json={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: `${appConfig.title} Database — The Hidden Gaming Lair`,
+            url: baseUrl,
+            description,
+            inLanguage: appConfig.supportedLocales,
+            publisher: {
+              "@type": "Organization",
+              name: "The Hidden Gaming Lair",
+              url: "https://www.th.gl",
+            },
+            potentialAction: {
+              "@type": "SearchAction",
+              target: {
+                "@type": "EntryPoint",
+                urlTemplate: `${baseUrl}/db/units?q={search_term_string}`,
+              },
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
+        <HeaderOffset full>
+          <ContentLayout
+            id={appConfig.name}
+            header={
+              <section className="space-y-8">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl font-bold tracking-tight">
                   {appConfig.title}
@@ -224,10 +252,11 @@ export function createDbHomePage(appConfig: AppConfig) {
                 </div>
               )}
             </section>
-          }
-          content={<ReleaseNotes updateMessages={updateMessages} />}
-        />
-      </HeaderOffset>
+            }
+            content={<ReleaseNotes updateMessages={updateMessages} />}
+          />
+        </HeaderOffset>
+      </>
     );
   };
 }

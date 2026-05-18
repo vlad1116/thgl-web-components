@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { DEFAULT_LOCALE, getMetadataAlternates } from "@repo/lib";
 import { HeaderOffset } from "@repo/ui/header";
 import { ContentLayout } from "@repo/ui/ads";
+import { JSONLDScript } from "@repo/ui/apps";
 import { requireApp } from "@/lib/get-app-config";
 
 const GAME_TITLE = "Heroes of Might & Magic: Olden Era";
@@ -112,8 +113,34 @@ const battleMechanics = [
 
 export default async function MechanicsPage() {
   const appConfig = await requireApp("homm-olden-era");
+  const baseUrl = `https://${appConfig.domain}.th.gl`;
   return (
-    <HeaderOffset full>
+    <>
+      <JSONLDScript
+        json={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: `Game Mechanics | ${GAME_TITLE}`,
+          name: "Game Mechanics",
+          description: `Learn how combat stats, luck, morale, and other mechanics work in ${GAME_TITLE}.`,
+          url: `${baseUrl}/db/mechanics`,
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": `${baseUrl}/db/mechanics`,
+          },
+          isPartOf: {
+            "@type": "WebSite",
+            name: `${GAME_TITLE} Database — The Hidden Gaming Lair`,
+            url: baseUrl,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "The Hidden Gaming Lair",
+            url: "https://www.th.gl",
+          },
+        }}
+      />
+      <HeaderOffset full>
       <ContentLayout
         id={appConfig.name}
         header={null}
@@ -233,6 +260,7 @@ export default async function MechanicsPage() {
           </div>
         }
       />
-    </HeaderOffset>
+      </HeaderOffset>
+    </>
   );
 }

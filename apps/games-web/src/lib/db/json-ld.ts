@@ -1,0 +1,125 @@
+import type { AppConfig } from "@repo/lib";
+
+/**
+ * Schema.org JSON-LD builders for DB pages. Kept out of the page
+ * components so other DB games can reuse them without copying the
+ * boilerplate.
+ *
+ * Each builder returns a plain JSON object suitable for `<JSONLDScript json={...}>`.
+ */
+
+function baseUrl(appConfig: AppConfig): string {
+  return `https://${appConfig.domain}.th.gl`;
+}
+
+/**
+ * CollectionPage schema for `/db/<section>` listing pages.
+ *
+ * `items` is the list of entity entries shown on the page (id + display
+ * name). The resulting JSON includes an `ItemList` `mainEntity` capped at
+ * 100 entries — enough for Google's rich-result heuristics without
+ * bloating the HTML for sections like Factions (326 items).
+ */
+export function collectionPageJsonLd({
+  appConfig,
+  section,
+  sectionLabel,
+  description,
+  items,
+  locale = "en",
+}: {
+  appConfig: AppConfig;
+  /** URL segment under /db/ (e.g. "units") */
+  section: string;
+  /** Human-readable section title (already localized) */
+  sectionLabel: string;
+  /** Page description (already localized) */
+  description: string;
+  /** Entries displayed on this section page */
+  items: Array<{ id: string; name: string }>;
+  locale?: string;
+}): Record<string, unknown> {
+  const localePath = locale === "en" ? "" : `/${locale}`;
+  const url = `${baseUrl(appConfig)}${localePath}/db/${section}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `${sectionLabel} | ${appConfig.title}`,
+    description,
+    url,
+    inLanguage: locale,
+    isPartOf: {
+      "@type": "WebSite",
+      name: `${appConfig.title} Database — The Hidden Gaming Lair`,
+      url: baseUrl(appConfig),
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: items.length,
+      itemListElement: items.slice(0, 100).map((item, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: item.name,
+        url: `${baseUrl(appConfig)}${localePath}/db/${section}/${encodeURIComponent(item.id)}`,
+      })),
+    },
+  };
+}
+
+/**
+ * Article schema for `/db/<section>/<id>` entity detail pages.
+ *
+ * Article is the most broadly-applicable type Google indexes for
+ * game-database entries — it surfaces the page in search with the
+ * description snippet. We use Article (not Thing/CreativeWork) so the
+ * `headline`/`description` fields are first-class.
+ */
+export function entityPageJsonLd({
+  appConfig,
+  section,
+  sectionLabel,
+  entityId,
+  entityName,
+  description,
+  locale = "en",
+}: {
+  appConfig: AppConfig;
+  section: string;
+  sectionLabel: string;
+  entityId: string;
+  entityName: string;
+  /** May be empty when the entity has no description */
+  description?: string;
+  locale?: string;
+}): Record<string, unknown> {
+  const localePath = locale === "en" ? "" : `/${locale}`;
+  const url = `${baseUrl(appConfig)}${localePath}/db/${section}/${encodeURIComponent(entityId)}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `${entityName} | ${sectionLabel} | ${appConfig.title}`,
+    name: entityName,
+    description:
+      description?.trim() ||
+      `${entityName} — ${sectionLabel} entry in ${appConfig.title}.`,
+    url,
+    inLanguage: locale,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    isPartOf: {
+      "@type": "WebSite",
+      name: `${appConfig.title} Database — The Hidden Gaming Lair`,
+      url: baseUrl(appConfig),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "The Hidden Gaming Lair",
+      url: "https://www.th.gl",
+    },
+    image: `${baseUrl(appConfig)}/opengraph-image.jpg`,
+  };
+}
