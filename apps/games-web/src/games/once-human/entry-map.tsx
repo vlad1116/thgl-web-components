@@ -7,16 +7,17 @@ import type { SimpleSpawn, TilesConfig } from "@repo/lib";
 // SimpleMapDynamic uses Leaflet, which doesn't work in SSR. Match the
 // old once-human-web pattern and dynamically import with ssr:false +
 // a skeleton placeholder.
-const SimpleMapDynamic = dynamic(
-  () =>
-    import("@repo/ui/data").then((m) => ({
-      default: m.SimpleMapDynamic,
-    })),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-64 md:h-96 mt-4" />,
-  },
-);
+//
+// The dynamic import points at a co-located re-export file rather than
+// `@repo/ui/data` directly: Next.js/webpack accepts static imports of
+// the barrel subpath everywhere, but rejects the same subpath inside
+// `import("...")` calls (build error: "Package path ./data is not
+// exported from package …/@repo/ui"). The local re-export uses a
+// static import internally, sidestepping the issue.
+const SimpleMapDynamic = dynamic(() => import("./simple-map"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 md:h-96 mt-4" />,
+});
 
 const APP_NAME = "once-human";
 
