@@ -4,6 +4,7 @@ import { getAppConfig } from "@/lib/get-app-config";
 import { buildHommSearchIndex } from "@/games/homm-olden-era/search-index";
 import { buildBpsrSearchIndex } from "@/games/blue-protocol-star-resonance/search-index";
 import { buildOnceHumanSearchIndex } from "@/games/once-human/search-index";
+import { buildDnaSearchIndex } from "@/games/duet-night-abyss/search-index";
 
 /**
  * Per-game header-search index. Each DB-mode game registers a builder
@@ -21,6 +22,7 @@ const BUILDERS: Record<
   "homm-olden-era": buildHommSearchIndex,
   "blue-protocol-star-resonance": buildBpsrSearchIndex,
   "once-human": buildOnceHumanSearchIndex,
+  "duet-night-abyss": buildDnaSearchIndex,
 };
 
 export async function GET(request: Request) {

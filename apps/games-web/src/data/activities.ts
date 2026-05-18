@@ -1,5 +1,6 @@
 import { type Activity } from "@repo/ui/providers";
 import { blueProtocolStarResonanceActivities } from "./blue-protocol-star-resonance-activities";
+import { duetNightAbyssActivities } from "./duet-night-abyss-activities";
 import { nightCrowsActivities } from "./night-crows-activities";
 
 /**
@@ -8,5 +9,6 @@ import { nightCrowsActivities } from "./night-crows-activities";
  */
 export const ACTIVITIES_BY_GAME: Record<string, Activity[]> = {
   "blue-protocol-star-resonance": blueProtocolStarResonanceActivities,
+  "duet-night-abyss": duetNightAbyssActivities,
   "night-crows": nightCrowsActivities,
 };
