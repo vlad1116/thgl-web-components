@@ -1,5 +1,7 @@
-import { fetchVersion } from "@repo/lib";
+import { DEFAULT_LOCALE, fetchVersion } from "@repo/lib";
+import { notFound } from "next/navigation";
 import { createHomePage, createHomePageGenerateMetadata } from "@repo/ui/apps";
+import { isValidLocale } from "@repo/ui/dicts";
 import {
   createDbHomePage,
   createDbHomePageGenerateMetadata,
@@ -7,6 +9,20 @@ import {
 import { getAppConfig } from "@/lib/get-app-config";
 
 type PageProps = { params: Promise<{ locale?: string }> };
+
+/**
+ * Bail out for non-locale segments before any data fetches. The
+ * `[locale]` route catches every unmatched top-level path (favicon
+ * lookups, apple-touch-icon, random scanner probes, etc.) — the layout
+ * already calls notFound() for invalid locales, but the page renders
+ * in parallel and triggers spurious fetchDict 404s in the logs before
+ * the layout's notFound wins. Guarding here short-circuits both.
+ */
+function assertLocaleOrNotFound(rawLocale: string | undefined): string {
+  const locale = rawLocale ?? DEFAULT_LOCALE;
+  if (!isValidLocale(locale)) notFound();
+  return locale;
+}
 
 /**
  * DB-only sites (homm — has `appConfig.db` AND no map filters) render
@@ -25,6 +41,8 @@ async function isDbOnly(name: string, hasDb: boolean): Promise<boolean> {
 }
 
 export async function generateMetadata(props: PageProps) {
+  const { locale } = await props.params;
+  assertLocaleOrNotFound(locale);
   const config = await getAppConfig();
   const dbOnly = await isDbOnly(config.name, !!config.db);
   const factory = dbOnly
@@ -34,6 +52,8 @@ export async function generateMetadata(props: PageProps) {
 }
 
 export default async function Page(props: PageProps) {
+  const { locale } = await props.params;
+  assertLocaleOrNotFound(locale);
   const config = await getAppConfig();
   const dbOnly = await isDbOnly(config.name, !!config.db);
   const factory = dbOnly ? createDbHomePage : createHomePage;
