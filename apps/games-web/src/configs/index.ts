@@ -4,6 +4,7 @@ import { blueProtocolStarResonance } from "./blue-protocol-star-resonance";
 import { chronoOdyssey } from "./chrono-odyssey";
 import { conanExiles } from "./conan-exiles";
 import { crimsonDesert } from "./crimson-desert";
+import { diablo4 } from "./diablo4";
 import { duetNightAbyss } from "./duet-night-abyss";
 import { duneAwakening } from "./dune-awakening";
 import { grounded2 } from "./grounded2";
@@ -31,6 +32,7 @@ const ALL_CONFIGS: AppConfig[] = [
   chronoOdyssey,
   conanExiles,
   crimsonDesert,
+  diablo4,
   duetNightAbyss,
   duneAwakening,
   grounded2,

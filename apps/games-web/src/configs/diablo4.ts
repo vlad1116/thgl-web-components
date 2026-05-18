@@ -1,6 +1,9 @@
-import { type AppConfig, getPreviewImageUrl } from "@repo/lib";
+import { type AppConfig } from "@repo/lib";
 
-export const APP_CONFIG: AppConfig = {
+const preview = (mapId: string) =>
+  `https://cdn.th.gl/diablo4/map-tiles/${mapId}/preview.webp`;
+
+export const diablo4: AppConfig = {
   name: "diablo4",
   title: "Diablo IV",
   domain: "diablo4",
@@ -15,7 +18,7 @@ export const APP_CONFIG: AppConfig = {
       href: "/maps/Sanctuary",
       iconName: "Map",
       linkText: "Explore the Map",
-      bgImage: getPreviewImageUrl("diablo4", "Sanctuary"),
+      bgImage: preview("Sanctuary"),
     },
   ],
   externalLinks: [],

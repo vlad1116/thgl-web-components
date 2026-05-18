@@ -3,29 +3,29 @@ import { CoordinatesProvider } from "@repo/ui/providers";
 import type { Metadata } from "next";
 import { fetchDict, fetchVersion, translate } from "@repo/lib";
 import { FullMapDynamic } from "@repo/ui/full-map-dynamic";
-import { APP_CONFIG } from "@/config";
+import { requireApp } from "@/lib/get-app-config";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/mobalytics",
-  },
-  title: `${APP_CONFIG.title} Interactive Map – The Hidden Gaming Lair`,
-  description:
-    "Explore Diablo 4 Vessel of Hatred with this Interactive Map! Discover Tenet of Akarat, Helltide, Legion, Wandering Death, Altars of Lilith, Chests, Bosses, and more with real-time position tracking.",
-  openGraph: {
-    url: `/mobalytics`,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await requireApp("diablo4");
+  return {
+    alternates: { canonical: "/mobalytics" },
+    title: `${config.title} Interactive Map – The Hidden Gaming Lair`,
+    description:
+      "Explore Diablo 4 Vessel of Hatred with this Interactive Map! Discover Tenet of Akarat, Helltide, Legion, Wandering Death, Altars of Lilith, Chests, Bosses, and more with real-time position tracking.",
+    openGraph: { url: "/mobalytics" },
+  };
+}
 
-export default async function Home() {
+export default async function Mobalytics() {
+  const config = await requireApp("diablo4");
   const [version, dict] = await Promise.all([
-    fetchVersion(APP_CONFIG.name),
-    fetchDict(APP_CONFIG.name),
+    fetchVersion(config.name),
+    fetchDict(config.name),
   ]);
 
   return (
     <CoordinatesProvider
-      appName={APP_CONFIG.name}
+      appName={config.name}
       filters={version.data.filters}
       staticDrawings={version.data.drawings}
       mapNames={Object.keys(version.data.tiles)}
@@ -35,14 +35,14 @@ export default async function Home() {
     >
       <div className="relative h-dscreen">
         <FullMapDynamic
-          appConfig={APP_CONFIG}
+          appConfig={config}
           tilesConfig={version.data.tiles}
           simple
           iconsPath={version.more.icons}
         />
         <MarkersSearch
           lastMapUpdate={version.createdAt}
-          appName={APP_CONFIG.name}
+          appName={config.name}
           tileOptions={version.data.tiles}
           embed
           iconsPath={version.more.icons}

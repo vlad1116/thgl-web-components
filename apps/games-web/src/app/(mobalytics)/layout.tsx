@@ -8,7 +8,7 @@ import { PlausibleTracker } from "@repo/ui/header";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { Toaster } from "@repo/ui/controls";
 import enDictGlobal from "@repo/ui/dicts/en.json" assert { type: "json" };
-import { APP_CONFIG } from "@/config";
+import { requireApp } from "@/lib/get-app-config";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -19,19 +19,34 @@ export const viewport: Viewport = {
   themeColor: "black",
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(`https://${APP_CONFIG.domain}.th.gl`),
-  title: `${APP_CONFIG.title} – The Hidden Gaming Lair`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await requireApp("diablo4");
+  return {
+    metadataBase: new URL(`https://${config.domain}.th.gl`),
+    title: `${config.title} – The Hidden Gaming Lair`,
+  };
+}
+
 export const revalidate = 60;
-export default async function RootLayout({
+
+/**
+ * Separate root layout for the Mobalytics partner embed. No header /
+ * brand / account — Mobalytics renders this inside their own chrome.
+ * Plausible domain gets the `-mobalytics` suffix so iframe traffic is
+ * tracked independently from the standalone diablo4 site.
+ *
+ * The route is gated to the `diablo4` host via `requireApp` (called
+ * from the page), so requests from any other tenant return 404.
+ */
+export default async function MobalyticsRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [version, enDict] = await Promise.all([
-    fetchVersion(APP_CONFIG.name),
-    fetchDict(APP_CONFIG.name),
+  const config = await requireApp("diablo4");
+  const [, enDict] = await Promise.all([
+    fetchVersion(config.name),
+    fetchDict(config.name),
   ]);
   const enDictMerged = {
     ...enDictGlobal,
@@ -47,11 +62,13 @@ export default async function RootLayout({
         )}
       >
         <I18NProvider dict={enDictMerged}>
-          <TooltipProvider><main>{children}</main></TooltipProvider>
+          <TooltipProvider>
+            <main>{children}</main>
+          </TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
           apiHost="https://metrics.th.gl"
-          domain={`${APP_CONFIG.domain}.th.gl-mobalytics`}
+          domain={`${config.domain}.th.gl-mobalytics`}
         />
         <Toaster />
       </body>
