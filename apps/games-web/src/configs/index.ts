@@ -6,6 +6,7 @@ import { crimsonDesert } from "./crimson-desert";
 import { duneAwakening } from "./dune-awakening";
 import { grounded2 } from "./grounded2";
 import { hogwartsLegacy } from "./hogwarts-legacy";
+import { hommOldenEra } from "./homm-olden-era";
 import { infinityNikki } from "./infinity-nikki";
 import { nightCrows } from "./night-crows";
 import { palworld } from "./palworld";
@@ -29,6 +30,7 @@ const ALL_CONFIGS: AppConfig[] = [
   duneAwakening,
   grounded2,
   hogwartsLegacy,
+  hommOldenEra,
   infinityNikki,
   nightCrows,
   palworld,

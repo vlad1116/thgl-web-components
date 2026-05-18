@@ -54,6 +54,52 @@ export type AppConfig = {
   game?: Game;
   /** Featured filter IDs to highlight on the home page. If not set, first filters are shown. */
   topFilters?: string[];
+  /**
+   * Database-mode settings. When set, the app renders as a DB site
+   * (custom landing page with entity counts, header search instead of
+   * settings) rather than a map site. Used by homm-olden-era and
+   * other future game-database deployments.
+   */
+  db?: DbAppConfig;
+};
+
+export type DbAppConfig = {
+  /** Tagline rendered under the H1 (e.g. "Game Database"). */
+  heroSubtitle: string;
+  /** Placeholder text for the hero search button. */
+  searchPlaceholder: string;
+  /** Sections rendered as cards on the landing page. */
+  homeSections: Array<{
+    href: string;
+    /** Dict key for the section title (resolved at render time). */
+    titleKey?: string;
+    /** Fallback label if the dict key doesn't resolve. */
+    titleFallback?: string;
+    /** Database entry type used to compute the count badge. */
+    type: string;
+    /** Extra entry types whose item counts should be added to this section. */
+    extraTypes?: string[];
+    /** Glyph rendered to the left of the card title. */
+    icon: string;
+    /** Optional description. If absent, falls back to the matching internalLink description. */
+    description?: string;
+  }>;
+  /** Full-width links rendered below the section grid (e.g. Game Mechanics). */
+  homeExtraLinks?: Array<{
+    href: string;
+    title: string;
+    description: string;
+    icon: string;
+  }>;
+  /** Per-entry-type display labels shown in the header search dropdown. */
+  typeLabels?: Record<string, string>;
+  /** Per-entry-type Tailwind classes (bg + text colour) for the search dropdown badges. */
+  typeColors?: Record<string, string>;
+  /**
+   * Number of UI translations to display on the landing page. Defaults to
+   * `appConfig.supportedLocales.length` when omitted.
+   */
+  languageCount?: number;
 };
 
 export type OverwolfAppConfig = {

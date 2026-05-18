@@ -1,5 +1,12 @@
 import type { MetadataRoute } from "next";
-import { AppConfig, fetchDict, fetchVersion, getAppUrl } from "./config";
+import {
+  AppConfig,
+  DatabaseConfig,
+  fetchDatabaseIndex,
+  fetchDict,
+  fetchVersion,
+  getAppUrl,
+} from "./config";
 import { DEFAULT_LOCALE, localizePath, translate } from "./i18n";
 import { decodeFromBuffer } from "./cbor";
 import { type Spawn } from "./coordinates";
@@ -231,7 +238,20 @@ export function createSitemapIndex(appConfig: AppConfig) {
     const guideChunks = guideCount > 0 ? Math.ceil(guideCount / ENTRIES_PER_CHUNK) : 0;
     const markers = await collectNamedMarkers(appConfig, version, enDict);
     const markerChunks = markers.length > 0 ? Math.ceil(markers.length / ENTRIES_PER_CHUNK) : 0;
-    const totalSitemaps = 1 + guideChunks + markerChunks;
+
+    let dbChunks = 0;
+    if (appConfig.db) {
+      const database = await fetchDatabaseIndex(appConfig.name).catch(
+        () => [] as DatabaseConfig,
+      );
+      const typeToSection = buildDbTypeToSection(appConfig);
+      const dbEntries = collectDbEntries(database, typeToSection);
+      dbChunks = dbEntries.length > 0
+        ? Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK)
+        : 0;
+    }
+
+    const totalSitemaps = 1 + guideChunks + markerChunks + dbChunks;
 
     const now = new Date().toISOString();
     const xml = [
@@ -249,11 +269,78 @@ export function createSitemapIndex(appConfig: AppConfig) {
   };
 }
 
-/** Count total guide entries (groups + types, deduplicated by English label) */
+/**
+ * Build the lookup that maps each database entry type to its public /db
+ * URL segment. Driven by `appConfig.db.homeSections` so apps stay in
+ * control — the canonical `units → /db/units` table lives in their
+ * config, not in this generic builder.
+ */
+function buildDbTypeToSection(appConfig: AppConfig): Record<string, string> {
+  const sections = appConfig.db?.homeSections ?? [];
+  const map: Record<string, string> = {};
+  for (const section of sections) {
+    const segment = section.href.replace(/^\/db\//, "").replace(/\/.*$/, "");
+    map[section.type] = segment;
+    for (const extra of section.extraTypes ?? []) {
+      map[extra] = segment;
+    }
+  }
+  return map;
+}
+
+/** Collect every (section, entityId) pair that has a detail page. */
+function collectDbEntries(
+  database: DatabaseConfig,
+  typeToSection: Record<string, string>,
+): { section: string; id: string }[] {
+  const entries: { section: string; id: string }[] = [];
+  for (const cat of database) {
+    if (cat.type.startsWith("_")) continue;
+    // item_sets share routes with `items` (/db/artifacts/<id>); skip to
+    // avoid double-emitting the same URL via two categories.
+    if (cat.type === "item_sets") continue;
+    const section = typeToSection[cat.type];
+    if (!section) continue;
+    for (const item of cat.items) {
+      entries.push({ section, id: item.id });
+    }
+  }
+  return entries;
+}
+
+/** Unique (section, groupId) pairs for `/db/<section>/<groupId>` pages. */
+function collectDbGroupPages(
+  database: DatabaseConfig,
+  typeToSection: Record<string, string>,
+): { section: string; groupId: string }[] {
+  const seen = new Set<string>();
+  const entries: { section: string; groupId: string }[] = [];
+  for (const cat of database) {
+    if (cat.type.startsWith("_")) continue;
+    const section = typeToSection[cat.type];
+    if (!section) continue;
+    for (const item of cat.items) {
+      const gid = item.groupId;
+      if (!gid) continue;
+      const key = `${section}/${gid}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries.push({ section, groupId: gid });
+    }
+  }
+  return entries;
+}
+
+/**
+ * Count total guide entries (the /guides index, plus dedup'd group and type
+ * pages). Returns 0 when there are no filters so DB-only games don't get
+ * an empty shard allocated for them.
+ */
 function countGuideEntries(
   version: Awaited<ReturnType<typeof fetchVersion>>,
   enDict: Record<string, string>,
 ): number {
+  if (version.data.filters.length === 0) return 0;
   const seenLabels = new Set<string>();
   let count = 1; // /guides index page
   const seenGroups = new Set<string>();
@@ -286,8 +373,21 @@ export function createGenerateSitemaps(appConfig: AppConfig) {
     const markers = await collectNamedMarkers(appConfig, version, enDict);
     const markerChunks = markers.length > 0 ? Math.ceil(markers.length / ENTRIES_PER_CHUNK) : 0;
 
-    // id 0 = core pages (home, maps, links), id 1..guideChunks = guides, rest = markers
-    const total = 1 + guideChunks + markerChunks;
+    let dbChunks = 0;
+    if (appConfig.db) {
+      const database = await fetchDatabaseIndex(appConfig.name).catch(
+        () => [] as DatabaseConfig,
+      );
+      const typeToSection = buildDbTypeToSection(appConfig);
+      const dbEntries = collectDbEntries(database, typeToSection);
+      dbChunks = dbEntries.length > 0
+        ? Math.ceil(dbEntries.length / ENTRIES_PER_CHUNK)
+        : 0;
+    }
+
+    // id 0 = core pages (home, maps, links, db group pages),
+    // id 1..guideChunks = guides, then markers, then db detail pages
+    const total = 1 + guideChunks + markerChunks + dbChunks;
     return Array.from({ length: total }, (_, i) => ({ id: i }));
   };
 }
@@ -317,6 +417,19 @@ export function createSitemap(appConfig: AppConfig) {
     const guideCount = countGuideEntries(version, enDict);
     const guideChunks = guideCount > 0 ? Math.ceil(guideCount / ENTRIES_PER_CHUNK) : 0;
     const markerStartId = 1 + guideChunks;
+    // Marker count drives the offset for DB chunks
+    const markersForCount = await collectNamedMarkers(
+      appConfig,
+      version,
+      enDict,
+    );
+    const markerChunks = markersForCount.length > 0
+      ? Math.ceil(markersForCount.length / ENTRIES_PER_CHUNK)
+      : 0;
+    const dbStartId = markerStartId + markerChunks;
+    const typeToSection = appConfig.db
+      ? buildDbTypeToSection(appConfig)
+      : {};
 
     if (id === 0) {
       // Core pages: home, maps, internal links (no guides — they have their own chunks)
@@ -354,6 +467,33 @@ export function createSitemap(appConfig: AppConfig) {
           addEntry(entries, path, {
             changeFrequency: "daily",
             priority: 0.8,
+          });
+        }
+      }
+
+      // DB-mode extras: group pages (e.g. /db/spells/day) and the
+      // item-sets landing page. Detail pages live in the dedicated
+      // dbChunks range below.
+      if (appConfig.db) {
+        const database = await fetchDatabaseIndex(appConfig.name).catch(
+          () => [] as DatabaseConfig,
+        );
+        const groupPages = collectDbGroupPages(database, typeToSection);
+        for (const { section, groupId } of groupPages) {
+          addEntry(entries, `/db/${section}/${encodeURIComponent(groupId)}`, {
+            changeFrequency: "weekly",
+            priority: 0.7,
+          });
+        }
+        // Only emit /db/artifacts/sets when the artifacts section exists,
+        // so other future DB games don't get a dangling 404 entry.
+        const hasArtifacts = appConfig.db.homeSections.some(
+          (s) => s.href === "/db/artifacts",
+        );
+        if (hasArtifacts) {
+          addEntry(entries, "/db/artifacts/sets", {
+            changeFrequency: "weekly",
+            priority: 0.7,
           });
         }
       }
@@ -421,7 +561,7 @@ export function createSitemap(appConfig: AppConfig) {
           localizedPathFn: entry.localizedPathFn,
         });
       }
-    } else {
+    } else if (id < dbStartId) {
       // Marker chunk
       const markers = await collectNamedMarkers(appConfig, version, enDict);
       const markerChunkIndex = id - markerStartId;
@@ -461,6 +601,22 @@ export function createSitemap(appConfig: AppConfig) {
                   return `/maps/${encodeURIComponent(lMap)}/${encodeURIComponent(lType)}/${encodeURIComponent(lName)}?id=${encodeURIComponent(nodeId)}`;
                 }
               : undefined,
+        });
+      }
+    } else if (appConfig.db) {
+      // DB detail-page chunk: one entry per database entity id.
+      const database = await fetchDatabaseIndex(appConfig.name).catch(
+        () => [] as DatabaseConfig,
+      );
+      const dbEntries = collectDbEntries(database, typeToSection);
+      const dbChunkIndex = id - dbStartId;
+      const start = dbChunkIndex * ENTRIES_PER_CHUNK;
+      const chunk = dbEntries.slice(start, start + ENTRIES_PER_CHUNK);
+
+      for (const { section, id: entityId } of chunk) {
+        addEntry(entries, `/db/${section}/${encodeURIComponent(entityId)}`, {
+          changeFrequency: "weekly",
+          priority: 0.6,
         });
       }
     }

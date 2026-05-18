@@ -10,6 +10,18 @@ import { getAppConfigBySlug, getAppConfigByHost } from "@/configs";
 export const APP_SLUG_HEADER = "x-thgl-app";
 
 /**
+ * Resolve the AppConfig for the current request and ensure the result
+ * matches an expected slug. Used by game-specific routes (e.g. /db/* for
+ * homm-olden-era) so requests against other hostnames return 404 instead
+ * of rendering content for the wrong game.
+ */
+export async function requireApp(name: string): Promise<AppConfig> {
+  const config = await getAppConfig();
+  if (config.name !== name) notFound();
+  return config;
+}
+
+/**
  * Resolve the AppConfig for the current request.
  *
  * Order of resolution:

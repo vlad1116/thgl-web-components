@@ -7,6 +7,7 @@ import {
   createRootLayoutMetadata,
   rootLayoutViewport,
 } from "@repo/ui/apps";
+import { createDbRootLayout } from "@/lib/db/root-layout";
 import { getAppConfig } from "@/lib/get-app-config";
 
 export const viewport = rootLayoutViewport;
@@ -20,6 +21,8 @@ export default async function Layout(
   props: Parameters<ReturnType<typeof createRootLayout>>[0],
 ) {
   const config = await getAppConfig();
-  const RootLayout = createRootLayout(config);
+  const RootLayout = config.db
+    ? createDbRootLayout(config)
+    : createRootLayout(config);
   return RootLayout(props);
 }
