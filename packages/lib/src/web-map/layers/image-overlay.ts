@@ -7,6 +7,11 @@ export interface ImageOverlayOptions {
 }
 
 export class ImageOverlayLayer implements Layer {
+  // WebMap.addLayer wires this up; we call it once the texture is ready
+  // so the map redraws on its own. Without it the heatmap is invisible
+  // until the user pans/zooms (next render tick).
+  onTileLoad?: () => void;
+
   private gl: WebGL2RenderingContext | null = null;
   private program: WebGLProgram | null = null;
   private vao: WebGLVertexArrayObject | null = null;
@@ -135,6 +140,10 @@ export class ImageOverlayLayer implements Layer {
 
       this.imageLoaded = true;
       this.loadingImage = undefined;
+      // Ask the map to redraw — the texture wasn't ready when addLayer
+      // queued the first redraw, so without this the heatmap stays
+      // invisible until the next pan/zoom.
+      this.onTileLoad?.();
     };
     image.onerror = () => {
       if (this.loadingImage === image) {
