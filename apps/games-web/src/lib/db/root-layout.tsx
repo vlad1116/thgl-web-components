@@ -55,10 +55,10 @@ function sliceClientDict(
  * Root layout factory for database-mode apps (e.g. homm-olden-era).
  * Differs from `createRootLayout`:
  *   - DbSearch input in the header instead of a Settings dialog button.
- *   - Drops `hasMap` Links autodetection (DB sites don't render /maps).
- *
- * Mirrors the homm-olden-era-web layout exactly so the production site
- * and the multi-tenant deployment render identically.
+ *   - Hides the /guides link via `hasGuides={false}` (DB sites have no
+ *     guide-style filter taxonomy).
+ *   - Ships the full game dictionary (sliced for client) so DB pages
+ *     can resolve entity names without an additional fetch.
  */
 export function createDbRootLayout(appConfig: AppConfig) {
   return async function RootLayout({
