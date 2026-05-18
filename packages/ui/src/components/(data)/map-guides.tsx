@@ -12,6 +12,7 @@ import { AdditionalTooltipType } from "../(content)";
 
 export default function MapGuides({
   maps,
+  mapLabels,
   simpleSpawns,
   tiles,
   appName,
@@ -19,6 +20,12 @@ export default function MapGuides({
   typeGroupLabels,
 }: {
   maps: string[];
+  /**
+   * Pre-resolved display labels for each map key, computed server-side.
+   * Required for multi-tenant deployments whose client dict only ships
+   * UI strings (map names live in the full game dict).
+   */
+  mapLabels?: Record<string, string>;
   simpleSpawns: SimpleSpawn[];
   tiles: TilesConfig;
   appName: string;
@@ -29,6 +36,10 @@ export default function MapGuides({
   const searchParams = useSearchParams();
   const mapParam = searchParams.get("map");
   const currentMap = mapParam || maps[0];
+
+  // Defensive fallback for legacy callers that don't pass mapLabels
+  // (single-tenant apps shipping the full dict still translate via t()).
+  const labelFor = (m: string) => mapLabels?.[m] ?? t(m);
 
   useEffect(() => {
     if (!mapParam) {
@@ -64,7 +75,7 @@ export default function MapGuides({
               aria-selected={map === currentMap}
               asChild
             >
-              <Link href={`?${createQueryString("map", map)}`}>{t(map)}</Link>
+              <Link href={`?${createQueryString("map", map)}`}>{labelFor(map)}</Link>
             </Button>
           ))}
         </div>
@@ -72,6 +83,7 @@ export default function MapGuides({
       <MapProgress
         spawns={mapSpawns}
         map={currentMap}
+        mapLabel={labelFor(currentMap)}
         tiles={tiles}
         appName={appName}
         additionalTooltip={additionalTooltip}

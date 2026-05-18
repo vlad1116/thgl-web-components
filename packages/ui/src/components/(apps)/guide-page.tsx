@@ -340,6 +340,7 @@ export function createGuidePage(appConfig: AppConfig) {
               <MapGuides
                 simpleSpawns={simpleSpawns}
                 maps={maps}
+                mapLabels={Object.fromEntries(maps.map((m) => [m, t(m)]))}
                 tiles={version.data.tiles}
                 appName={appConfig.name}
                 additionalTooltip={

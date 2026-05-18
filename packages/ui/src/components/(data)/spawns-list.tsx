@@ -28,6 +28,17 @@ export function SpawnsList({
   type Entry = { name: string; spawns: SimpleSpawn[]; groupLabel: string | null };
   type Section = { label: string | null; entries: Entry[] };
 
+  // Resolve a spawn's display name. The server already populated
+  // `spawn.name` with the dict-translated value using the full game
+  // dictionary, so prefer that. As a defensive fallback for legacy
+  // callers that build SimpleSpawn manually we retry via `t()` (the
+  // client-side dict only ships UI strings, so this rarely yields
+  // anything useful but at least we don't crash).
+  const resolveName = (spawn: SimpleSpawn): string => {
+    if (spawn.name) return spawn.name;
+    return t(spawn.id, { fallback: spawn.type });
+  };
+
   const sections: Section[] = (() => {
     // Group spawns by display name, but use a composite key of
     // "type:name" so same-named spawns from different filter types
@@ -35,7 +46,7 @@ export function SpawnsList({
     const useTypeKey = Boolean(typeGroupLabels);
     const grouped: Record<string, SimpleSpawn[]> = {};
     for (const spawn of spawns) {
-      const name = t(spawn.id, { fallback: spawn.type });
+      const name = resolveName(spawn);
       const key = useTypeKey ? `${spawn.type || ""}::${name}` : name;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(spawn);
@@ -45,7 +56,7 @@ export function SpawnsList({
       // Organize entries into sections by group label
       const groupMap = new Map<string, Entry[]>();
       for (const [, groupSpawns] of Object.entries(grouped)) {
-        const name = t(groupSpawns[0].id, { fallback: groupSpawns[0].type });
+        const name = resolveName(groupSpawns[0]);
         const typeId = groupSpawns[0].type || "";
         const groupLabel = typeGroupLabels[typeId] ?? null;
         const key = groupLabel ?? "__ungrouped";
@@ -62,7 +73,7 @@ export function SpawnsList({
     return [{
       label: null,
       entries: Object.entries(grouped).map(([, s]) => ({
-        name: t(s[0].id, { fallback: s[0].type }),
+        name: resolveName(s[0]),
         spawns: s,
         groupLabel: null,
       })),

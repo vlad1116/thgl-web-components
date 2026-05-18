@@ -17,6 +17,7 @@ const SimpleMapDynamic = dynamic(() => import("./simple-map-dynamic"), {
 
 export default function MapProgress({
   map,
+  mapLabel,
   spawns,
   tiles,
   appName,
@@ -24,6 +25,11 @@ export default function MapProgress({
   typeGroupLabels,
 }: {
   map: string;
+  /**
+   * Pre-resolved display label for `map`. Computed server-side from the
+   * full dict because the client-shipped dict only carries UI strings.
+   */
+  mapLabel?: string;
   spawns: SimpleSpawn[];
   tiles: TilesConfig;
   appName: string;
@@ -34,12 +40,16 @@ export default function MapProgress({
   const locale = useLocale();
   const [highlightedIds, setHighlightedIds] = useState<string[]>([]);
 
+  // Defensive: if no server-resolved label was passed, try the client
+  // dict (works for legacy single-tenant apps that ship the full dict).
+  const resolvedMap = mapLabel ?? t(map);
+
   return (
     <section key={map} className="mb-8">
       <Subtitle
         title={t("guide.mapProgress.title", {
           vars: {
-            map: t(map),
+            map: resolvedMap,
           },
         })}
         order={3}
@@ -58,7 +68,7 @@ export default function MapProgress({
       <div className="mb-4">
         <Link
           href={localizePath(
-            `/maps/${tiles[map]?.defaultTitle || t(map)}`,
+            `/maps/${tiles[map]?.defaultTitle || resolvedMap}`,
             locale,
           )}
           passHref
@@ -66,7 +76,7 @@ export default function MapProgress({
           <Button variant="link">
             {t("guide.mapProgress.full", {
               vars: {
-                map: t(map),
+                map: resolvedMap,
               },
             })}
           </Button>
