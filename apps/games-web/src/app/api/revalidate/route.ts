@@ -34,11 +34,17 @@ const TAG_TO_PATH: Record<string, string> = {
   "weekly-wants": "/weekly-wants",
 };
 
-async function purgeBunny(urls: string[]): Promise<void> {
-  const accessKey = process.env.BUNNY_ACCOUNT_API_KEY;
-  if (!accessKey || urls.length === 0) return;
+type PurgeResult =
+  | { configured: false }
+  | { configured: true; succeeded: number; failed: number; total: number };
 
-  await Promise.all(
+async function purgeBunny(urls: string[]): Promise<PurgeResult> {
+  const accessKey = process.env.BUNNY_ACCOUNT_API_KEY;
+  if (!accessKey) return { configured: false };
+  if (urls.length === 0)
+    return { configured: true, succeeded: 0, failed: 0, total: 0 };
+
+  const results = await Promise.all(
     urls.map(async (url) => {
       try {
         const res = await fetch(
@@ -50,12 +56,22 @@ async function purgeBunny(urls: string[]): Promise<void> {
         );
         if (!res.ok) {
           console.error(`Bunny purge failed (${res.status}): ${url}`);
+          return false;
         }
+        return true;
       } catch (err) {
         console.error(`Bunny purge error: ${url}`, err);
+        return false;
       }
     }),
   );
+  const succeeded = results.filter(Boolean).length;
+  return {
+    configured: true,
+    succeeded,
+    failed: results.length - succeeded,
+    total: results.length,
+  };
 }
 
 /**
@@ -99,15 +115,13 @@ export async function POST(request: Request) {
 
   const path = TAG_TO_PATH[tag];
   const purgedUrls = path ? paliaUrlsForPath(path) : [];
-  if (purgedUrls.length > 0) {
-    // Await sync purge so the caller knows the edge cache is invalidated
-    // before we return — async=true purges weren't reliable end-to-end.
-    await purgeBunny(purgedUrls);
-  }
+  // Await sync purge so the caller knows the edge cache is invalidated
+  // before we return — async=true purges weren't reliable end-to-end.
+  const purgeResult = await purgeBunny(purgedUrls);
 
   return Response.json({
     revalidated: true,
-    purged: purgedUrls.length,
+    purge: purgeResult,
     now: Date.now(),
   });
 }
