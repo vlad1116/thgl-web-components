@@ -65,8 +65,18 @@ function paliaUrlsForPath(path: string): string[] {
 }
 
 export async function POST(request: Request) {
+  const expected = process.env.PALIA_REVALIDATE_SECRET;
+  // Fail closed when the secret isn't configured — otherwise both sides
+  // are `undefined`, the equality check passes, and any anonymous POST
+  // would trigger a revalidateTag + Bunny purge.
+  if (!expected) {
+    return Response.json(
+      { message: "Revalidate not configured" },
+      { status: 503 },
+    );
+  }
   const secret = request.headers.get("authorization")?.split(" ")[1];
-  if (secret !== process.env.PALIA_REVALIDATE_SECRET) {
+  if (secret !== expected) {
     return Response.json({ message: "Invalid token" }, { status: 401 });
   }
 
