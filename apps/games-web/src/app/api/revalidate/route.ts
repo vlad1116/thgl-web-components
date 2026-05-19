@@ -34,18 +34,31 @@ const TAG_TO_PATH: Record<string, string> = {
   "weekly-wants": "/weekly-wants",
 };
 
+type PurgeFailure = { url: string; status: number | "error"; body: string };
 type PurgeResult =
   | { configured: false }
-  | { configured: true; succeeded: number; failed: number; total: number };
+  | {
+      configured: true;
+      succeeded: number;
+      failed: number;
+      total: number;
+      failures: PurgeFailure[];
+    };
 
 async function purgeBunny(urls: string[]): Promise<PurgeResult> {
   const accessKey = process.env.BUNNY_ACCOUNT_API_KEY;
   if (!accessKey) return { configured: false };
   if (urls.length === 0)
-    return { configured: true, succeeded: 0, failed: 0, total: 0 };
+    return {
+      configured: true,
+      succeeded: 0,
+      failed: 0,
+      total: 0,
+      failures: [],
+    };
 
   const results = await Promise.all(
-    urls.map(async (url) => {
+    urls.map(async (url): Promise<PurgeFailure | null> => {
       try {
         const res = await fetch(
           `https://api.bunny.net/purge?url=${encodeURIComponent(url)}&async=false`,
@@ -54,23 +67,26 @@ async function purgeBunny(urls: string[]): Promise<PurgeResult> {
             headers: { AccessKey: accessKey, accept: "application/json" },
           },
         );
-        if (!res.ok) {
-          console.error(`Bunny purge failed (${res.status}): ${url}`);
-          return false;
-        }
-        return true;
+        if (res.ok) return null;
+        const body = await res.text().catch(() => "");
+        console.error(
+          `Bunny purge failed (${res.status}): ${url} — ${body.slice(0, 200)}`,
+        );
+        return { url, status: res.status, body: body.slice(0, 200) };
       } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
         console.error(`Bunny purge error: ${url}`, err);
-        return false;
+        return { url, status: "error", body: msg.slice(0, 200) };
       }
     }),
   );
-  const succeeded = results.filter(Boolean).length;
+  const failures = results.filter((r): r is PurgeFailure => r !== null);
   return {
     configured: true,
-    succeeded,
-    failed: results.length - succeeded,
+    succeeded: results.length - failures.length,
+    failed: failures.length,
     total: results.length,
+    failures,
   };
 }
 
