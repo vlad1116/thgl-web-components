@@ -67,7 +67,7 @@ export const palia: AppConfig = {
       description: "config.internalLinks.rummagePile.description",
       linkText: "config.internalLinks.rummagePile.linkText",
       iconName: "MapPin",
-      bgImage: "/rummage-pile.webp",
+      bgImage: "/games/palia/rummage-pile.webp",
     },
     {
       href: "/leaderboard",
@@ -75,7 +75,7 @@ export const palia: AppConfig = {
       description: "config.internalLinks.leaderboard.description",
       linkText: "config.internalLinks.leaderboard.linkText",
       iconName: "Trophy",
-      bgImage: "/leaderboard.webp",
+      bgImage: "/games/palia/leaderboard.webp",
     },
     {
       href: "/weekly-wants",
@@ -83,7 +83,7 @@ export const palia: AppConfig = {
       description: "config.internalLinks.weeklyWants.description",
       linkText: "config.internalLinks.weeklyWants.linkText",
       iconName: "Gift",
-      bgImage: "/weekly-wants.webp",
+      bgImage: "/games/palia/weekly-wants.webp",
     },
   ],
   markerOptions: {

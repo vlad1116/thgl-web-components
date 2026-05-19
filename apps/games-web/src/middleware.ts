@@ -41,19 +41,6 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // Palia home-page card backgrounds: AppConfig.internalLinks point at
-  // bare root paths (/leaderboard.webp, /rummage-pile.webp, /weekly-wants.webp).
-  // Rewrite to the per-tenant bundle so other hosts don't collide.
-  if (
-    config.name === "palia" &&
-    (path === "/leaderboard.webp" ||
-      path === "/rummage-pile.webp" ||
-      path === "/weekly-wants.webp")
-  ) {
-    url.pathname = `/games/palia${path}`;
-    return NextResponse.rewrite(url);
-  }
-
   // Once-human: legacy section URLs (/weapons, /remnants, etc.) moved
   // under /db/* during the games-web migration. Permanent-redirect the
   // old paths so external links + Search Console history stay intact.
