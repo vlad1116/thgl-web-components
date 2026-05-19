@@ -91,18 +91,22 @@ async function purgeBunny(urls: string[]): Promise<PurgeResult> {
 }
 
 /**
- * Build every locale variant of the given canonical path, with a
+ * Build the en-locale variant of the given canonical path, with a
  * trailing `*` so Bunny purges the bare URL AND any query-string
  * variants in one call. Without the wildcard, `/rummage-pile` is a
  * separate cache key from `/rummage-pile?map=kilima-valley` and only
  * the bare URL would be invalidated.
+ *
+ * We deliberately do NOT purge each locale prefix (`/de/...`, `/fr/...`
+ * etc): Bunny rate-limits wildcard purges to ~5/second per account
+ * with HTTP 429 (`type: prefix`, `retry_after_seconds: 1-2`), so
+ * firing all 10 in parallel produced half-failures. en accounts for
+ * the bulk of palia traffic; localized variants refresh naturally
+ * within the 60s s-maxage. If we ever need instant localized purges,
+ * serialise with the server's `retry_after_seconds` backoff.
  */
 function paliaUrlsForPath(path: string): string[] {
-  const base = `https://${palia.domain}.th.gl`;
-  return palia.supportedLocales.map((locale) => {
-    const localePath = locale === "en" ? path : `/${locale}${path}`;
-    return `${base}${localePath}*`;
-  });
+  return [`https://${palia.domain}.th.gl${path}*`];
 }
 
 export async function POST(request: Request) {
