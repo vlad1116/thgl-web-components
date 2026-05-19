@@ -19,8 +19,10 @@ import { palia } from "@/configs/palia";
  *      HTML until the s-maxage expires. Purge explicitly so end users
  *      see the update within seconds instead of up to a minute.
  *
- * The Bunny purge is fire-and-forget (`async=true`) — the response to
- * the caller doesn't block on Bunny round-trips.
+ * Bunny purge uses `async=false` — wildcard purges submitted with
+ * `async=true` were observed to take >15s (or fail silently) to take
+ * effect. The synchronous variant returns once Bunny has confirmed the
+ * purge, which is fast enough (~1-2s for 10 URLs in parallel).
  */
 
 // Map upstream tag → palia path. Tags we don't know about still get
@@ -40,7 +42,7 @@ async function purgeBunny(urls: string[]): Promise<void> {
     urls.map(async (url) => {
       try {
         const res = await fetch(
-          `https://api.bunny.net/purge?url=${encodeURIComponent(url)}&async=true`,
+          `https://api.bunny.net/purge?url=${encodeURIComponent(url)}&async=false`,
           {
             method: "POST",
             headers: { AccessKey: accessKey, accept: "application/json" },
@@ -98,11 +100,9 @@ export async function POST(request: Request) {
   const path = TAG_TO_PATH[tag];
   const purgedUrls = path ? paliaUrlsForPath(path) : [];
   if (purgedUrls.length > 0) {
-    // Fire purge in the background so the response returns fast — Bunny
-    // accepts async=true purges and processes them within a few seconds.
-    purgeBunny(purgedUrls).catch((err) =>
-      console.error("Bunny purge batch failed:", err),
-    );
+    // Await sync purge so the caller knows the edge cache is invalidated
+    // before we return — async=true purges weren't reliable end-to-end.
+    await purgeBunny(purgedUrls);
   }
 
   return Response.json({
