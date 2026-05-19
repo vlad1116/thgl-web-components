@@ -56,12 +56,19 @@ async function purgeBunny(urls: string[]): Promise<void> {
   );
 }
 
-/** Build every locale variant of the given canonical path. */
+/**
+ * Build every locale variant of the given canonical path, with a
+ * trailing `*` so Bunny purges the bare URL AND any query-string
+ * variants in one call. Without the wildcard, `/rummage-pile` is a
+ * separate cache key from `/rummage-pile?map=kilima-valley` and only
+ * the bare URL would be invalidated.
+ */
 function paliaUrlsForPath(path: string): string[] {
   const base = `https://${palia.domain}.th.gl`;
-  return palia.supportedLocales.map((locale) =>
-    locale === "en" ? `${base}${path}` : `${base}/${locale}${path}`,
-  );
+  return palia.supportedLocales.map((locale) => {
+    const localePath = locale === "en" ? path : `/${locale}${path}`;
+    return `${base}${localePath}*`;
+  });
 }
 
 export async function POST(request: Request) {
