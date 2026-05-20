@@ -629,6 +629,20 @@ function MarkersContent({
     return mapTypeToGroup;
   }, [filters]);
 
+  // typeToCategory: top-level "Fishing" / "Bugs" / "Mining" etc. The category
+  // slider in the FilterSettingsPopover writes iconSizeByGroup[<category>],
+  // which is a different key than the per-group slider (e.g. fishing_legendary).
+  // Without this, only the per-subcategory slider had any effect.
+  const typeToCategory = useMemo(() => {
+    const m = new Map<string, string>();
+    filters.forEach((g) => {
+      if (g.category) {
+        g.values.forEach((v) => m.set(v.id, g.category!));
+      }
+    });
+    return m;
+  }, [filters]);
+
   // Cache rotated coordinates to avoid recalculating on every render
   const rotationCache = useMemo(() => {
     const rotationDegrees = map?.rotationDegrees ?? map?._rotationDegrees;
@@ -773,9 +787,13 @@ function MarkersContent({
       const iconBaseSize = icon?.size ?? 1;
       const groupId = typeToGroup.get(spawn.type);
       const groupMultiplier = groupId ? (iconSizeByGroup[groupId] ?? 1) : 1;
+      const categoryId = typeToCategory.get(spawn.type);
+      const categoryMultiplier = categoryId
+        ? (iconSizeByGroup[categoryId] ?? 1)
+        : 1;
       const typeMultiplier = iconSizeByFilter[spawn.type] ?? 1;
       const spawnRadius = spawn.radius ?? markerOptions.radius * iconBaseSize;
-      let size = (spawnRadius * 4 - 1) * baseIconSize * groupMultiplier * typeMultiplier * dpr;
+      let size = (spawnRadius * 4 - 1) * baseIconSize * categoryMultiplier * groupMultiplier * typeMultiplier * dpr;
 
       // Get icon from filter config (NOT resolved to URL yet - we need the raw icon data)
       const markerIcon =
@@ -1491,6 +1509,7 @@ function MarkersContent({
     iconSizeByFilter,
     iconSizeByGroup,
     typeToGroup,
+    typeToCategory,
     throttledPlayer,
     markerOptions.zPos,
     colorBlindMode,
