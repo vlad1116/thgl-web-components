@@ -59,7 +59,7 @@ const unitStats = [
   {
     name: "Attack & Defense",
     color: "text-red-400",
-    desc: "The damage formula is DM = (20 + attacker's Attack) / (20 + target's Defense). Minimum modifier is 0 — Defense can never make a unit invulnerable.",
+    desc: "The damage modifier is (20 + attacker's Attack) / (20 + target's Defense). Higher Attack vs. Defense multiplies the dealt damage; higher Defense divides it. Defense can never make a unit invulnerable.",
   },
   {
     name: "Damage",
@@ -224,24 +224,21 @@ export default async function MechanicsPage() {
                 <p className="text-sm text-muted-foreground">
                   Base damage is rolled between the unit&apos;s min and max
                   damage values, then multiplied by the number of creatures in
-                  the stack.
+                  the stack and by an Attack/Defense ratio modifier.
                 </p>
-                <div className="bg-black/30 rounded p-3 font-mono text-sm">
+                <div className="bg-black/30 rounded p-3 font-mono text-sm space-y-1">
                   <div>
-                    Final Damage = Base Damage × Stack Size × ATK/DEF Modifier
+                    Final Damage = Base Damage × Stack Size × (20 + ATK) / (20 +
+                    DEF)
                   </div>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  The ratio scales smoothly: equal Attack and Defense leaves
+                  damage unchanged, more Attack than Defense multiplies it, more
+                  Defense than Attack divides it. Defense can never reduce the
+                  modifier to zero, so no unit is fully invulnerable.
+                </p>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>
-                    <span className="text-amber-500">&#x25C6;</span>{" "}
-                    If Attack {">"} Defense: +5% damage per point difference (max
-                    +300%)
-                  </li>
-                  <li>
-                    <span className="text-amber-500">&#x25C6;</span>{" "}
-                    If Defense {">"} Attack: ~2.5% damage reduction per point
-                    difference
-                  </li>
                   <li>
                     <span className="text-amber-500">&#x25C6;</span> Lucky
                     Strike: +50% damage
