@@ -240,9 +240,14 @@ export async function GET(request: Request) {
   if (hasDesc) desc = stripHtml(desc);
 
   const bonuses: string[] = [];
-  for (const b of item.props?.bonuses ?? []) {
-    const formatted = formatBonus(b, dict);
-    if (formatted) bonuses.push(stripHtml(formatted));
+  // Item sets store `bonuses` as `[{ requiredItems, desc, effects[] }, ...]`,
+  // not as a flat list of `{type, params}` rows — so the generic formatter
+  // produces noise. We handle them in the `item_sets` switch case below.
+  if (entryType !== "item_sets") {
+    for (const b of item.props?.bonuses ?? []) {
+      const formatted = formatBonus(b, dict);
+      if (formatted) bonuses.push(stripHtml(formatted));
+    }
   }
 
   const extras: { label: string; value: string }[] = [];
@@ -373,14 +378,60 @@ export async function GET(request: Request) {
       if (p.manaCost) stats.push(`${p.manaCost} Mana`);
       break;
     }
-    case "items":
-    case "item_sets": {
+    case "items": {
       if (p.slot) {
         const slotKey = `ui.slot_${p.slot}`;
         const resolved = resolveDict(dict, slotKey);
         stats.push(resolved !== slotKey ? resolved : (p.slot as string).replace(/_slot$/, "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
       }
       if (p.rarity) stats.push(humanizeStat(p.rarity as string));
+      break;
+    }
+    case "item_sets": {
+      // `bonuses` is the per-tier set-bonus table. Render each tier as
+      // "<N pieces>: <description>" with the description's `{0}/{1}`
+      // placeholders filled from that tier's own effect params.
+      const setBonuses = (p.bonuses ?? []) as {
+        requiredItems?: string | number;
+        desc?: string;
+        effects?: { type: string; params: (string | number)[] }[];
+      }[];
+      for (const tier of setBonuses) {
+        if (!tier.desc) continue;
+        const raw = resolveDict(dict, tier.desc);
+        if (raw === tier.desc) continue; // sid didn't resolve
+        const values: string[] = [];
+        for (const eff of tier.effects ?? []) {
+          for (const param of eff.params ?? []) {
+            const n = parseFloat(String(param));
+            if (
+              !isNaN(n) &&
+              n !== 0 &&
+              String(param) !== "true" &&
+              String(param) !== "false"
+            ) {
+              const abs = Math.abs(n);
+              values.push(
+                abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+              );
+            }
+          }
+        }
+        const filled = stripHtml(raw).replace(
+          /\{(\d+)\}/g,
+          (_, idx: string) => values[parseInt(idx)] ?? "?",
+        );
+        const n = Number(tier.requiredItems);
+        const count =
+          tier.requiredItems != null
+            ? `${tier.requiredItems} ${n === 1 ? "piece" : "pieces"}`
+            : "Set";
+        bonuses.push(`${count}: ${filled}`);
+      }
+      const memberCount = Array.isArray(p.itemsInSet) ? p.itemsInSet.length : 0;
+      if (memberCount > 0) {
+        stats.push(`${memberCount} items`);
+      }
       break;
     }
     case "skills":

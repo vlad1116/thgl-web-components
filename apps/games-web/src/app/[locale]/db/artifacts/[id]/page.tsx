@@ -6,6 +6,7 @@ import { generateEntryMetadata, generateGroupMetadata } from "@/games/homm-olden
 import { requireApp } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
+import { EntityTooltip } from "@/lib/db/entity-tooltip";
 import { DatabaseEntryContent } from "@/games/homm-olden-era/database-entry";
 import { getGroupData, GroupPageContent } from "@/games/homm-olden-era/group-page";
 
@@ -57,18 +58,19 @@ export default async function EntryPage({ params }: { params: Params }) {
                 const memberCount = (set.props as any)?.itemsInSet?.length ?? 0;
                 const bonusTiers = (set.props as any)?.bonuses?.length ?? 0;
                 return (
-                  <Link
-                    key={set.id}
-                    href={localizePath(`/db/artifacts/${set.id}`, locale)}
-                    className="group border border-slate-800 hover:border-amber-800/50 rounded-lg px-4 py-3 transition-all hover:bg-slate-900/50"
-                  >
-                    <div className="font-medium group-hover:text-amber-400 transition-colors">
-                      {setName}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {memberCount} items · {bonusTiers} bonus {bonusTiers === 1 ? "tier" : "tiers"}
-                    </div>
-                  </Link>
+                  <EntityTooltip key={set.id} entityId={set.id} locale={locale} className="block">
+                    <Link
+                      href={localizePath(`/db/artifacts/${set.id}`, locale)}
+                      className="group block border border-slate-800 hover:border-amber-800/50 rounded-lg px-4 py-3 transition-all hover:bg-slate-900/50"
+                    >
+                      <div className="font-medium group-hover:text-amber-400 transition-colors">
+                        {setName}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {memberCount} items · {bonusTiers} bonus {bonusTiers === 1 ? "tier" : "tiers"}
+                      </div>
+                    </Link>
+                  </EntityTooltip>
                 );
               })}
             </div>

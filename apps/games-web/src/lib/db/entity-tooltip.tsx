@@ -42,10 +42,14 @@ export function EntityTooltip({
   entityId,
   locale = "en",
   children,
+  className = "inline-flex",
 }: {
   entityId: string;
   locale?: string;
   children: ReactNode;
+  /** Tailwind classes for the wrapper span. Override to `"block w-full"`
+   *  when wrapping a full-width grid cell so the child fills its column. */
+  className?: string;
 }) {
   const [data, setData] = useState<TooltipData | null>(null);
   const [visible, setVisible] = useState(false);
@@ -107,7 +111,7 @@ export function EntityTooltip({
   return (
     <span
       ref={containerRef}
-      className="inline-flex"
+      className={className}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
