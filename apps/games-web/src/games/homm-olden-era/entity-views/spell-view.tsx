@@ -21,12 +21,35 @@ type SpellProps = {
   spellPowerScaling?: { threshold: number; increment: number };
 };
 
+/**
+ * Substitute `{N}` placeholders in a per-mastery spell description.
+ *
+ * `params` is `[duration, ...statValues]` (see the extractor), but the
+ * description sids in the source data use the placeholder indices in
+ * whatever order the game's text writer chose. e.g. Twilight has
+ * "Duration: {0} round(s)" (`{0}` = duration) while Radiant Armor has
+ * "–{0}% Damage.\nDuration: {1} round(s)" (`{0}` = stat, `{1}` = duration).
+ *
+ * We disambiguate by scanning the text for `%`-suffixed placeholders, which
+ * are always stat percentages. Any non-`%` placeholder is treated as the
+ * duration. Stat placeholders consume `statValues` in left-to-right order.
+ */
 function fillPlaceholders(text: string, params?: number[]): string {
   if (!params || params.length === 0) return text.replace(/\{(\d+)\}/g, "?");
+  const duration = params[0];
+  const statValues = params.slice(1);
+  const statPlaceholders = new Set<number>();
+  for (const m of text.matchAll(/\{(\d+)\}%/g)) {
+    statPlaceholders.add(parseInt(m[1], 10));
+  }
+  let statCursor = 0;
   return text.replace(/\{(\d+)\}/g, (_, idx) => {
     const i = parseInt(idx, 10);
-    const v = params[i];
-    return v != null ? String(v) : "?";
+    if (statPlaceholders.has(i)) {
+      const v = statValues[statCursor++];
+      return v != null ? String(v) : "?";
+    }
+    return duration != null ? String(duration) : "?";
   });
 }
 
