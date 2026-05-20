@@ -41,6 +41,30 @@ export function middleware(req: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // thgl-app's root-level static assets — the native client downloads
+  // these from app.th.gl by exact path (installer + auto-update manifest
+  // + version marker), so we keep the URL but bundle the files under
+  // public/games/thgl-app/.
+  if (
+    config.name === "thgl-app" &&
+    (path === "/THGL_Installer.exe" ||
+      path === "/manifest.bin" ||
+      path === "/version.txt" ||
+      path === "/cave128.png")
+  ) {
+    url.pathname = `/games/thgl-app${path}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // thgl-app Patreon OAuth entrypoint. Done in middleware (not next.config
+  // redirects) because the `has: { type: "host" }` rule there only does
+  // exact-string matching, breaking `app.localhost:3100` in dev. We
+  // already have host resolution here.
+  if (config.name === "thgl-app" && path === "/authenticate") {
+    const dest = `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${process.env.PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PATREON_REDIRECT_URL ?? "")}`;
+    return NextResponse.redirect(dest, 302);
+  }
+
   // Once-human: legacy section URLs (/weapons, /remnants, etc.) moved
   // under /db/* during the games-web migration. Permanent-redirect the
   // old paths so external links + Search Console history stay intact.

@@ -22,7 +22,9 @@
   "dependencies": {
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@vercel/kv": "catalog:",
     "fuse.js": "catalog:",
+    "jsonwebtoken": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

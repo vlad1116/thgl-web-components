@@ -8,7 +8,8 @@ import { PlausibleTracker } from "@repo/ui/header";
 import { I18NProvider, TooltipProvider } from "@repo/ui/providers";
 import { Toaster } from "@repo/ui/controls";
 import { getGlobalDictionary, getAppDictionary, isValidLocale } from "@repo/ui/dicts";
-import { getCurrentVersion } from "@/version";
+import { getCurrentVersion } from "@/games/thgl-app/version";
+import { requireApp } from "@/lib/get-app-config";
 import { notFound } from "next/navigation";
 
 const fontSans = FontSans({
@@ -32,6 +33,9 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ locale?: string }>;
 }) {
+  // Gate the entire (app) tree to the app.th.gl host — any other tenant
+  // requesting /dashboard, /apps/[id], /controller, etc. gets a 404.
+  await requireApp("thgl-app");
   const { locale = DEFAULT_LOCALE } = await params;
   if (locale !== DEFAULT_LOCALE && !isValidLocale(locale)) {
     notFound();

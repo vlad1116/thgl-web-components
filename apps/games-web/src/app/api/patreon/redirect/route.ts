@@ -7,10 +7,13 @@ import {
   postToken,
   toCookieString,
   toCookieStringEmpty,
-} from "@/lib/patreon";
+} from "@/games/thgl-app/patreon";
+import { requireApp } from "@/lib/get-app-config";
 
 export const maxDuration = 25;
 export async function GET(request: Request) {
+  // Patreon OAuth callback is only valid on app.th.gl — other tenants 404.
+  await requireApp("thgl-app");
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
 

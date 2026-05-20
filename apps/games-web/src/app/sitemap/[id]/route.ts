@@ -1,4 +1,5 @@
 import { createSitemap } from "@repo/lib";
+import { notFound } from "next/navigation";
 import { getAppConfig } from "@/lib/get-app-config";
 import { sitemapToXml } from "@/lib/sitemap-xml";
 
@@ -15,6 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const config = await getAppConfig();
+  if (config.name === "thgl-app") notFound();
   const { id: idParam } = await params;
   const id = idParam.replace(/\.xml$/, "");
 

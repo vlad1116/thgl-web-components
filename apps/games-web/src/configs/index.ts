@@ -21,6 +21,7 @@ import { satisfactory } from "./satisfactory";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
 import { starsandIsland } from "./starsand-island";
+import { thglApp } from "./thgl-app";
 import { wutheringWaves } from "./wuthering-waves";
 
 /**
@@ -50,6 +51,7 @@ const ALL_CONFIGS: AppConfig[] = [
   soulframe,
   soulmask,
   starsandIsland,
+  thglApp,
   wutheringWaves,
 ];
 

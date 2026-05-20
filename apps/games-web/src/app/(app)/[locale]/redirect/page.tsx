@@ -1,5 +1,5 @@
 import { AuthRedirect } from "@repo/ui/thgl-app";
-import { getAccount } from "@/lib/patreon";
+import { getAccount } from "@/games/thgl-app/patreon";
 
 export default async function Redirect() {
   const account = await getAccount();
