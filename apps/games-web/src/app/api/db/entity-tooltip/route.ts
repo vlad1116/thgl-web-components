@@ -217,7 +217,7 @@ export async function GET(request: Request) {
   const dictKey = entryType === "factions" ? `faction_${id}` : id;
   const name = resolveDict(dict, dictKey);
   let desc = resolveDict(dict, `${dictKey}_desc`);
-  const hasDesc = desc && desc !== `${dictKey}_desc` && desc !== name;
+  let hasDesc = desc && desc !== `${dictKey}_desc` && desc !== name;
 
   if (hasDesc && desc.includes("{")) {
     const numericValues: string[] = [];
@@ -292,9 +292,63 @@ export async function GET(request: Request) {
       if (p.spellPower) stats.push(`SP: ${p.spellPower}`);
       if (p.intelligence) stats.push(`INT: ${p.intelligence}`);
 
+      // For drafting / quick comparison, the hero's specialization is the
+      // single most useful piece of info — much more so than the backstory.
+      // We replace the flavor `desc` with `"{specName}: {specDesc}"` (with
+      // `{0}/{1}` placeholders filled from the specialization's own bonus
+      // params, mirroring the inline display on the hero detail page).
       if (p.specialization) {
         const specName = resolveDict(dict, p.specialization as string);
-        if (specName !== p.specialization) extras.push({ label: "Specialization", value: specName });
+        const baseId = (p.specialization as string).replace("_specialization", "");
+        const rawSpecDesc = resolveDict(dict, `${baseId}_spec_desc`);
+        const hasSpecDesc =
+          rawSpecDesc && rawSpecDesc !== `${baseId}_spec_desc`;
+        if (specName !== p.specialization && hasSpecDesc) {
+          const specsCat = await fetchDatabaseType(appConfig.name, "specializations");
+          const specEntry = specsCat.items.find(
+            (i: any) => i.id === p.specialization,
+          );
+          const specBonuses = ((specEntry?.props as any)?.bonuses ?? []) as {
+            params?: (string | number)[];
+            upgrade?: { increment: number; levelStep?: number };
+          }[];
+          const values: string[] = [];
+          for (const b of specBonuses) {
+            for (const param of b.params ?? []) {
+              const n = parseFloat(String(param));
+              if (
+                !isNaN(n) &&
+                n !== 0 &&
+                String(param) !== "true" &&
+                String(param) !== "false"
+              ) {
+                const abs = Math.abs(n);
+                values.push(
+                  abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+                );
+              }
+            }
+            if (b.upgrade) {
+              const inc = b.upgrade.increment;
+              if (inc !== 0) {
+                const abs = Math.abs(inc);
+                values.push(
+                  abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+                );
+              }
+              if (b.upgrade.levelStep) values.push(String(b.upgrade.levelStep));
+            }
+          }
+          const filled = stripHtml(rawSpecDesc).replace(
+            /\{(\d+)\}/g,
+            (_, idx: string) => values[parseInt(idx)] ?? "?",
+          );
+          desc = `${specName}: ${filled}`;
+          hasDesc = true;
+        } else if (specName !== p.specialization) {
+          // Spec name resolved but no description — keep the spec as an extra.
+          extras.push({ label: "Specialization", value: specName });
+        }
       }
       if (Array.isArray(p.startSkills) && p.startSkills.length > 0) {
         const names = (p.startSkills as string[])
