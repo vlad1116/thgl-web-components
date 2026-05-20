@@ -6,9 +6,11 @@ import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
-import { useSettingsStore, type LabelMode } from "@repo/lib";
+import { useSettingsStore, type LabelMode, useUserStore } from "@repo/lib";
 import { useMemo, useState } from "react";
+import { useCoordinates } from "../(providers)";
 import { FilterTooltip } from "./filter-tooltip";
+import { Button } from "../ui/button";
 import {
   Select,
   SelectContent,
@@ -38,6 +40,52 @@ type FilterSettingsPopoverProps =
 export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const { filterLabel, isGroup } = props;
   const [open, setOpen] = useState(false);
+
+  const { filters } = useCoordinates();
+  const userFilters = useUserStore((s) => s.filters);
+  const setUserFilters = useUserStore((s) => s.setFilters);
+
+  // Sibling variants: filter values across all groups that share this
+  // value's baseType (e.g. all sizes of Gold, or base + starred + infected
+  // + amber of the same bug). Lets us offer a one-click "Enable all
+  // variants" toggle alongside the existing per-filter controls.
+  const siblingIds = useMemo<string[] | null>(() => {
+    if (isGroup) return null;
+    let baseType: string | undefined;
+    for (const g of filters) {
+      const v = g.values.find((v) => v.id === props.filterId);
+      if (v) {
+        baseType = v.baseType;
+        break;
+      }
+    }
+    if (!baseType) return null;
+    const ids: string[] = [];
+    for (const g of filters) {
+      for (const v of g.values) {
+        if (v.baseType === baseType) ids.push(v.id);
+      }
+    }
+    return ids.length > 1 ? ids : null;
+  }, [filters, isGroup, isGroup ? null : props.filterId]);
+
+  const siblingEnabledCount = useMemo(
+    () =>
+      siblingIds ? siblingIds.filter((id) => userFilters.includes(id)).length : 0,
+    [siblingIds, userFilters],
+  );
+  const allSiblingsEnabled =
+    siblingIds !== null && siblingEnabledCount === siblingIds.length;
+
+  const handleToggleAllVariants = () => {
+    if (!siblingIds) return;
+    if (allSiblingsEnabled) {
+      const drop = new Set(siblingIds);
+      setUserFilters(userFilters.filter((id) => !drop.has(id)));
+    } else {
+      setUserFilters([...new Set([...userFilters, ...siblingIds])]);
+    }
+  };
 
   const iconSizeByFilter = useSettingsStore((s) => s.iconSizeByFilter);
   const setIconSizeByFilter = useSettingsStore((s) => s.setIconSizeByFilter);
@@ -146,6 +194,24 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
 
         {isGroup && (
           <div className="font-medium text-sm truncate">{filterLabel}</div>
+        )}
+
+        {siblingIds && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Variants</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full justify-between text-xs h-7"
+              onClick={handleToggleAllVariants}
+            >
+              <span>{allSiblingsEnabled ? "Disable all" : "Enable all"}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {siblingEnabledCount}/{siblingIds.length}
+              </span>
+            </Button>
+          </div>
         )}
 
         <div className="space-y-1.5">

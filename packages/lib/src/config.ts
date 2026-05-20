@@ -497,6 +497,11 @@ export type FiltersConfig = {
     live_only?: boolean;
     autoDiscover?: boolean;
     defaultOn?: boolean;
+    // Stable identifier shared by all variants of the same underlying entity
+    // (base / starred / infected / amber / masked / royal / magical / sized
+    // siblings). Used by FilterSettingsPopover to offer a "Enable all
+    // variants" toggle. Omitted for filters with no siblings.
+    baseType?: string;
   }[];
 }[];
 
