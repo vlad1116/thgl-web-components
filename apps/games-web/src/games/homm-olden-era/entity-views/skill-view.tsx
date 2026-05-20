@@ -28,6 +28,38 @@ type SkillProps = {
   synergiesWith?: string[];
 };
 
+/**
+ * Substitute `{0}`, `{1}`, … placeholders in a skill-level description using
+ * the numeric values from that level's bonus params. Mirrors the same
+ * algorithm used for the main skill description: walks each bonus's `params`,
+ * picks up non-zero numbers, and converts fractional values (|v| < 1) into
+ * percentage integers since the source text already carries the `%` sign.
+ */
+function fillSkillLevelPlaceholders(
+  text: string,
+  bonuses?: { params: (string | number)[] }[],
+): string {
+  if (!bonuses || bonuses.length === 0) {
+    return text.replace(/\{(\d+)\}/g, "?");
+  }
+  const numericValues: string[] = [];
+  for (const b of bonuses) {
+    for (const p of b.params ?? []) {
+      const n = parseFloat(String(p));
+      if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+        const abs = Math.abs(n);
+        numericValues.push(
+          abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+        );
+      }
+    }
+  }
+  return text.replace(/\{(\d+)\}/g, (_, idx) => {
+    const v = numericValues[parseInt(idx, 10)];
+    return v != null ? v : "?";
+  });
+}
+
 function renderDescWithSkillLinks(
   desc: string,
   database: any[],
@@ -132,20 +164,11 @@ export function SkillView({
       </div>
 
       {desc && desc !== name && !desc.includes("_desc") && (() => {
-        const substituted = desc.replace(/\{(\d+)\}/g, (_, idx) => {
-          const numericValues: string[] = [];
-          const bonusSources = props.levels?.[0]?.bonuses ?? props.bonuses ?? [];
-          for (const b of bonusSources) {
-            for (const p of b.params) {
-              const n = parseFloat(String(p));
-              if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
-                const abs = Math.abs(n);
-                numericValues.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
-              }
-            }
-          }
-          return numericValues[parseInt(idx)] ?? "";
-        });
+        const stripped = desc.replace(/<[^>]+>/g, "");
+        const substituted = fillSkillLevelPlaceholders(
+          stripped,
+          props.levels?.[0]?.bonuses ?? props.bonuses ?? [],
+        );
         return (
           <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
             {renderDescWithSkillLinks(substituted, database, dict, locale)}
@@ -227,10 +250,11 @@ export function SkillView({
                   const key = `${entryId}_level_${level.level}_desc`;
                   const resolved = dict[key] ? resolveDict(dict, key) : undefined;
                   if (resolved && resolved !== key) {
-                    levelDesc = resolved
-                      .replace(/<[^>]+>/g, "")
-                      .replace(/\{(\d+)\}/g, "X")
-                      .trim();
+                    // Strip HTML, then fill `{N}` placeholders from this
+                    // level's own bonus params (each skill level carries its
+                    // own scaling numbers).
+                    const stripped = resolved.replace(/<[^>]+>/g, "").trim();
+                    levelDesc = fillSkillLevelPlaceholders(stripped, level.bonuses);
                   }
                 }
 
