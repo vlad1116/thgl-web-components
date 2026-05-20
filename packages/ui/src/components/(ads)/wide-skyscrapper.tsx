@@ -35,7 +35,11 @@ export function WideSkyscraper({
     } catch (error) {
       console.error(`[WideSkyscraper] Failed to create ad ${id}:`, error);
     }
-  }, [matched, id, targeting, mediaQuery]);
+    // Depend on the `targeting` *values* (not the object reference) so soft
+    // navigations within the same layout don't keep firing `createAd` for the
+    // same DOM id. Server-rendered parent passes a fresh `targeting` object
+    // each render, which previously made this effect re-run on every nav.
+  }, [matched, id, targeting?.game, targeting?.platform, mediaQuery]);
 
   if (!matched) {
     return <></>;

@@ -25,7 +25,9 @@ export function LargeMobileBanner({
     } catch (error) {
       console.error(`[LargeMobileBanner] Failed to create ad ${id}:`, error);
     }
-  }, [id, targeting]);
+    // Depend on the targeting *values* (not the object reference) — see
+    // wide-skyscrapper.tsx for full context.
+  }, [id, targeting?.game, targeting?.platform]);
 
   return (
     <AdFreeContainer className="w-fit mx-auto">

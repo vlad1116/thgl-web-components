@@ -41,7 +41,9 @@ export function FloatingMobileBanner({
         error,
       );
     }
-  }, [matched, bannerId, targeting, isLoading, isBlocked]);
+    // Depend on the targeting *values* (not the object reference) — see
+    // wide-skyscrapper.tsx for full context.
+  }, [matched, bannerId, targeting?.game, targeting?.platform, isLoading, isBlocked]);
 
   if (matched) {
     return <></>;
