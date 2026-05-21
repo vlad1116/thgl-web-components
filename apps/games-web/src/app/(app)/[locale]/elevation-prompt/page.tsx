@@ -49,7 +49,7 @@ function ElevationPromptContent() {
       >
         <div className="flex items-center gap-2 text-sm font-extrabold tracking-tight">
           <Image
-            src="/cave128.png"
+            src="/games/thgl-app/cave128.png"
             alt="Logo"
             width={20}
             height={20}

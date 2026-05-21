@@ -45,12 +45,14 @@ export function middleware(req: NextRequest) {
   // these from app.th.gl by exact path (installer + auto-update manifest
   // + version marker), so we keep the URL but bundle the files under
   // public/games/thgl-app/.
+  // cave128.png isn't in this list — it's only referenced from inside
+  // dashboard / elevation-prompt via <Image src="/games/thgl-app/...">,
+  // and next/image reads public/ via filesystem (bypasses middleware).
   if (
     config.name === "thgl-app" &&
     (path === "/THGL_Installer.exe" ||
       path === "/manifest.bin" ||
-      path === "/version.txt" ||
-      path === "/cave128.png")
+      path === "/version.txt")
   ) {
     url.pathname = `/games/thgl-app${path}`;
     return NextResponse.rewrite(url);
