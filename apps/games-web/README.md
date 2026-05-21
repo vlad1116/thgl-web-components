@@ -1,71 +1,198 @@
 # games-web
 
-Multi-tenant Next.js app that serves all THGL game web apps from a single
-deployment, replacing the per-game `*-web` apps on Vercel.
+Multi-tenant Next.js container that serves **every** THGL public web
+surface — game-specific sites, the marketing site at `www.th.gl`, and
+the THGLApp WebView2 surface at `app.th.gl` — from a single Docker
+image on Bunny Magic Containers.
 
-The same container handles `avowed.th.gl`, `palia.th.gl`, etc. by inspecting
-the `Host` header in middleware and resolving the right `AppConfig`.
+The same container handles `palia.th.gl`, `avowed.th.gl`,
+`www.th.gl`, `app.th.gl`, etc. It dispatches by inspecting the `Host`
+header in middleware and resolving the right `AppConfig`.
 
-## How it works
+## Tenants
 
-1. `middleware.ts` reads the `Host` header → looks up `AppConfig` in
-   `src/configs/index.ts` → sets `x-thgl-app` request header.
-2. Server components call `getAppConfig()` (`src/lib/get-app-config.ts`)
-   which reads that header and returns the matching config.
-3. Each route file is a 1-line passthrough using the `multiTenant()` wrapper:
+| Tenant | Host | Source on disk |
+|---|---|---|
+| games-web (per-game) | `{slug}.th.gl` (palia, avowed, once-human, BPSR, homm-olden-era, diablo4, DNA, conan-exiles, crimson-desert, dune-awakening, grounded2, hogwarts-legacy, infinity-nikki, night-crows, palworld, pax-dei, rsdragonwilds, satisfactory, soulframe, soulmask, starsand-island, wuthering-waves, chrono-odyssey) | `app/(en)/…`, `app/[locale]/…` |
+| Diablo IV Mobalytics embed | `diablo4.th.gl/mobalytics` | `app/(mobalytics)/…` |
+| THGLApp WebView2 surface | `app.th.gl` | `app/(app)/(en)/…`, `app/(app)/[locale]/…` |
+| Marketing site | `www.th.gl` (apex `th.gl` 308-redirects here) | `app/www/…` |
 
-   ```ts
-   // before (single-tenant):
-   export default createMapPage(APP_CONFIG);
+Per-tenant configs live in `src/configs/{slug}.ts` and are registered
+in `src/configs/index.ts`. `getAppConfigByHost(host)` keys on the
+first subdomain (`palia.th.gl` → `palia`, `www.th.gl` → `www`, etc.).
 
-   // after (multi-tenant):
-   export default multiTenant(createMapPage);
-   ```
+## How routing works
 
-## Adding a new game
+1. `middleware.ts` reads the `Host` header → `getAppConfigByHost` →
+   sets `x-thgl-app` request header downstream.
+2. Server components / route handlers call `getAppConfig()` (or the
+   stricter `requireApp("name")`) from `src/lib/get-app-config.ts`,
+   which reads the header and returns the matching config.
+3. Routes that should only serve one tenant guard with
+   `await requireApp("thgl-app")` and `notFound()` other tenants.
 
-1. Copy the game's existing config from `apps/{game}-web/src/config.ts` to
-   `apps/games-web/src/configs/{game}.ts`. Rename the export from
-   `APP_CONFIG` to the game slug (e.g. `palia`).
-2. Add the import + entry to `apps/games-web/src/configs/index.ts`:
+### Route groups
 
-   ```ts
-   import { palia } from "./palia";
-   export const APP_CONFIGS = { avowed, palia };
-   ```
+Each tenant tree has its own root layout to keep chrome / HTML body
+classes isolated:
 
-3. Configure DNS so `palia.th.gl` resolves to the container (via the Bunny
-   pull zone with custom hostname).
-4. Push to main — `games-web-deploy.yml` builds and deploys automatically.
+```
+app/
+  (en)/              ← games-web tenants, en routes (root layout)
+  [locale]/          ← games-web tenants, localized routes (root layout)
+  (mobalytics)/      ← diablo4 mobalytics embed (bare root layout)
+  (app)/(en)/        ← thgl-app dashboard, en (root layout)
+  (app)/[locale]/    ← thgl-app dashboard, localized (root layout)
+  www/               ← thgl-web marketing site (root layout)
+  api/               ← shared API routes (e.g. /api/revalidate)
+  sitemap.xml/       ← multiTenant sitemap (dispatches by config)
+  robots.ts          ← multiTenant robots (dispatches by config)
+```
 
-## Migration strategy
+### Why `www/` and not `_www/`
 
-Migrate one game at a time:
+Next.js silently excludes folders starting with `_` from routing
+(private-folder convention). The migration originally used `_www/`,
+hit no build errors, and produced zero `/www/*` routes. Renamed to
+`www/` and middleware was updated to match. Don't reintroduce a `_`
+prefix here.
 
-1. Add the game's config to this app, deploy.
-2. Test by overriding hosts: `curl -H "Host: avowed.th.gl" http://container-ip:3100/`
-3. Switch DNS / Bunny pull zone for that subdomain to the container.
-4. Verify in production, then delete the per-game `apps/{game}-web/` app.
+### Collision-resolving middleware rewrites
+
+Two tenants own URLs that would otherwise collide at the Next route
+table (Next.js can't accept two `page.tsx` resolving to the same
+path):
+
+- thgl-web (`www.th.gl`) lives at `app/www/…` on disk. Middleware
+  rewrites every `www.th.gl/*` request transparently to `/www/*`.
+  Exempts paths already prefixed `/www/` (idempotent) or
+  `/games/thgl-web/` (per-tenant static assets read by next/image
+  filesystem reader, which bypasses middleware).
+- Apex `th.gl` 308-redirects to `https://www.th.gl/…` (preserves path
+  + query).
+
+### Per-tenant static assets
+
+Bundled under `public/games/{slug}/…`. Components reference them
+either via:
+
+- Middleware rewrites that we add for legacy URLs (e.g.
+  `/THGL_Installer.exe` → `/games/thgl-app/THGL_Installer.exe` on
+  app.th.gl), or
+- Direct `<Image src="/games/{slug}/…">` references in code (because
+  `next/image` reads `public/` from the filesystem and bypasses
+  middleware).
 
 ## Local development
 
+Modern browsers and OSes (RFC 6761) resolve `*.localhost` to loopback.
+You don't need an `/etc/hosts` entry or anything else. Run the dev
+server and open whichever tenant you want in a browser:
+
 ```bash
 bun run dev
-# Test as a specific game by setting the Host header:
-curl -H "Host: avowed.localhost" http://localhost:3100/
+# → http://palia.localhost:3100/
+# → http://avowed.localhost:3100/maps
+# → http://app.localhost:3100/dashboard
+# → http://www.localhost:3100/blog
+# → http://diablo4.localhost:3100/mobalytics
 ```
+
+The subdomain in the URL determines which tenant's config the
+middleware resolves to. `localhost:3100` (no subdomain) doesn't match
+any tenant and returns 404.
+
+You can also test from the CLI by setting the Host header:
+
+```bash
+curl -H "Host: palia.th.gl" http://localhost:3100/
+```
+
+### Environment variables
+
+Required for full functionality:
+
+- `BUNNY_ACCOUNT_API_KEY` — Bunny purge API key (`/api/revalidate`).
+- `PALIA_API_KEY`, `PALIA_REVALIDATE_SECRET` — palia leaderboard / rummage-pile / weekly-wants webhook.
+- `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, `PATREON_REDIRECT_URL`, `PATREON_SPECIAL_USERS`, `JWT_SECRET`, `COOKIE_DOMAIN` — thgl-app + thgl-web Patreon OAuth flow.
+- `NEXT_PUBLIC_BASE_URL` — base URL for server-side self-fetches.
+- `KV_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN` — Patreon token store (Vercel KV / Upstash).
+- `POSTGRES_*` (thgl-web shared filters / nodes / suggestions).
+- `BLOB_READ_WRITE_TOKEN` (thgl-web shared profile images).
+
+Local dev uses `apps/games-web/.env.local` (gitignored). Production
+container env vars are set in the Bunny Magic Container settings.
+
+### Caching
+
+`next.config.js` sets `Cache-Control: public, max-age=0, s-maxage=60,
+stale-while-revalidate=300` by default for non-RSC HTML, with an RSC
+carve-out that returns `private, no-store`.
+
+`app.th.gl` overrides to `private, no-store` across the board
+(dashboard is per-user; sharing the edge cache would leak account
+info between users).
+
+## Adding a new tenant
+
+1. Create `src/configs/{slug}.ts` exporting an `AppConfig`. Pick
+   `domain` carefully — it's matched against the request's first
+   subdomain.
+
+2. Register it in `src/configs/index.ts`:
+
+   ```ts
+   import { yourGame } from "./your-game";
+   const ALL_CONFIGS: AppConfig[] = [
+     // existing entries…
+     yourGame,
+   ];
+   ```
+
+3. Configure DNS so `{slug}.th.gl` resolves to the games-web Bunny
+   pull zone, and add the hostname under the pull zone's custom
+   hostnames.
+
+4. If the tenant needs custom routes that conflict with existing
+   ones, follow the `www/` pattern: mount the routes under a
+   reserved on-disk prefix and add a middleware rewrite for that
+   tenant's host.
+
+5. Per-tenant public assets go in `public/games/{slug}/…`. The
+   middleware already rewrites a few well-known root paths
+   (`/heatmaps/*`, `/opengraph-image.jpg`) to that prefix.
+
+6. Push to `main` — `games-web-deploy.yml` builds the image and
+   PATCHes the Magic Container template.
 
 ## Build & run as Docker
 
 ```bash
 # from monorepo root
 docker build -f apps/games-web/Dockerfile -t games-web .
-docker run -p 3100:3100 games-web
+docker run --rm -p 3100:3100 \
+  -e PATREON_CLIENT_ID=… \
+  -e JWT_SECRET=… \
+  -e KV_URL=… \
+  games-web
 ```
 
-## Special pages
+In production the image is built by GitHub Actions
+(`games-web-deploy.yml`), pushed to GHCR, and the Bunny Magic
+Container is PATCHed to use the new tag.
 
-A few games have unique routes (e.g. `palia` has `/leaderboard`,
-`/weekly-wants`, `/rummage-pile`). These are NOT included here yet — those
-games stay on the dedicated `palia-web` app for now. Or, port those routes
-into this app and gate them by `appConfig.name`.
+## Observability
+
+- `src/instrumentation.ts` registers `onRequestError` so server-side
+  errors are logged with their full stack (Next.js strips error
+  messages from responses in prod, but the hook gets the raw error).
+  Filters known cached-client noise (`Failed to find Server Action`,
+  `Unexpected end of form`) so real bugs aren't drowned.
+- The `[onRequestError]` line format is `digest=… routePath=…
+  routeType=… method=… path=… host=…` — search Bunny container logs
+  for `[onRequestError]` to find anything we should care about.
+- `/api/patreon/redirect` and the `getAccount` helper log tagged
+  `[patreon/redirect]` and `[getAccount]` lines on each failure mode
+  (missing env var, JWT verify failure, KV unreachable, Patreon API
+  rejecting the token, etc.).

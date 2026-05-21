@@ -5,11 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Key Commands
 
 ### Development
-- **Run specific app**: `bunx turbo run dev --filter={app-name}...` (e.g., `--filter=palworld-web...`)
-- **Run by type**:
-  - Web apps: `bun run dev:web`
-  - Overwolf apps: `bun run dev:overwolf`
-  - Specific game: `bun run dev:{game-name}` (e.g., `dev:palworld`)
+- **Run games-web** (every public web tenant): `bun run dev --filter=games-web` — open
+  `http://palia.localhost:3100/`, `http://www.localhost:3100/`, `http://app.localhost:3100/dashboard`
+  etc. in a browser to test as a specific tenant. `*.localhost` resolves to loopback per
+  RFC 6761; no `/etc/hosts` entry needed.
+- **Run an Overwolf app**: `bun run dev:overwolf` or `bun run dev:{game}` (e.g.
+  `dev:palworld` targets `palworld-overwolf`).
+- **CLI host override**: `curl -H "Host: palia.th.gl" http://localhost:3100/`.
 
 ### Build & Quality
 - **Build**: `bun run build` or `turbo run build`
@@ -23,13 +25,21 @@ No test framework is configured - the project relies on TypeScript, linting, and
 
 ## Architecture Overview
 
-This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specific web and Overwolf apps.
+This is a TurboRepo monorepo for The Hidden Gaming Lair, containing one
+multi-tenant Next.js container that serves every public web surface plus
+nine game-specific Overwolf overlay apps.
 
 ### Project Structure
-- **Apps** (`apps/`): Each game has two app types:
-  - `{game-name}-web`: Next.js web app (e.g., palworld.th.gl)
-  - `{game-name}-overwolf`: Vite-based Overwolf in-game overlay
-  - Special apps: `thgl-web` (main site), `thgl-app` (Windows companion)
+- **`apps/games-web/`** — multi-tenant Next.js container. One Docker
+  image, deployed on Bunny Magic Containers, serves every game site
+  (`palia.th.gl`, `avowed.th.gl`, `oncehuman.th.gl`, etc.), the THGLApp
+  WebView2 surface (`app.th.gl`), and the marketing site (`www.th.gl`).
+  Middleware dispatches by `Host` header → per-tenant `AppConfig` in
+  `src/configs/{slug}.ts`. See `apps/games-web/README.md` for the full
+  routing model.
+- **`apps/{game}-overwolf/`** — Vite-based Overwolf overlay per game.
+  Each ships independently (Overwolf store distribution requires its
+  own .opk per game).
 
 - **Shared Packages** (`packages/`):
   - `@repo/lib`: Core logic, types, utilities, game configurations
@@ -38,13 +48,17 @@ This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specifi
   - Config packages: `config-eslint`, `config-typescript`, `config-tailwind`
 
 ### Key Configuration Files
-- Each app has a `src/config.ts` defining game-specific settings, routes, and map configurations
-- Game definitions live in `packages/lib/src/games.ts`
-- App configs extend `AppConfig` or `OverwolfAppConfig` types from `@repo/lib`
+- `apps/games-web/src/configs/{slug}.ts` — per-tenant `AppConfig`
+  (registered in `src/configs/index.ts`). Driven by the request's
+  first hostname subdomain.
+- `apps/{game}-overwolf/src/config.ts` — per-Overwolf-app config.
+- Game definitions live in `packages/lib/src/games.ts`.
+- App configs extend `AppConfig` or `OverwolfAppConfig` types from
+  `@repo/lib`.
 
 ### Technology Stack
 - **Runtime**: Bun (package manager and runtime)
-- **Frameworks**: Next.js (web apps), Vite (Overwolf apps)
+- **Frameworks**: Next.js (games-web container), Vite (Overwolf apps)
 - **UI**: React + TypeScript + Tailwind CSS + Radix UI
 - **State**: Zustand
 - **Maps**: Custom WebGL2 engine for interactive game maps
@@ -52,7 +66,8 @@ This is a TurboRepo monorepo for The Hidden Gaming Lair, containing game-specifi
 ### Development Notes
 - All paths must be absolute, not relative
 - Follow existing code patterns and conventions in the codebase
-- Web apps auto-deploy to Vercel, Overwolf apps require manual updates
+- `games-web` auto-deploys to Bunny via GitHub Actions (`games-web-deploy.yml`).
+  Overwolf apps require manual updates.
 - No direct pushes to main - all changes via PR
 - Use `.env.example` files for environment variable templates (never commit `.env` files)
 - Repository is source-available but NOT open source - code cannot be reused for other projects
