@@ -99,7 +99,7 @@ export function postToken(code: string) {
       code,
       grant_type: "authorization_code",
       client_id: process.env.PATREON_CLIENT_ID!,
-      client_secret: process.env.PATREON_CLIENT_SECRET_V2!,
+      client_secret: process.env.PATREON_CLIENT_SECRET!,
       redirect_uri: process.env.PATREON_REDIRECT_URL!,
     }),
   });
@@ -115,7 +115,7 @@ export function postRefreshToken(refreshToken: string) {
       grant_type: "refresh_token",
       refresh_token: refreshToken,
       client_id: process.env.PATREON_CLIENT_ID!,
-      client_secret: process.env.PATREON_CLIENT_SECRET_V2!,
+      client_secret: process.env.PATREON_CLIENT_SECRET!,
     }),
   });
 }
