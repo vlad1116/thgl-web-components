@@ -22,12 +22,16 @@
   "dependencies": {
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@vercel/blob": "1.0.0",
     "@vercel/kv": "catalog:",
+    "@vercel/postgres": "0.10.0",
     "fuse.js": "catalog:",
     "jsonwebtoken": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "react-markdown": "catalog:",
+    "remark-gfm": "catalog:"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "catalog:",

@@ -67,6 +67,30 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(dest, 302);
   }
 
+  // thgl-web (marketing site at www.th.gl) is mounted at app/www/ on
+  // disk to avoid URL collisions with thgl-app (`/apps/[id]`,
+  // `/api/patreon/redirect`) and the tenant home (`/`). Rewrite every
+  // www.th.gl request transparently.
+  //
+  // Originally used `_www/` but Next.js treats `_`-prefixed folders as
+  // private (opted out of routing entirely), so the routes silently
+  // dropped from the build.
+  //
+  // Exemptions:
+  //   - `/www/*`: already rewritten (paranoia — idempotent on re-entry).
+  //   - `/games/thgl-web/*`: per-tenant public assets bundled there
+  //     (matches the thgl-app pattern). <Image src="/games/thgl-web/...">
+  //     references in thgl-web components bypass middleware and hit the
+  //     public folder directly via next/image's filesystem reader.
+  if (
+    config.name === "thgl-web" &&
+    !path.startsWith("/www/") &&
+    !path.startsWith("/games/thgl-web/")
+  ) {
+    url.pathname = `/www${path}`;
+    return NextResponse.rewrite(url);
+  }
+
   // Once-human: legacy section URLs (/weapons, /remnants, etc.) moved
   // under /db/* during the games-web migration. Permanent-redirect the
   // old paths so external links + Search Console history stay intact.
@@ -116,6 +140,10 @@ const ONCE_HUMAN_LEGACY_REDIRECTS: Array<{
 ];
 
 export const config = {
-  // Run middleware on everything except Next internals and robots
+  // Run middleware on everything except Next internals and robots.txt.
+  // robots.ts only auto-routes at the top-level app/, so we serve all
+  // tenants' robots from app/robots.ts (multiTenant-dispatched).
+  // Skipping /robots.txt here keeps the thgl-web rewrite from sending
+  // it to a path Next can't resolve.
   matcher: ["/((?!_next/|robots\\.txt).*)"],
 };

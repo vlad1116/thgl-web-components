@@ -22,6 +22,7 @@ import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
 import { starsandIsland } from "./starsand-island";
 import { thglApp } from "./thgl-app";
+import { thglWeb } from "./thgl-web";
 import { wutheringWaves } from "./wuthering-waves";
 
 /**
@@ -52,6 +53,7 @@ const ALL_CONFIGS: AppConfig[] = [
   soulmask,
   starsandIsland,
   thglApp,
+  thglWeb,
   wutheringWaves,
 ];
 
