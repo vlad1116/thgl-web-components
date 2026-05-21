@@ -4,6 +4,7 @@ import {
   type PatreonToken,
   type PatreonUser,
   getCurrentUser,
+  getRedirectUriFromRequest,
   postToken,
   toCookieString,
   toCookieStringEmpty,
@@ -44,7 +45,6 @@ export async function GET(request: Request) {
   const missing: string[] = [];
   if (!process.env.PATREON_CLIENT_ID) missing.push("PATREON_CLIENT_ID");
   if (!process.env.PATREON_CLIENT_SECRET) missing.push("PATREON_CLIENT_SECRET");
-  if (!process.env.PATREON_REDIRECT_URL) missing.push("PATREON_REDIRECT_URL");
   if (!process.env.JWT_SECRET) missing.push("JWT_SECRET");
   if (missing.length > 0) {
     console.error(`${LOG} missing env vars: ${missing.join(", ")}`);
@@ -57,7 +57,10 @@ export async function GET(request: Request) {
   let tokenResponse: Response;
   let tokenResult: PatreonToken | { error: string; error_description?: string };
   try {
-    tokenResponse = await postToken(code);
+    // Must match the redirect_uri used in the authorize step. Derived
+    // from this request's host so app.th.gl and www.th.gl each
+    // round-trip to themselves.
+    tokenResponse = await postToken(code, getRedirectUriFromRequest(request));
     tokenResult = (await tokenResponse.json()) as
       | PatreonToken
       | { error: string };

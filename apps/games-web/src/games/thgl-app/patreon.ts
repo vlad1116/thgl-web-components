@@ -89,7 +89,7 @@ export type PatreonError =
       }[];
     };
 
-export function postToken(code: string) {
+export function postToken(code: string, redirectUri: string) {
   return fetch("https://www.patreon.com/api/oauth2/token", {
     method: "POST",
     headers: {
@@ -100,9 +100,27 @@ export function postToken(code: string) {
       grant_type: "authorization_code",
       client_id: process.env.PATREON_CLIENT_ID!,
       client_secret: process.env.PATREON_CLIENT_SECRET!,
-      redirect_uri: process.env.PATREON_REDIRECT_URL!,
+      // Must match the redirect_uri used in the authorize step (Patreon
+      // enforces exact equality). Derived from the request host by the
+      // caller so app.th.gl and www.th.gl each round-trip to themselves.
+      redirect_uri: redirectUri,
     }),
   });
+}
+
+/**
+ * Derive the Patreon OAuth redirect_uri from the incoming request's
+ * host header. Both `/authenticate` (kicks off OAuth) and
+ * `/api/patreon/redirect` (consumes the code) need to produce the
+ * exact same value — Patreon enforces strict equality between the
+ * authorize step and the token-exchange step. Reading from `host`
+ * means each tenant (app.th.gl vs www.th.gl vs *.localhost) hands
+ * Patreon its own URL.
+ */
+export function getRedirectUriFromRequest(request: Request): string {
+  const host = request.headers.get("host") ?? "app.th.gl";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  return `${protocol}://${host}/api/patreon/redirect`;
 }
 
 export function postRefreshToken(refreshToken: string) {

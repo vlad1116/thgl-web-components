@@ -76,7 +76,14 @@ export function middleware(req: NextRequest) {
   // exact-string matching, breaking `app.localhost:3100` in dev. We
   // already have host resolution here.
   if (config.name === "thgl-app" && path === "/authenticate") {
-    const dest = `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${process.env.PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.PATREON_REDIRECT_URL ?? "")}`;
+    // Derive redirect_uri from request host (app.th.gl → app.th.gl,
+    // app.localhost:3100 → app.localhost:3100 for dev). Must match
+    // what /api/patreon/redirect sends in postToken — both use the
+    // host header so they stay in sync.
+    const host = req.headers.get("host") ?? "app.th.gl";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const redirectUri = `${protocol}://${host}/api/patreon/redirect`;
+    const dest = `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${process.env.PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     return NextResponse.redirect(dest, 302);
   }
 

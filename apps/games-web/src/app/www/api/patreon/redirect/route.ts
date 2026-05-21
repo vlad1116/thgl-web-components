@@ -4,6 +4,7 @@ import {
   type PatreonToken,
   type PatreonUser,
   getCurrentUser,
+  getRedirectUriFromRequest,
   postToken,
   toCookieString,
   toCookieStringEmpty,
@@ -50,7 +51,10 @@ export async function GET(request: Request) {
     });
   }
 
-  const tokenResponse = await postToken(code);
+  // Must match the redirect_uri used in the authorize step. Derived
+  // from this request's host so app.th.gl and www.th.gl each
+  // round-trip to themselves.
+  const tokenResponse = await postToken(code, getRedirectUriFromRequest(request));
   const tokenResult = (await tokenResponse.json()) as
     | PatreonToken
     | { error: string };
