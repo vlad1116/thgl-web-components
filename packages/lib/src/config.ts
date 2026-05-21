@@ -378,18 +378,111 @@ export function getIconsUrl(
   return getAppUrl(appName, `/icons/${icon}`);
 }
 
+/**
+ * Each locale's dict ships as three files (each kept under Next.js's 2 MB
+ * fetch-cache ceiling):
+ *
+ *   - `dicts/<locale>.json`       names/terms (filter labels, type names, item names)
+ *   - `dicts/<locale>-tags.json`  *_tags entries (Fuse.js search index keywords)
+ *   - `dicts/<locale>-desc.json`  *_desc entries (popover/tooltip content)
+ *
+ * Use `kind` to target a single bucket. Pointer-resolution is self-contained
+ * within each file. To restore the legacy combined dict, call all three and
+ * merge - see `fetchDict` for the default behaviour.
+ */
+export type DictKind = "names" | "tags" | "desc";
+
+const DICT_KIND_SUFFIX: Record<DictKind, string> = {
+  names: "",
+  tags: "-tags",
+  desc: "-desc",
+};
+
+async function fetchDictPart(
+  appName: string,
+  locale: string,
+  kind: DictKind,
+): Promise<Record<string, string>> {
+  const suffix = DICT_KIND_SUFFIX[kind];
+  const res = await fetch(
+    `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}${suffix}.json`,
+    { next: { revalidate: 60 } },
+  );
+  if (!res.ok) {
+    // tags or desc may legitimately be empty for some games; treat 404 as empty
+    if ((kind === "tags" || kind === "desc") && res.status === 404) {
+      return {};
+    }
+    throw new Error(
+      `Failed to fetch dict ${appName}/${locale}${suffix}: ${res.status}`,
+    );
+  }
+  return res.json();
+}
+
+/**
+ * Fetch the names dict (filter labels, type names, etc.) for the given app/locale.
+ * This is the critical-path dict needed for initial render and is what consumers
+ * should prefer when they only need labels.
+ */
+export async function fetchDictNames(
+  appName: string,
+  locale: string = "en",
+): Promise<Record<string, string>> {
+  return fetchDictPart(appName, locale, "names");
+}
+
+/**
+ * Legacy combined-dict fetcher. Loads names + tags + desc in parallel and
+ * merges them into a single object - matches the pre-split API so existing
+ * server-rendered call sites keep working. For client-side, prefer the
+ * granular fetchers + lazy load.
+ */
 export async function fetchDict(
   appName: string,
   locale: string = "en",
 ): Promise<Record<string, string>> {
-  const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
-    { next: { revalidate: 60 } },
-  );
-  if (!res.ok) {
-    throw new Error(`Failed to fetch dict ${appName}/${locale}: ${res.status}`);
-  }
-  return res.json();
+  return fetchFullDict(appName, locale);
+}
+
+/**
+ * Fetch the tags dict (`*_tags` entries) - used by the Fuse.js search index.
+ * Load on demand when the user opens the search box.
+ */
+export async function fetchDictTags(
+  appName: string,
+  locale: string = "en",
+): Promise<Record<string, string>> {
+  return fetchDictPart(appName, locale, "tags");
+}
+
+/**
+ * Fetch the descriptions dict (`*_desc` entries) - used by tooltips, marker
+ * details and zone overlays. Load on demand when a popover opens.
+ */
+export async function fetchDictDesc(
+  appName: string,
+  locale: string = "en",
+): Promise<Record<string, string>> {
+  return fetchDictPart(appName, locale, "desc");
+}
+
+/**
+ * Fetch all three dict parts in parallel and merge into a single dict object.
+ * Use this from server-side prefetchers (sitemap, wiki, RSC layouts) where the
+ * legacy combined-dict shape is convenient. For client-side, prefer the
+ * granular fetchers + lazy load to keep payloads small.
+ */
+export async function fetchFullDict(
+  appName: string,
+  locale: string = "en",
+): Promise<Record<string, string>> {
+  const [names, tags, desc] = await Promise.all([
+    fetchDictNames(appName, locale),
+    fetchDictTags(appName, locale),
+    fetchDictDesc(appName, locale),
+  ]);
+  return { ...names, ...tags, ...desc };
 }
 
 export async function fetchDatabase(appName: string): Promise<DatabaseConfig> {
