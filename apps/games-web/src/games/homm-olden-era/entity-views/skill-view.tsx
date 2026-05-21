@@ -26,6 +26,9 @@ type SkillProps = {
   classWeights?: { faction: string; classType: string; pct: number }[];
   compatibleWith?: { id: string; via: string[] }[];
   synergiesWith?: string[];
+  /** Pre-computed numeric values for `{N}` placeholders in the sub-skill's
+   *  description (sourced by chasing buff references at extraction time). */
+  descParams?: number[];
 };
 
 /**
@@ -165,10 +168,21 @@ export function SkillView({
 
       {desc && desc !== name && !desc.includes("_desc") && (() => {
         const stripped = desc.replace(/<[^>]+>/g, "");
-        const substituted = fillSkillLevelPlaceholders(
-          stripped,
-          props.levels?.[0]?.bonuses ?? props.bonuses ?? [],
-        );
+        // Prefer the pre-computed `descParams` for sub-skills (those carry
+        // values pulled from chased buff references, so they cover cases the
+        // generic bonus-param walk misses — e.g. Battle Frenzy's +2 Attack).
+        let substituted: string;
+        if (props.descParams && props.descParams.length > 0) {
+          substituted = stripped.replace(/\{(\d+)\}/g, (_, idx) => {
+            const v = props.descParams?.[parseInt(idx, 10)];
+            return v != null ? String(v) : "?";
+          });
+        } else {
+          substituted = fillSkillLevelPlaceholders(
+            stripped,
+            props.levels?.[0]?.bonuses ?? props.bonuses ?? [],
+          );
+        }
         return (
           <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
             {renderDescWithSkillLinks(substituted, database, dict, locale)}

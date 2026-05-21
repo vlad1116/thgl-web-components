@@ -220,15 +220,29 @@ export async function GET(request: Request) {
   let hasDesc = desc && desc !== `${dictKey}_desc` && desc !== name;
 
   if (hasDesc && desc.includes("{")) {
-    const numericValues: string[] = [];
-    for (const b of item.props?.bonuses ?? []) {
-      for (const p of b.params) {
-        const n = parseFloat(String(p));
-        if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
-          const abs = Math.abs(n);
-          numericValues.push(
-            abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
-          );
+    // For entities that pre-computed `descParams` at extraction time (e.g.
+    // sub-skills, which need a buff-reference chain to resolve), use that
+    // array directly. Otherwise fall back to a naive walk of `bonuses[].params`.
+    let numericValues: string[];
+    const pre = (item.props as any)?.descParams;
+    if (Array.isArray(pre) && pre.length > 0) {
+      numericValues = pre.map((n: number) => String(n));
+    } else {
+      numericValues = [];
+      // Skills store bonuses per level (`levels[i].bonuses`), not on the top
+      // `bonuses` array. Fall back to level 0 so e.g. `skill_luck`'s
+      // "{0} Luck" resolves to the Basic-mastery value.
+      const bonusSource =
+        item.props?.bonuses ?? item.props?.levels?.[0]?.bonuses ?? [];
+      for (const b of bonusSource) {
+        for (const p of b.params ?? []) {
+          const n = parseFloat(String(p));
+          if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+            const abs = Math.abs(n);
+            numericValues.push(
+              abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+            );
+          }
         }
       }
     }
