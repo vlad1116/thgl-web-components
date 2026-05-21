@@ -227,25 +227,49 @@ export async function getAccount() {
 
   if (userId?.value) {
     try {
-      const id = verify(userId.value, process.env.JWT_SECRET!) as string;
-      const patreonToken = await kv.get<PatreonToken>(`token:${id}`);
-      if (patreonToken) {
-        const currentUserResponse = await getCurrentUser(patreonToken);
-        const currentUserResult = (await currentUserResponse.json()) as
-          | PatreonUser
-          | PatreonError;
-        if (
-          !("error" in currentUserResult) &&
-          !("errors" in currentUserResult)
-        ) {
-          account.userId = userId.value;
-          account.decryptedUserId = id;
-          account.email = currentUserResult.data.attributes.email;
-          account.perks = getPerks(currentUserResult);
-        }
+      if (!process.env.JWT_SECRET) {
+        console.error("[getAccount] JWT_SECRET is not set");
+        return account;
       }
+      let id: string;
+      try {
+        id = verify(userId.value, process.env.JWT_SECRET) as string;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[getAccount] jwt verify failed: ${msg}`);
+        return account;
+      }
+      const patreonToken = await kv.get<PatreonToken>(`token:${id}`).catch(
+        (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`[getAccount] kv.get failed for ${id}: ${msg}`);
+          return null;
+        },
+      );
+      if (!patreonToken) {
+        console.error(`[getAccount] no PatreonToken in KV for id=${id}`);
+        return account;
+      }
+      const currentUserResponse = await getCurrentUser(patreonToken);
+      const currentUserResult = (await currentUserResponse.json()) as
+        | PatreonUser
+        | PatreonError;
+      if (
+        "error" in currentUserResult ||
+        "errors" in currentUserResult
+      ) {
+        console.error(
+          `[getAccount] patreon /identity failed (status=${currentUserResponse.status}): ${JSON.stringify(currentUserResult).slice(0, 300)}`,
+        );
+        return account;
+      }
+      account.userId = userId.value;
+      account.decryptedUserId = id;
+      account.email = currentUserResult.data.attributes.email;
+      account.perks = getPerks(currentUserResult);
     } catch (error) {
-      //
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[getAccount] unexpected: ${msg}`);
     }
   }
   return account;
