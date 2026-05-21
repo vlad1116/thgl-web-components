@@ -239,13 +239,13 @@ export async function getAccount() {
         console.error(`[getAccount] jwt verify failed: ${msg}`);
         return account;
       }
-      const patreonToken = await kv.get<PatreonToken>(`token:${id}`).catch(
-        (err) => {
+      const patreonToken = await kv
+        .get<PatreonToken>(`token:${id}`)
+        .catch((err) => {
           const msg = err instanceof Error ? err.message : String(err);
           console.error(`[getAccount] kv.get failed for ${id}: ${msg}`);
           return null;
-        },
-      );
+        });
       if (!patreonToken) {
         console.error(`[getAccount] no PatreonToken in KV for id=${id}`);
         return account;
@@ -254,10 +254,7 @@ export async function getAccount() {
       const currentUserResult = (await currentUserResponse.json()) as
         | PatreonUser
         | PatreonError;
-      if (
-        "error" in currentUserResult ||
-        "errors" in currentUserResult
-      ) {
+      if ("error" in currentUserResult || "errors" in currentUserResult) {
         console.error(
           `[getAccount] patreon /identity failed (status=${currentUserResponse.status}): ${JSON.stringify(currentUserResult).slice(0, 300)}`,
         );
