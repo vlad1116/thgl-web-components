@@ -115,7 +115,7 @@ Required for full functionality:
 
 - `BUNNY_ACCOUNT_API_KEY` — Bunny purge API key (`/api/revalidate`).
 - `PALIA_API_KEY`, `PALIA_REVALIDATE_SECRET` — palia leaderboard / rummage-pile / weekly-wants webhook.
-- `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, `PATREON_REDIRECT_URL`, `PATREON_SPECIAL_USERS`, `JWT_SECRET`, `COOKIE_DOMAIN` — thgl-app + thgl-web Patreon OAuth flow.
+- `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, `PATREON_SPECIAL_USERS`, `JWT_SECRET`, `COOKIE_DOMAIN` — thgl-app + thgl-web Patreon OAuth flow. `redirect_uri` is derived from the incoming request host (each tenant round-trips to itself), so no per-host env var is needed; just ensure both `https://app.th.gl/api/patreon/redirect` and `https://www.th.gl/api/patreon/redirect` are in the Patreon OAuth app's redirect_uri allowlist.
 - `NEXT_PUBLIC_BASE_URL` — base URL for server-side self-fetches.
 - `KV_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN` — Patreon token store (Vercel KV / Upstash).
 - `POSTGRES_*` (thgl-web shared filters / nodes / suggestions).
