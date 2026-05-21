@@ -19,10 +19,8 @@ export default async function GamePage({
   return <GamePageClient game={game} updateMessages={updateMessages} />;
 }
 
-export function generateStaticParams() {
-  return games
-    .filter((game) => game.companion)
-    .map((game) => ({
-      id: game.id,
-    }));
-}
+// No generateStaticParams: the parent (app)/[locale]/layout.tsx calls
+// requireApp("thgl-app") → headers(), which is a dynamic API. Static
+// gen of this route would throw DYNAMIC_SERVER_USAGE at build time
+// AND at runtime when an unknown id is requested. The dashboard is
+// per-user content anyway, so there's no caching benefit lost.

@@ -199,11 +199,59 @@ export function getOpenGraphImageUrl(appName: string, mapName: string): string {
   return `${DATA_FORGE_CDN_URL}/${appName}/map-tiles/${mapName}/opengraph-image.jpg`;
 }
 
-export async function fetchVersion(appName: string): Promise<Version> {
-  const res = await fetch(getAppUrl(appName, "/version.json"), {
-    next: { revalidate: 60 },
+/**
+ * Fetch JSON and cache it in a module-level Map keyed by URL. Bypasses
+ * Next.js's data cache (which has a hard 2 MB ceiling on the parsed JS
+ * representation) and runs our own per-process LRU with a TTL.
+ *
+ * Use for endpoints whose parsed response can exceed 2 MB (version.json on
+ * games with lots of regions, dicts/<locale>-desc.json on text-heavy games)
+ * or whose payload doesn't fit Next.js's tag/path invalidation model.
+ *
+ * Dedupes concurrent requests for the same URL so cold renders don't
+ * double-fetch.
+ */
+const memoryFetchCache = new Map<
+  string,
+  { data: unknown; expiresAt: number }
+>();
+const memoryFetchInflight = new Map<string, Promise<unknown>>();
+const MEMORY_FETCH_TTL_MS = 60_000;
+
+export async function fetchJsonWithMemoryCache<T>(
+  url: string,
+  options?: { onNotFound?: () => T | undefined; ttlMs?: number },
+): Promise<T> {
+  const now = Date.now();
+  const cached = memoryFetchCache.get(url);
+  if (cached && cached.expiresAt > now) {
+    return cached.data as T;
+  }
+  const inflight = memoryFetchInflight.get(url);
+  if (inflight) return inflight as Promise<T>;
+
+  const ttl = options?.ttlMs ?? MEMORY_FETCH_TTL_MS;
+  const promise = (async () => {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      if (res.status === 404 && options?.onNotFound) {
+        const fallback = options.onNotFound();
+        if (fallback !== undefined) return fallback;
+      }
+      throw new Error(`Failed to fetch ${url}: ${res.status}`);
+    }
+    const data = (await res.json()) as T;
+    memoryFetchCache.set(url, { data, expiresAt: Date.now() + ttl });
+    return data;
+  })().finally(() => {
+    memoryFetchInflight.delete(url);
   });
-  return res.json();
+  memoryFetchInflight.set(url, promise);
+  return promise;
+}
+
+export async function fetchVersion(appName: string): Promise<Version> {
+  return fetchJsonWithMemoryCache<Version>(getAppUrl(appName, "/version.json"));
 }
 
 // Cache for version lookup maps to avoid recreating them on each call
@@ -379,110 +427,18 @@ export function getIconsUrl(
 }
 
 /**
- * Each locale's dict ships as three files (each kept under Next.js's 2 MB
- * fetch-cache ceiling):
- *
- *   - `dicts/<locale>.json`       names/terms (filter labels, type names, item names)
- *   - `dicts/<locale>-tags.json`  *_tags entries (Fuse.js search index keywords)
- *   - `dicts/<locale>-desc.json`  *_desc entries (popover/tooltip content)
- *
- * Use `kind` to target a single bucket. Pointer-resolution is self-contained
- * within each file. To restore the legacy combined dict, call all three and
- * merge - see `fetchDict` for the default behaviour.
- */
-export type DictKind = "names" | "tags" | "desc";
-
-const DICT_KIND_SUFFIX: Record<DictKind, string> = {
-  names: "",
-  tags: "-tags",
-  desc: "-desc",
-};
-
-async function fetchDictPart(
-  appName: string,
-  locale: string,
-  kind: DictKind,
-): Promise<Record<string, string>> {
-  const suffix = DICT_KIND_SUFFIX[kind];
-  const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}${suffix}.json`,
-    { next: { revalidate: 60 } },
-  );
-  if (!res.ok) {
-    // tags or desc may legitimately be empty for some games; treat 404 as empty
-    if ((kind === "tags" || kind === "desc") && res.status === 404) {
-      return {};
-    }
-    throw new Error(
-      `Failed to fetch dict ${appName}/${locale}${suffix}: ${res.status}`,
-    );
-  }
-  return res.json();
-}
-
-/**
- * Fetch the names dict (filter labels, type names, etc.) for the given app/locale.
- * This is the critical-path dict needed for initial render and is what consumers
- * should prefer when they only need labels.
- */
-export async function fetchDictNames(
-  appName: string,
-  locale: string = "en",
-): Promise<Record<string, string>> {
-  return fetchDictPart(appName, locale, "names");
-}
-
-/**
- * Legacy combined-dict fetcher. Loads names + tags + desc in parallel and
- * merges them into a single object - matches the pre-split API so existing
- * server-rendered call sites keep working. For client-side, prefer the
- * granular fetchers + lazy load.
+ * Fetch a game's localisation dictionary. Routed through the module-level
+ * memory cache (see `fetchJsonWithMemoryCache`) to sidestep Next.js's 2 MB
+ * data-cache ceiling - some games' combined dicts (Avowed, Infinity Nikki,
+ * Crimson Desert) parse to > 2 MB in V8 even though the source JSON is smaller.
  */
 export async function fetchDict(
   appName: string,
   locale: string = "en",
 ): Promise<Record<string, string>> {
-  return fetchFullDict(appName, locale);
-}
-
-/**
- * Fetch the tags dict (`*_tags` entries) - used by the Fuse.js search index.
- * Load on demand when the user opens the search box.
- */
-export async function fetchDictTags(
-  appName: string,
-  locale: string = "en",
-): Promise<Record<string, string>> {
-  return fetchDictPart(appName, locale, "tags");
-}
-
-/**
- * Fetch the descriptions dict (`*_desc` entries) - used by tooltips, marker
- * details and zone overlays. Load on demand when a popover opens.
- */
-export async function fetchDictDesc(
-  appName: string,
-  locale: string = "en",
-): Promise<Record<string, string>> {
-  return fetchDictPart(appName, locale, "desc");
-}
-
-/**
- * Fetch all three dict parts in parallel and merge into a single dict object.
- * Use this from server-side prefetchers (sitemap, wiki, RSC layouts) where the
- * legacy combined-dict shape is convenient. For client-side, prefer the
- * granular fetchers + lazy load to keep payloads small.
- */
-export async function fetchFullDict(
-  appName: string,
-  locale: string = "en",
-): Promise<Record<string, string>> {
-  const [names, tags, desc] = await Promise.all([
-    fetchDictNames(appName, locale),
-    fetchDictTags(appName, locale),
-    fetchDictDesc(appName, locale),
-  ]);
-  return { ...names, ...tags, ...desc };
+  return fetchJsonWithMemoryCache<Record<string, string>>(
+    `${DATA_FORGE_CDN_URL}/${appName}/dicts/${locale}.json`,
+  );
 }
 
 export async function fetchDatabase(appName: string): Promise<DatabaseConfig> {
