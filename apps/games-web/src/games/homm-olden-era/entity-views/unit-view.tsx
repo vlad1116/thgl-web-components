@@ -37,6 +37,10 @@ type UnitProps = {
   cost: { name: string; cost: number }[];
   abilities: string[];
   passives: string[];
+  /** Per-ability numeric params keyed by the ability's `name` sid. */
+  abilityParams?: Record<string, number[]>;
+  /** Per-passive numeric params keyed by the passive's `name` sid. */
+  passiveParams?: Record<string, number[]>;
   altAttacks: string[];
   baseClass: string;
 };
@@ -220,7 +224,12 @@ export function UnitView({
           </h2>
           <div className="space-y-2">
             {props.abilities.map((a) => (
-              <AbilityRow key={a} sid={a} dict={dict} />
+              <AbilityRow
+                key={a}
+                sid={a}
+                dict={dict}
+                params={props.abilityParams?.[a]}
+              />
             ))}
           </div>
         </div>
@@ -233,7 +242,13 @@ export function UnitView({
           </h2>
           <div className="space-y-2">
             {props.passives.map((p) => (
-              <AbilityRow key={p} sid={p} dict={dict} passive />
+              <AbilityRow
+                key={p}
+                sid={p}
+                dict={dict}
+                passive
+                params={props.passiveParams?.[p]}
+              />
             ))}
           </div>
         </div>
@@ -246,7 +261,12 @@ export function UnitView({
           </h2>
           <div className="space-y-2">
             {props.altAttacks.map((a) => (
-              <AbilityRow key={a} sid={a} dict={dict} />
+              <AbilityRow
+                key={a}
+                sid={a}
+                dict={dict}
+                params={props.abilityParams?.[a]}
+              />
             ))}
           </div>
         </div>
@@ -317,10 +337,16 @@ function AbilityRow({
   sid,
   dict,
   passive = false,
+  params,
 }: {
   sid: string;
   dict: Record<string, string>;
   passive?: boolean;
+  /** Numeric values for the ability/passive's description placeholders, in
+   *  the order the game data stores them. Index N fills `{N}` in the
+   *  description. Extracted from buffs + misc unit stats by the data-mining
+   *  pipeline; missing slots fall back to `?`. */
+  params?: number[];
 }) {
   const name = resolveDict(dict, sid);
   const descCandidates = [
@@ -336,7 +362,10 @@ function AbilityRow({
     }
   }
   if (desc) {
-    desc = desc.replace(/\{(\d+)\}/g, "?");
+    desc = desc.replace(/\{(\d+)\}/g, (_, idx) => {
+      const v = params?.[parseInt(idx, 10)];
+      return v != null ? String(v) : "?";
+    });
     desc = desc.replace(/<\/?[a-zA-Z][^>]*>/g, "");
   }
 

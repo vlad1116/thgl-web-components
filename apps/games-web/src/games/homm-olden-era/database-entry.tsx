@@ -59,6 +59,14 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
       keys.add(`${val}_desc`);
       keys.add(`${val}_description`);
       keys.add(`faction_${val}`);
+      // For ability/passive sids that end in `_name`, also keep the parallel
+      // `_description` sid (e.g. `hive_queen_ability_2_name` →
+      // `hive_queen_ability_2_description`). That's where the actual text
+      // with `{N}` placeholders lives.
+      if (val.endsWith("_name")) {
+        keys.add(val.replace(/_name$/, "_description"));
+        keys.add(val.replace(/_name$/, "_name_desc"));
+      }
     } else if (Array.isArray(val)) {
       for (const v of val) walk(v);
     } else if (val && typeof val === "object") {
