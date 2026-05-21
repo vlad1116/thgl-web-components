@@ -44,6 +44,11 @@ export async function generateMetadata(props: PageProps) {
   const { locale } = await props.params;
   assertLocaleOrNotFound(locale);
   const config = await getAppConfig();
+  // Mirror the layout's thgl-app gate: the layout already notFound()s
+  // this tenant, but pages render in parallel and would otherwise
+  // kick off CDN/Discord fetches for `thgl-app` (which 404 or
+  // ETIMEDOUT, polluting logs).
+  if (config.name === "thgl-app") notFound();
   const dbOnly = await isDbOnly(config.name, !!config.db);
   const factory = dbOnly
     ? createDbHomePageGenerateMetadata
@@ -55,6 +60,7 @@ export default async function Page(props: PageProps) {
   const { locale } = await props.params;
   assertLocaleOrNotFound(locale);
   const config = await getAppConfig();
+  if (config.name === "thgl-app") notFound();
   const dbOnly = await isDbOnly(config.name, !!config.db);
   const factory = dbOnly ? createDbHomePage : createHomePage;
   return factory(config)(props);
