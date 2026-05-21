@@ -80,6 +80,29 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(dest, 302);
   }
 
+  // thgl-web shortcut redirects (ported from the old thgl-web Vercel
+  // next.config.js). Done in middleware (not next.config.js redirects)
+  // for the same reason as /authenticate — `has: { type: "host" }`
+  // does exact-string matching and breaks `www.localhost:3100` in dev.
+  if (config.name === "thgl-web") {
+    if (path === "/support-me/patreon") {
+      url.pathname = "/api/patreon/authorize";
+      return NextResponse.redirect(url, 302);
+    }
+    if (path === "/discord") {
+      return NextResponse.redirect(
+        "https://discord.com/invite/the-hidden-gaming-lair-320539672663031818",
+        302,
+      );
+    }
+    if (path === "/ads.txt") {
+      return NextResponse.redirect(
+        "https://api.nitropay.com/v1/ads-1487.txt",
+        301,
+      );
+    }
+  }
+
   // thgl-web (marketing site at www.th.gl) is mounted at app/www/ on
   // disk to avoid URL collisions with thgl-app (`/apps/[id]`,
   // `/api/patreon/redirect`) and the tenant home (`/`). Rewrite every
