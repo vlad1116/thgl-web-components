@@ -1,4 +1,5 @@
 import { type NextRequest } from "next/server";
+import { getRedirectUriFromRequest } from "@/games/thgl-web/lib/patreon";
 
 const ALLOWED_DOMAINS = [".th.gl", "localhost"];
 
@@ -20,9 +21,12 @@ export function GET(request: NextRequest) {
   const returnTo = searchParams.get("return_to");
 
   const clientId = process.env.PATREON_CLIENT_ID;
-  const redirectUri = process.env.PATREON_REDIRECT_URL;
+  // Derive redirect_uri from the request host so www.th.gl round-trips
+  // to itself (app.th.gl/authenticate does the same in middleware), and
+  // *.localhost dev works without per-host env vars.
+  const redirectUri = getRedirectUriFromRequest(request);
 
-  if (!clientId || !redirectUri) {
+  if (!clientId) {
     return Response.json(
       { error: "OAuth not configured" },
       { status: 503 },
