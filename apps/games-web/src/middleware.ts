@@ -15,6 +15,19 @@ import { getAppConfigByHost } from "./configs";
  */
 export function middleware(req: NextRequest) {
   const host = req.headers.get("host") || "";
+
+  // Redirect the apex domain (th.gl) to the canonical www host. Both
+  // resolve to the same Bunny pull zone, but having two hostnames
+  // serve identical content creates duplicate-content SEO issues. 308
+  // preserves the request method + path + query.
+  if (host === "th.gl" || host.startsWith("th.gl:")) {
+    const url = req.nextUrl.clone();
+    url.host = "www.th.gl";
+    url.protocol = "https:";
+    url.port = "";
+    return NextResponse.redirect(url, 308);
+  }
+
   const config = getAppConfigByHost(host);
 
   if (!config) {
