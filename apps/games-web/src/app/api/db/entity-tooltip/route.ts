@@ -222,13 +222,44 @@ export async function GET(request: Request) {
   if (hasDesc && desc.includes("{")) {
     // For entities that pre-computed `descParams` at extraction time (e.g.
     // sub-skills, which need a buff-reference chain to resolve), use that
-    // array directly. Otherwise fall back to a naive walk of `bonuses[].params`.
-    let numericValues: string[];
+    // array directly. Spells store per-mastery `levelParams[i]` instead —
+    // use level 0 (None mastery) for the tooltip, matching the
+    // "single representative value" convention.
+    let alreadySubstituted = false;
+    let numericValues: string[] = [];
     const pre = (item.props as any)?.descParams;
+    const spellLevelParams = (item.props as any)?.levelParams?.[0];
+    // Map objects ship the description's `{N}` values directly under
+    // `templateValues` (e.g. `pile_of_books` has `templateValues: [25]`
+    // for "+{0}% XP"). Used here on parity with `MapObjectView`.
+    const templateValues = (item.props as any)?.templateValues;
     if (Array.isArray(pre) && pre.length > 0) {
       numericValues = pre.map((n: number) => String(n));
+    } else if (Array.isArray(templateValues) && templateValues.length > 0) {
+      numericValues = templateValues.map((v: any) => String(v));
+    } else if (Array.isArray(spellLevelParams) && spellLevelParams.length > 0) {
+      // Spells: `levelParams[0]` = `[duration, ...statValues]`. Mirror the
+      // spell-view's `%`-aware substitution so descriptions like Radiant
+      // Armor's "–{0}% Damage. Duration: {1} round(s)" fill correctly
+      // (placeholder followed by `%` consumes stat values; non-`%` ones
+      // get the duration).
+      const duration = spellLevelParams[0];
+      const statValues = spellLevelParams.slice(1) as number[];
+      const statPlaceholders = new Set<number>();
+      for (const m of desc.matchAll(/\{(\d+)\}%/g)) {
+        statPlaceholders.add(parseInt(m[1], 10));
+      }
+      let statCursor = 0;
+      desc = desc.replace(/\{(\d+)\}/g, (_, idx: string) => {
+        const i = parseInt(idx, 10);
+        if (statPlaceholders.has(i)) {
+          const v = statValues[statCursor++];
+          return v != null ? String(v) : "?";
+        }
+        return duration != null ? String(duration) : "?";
+      });
+      alreadySubstituted = true;
     } else {
-      numericValues = [];
       // Skills store bonuses per level (`levels[i].bonuses`), not on the top
       // `bonuses` array. Fall back to level 0 so e.g. `skill_luck`'s
       // "{0} Luck" resolves to the Basic-mastery value.
@@ -246,10 +277,12 @@ export async function GET(request: Request) {
         }
       }
     }
-    desc = desc.replace(
-      /\{(\d+)\}/g,
-      (_, idx: string) => numericValues[parseInt(idx)] ?? "?",
-    );
+    if (!alreadySubstituted) {
+      desc = desc.replace(
+        /\{(\d+)\}/g,
+        (_, idx: string) => numericValues[parseInt(idx)] ?? "?",
+      );
+    }
   }
   if (hasDesc) desc = stripHtml(desc);
 
