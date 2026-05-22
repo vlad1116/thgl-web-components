@@ -352,9 +352,23 @@ export async function GET(request: Request) {
       if (p.specialization) {
         const specName = resolveDict(dict, p.specialization as string);
         const baseId = (p.specialization as string).replace("_specialization", "");
-        const rawSpecDesc = resolveDict(dict, `${baseId}_spec_desc`);
+        // Prefer `<sid>_specialization_desc` over the short `_spec_desc`.
+        // The two can disagree (e.g. Merry Elias's `_spec_desc` says
+        // "Spellbook one more time per battle round" but the actual
+        // mechanic — captured by `_specialization_desc` — is +1 global-map
+        // spell cap). `_specialization_desc` is the authoritative text on
+        // the specialization detail page, so we use that here too.
+        const specializationDescKey = `${p.specialization}_desc`;
+        const shortDescKey = `${baseId}_spec_desc`;
+        const fullDesc = resolveDict(dict, specializationDescKey);
+        const rawSpecDesc =
+          fullDesc && fullDesc !== specializationDescKey
+            ? fullDesc
+            : resolveDict(dict, shortDescKey);
         const hasSpecDesc =
-          rawSpecDesc && rawSpecDesc !== `${baseId}_spec_desc`;
+          rawSpecDesc &&
+          rawSpecDesc !== shortDescKey &&
+          rawSpecDesc !== specializationDescKey;
         if (specName !== p.specialization && hasSpecDesc) {
           const specsCat = await fetchDatabaseType(appConfig.name, "specializations");
           const specEntry = specsCat.items.find(

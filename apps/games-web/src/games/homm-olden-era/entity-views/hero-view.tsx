@@ -92,8 +92,18 @@ export function HeroView({
   const specName = props.specialization
     ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec`)
     : undefined;
+  // Prefer the full `<id>_specialization_desc` over the shorter `_spec_desc`.
+  // The two can disagree (e.g. Merry Elias's short description says
+  // "Spellbook one more time per battle round" but the accurate mechanic
+  // is +1 global-map spell cap, captured in `_specialization_desc`).
   const rawSpecDesc = props.specialization
-    ? resolveDict(dict, `${props.specialization.replace("_specialization", "")}_spec_desc`)
+    ? (() => {
+        const fullKey = `${props.specialization}_desc`;
+        const fullText = resolveDict(dict, fullKey);
+        if (fullText && fullText !== fullKey) return fullText;
+        const baseId = props.specialization.replace("_specialization", "");
+        return resolveDict(dict, `${baseId}_spec_desc`);
+      })()
     : undefined;
   const specBonuses = props.specialization
     ? ((database
@@ -169,6 +179,7 @@ export function HeroView({
           </div>
           <p className="font-medium">{specName}</p>
           {rawSpecDesc &&
+            rawSpecDesc !== `${props.specialization}_desc` &&
             rawSpecDesc !==
               `${props.specialization.replace("_specialization", "")}_spec_desc` && (
               <p className="text-sm text-muted-foreground mt-1">{specDesc}</p>
