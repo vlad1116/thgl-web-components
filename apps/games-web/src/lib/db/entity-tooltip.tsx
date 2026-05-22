@@ -150,7 +150,7 @@ export function EntityTooltip({
                   </div>
                 )}
                 {data.desc && (
-                  <p className="text-xs text-muted-foreground italic mb-2 line-clamp-3">
+                  <p className="text-xs text-muted-foreground italic mb-2">
                     {data.desc}
                   </p>
                 )}
