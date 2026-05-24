@@ -7,19 +7,26 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { FilterSettingsPopover } from "./filter-settings-popover";
 import { useT } from "../(providers)";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 export function CollapsibleFilter({
   appName,
   filter,
   iconsPath,
+  forceOpen,
+  valueFilter,
 }: {
   appName: string;
   filter: FiltersConfig[number];
   iconsPath?: string;
+  forceOpen?: boolean;
+  valueFilter?: Set<string>;
 }) {
   const [open, setOpen] = useState(filter.defaultOpen ?? false);
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
 
   const t = useT();
   const filters = useUserStore((state) => state.filters);
@@ -109,6 +116,7 @@ export function CollapsibleFilter({
       </div>
       <CollapsibleContent className="flex flex-wrap">
         {filter.values
+          .filter((v) => !valueFilter || valueFilter.has(v.id))
           .sort((a, b) => {
             if (a.sort !== undefined && b.sort !== undefined) {
               return a.sort - b.sort;

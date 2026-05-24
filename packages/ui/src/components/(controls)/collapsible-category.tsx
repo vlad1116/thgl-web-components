@@ -6,7 +6,7 @@ import {
 } from "../ui/collapsible";
 import { CollapsibleFilter } from "./collapsible-filter";
 import { useT } from "../(providers)";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { FilterSettingsPopover } from "./filter-settings-popover";
 
@@ -15,13 +15,20 @@ export function CollapsibleCategory({
   filters,
   appName,
   iconsPath,
+  forceOpen,
+  valueFilter,
 }: {
   category: string;
   filters: FiltersConfig;
   appName: string;
   iconsPath?: string;
+  forceOpen?: boolean;
+  valueFilter?: Set<string>;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
 
   const t = useT();
   const userFilters = useUserStore((state) => state.filters);
@@ -107,6 +114,8 @@ export function CollapsibleCategory({
               filter={f}
               appName={appName}
               iconsPath={iconsPath}
+              forceOpen={forceOpen}
+              valueFilter={valueFilter}
             />
           ))}
         </div>
