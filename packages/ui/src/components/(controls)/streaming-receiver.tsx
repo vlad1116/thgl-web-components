@@ -6,6 +6,53 @@ import Peer, { DataConnection } from "peerjs";
 import { RemotePlayer, usePeersStore } from "../(providers)/peers-store";
 import { PeerMeshUtils, peerConfig, type ControlMsg } from "../(providers)/peer-mesh-utils";
 import { useEffect, useRef, useState } from "react";
+
+// PeerJS's "close" event isn't always fired when a tab is hard-killed,
+// refreshed, or the OS shuts down — the remote side has to detect the dead
+// connection via ICE timeout, and that signal sometimes never propagates up
+// to PeerJS. Result: stale entries pile up in the leader's receiverConns /
+// senderIds maps every time someone refreshes (reported by Elsia on Discord).
+//
+// Watch the underlying RTCPeerConnection's state directly so we react to
+// "failed"/"closed" event-driven, plus give "disconnected" a 30s grace
+// window for transient network blips. When we decide it's dead we just call
+// conn.close() — PeerJS then fires its own "close" event which the existing
+// per-leader cleanup handlers already listen to.
+function attachConnectionStateWatcher(conn: DataConnection) {
+  const pc = conn.peerConnection;
+  if (!pc) return;
+  let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearDisconnectTimer = () => {
+    if (disconnectTimer) {
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
+    }
+  };
+  const killIfOpen = () => {
+    if (conn.open) {
+      try { conn.close(); } catch { /* already closing */ }
+    }
+  };
+  pc.addEventListener("connectionstatechange", () => {
+    const state = pc.connectionState;
+    if (state === "failed" || state === "closed") {
+      clearDisconnectTimer();
+      killIfOpen();
+    } else if (state === "disconnected") {
+      // Transient: could recover. Give it a grace window before kicking.
+      if (!disconnectTimer) {
+        disconnectTimer = setTimeout(() => {
+          disconnectTimer = null;
+          if (pc.connectionState !== "connected") {
+            killIfOpen();
+          }
+        }, 30000);
+      }
+    } else if (state === "connected") {
+      clearDisconnectTimer();
+    }
+  });
+}
 import { useShallow } from "zustand/react/shallow";
 import {
   Dialog,
@@ -726,6 +773,7 @@ export function StreamingReceiver({
                   });
                 }
               });
+              attachConnectionStateWatcher(conn);
             });
             leaderPeer.on("open", () => {
               setErrorMessage("");
@@ -884,6 +932,7 @@ export function StreamingReceiver({
                   });
                 }
               });
+              attachConnectionStateWatcher(conn);
             });
             leaderPeer.on("open", () => {
               setErrorMessage("");
@@ -1048,6 +1097,7 @@ export function StreamingReceiver({
                 });
               }
             });
+            attachConnectionStateWatcher(conn);
           });
           leaderPeer.on("open", () => {
             setErrorMessage("");
