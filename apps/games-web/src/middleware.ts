@@ -110,6 +110,19 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // Shared cross-tenant game icons bundled under public/games/thgl-web/
+  // global_icons/ are referenced by absolute URL (`https://www.th.gl/
+  // global_icons/...`) from games.ts, whats-new, and game-switcher so
+  // every tenant resolves the same sprite. Without this rewrite the
+  // catch-all below sends the request to /www/global_icons/* which has
+  // no route, and the Bunny container falls back to its deploy
+  // placeholder HTML — Chrome's ORB then blocks the cross-origin
+  // image fetch.
+  if (config.name === "thgl-web" && path.startsWith("/global_icons/")) {
+    url.pathname = `/games/thgl-web${path}`;
+    return NextResponse.rewrite(url);
+  }
+
   // thgl-web (marketing site at www.th.gl) is mounted at app/www/ on
   // disk to avoid URL collisions with thgl-app (`/apps/[id]`,
   // `/api/patreon/redirect`) and the tenant home (`/`). Rewrite every

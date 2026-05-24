@@ -7,7 +7,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
 import apps from "./global-menu.json";
 
-const ICON_BASE_URL = "https://www.th.gl/global_icons/";
+// Relative path so every tenant hits its own host (the public folder is
+// shared across the games-web container, so `/games/thgl-web/global_icons/*`
+// resolves on palia.th.gl, www.th.gl, palia.localhost:3100, etc.). Hitting
+// the absolute https://www.th.gl/global_icons/ URL was being served as
+// text/html by Bunny and getting blocked by Chrome's ORB cross-origin.
+const ICON_BASE_URL = "/games/thgl-web/global_icons/";
 
 type AppEntry = (typeof apps)[number];
 
