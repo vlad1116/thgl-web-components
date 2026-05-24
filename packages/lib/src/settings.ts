@@ -146,7 +146,6 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   myFilters: [],
   showGrid: false,
   showFilters: true,
-  expandedFilters: false,
   // Peer Link / Mesh settings
   peerCode: "",
   lastMeSenderId: "",
@@ -214,7 +213,6 @@ export type ProfileSettings = {
   myFilters: DrawingsAndNodes[];
   showGrid: boolean;
   showFilters: boolean;
-  expandedFilters: boolean;
   // Peer Link / Mesh settings
   peerCode: string;
   lastMeSenderId: string;
@@ -304,7 +302,6 @@ export interface ProfileActions {
   removeMyNode: (nodeId: string) => void;
   toggleShowGrid: () => void;
   toggleShowFilters: () => void;
-  toggleExpandedFilters: () => void;
   // Peer Link / Mesh settings
   setPeerCode: (code: string) => void;
   setLastMeSenderId: (id: string) => void;
@@ -1120,13 +1117,6 @@ export const useSettingsStore = create(
           const state = get();
           updateSettings({
             showFilters: !state.showFilters,
-          });
-        },
-
-        toggleExpandedFilters: () => {
-          const state = get();
-          updateSettings({
-            expandedFilters: !state.expandedFilters,
           });
         },
 

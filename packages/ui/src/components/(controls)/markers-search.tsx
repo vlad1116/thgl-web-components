@@ -7,7 +7,6 @@ import { MarkersSearchResults } from "./markers-search-results";
 import { MarkersFilters } from "./markers-filters";
 import { ScrollArea } from "../ui/scroll-area";
 import {
-  FoldVertical,
   PanelLeftClose,
   Search,
   SlidersHorizontal,
@@ -49,11 +48,6 @@ export function MarkersSearch({
   const showFilters = useSettingsStore((state) => state.showFilters);
   const toggleShowFilters = useSettingsStore(
     (state) => state.toggleShowFilters,
-  );
-
-  const expandedFilters = useSettingsStore((state) => state.expandedFilters);
-  const toggleExpandedFilters = useSettingsStore(
-    (state) => state.toggleExpandedFilters,
   );
 
   const mapNames = Object.entries(tileOptions).map(([k, v]) => ({
@@ -191,7 +185,6 @@ export function MarkersSearch({
       <div
         className={cn(
           "pointer-events-auto border rounded-md bg-card text-card-foreground shadow relative pb-1 overflow-hidden text-sm flex flex-col",
-          expandedFilters ? "" : "md:max-h-[min(40vh,300px)]",
           {
             collapse: !showFilters,
           },
@@ -254,22 +247,6 @@ export function MarkersSearch({
           )}
         </ScrollArea>
       </div>
-      <button
-        className={cn(
-          "pointer-events-auto hover:text-primary mx-auto bg-card p-1.5 rounded-b-md -mt-4",
-          {
-            hidden: !showFilters,
-          },
-        )}
-        onClick={toggleExpandedFilters}
-        aria-label={expandedFilters ? "Collapse filters" : "Expand filters"}
-      >
-        {expandedFilters ? (
-          <FoldVertical className="h-4 w-4" />
-        ) : (
-          <UnfoldVertical className="h-4 w-4" />
-        )}
-      </button>
       <div className="grow" />
       {children}
     </div>
