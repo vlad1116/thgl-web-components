@@ -178,7 +178,11 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
           <Settings2 className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 space-y-3" side="right">
+      <PopoverContent
+        className="w-64 space-y-3 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent"
+        side="right"
+        collisionPadding={8}
+      >
         {!isGroup && (
           <>
             {props.liveOnly && (
