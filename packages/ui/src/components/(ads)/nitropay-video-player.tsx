@@ -6,7 +6,11 @@ import { AdFreeContainer } from "./ad-free-container";
 import { IS_DEMO_MODE } from "./constants";
 import { AdPlaceholder } from "./ad-placeholder";
 
-const mediaQuery = "(min-width: 768px)";
+// Inline ad lives inside the filter sidebar (~225px including the
+// AdFreeContainer header). On short viewports it pushes the filter
+// list offscreen, so gate on min-height too — same 750px threshold
+// FloatingBanner uses to pick its compact vs sidebar variant.
+const mediaQuery = "(min-width: 768px) and (min-height: 750px)";
 export function NitroPayVideoPlayer({
   id,
   targeting,
