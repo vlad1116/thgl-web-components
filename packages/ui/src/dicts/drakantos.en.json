@@ -1,0 +1,20 @@
+{
+  "config.internalLinks.creatures.title": "Creatures",
+  "config.internalLinks.creatures.description": "Bestiary entries for every monster across the realms of Drakantos — descriptions, lore, and regions.",
+  "config.internalLinks.creatures.linkText": "Browse all Creatures",
+  "config.internalLinks.items.title": "Items",
+  "config.internalLinks.items.description": "Every item with its decrypted sprite icon, captured from a live game session.",
+  "config.internalLinks.items.linkText": "Browse all Items",
+  "config.internalLinks.outfits.title": "Outfits",
+  "config.internalLinks.outfits.description": "Character and creature outfit sprites — the visual side of every monster, player, and NPC.",
+  "config.internalLinks.outfits.linkText": "Browse all Outfits",
+  "config.internalLinks.places.title": "Places & People",
+  "config.internalLinks.places.description": "Lore entries about the people, places, factions, and history of Drakantos.",
+  "config.internalLinks.places.linkText": "Browse all Lore",
+  "config.internalLinks.zones.title": "Zones",
+  "config.internalLinks.zones.description": "Every map in the game — cities, PvP arenas, quest zones, ships, and the world map itself.",
+  "config.internalLinks.zones.linkText": "Browse all Zones",
+  "config.internalLinks.story.title": "Story",
+  "config.internalLinks.story.description": "Story chapters and player guides for the world of Drakantos.",
+  "config.internalLinks.story.linkText": "Read the Story"
+}

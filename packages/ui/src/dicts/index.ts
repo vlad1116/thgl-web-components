@@ -51,6 +51,9 @@ const appDictionaries = {
     "zh-TW": () =>
       import("./dune-awakening.zh-TW.json").then((mod) => mod.default),
   },
+  drakantos: {
+    en: () => import("./drakantos.en.json").then((mod) => mod.default),
+  },
   palia: {
     en: () => import("./palia.en.json").then((mod) => mod.default),
     de: () => import("./palia.de.json").then((mod) => mod.default),

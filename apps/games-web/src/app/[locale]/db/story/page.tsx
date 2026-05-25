@@ -1,79 +1,38 @@
+// Multi-tenant /db/story route. Dispatches to the per-game implementation
+// based on the resolved AppConfig. Currently hosts BPSR's story explorer
+// and Drakantos's story chapters.
+
 import { type Metadata } from "next";
-import { DEFAULT_LOCALE, fetchDatabase } from "@repo/lib";
-import { JSONLDScript } from "@repo/ui/apps";
-import { requireApp } from "@/lib/get-app-config";
-import { SectionJsonLd } from "@/lib/db/section-jsonld";
-import { collectionPageJsonLd } from "@/lib/db/json-ld";
-import { loadSection } from "@/games/blue-protocol-star-resonance/data";
-import { BPSR_SECTIONS } from "@/games/blue-protocol-star-resonance/sections";
-import { SectionHero } from "@/games/blue-protocol-star-resonance/section-hero";
-import { SectionList } from "@/games/blue-protocol-star-resonance/section-list";
-import { sectionMetadata } from "@/games/blue-protocol-star-resonance/metadata";
-import { blueProtocolStarResonance } from "@/configs/blue-protocol-star-resonance";
+import { notFound } from "next/navigation";
+import { DEFAULT_LOCALE } from "@repo/lib";
+import { getAppConfig } from "@/lib/get-app-config";
+import { bpsrStoryMetadata, BpsrStoryListPage } from "@/games/blue-protocol-star-resonance/story-pages";
+import { makeCategoryPage } from "@/games/drakantos/category-page";
 
 type PageProps = { params: Promise<{ locale?: string }> };
 
-const SECTION = BPSR_SECTIONS.story;
+const drakantosStory = makeCategoryPage("story", ["guide"]);
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  await requireApp("blue-protocol-star-resonance");
-  const { locale = DEFAULT_LOCALE } = await params;
-  return sectionMetadata(SECTION, locale);
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const config = await getAppConfig();
+  if (config.name === "blue-protocol-star-resonance") {
+    const { locale = DEFAULT_LOCALE } = await props.params;
+    return bpsrStoryMetadata(locale);
+  }
+  if (config.name === "drakantos") {
+    return drakantosStory.generateMetadata(props);
+  }
+  notFound();
 }
 
-export default async function Page({ params }: PageProps) {
-  await requireApp("blue-protocol-star-resonance");
-  const { locale = DEFAULT_LOCALE } = await params;
-  const rawGroups = await loadSection(SECTION, locale);
-
-  // Story phases inside an episode are authored in narrative order, but
-  // the database doesn't guarantee that order on disk. Sort by
-  // phaseOrder so the listing reads as a chronological campaign log.
-  const groups = rawGroups.map((g) => ({
-    ...g,
-    items: [...g.items].sort((a, b) => {
-      const ao = typeof a.props.phaseOrder === "number" ? a.props.phaseOrder : 0;
-      const bo = typeof b.props.phaseOrder === "number" ? b.props.phaseOrder : 0;
-      return ao - bo;
-    }),
-  }));
-
-  const totalCount = groups.reduce((s, g) => s + g.items.length, 0);
-  const database = await fetchDatabase("blue-protocol-star-resonance");
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-10">
-      <JSONLDScript
-        json={collectionPageJsonLd({
-          appConfig: blueProtocolStarResonance,
-          section: SECTION.href,
-          sectionLabel: SECTION.label,
-          description: SECTION.tagline,
-          items: groups.flatMap((g) =>
-            g.items.map((i) => ({ id: i.id, name: i.props.title })),
-          ),
-          locale,
-        })}
-      />
-      <SectionJsonLd
-        appConfig={blueProtocolStarResonance}
-        section={SECTION.href}
-        sectionLabel={SECTION.label}
-        description={SECTION.tagline}
-        dict={{}}
-        database={database}
-        typePrefixes={[SECTION.typePrefix]}
-        resolveName={(item) =>
-          (item.props as { title?: string }).title ?? item.id
-        }
-        locale={locale}
-      />
-      <SectionHero
-        section={SECTION}
-        totalCount={totalCount}
-        totalCategories={groups.length}
-      />
-      <SectionList section={SECTION} groups={groups} locale={locale} />
-    </div>
-  );
+export default async function Page(props: PageProps) {
+  const config = await getAppConfig();
+  if (config.name === "blue-protocol-star-resonance") {
+    const { locale = DEFAULT_LOCALE } = await props.params;
+    return BpsrStoryListPage({ locale });
+  }
+  if (config.name === "drakantos") {
+    return drakantosStory.Page(props);
+  }
+  notFound();
 }
