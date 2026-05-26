@@ -6,7 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ArrowLeft, Circle } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
-import { ScrollArea } from "../ui/scroll-area";
 import {
   Command,
   CommandEmpty,
@@ -153,25 +152,26 @@ export function IconPicker({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="space-y-4">
+      <PopoverContent className="p-0 max-h-[var(--radix-popover-content-available-height)] overflow-hidden flex flex-col">
         {icons === null ? (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             <Skeleton className="h-4 w-[250px]" />
             <Skeleton className="h-4 w-[200px]" />
           </div>
         ) : selection ? (
-          <div className="space-y-2">
-            <button
-              className="flex gap-1 items-center text-sm text-primary underline-offset-4 hover:underline"
-              onClick={() => setSelection(null)}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to categories</span>
-            </button>
-            <div className="text-sm font-medium">{selection.tag}</div>
-            <div className="flex flex-wrap gap-1">
-              <ScrollArea className="max-h-96">
-                {selection.icons.map((icon) => (
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className="px-4 pt-4 pb-2 space-y-2 shrink-0">
+              <button
+                className="flex gap-1 items-center text-sm text-primary underline-offset-4 hover:underline"
+                onClick={() => setSelection(null)}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to categories</span>
+              </button>
+              <div className="text-sm font-medium">{selection.tag}</div>
+            </div>
+            <div className="flex flex-wrap gap-1 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
+              {selection.icons.map((icon) => (
                   <button
                     key={`${icon.name}-${icon.author}`}
                     onClick={() => onChange(icon)}
@@ -207,40 +207,32 @@ export function IconPicker({
                     )}
                   </button>
                 ))}
-              </ScrollArea>
             </div>
           </div>
         ) : (
-          <Command>
+          <Command className="flex-1 min-h-0">
             <CommandInput placeholder="Search category..." />
             <CommandEmpty className="w-full">No category found.</CommandEmpty>
-            <CommandList>
-              <CommandGroup className="p-0 flex">
-                <ScrollArea className="h-full max-h-96">
-                  {icons.map((subIcons, index) => (
-                    <Fragment key={index}>
-                      {subIcons.map(({ tag, icons, ...props }) => (
-                        <CommandItem
-                          key={tag}
-                          value={tag}
-                          onSelect={() => {
-                            setSelection({ tag, icons, ...props });
-                          }}
-                        >
-                          {/* <img
-                            src={icons[0].url}
-                            alt=""
-                            className="mr-2 h-4 w-4"
-                          /> */}
-                          <span>
-                            {tag} ({icons.length})
-                          </span>
-                        </CommandItem>
-                      ))}
-                      {index !== icons.length - 1 && <CommandSeparator />}
-                    </Fragment>
-                  ))}
-                </ScrollArea>
+            <CommandList className="[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
+              <CommandGroup className="p-0">
+                {icons.map((subIcons, index) => (
+                  <Fragment key={index}>
+                    {subIcons.map(({ tag, icons, ...props }) => (
+                      <CommandItem
+                        key={tag}
+                        value={tag}
+                        onSelect={() => {
+                          setSelection({ tag, icons, ...props });
+                        }}
+                      >
+                        <span>
+                          {tag} ({icons.length})
+                        </span>
+                      </CommandItem>
+                    ))}
+                    {index !== icons.length - 1 && <CommandSeparator />}
+                  </Fragment>
+                ))}
               </CommandGroup>
             </CommandList>
           </Command>
@@ -249,7 +241,7 @@ export function IconPicker({
         <Button
           size="sm"
           onClick={() => onChange(null)}
-          className="block mx-auto"
+          className="block mx-auto shrink-0 my-3"
           variant="outline"
         >
           Clear icon
