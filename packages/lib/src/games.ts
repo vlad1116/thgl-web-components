@@ -550,13 +550,6 @@ export const games: Array<Game> = [
       },
     },
     web: "https://avowed.th.gl",
-    overwolf: {
-      id: "dfmnobmlhpkjnodhlabbmihmgocgpklofeklfmod",
-      title: "Avowed Interactive Maps",
-      protocol: "thgl-avowed-map",
-      url: "https://www.overwolf.com/app/leon_machens-avowed_interactive_maps",
-      supportsCopySecret: true,
-    },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
@@ -732,13 +725,6 @@ export const games: Array<Game> = [
     title: "Hogwarts Legacy",
     logo: "https://www.th.gl/global_icons/hogwarts-legacy.webp",
     web: "https://hogwarts.th.gl",
-    overwolf: {
-      id: "ejpjngplofkhhplmlfdhlaccobehhefmgbbojdno",
-      title: "Hogwarts Legacy Map",
-      protocol: "thgl-hogwarts-legacy",
-      url: "https://www.overwolf.com/app/Leon_Machens-Hogwarts.gg",
-      supportsCopySecret: true,
-    },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
