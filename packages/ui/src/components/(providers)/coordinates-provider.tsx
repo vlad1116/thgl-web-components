@@ -99,6 +99,13 @@ export const REGION_FILTERS = [
 ];
 const emptyArray: any[] = [];
 const emptyObject: any = {};
+// Stable refs for prop defaults — destructuring inline literals (`= []`,
+// `= ["default"]`) creates a NEW reference every render, which in turn
+// invalidates every useMemo / useCallback / useEffect that depends on
+// the prop. That cascades into refreshSpawns → setSpawns → MarkersContent
+// re-render → static-effect re-run → 10k+ markerLayer.add() calls per tick.
+const EMPTY_GLOBAL_FILTERS: GlobalFiltersConfig = [];
+const DEFAULT_MAP_NAMES: string[] = ["default"];
 
 export function CoordinatesProvider({
   children,
@@ -107,9 +114,9 @@ export function CoordinatesProvider({
   useCbor,
   regions,
   filters,
-  globalFilters = [],
+  globalFilters = EMPTY_GLOBAL_FILTERS,
   typesIdMap,
-  mapNames = ["default"],
+  mapNames = DEFAULT_MAP_NAMES,
   appName,
   nodesPaths,
   map,
