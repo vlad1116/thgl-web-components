@@ -160,6 +160,7 @@ export interface IconMarkerInstance {
   z?: number; // optional elevation for relative z-arrow logic
   isHighlighted?: boolean;
   isDiscovered?: boolean; // greyscale + alpha reduction
+  isMuted?: boolean; // alpha reduction only (e.g. predicted-only spawns in combined live mode)
   zPos?: "top" | "bottom" | "needle" | "needle-down" | null;
   zMag?: number; // 0..1 magnitude of relative z (for halo)
   isSelected?: boolean;
@@ -184,7 +185,7 @@ in vec2 a_pos;      // unit quad [0..1] OR line position for height stems
 in vec2 a_offset;   // world px top-left
 in vec2 a_size;     // size in px
 in vec4 a_uv;       // uv origin (xy) and size (zw)
-in float a_disc;    // per-instance discovered flag (0/1)
+in float a_disc;    // per-instance state: 0 normal, 0.5 muted, 1.0 discovered
 in vec2 a_flags;    // x: normalized height, y: zpos(-1/0/1)
 in float a_count;   // 1=single, 2=stacked (multiple spawns at same location)
 in float a_angle;   // rotation in radians
@@ -446,9 +447,13 @@ void main(){
       c = u_hc_color;
     }
   }
-  if (v_disc > 0.5) {
+  if (v_disc > 0.75) {
+    // discovered: greyscale + 50% alpha
     float g = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
     c = vec4(vec3(g), c.a * 0.5);
+  } else if (v_disc > 0.25) {
+    // muted (e.g. predicted-only in combined live mode): keep color, fade alpha
+    c = vec4(c.rgb, c.a * 0.35);
   }
   // Use v_localUv for overlays (0..1 across the entire rendered quad)
   vec2 uv = v_localUv;
@@ -546,8 +551,8 @@ void main(){
     overlayAlpha = max(overlayAlpha, cross);
   }
 
-  // Apply color-blind simulation (only to non-discovered icons to avoid double-greyscale)
-  if(u_cb_mode != 0 && v_disc < 0.5){
+  // Apply color-blind simulation (skip discovered icons to avoid double-greyscale; muted is fine)
+  if(u_cb_mode != 0 && v_disc < 0.75){
     vec3 sim = simulateCB(draw, u_cb_mode);
     draw = mix(draw, sim, clamp(u_cb_sev, 0.0, 1.0));
   }
@@ -1467,7 +1472,7 @@ export class IconMarkerLayer implements Layer {
         uvs[visCount * 4 + 1] = v0;
         uvs[visCount * 4 + 2] = uw;
         uvs[visCount * 4 + 3] = vh;
-        discs[visCount] = m.isDiscovered ? 1 : 0;
+        discs[visCount] = m.isDiscovered ? 1 : m.isMuted ? 0.5 : 0;
         const rawZ = typeof m.z === "number" ? m.z : 0;
         let normalizedHeight =
           m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;

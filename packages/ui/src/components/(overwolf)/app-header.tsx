@@ -15,6 +15,7 @@ import { SendLogs } from "./send-logs";
 import {
   Button,
   Label,
+  LiveModeControl,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -148,12 +149,10 @@ export function AppHeader({
 
               {typesIdMap && Object.keys(typesIdMap).length > 0 && (
                 <Tooltip delayDuration={200} disableHoverableContent>
-                  <TooltipTrigger>
-                    <HeaderSwitch
-                      checked={settingsStore.liveMode}
-                      label="Live Mode"
-                      onChange={settingsStore.toggleLiveMode}
-                    />
+                  <TooltipTrigger asChild>
+                    <div>
+                      <LiveModeControl />
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent className="w-64" side="bottom">
                     <p>
@@ -163,7 +162,7 @@ export function AppHeader({
                       mode support.
                     </p>
                     <Label className="flex items-center gap-2 justify-between">
-                      Toggle Live Mode
+                      Cycle Live Mode
                       <Hotkey
                         name={HOTKEYS.TOGGLE_LIVE_MODE}
                         gameClassId={gameClassId}

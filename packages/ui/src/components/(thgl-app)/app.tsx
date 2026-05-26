@@ -26,6 +26,7 @@ import {
 import {
   Button,
   ErrorBoundary,
+  LiveModeControl,
   Toaster,
   Tooltip,
   TooltipContent,
@@ -37,7 +38,6 @@ import { OverlayInputEvents } from "./overlay-input-events";
 import { AppMapDynamic } from "./app-map-dynamic";
 import { InitializeApp } from "./initialize-app";
 import { ResizeBorders } from "./resize-borders";
-import { HeaderSwitch } from "../(header)";
 import { EyeNoneIcon, EyeOpenIcon } from "@radix-ui/react-icons";
 import { UnlockButton } from "./unlock-button";
 import { MapHotkeys } from "./map-hotkeys";
@@ -77,8 +77,6 @@ export function App({
   isOverlay?: boolean;
   additionalTooltip?: AdditionalTooltipType;
 }) {
-  const liveMode = useSettingsStore((state) => state.liveMode);
-  const toggleLiveMode = useSettingsStore((state) => state.toggleLiveMode);
   const lockedWindow = useSettingsStore((state) => state.lockedWindow);
   const toggleLockedWindow = useSettingsStore(
     (state) => state.toggleLockedWindow,
@@ -230,13 +228,7 @@ export function App({
                 <Tooltip delayDuration={200} disableHoverableContent>
                   <TooltipTrigger asChild>
                     <div>
-                      <HeaderSwitch
-                        checked={liveMode}
-                        label="Live Mode"
-                        labelClassName="hidden md:inline-flex"
-                        onChange={toggleLiveMode}
-                        disabled={withoutLiveMode}
-                      />
+                      <LiveModeControl disabled={withoutLiveMode} />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent className="w-64" side="bottom">

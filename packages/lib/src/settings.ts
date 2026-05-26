@@ -1,7 +1,42 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, subscribeWithSelector } from "zustand/middleware";
+import { useAccountStore } from "./account";
 import { withStorageDOMEvents } from "./dom";
 import { putSharedFilters } from "./shared-nodes";
+
+export type LiveMode = "static" | "live" | "combined";
+
+export const LIVE_MODE_VALUES: readonly LiveMode[] = [
+  "static",
+  "combined",
+  "live",
+] as const;
+
+/** Modes gated behind preview-release perks. */
+export const PREVIEW_LIVE_MODES: ReadonlySet<LiveMode> = new Set(["combined"]);
+
+export function isLiveReadingActive(liveMode: LiveMode): boolean {
+  return liveMode !== "static";
+}
+
+export function nextLiveMode(current: LiveMode): LiveMode {
+  const idx = LIVE_MODE_VALUES.indexOf(current);
+  return LIVE_MODE_VALUES[(idx + 1) % LIVE_MODE_VALUES.length];
+}
+
+/**
+ * Read the live mode the user is currently entitled to.
+ * Silently downgrades preview-gated modes ('combined') to 'live' for
+ * users without preview access — keeps the heavy combined-mode render
+ * path off the free tier even if their stored setting is 'combined'
+ * (legacy or auto-set by peer sync).
+ */
+export function useEffectiveLiveMode(): LiveMode {
+  const liveMode = useSettingsStore((s) => s.liveMode);
+  const hasPreview = useAccountStore((s) => s.perks.previewReleaseAccess);
+  if (!hasPreview && PREVIEW_LIVE_MODES.has(liveMode)) return "live";
+  return liveMode;
+}
 
 export type PrivateNode = {
   id: string;
@@ -96,7 +131,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
     show_labels: "Shift+F5",
   },
   groupName: "",
-  liveMode: true,
+  liveMode: "combined",
   overlayMode: null,
   overlayFullscreen: false,
   lockedWindow: false,
@@ -163,7 +198,7 @@ export const DEFAULT_PROFILE = {
 export type ProfileSettings = {
   hotkeys: Record<string, string>;
   groupName: string;
-  liveMode: boolean;
+  liveMode: LiveMode;
   overlayMode: boolean | null;
   overlayFullscreen: boolean;
   lockedWindow: boolean;
@@ -233,8 +268,8 @@ export interface ProfileActions {
   setHotkey: (key: string, value: string) => void;
   setHotkeys: (hotkeys: Record<string, string>) => void;
   setGroupName: (groupName: string) => void;
-  setLiveMode: (liveMode: boolean) => void;
-  toggleLiveMode: () => void;
+  setLiveMode: (liveMode: LiveMode) => void;
+  cycleLiveMode: () => void;
   setOverlayMode: (overlayMode: boolean) => void;
   toggleOverlayFullscreen: () => void;
   toggleLockedWindow: () => void;
@@ -390,6 +425,7 @@ let discoveredCoordsSet: Set<string> | null = null;
 let cachedDiscoveredNodes: string[] | null = null;
 
 export const useSettingsStore = create(
+  subscribeWithSelector(
   persist<SettingsStore>(
     (set, get) => {
       // Helper to update both flat state and profiles array
@@ -560,10 +596,10 @@ export const useSettingsStore = create(
           updateSettings({ liveMode });
         },
 
-        toggleLiveMode: () => {
+        cycleLiveMode: () => {
           const state = get();
           updateSettings({
-            liveMode: !state.liveMode,
+            liveMode: nextLiveMode(state.liveMode),
           });
         },
 
@@ -1176,7 +1212,7 @@ export const useSettingsStore = create(
           state.setHasHydrated(true);
         }
       },
-      version: 4,
+      version: 5,
       // @ts-ignore
       migrate: (persistedState, version) => {
         if (version < 3) {
@@ -1231,9 +1267,29 @@ export const useSettingsStore = create(
           }
         }
 
+        if (version < 5) {
+          // liveMode boolean → tri-state: true→'combined', false→'static'
+          const state = persistedState as any;
+          const convert = (v: unknown): LiveMode =>
+            typeof v === "string" ? (v as LiveMode) : v ? "combined" : "static";
+          if ("liveMode" in state) {
+            state.liveMode = convert(state.liveMode);
+          }
+          if (Array.isArray(state.profiles)) {
+            state.profiles = state.profiles.map((p: Profile) => ({
+              ...p,
+              settings: {
+                ...p.settings,
+                liveMode: convert(p.settings?.liveMode),
+              },
+            }));
+          }
+        }
+
         return persistedState;
       },
     },
+  ),
   ),
 );
 

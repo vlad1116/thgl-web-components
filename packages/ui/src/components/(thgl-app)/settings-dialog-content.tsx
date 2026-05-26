@@ -84,7 +84,7 @@ export function THGLAppSettingsDialogContent({
             />
           </Label>
           <Label className="flex items-center gap-2 justify-between">
-            Toggle Live Mode
+            Cycle Live Mode
             <Hotkey
               name={HOTKEYS.TOGGLE_LIVE_MODE}
               isActive={recordingName === HOTKEYS.TOGGLE_LIVE_MODE}

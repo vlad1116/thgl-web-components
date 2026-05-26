@@ -1,7 +1,8 @@
 import { create } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
 import type { ActorPlayer, Actor } from "./overwolf/plugin";
 
-export const useGameState = create<{
+export const useGameState = create(subscribeWithSelector<{
   player: ActorPlayer | null;
   setPlayer: (player: ActorPlayer | null) => void;
   character: Record<string, any> | null;
@@ -43,4 +44,4 @@ export const useGameState = create<{
   setIsUpdatingApp: (isUpdatingApp) => set({ isUpdatingApp }),
   showLabelsActive: false,
   setShowLabelsActive: (active) => set({ showLabelsActive: active }),
-}));
+})));

@@ -49,7 +49,7 @@ export function OverwolfSettingsDialogContent({
         <Hotkey name={HOTKEYS.DISCOVER_NODE} gameClassId={gameClassId} />
       </Label>
       <Label className="flex items-center gap-2 justify-between">
-        Toggle Live Mode
+        Cycle Live Mode
         <Hotkey name={HOTKEYS.TOGGLE_LIVE_MODE} gameClassId={gameClassId} />
       </Label>
       <Label className="flex items-center gap-2 justify-between">

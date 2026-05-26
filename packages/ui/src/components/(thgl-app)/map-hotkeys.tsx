@@ -7,7 +7,7 @@ import { HOTKEYS, onWebviewMessage } from "@repo/lib/thgl-app";
 
 export function MapHotkeys() {
   const map = useMap();
-  const { nodes } = useCoordinates();
+  const { nodes, typesIdMap } = useCoordinates();
   const t = useT();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function MapHotkeys() {
         } else if (hotkeyAction === HOTKEYS.TOGGLE_LOCK_APP) {
           useSettingsStore.getState().toggleLockedWindow();
         } else if (hotkeyAction === HOTKEYS.TOGGLE_LIVE_MODE) {
-          useSettingsStore.getState().toggleLiveMode();
+          useSettingsStore.getState().cycleLiveMode();
         } else if (hotkeyAction === HOTKEYS.SHOW_LABELS) {
           // Toggle show labels state
           const current = useGameState.getState().showLabelsActive;
@@ -74,6 +74,28 @@ export function MapHotkeys() {
                 return true;
               })
               .flatMap((n) => n.spawns.map((s) => ({ ...s, type: n.type })));
+            // Include live actors — they bypass coordinates-provider so we
+            // need to pull them in directly for the closest-node hotkey.
+            if (typesIdMap) {
+              const actors = useGameState.getState().actors || [];
+              for (const actor of actors) {
+                const displayType = typesIdMap[actor.type];
+                if (!displayType) continue;
+                if (!filters.includes(displayType)) continue;
+                if (actor.mapName && actor.mapName !== player.mapName) continue;
+                nodeSpawns.push({
+                  type: displayType,
+                  p:
+                    actor.z != null
+                      ? ([actor.x, actor.y, actor.z] as [
+                          number,
+                          number,
+                          number,
+                        ])
+                      : ([actor.x, actor.y] as [number, number]),
+                });
+              }
+            }
             const { spawns } = nodeSpawns.reduce(
               (nearest, spawn) => {
                 if (hideDiscoveredNodes && isDiscoveredNode(getNodeId(spawn as Spawn))) {
@@ -113,7 +135,7 @@ export function MapHotkeys() {
     return () => {
       cleanup();
     };
-  }, [nodes]);
+  }, [nodes, typesIdMap]);
 
   return <></>;
 }

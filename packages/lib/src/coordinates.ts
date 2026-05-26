@@ -27,6 +27,8 @@ export const isPointInsidePolygon = (
   return inside;
 };
 
+export type SpawnSource = "static" | "live" | "both";
+
 export type Spawn = {
   id: string;
   name?: string | undefined;
@@ -37,6 +39,14 @@ export type Spawn = {
   cluster?: Omit<Spawn, "cluster">[];
   mapName?: string;
   color?: string;
+  /**
+   * Where this spawn currently came from at render time.
+   * 'static' = predicted only (no live confirmation right now).
+   * 'live'   = live-only (no matching static prediction).
+   * 'both'   = static prediction confirmed by live tracking.
+   * Absent on stored data; populated when building the rendered node list.
+   */
+  source?: SpawnSource;
   icon?: {
     name: string;
     url: string;

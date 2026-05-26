@@ -1,4 +1,4 @@
-import { useSettingsStore } from "../settings";
+import { isLiveReadingActive, useSettingsStore } from "../settings";
 import { isDebug } from "../env";
 import { promisifyOverwolf } from "./promisify";
 import { EventBus, MESSAGES } from "./event-bus";
@@ -259,13 +259,15 @@ export async function initGameEventsPlugin<T extends GameEventsPlugin>(
     }
     refreshPlayerState();
 
-    let liveMode = !withoutLiveMode && useSettingsStore.getState().liveMode;
+    let liveMode =
+      !withoutLiveMode && isLiveReadingActive(useSettingsStore.getState().liveMode);
     let actorsPollingRate = useSettingsStore.getState().actorsPollingRate;
     useSettingsStore.subscribe((settings) => {
-      if (!liveMode && settings.liveMode) {
+      const nextLive = !withoutLiveMode && isLiveReadingActive(settings.liveMode);
+      if (!liveMode && nextLive) {
         refreshActorsState();
       }
-      liveMode = settings.liveMode;
+      liveMode = nextLive;
       actorsPollingRate = settings.actorsPollingRate;
     });
 

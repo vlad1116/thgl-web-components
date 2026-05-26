@@ -10,9 +10,11 @@ import {
   getAppUrl,
   getIconsUrl,
   getNodeId,
+  isLiveReadingActive,
   MarkerOptions,
   Spawn,
   useConnectionStore,
+  useEffectiveLiveMode,
   useGameState,
   useSettingsStore,
   useUserStore,
@@ -337,7 +339,7 @@ function MarkersContent({
 }) {
   const map = useMap();
   const t = useT();
-  const { spawns, icons, filters } = useCoordinates();
+  const { spawns, icons, filters, typesIdMap } = useCoordinates();
   // Group settings into logical selectors to minimize re-render triggers
   const {
     hideDiscoveredNodes,
@@ -346,7 +348,6 @@ function MarkersContent({
     baseIconSize,
     iconSizeByGroup,
     iconSizeByFilter,
-    liveMode,
     fitBoundsOnChange,
     dynamicIconSize,
     dynamicIconSizeFactor,
@@ -361,7 +362,6 @@ function MarkersContent({
       baseIconSize: state.baseIconSize,
       iconSizeByGroup: state.iconSizeByGroup,
       iconSizeByFilter: state.iconSizeByFilter,
-      liveMode: state.liveMode,
       fitBoundsOnChange: state.fitBoundsOnChange,
       dynamicIconSize: state.dynamicIconSize,
       dynamicIconSizeFactor: state.dynamicIconSizeFactor,
@@ -370,6 +370,7 @@ function MarkersContent({
       labelTextSize: state.labelTextSize,
     })),
   );
+  const liveMode = useEffectiveLiveMode();
   const {
     audioAlertsMuted,
     audioAlertRange,
@@ -409,12 +410,29 @@ function MarkersContent({
   const highlightSpawnIDs = useGameState((state) => state.highlightSpawnIDs);
   const player = useGameState((state) => state.player);
   const throttledPlayer = useThrottle(player, 1000);
+  // Stable ref for hot-path reads inside the static-markers effect — keeps
+  // throttledPlayer OUT of that effect's deps so player movement (every 1s)
+  // does NOT trigger a full rebuild of every static marker. Z-position
+  // arrows stay at the value captured during the last full rebuild; a
+  // separate small effect could later update them via updateMarker.
+  const throttledPlayerRef = useRef(throttledPlayer);
+  throttledPlayerRef.current = throttledPlayer;
   const firstRender = useRef(true);
 
-  // Track which marker IDs this component owns
+  // Track which marker IDs this component owns. Split by source so static
+  // and live updates don't trample each other. spawnMapRef is the union for
+  // lookups (tooltips, audio alerts, click handlers).
   const spawnMapRef = useRef<Map<string, Spawn>>(new Map());
+  const staticSpawnMapRef = useRef<Map<string, Spawn>>(new Map());
+  const liveSpawnMapRef = useRef<Map<string, Spawn>>(new Map());
   const justClickedMarkerRef = useRef(false);
   const tooltipDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Shared tooltip helper updated each render via the static effect — lets
+  // the parallel live-marker effect reuse the same tooltip logic without
+  // duplicating the projection / item-building code.
+  const showTooltipForMarkerRef = useRef<
+    ((m: IconMarkerInstance) => void) | null
+  >(null);
 
   // Cache for colored circle images (for private nodes without icons)
   const coloredCircleCache = useRef<Map<string, HTMLImageElement>>(new Map());
@@ -967,13 +985,16 @@ function MarkersContent({
         markerPosition = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
       }
 
-      // Calculate z position indicator (player-relative mode)
+      // Calculate z position indicator (player-relative mode).
+      // Reads throttledPlayer via ref so player movement doesn't trigger
+      // a full static-marker rebuild every second.
+      const playerNow = throttledPlayerRef.current;
       let zPos: "top" | "bottom" | null = null;
       let zValue: number | undefined = undefined;
-      if (markerOptions.zPos && throttledPlayer && spawn.p[2] !== undefined) {
+      if (markerOptions.zPos && playerNow && spawn.p[2] !== undefined) {
         const { xyMaxDistance, zDistance } = markerOptions.zPos;
-        let playerX = throttledPlayer.x;
-        let playerY = throttledPlayer.y;
+        let playerX = playerNow.x;
+        let playerY = playerNow.y;
         if (rotationCache) {
           const rotatedPlayer = rotationCache.getRotated(playerX, playerY);
           playerX = rotatedPlayer[0];
@@ -985,7 +1006,7 @@ function MarkersContent({
         const maxDistSq = xyMaxDistance * xyMaxDistance;
 
         if (xyDistSq <= maxDistSq) {
-          const dz = throttledPlayer.z - spawn.p[2];
+          const dz = playerNow.z - spawn.p[2];
           if (dz > zDistance) {
             zPos = "bottom";
             zValue = -dz;
@@ -1011,6 +1032,8 @@ function MarkersContent({
         zPos,
         isHighlighted,
         isDiscovered,
+        // In combined live mode, fade spawns we predict but haven't confirmed live.
+        isMuted: liveMode === "combined" && spawn.source === "static",
         isSelected: selectedNodeId === nodeId,
         keepUpright: true,
         tint: spawn.isPrivate && markerIcon && !useProcessedIcon ? spawn.color : undefined,
@@ -1025,7 +1048,7 @@ function MarkersContent({
       // Track raw Z for height visualization without player.
       // Skip z=0 — these are spawns without real elevation data and
       // would skew the normalization range for all other markers.
-      if (!throttledPlayer && spawn.p[2] !== undefined && spawn.p[2] !== 0) {
+      if (!playerNow && spawn.p[2] !== undefined && spawn.p[2] !== 0) {
         markerZValues.set(markerInstances.length - 1, spawn.p[2]);
       }
 
@@ -1038,8 +1061,8 @@ function MarkersContent({
     };
 
 
-    // Pre-process spawns: split mixed-type clusters into per-type sub-spawns
-    // arranged in a circle. Same-type clusters are left as-is.
+    // Pre-process static spawns. Live actors are handled by the imperative
+    // pipeline below (writes to liveMarkerLayer, bypasses React entirely).
     const processedSpawns: Spawn[] = [];
     for (const spawn of spawns) {
       if (!spawn.cluster || spawn.cluster.length === 0) {
@@ -1241,34 +1264,20 @@ function MarkersContent({
     // Update spatial grid ref
     spatialGridRef.current = newSpatialGrid;
 
-    // Compute which markers to add/remove/update
-    const oldIds = new Set(spawnMapRef.current.keys());
+    // Diff vs previously rendered STATIC markers only. Live actor markers
+    // are tracked in liveSpawnMapRef and managed by the parallel effect.
+    const oldIds = new Set(staticSpawnMapRef.current.keys());
     const newIds = new Set(newSpawnMap.keys());
 
-    // Find markers to remove (in old but not in new)
     const toRemove: string[] = [];
     for (const id of oldIds) {
-      if (!newIds.has(id)) {
-        toRemove.push(id);
-      }
+      if (!newIds.has(id)) toRemove.push(id);
     }
-
-    // Batch remove old markers and their event handlers from both layers
     if (toRemove.length > 0) {
-      const staticToRemove: string[] = [];
-      const liveToRemove: string[] = [];
       for (const id of toRemove) {
-        const oldSpawn = spawnMapRef.current.get(id);
-        if (oldSpawn?.address && liveMarkerLayer) {
-          liveMarkerLayer.unregisterAllEventHandlers(id);
-          liveToRemove.push(id);
-        } else {
-          markerLayer.unregisterAllEventHandlers(id);
-          staticToRemove.push(id);
-        }
+        markerLayer.unregisterAllEventHandlers(id);
       }
-      if (staticToRemove.length > 0) markerLayer.removeMany(staticToRemove);
-      if (liveToRemove.length > 0) liveMarkerLayer?.removeMany(liveToRemove);
+      markerLayer.removeMany(toRemove);
     }
 
 
@@ -1277,20 +1286,11 @@ function MarkersContent({
       markerLayer.copySheets(liveMarkerLayer);
     }
 
-    // Add or update markers, routing live actors to liveMarkerLayer
-    // Note: We always re-register handlers to avoid stale closures from previous renders
-    for (const instance of markerInstances) {
-      const spawn = newSpawnMap.get(instance.id);
-      const isLive = spawn?.address && liveMarkerLayer;
-      const targetLayer = isLive ? liveMarkerLayer : markerLayer;
-      targetLayer.add(instance); // This handles both add and update
-
-      // Register event handlers (always, to capture fresh closure)
-      if (!spawn) continue;
-
-      // Helper to show tooltip for a marker
-      const showTooltipForMarker = (m: IconMarkerInstance) => {
-        const s = newSpawnMap.get(m.id);
+    // Tooltip helper. Defined once (not per marker) and stored in a ref so
+    // the parallel live-marker effect can reuse it without duplicating the
+    // projection / item-building logic.
+    const showTooltipForMarker = (m: IconMarkerInstance) => {
+      const s = spawnMapRef.current.get(m.id);
         if (!s) return;
 
         const canvas = map.getContainer();
@@ -1382,23 +1382,29 @@ function MarkersContent({
         const edgeScreenX = (edgeClipX * 0.5 + 0.5) * rect.width;
         const screenRadius = Math.abs(edgeScreenX - screenX);
 
-        onTooltipData({
-          x: screenX,
-          y: screenY,
-          radius: screenRadius,
-          items,
-          latLng: s.p,
-        });
-        onTooltipOpen(true);
-      };
+      onTooltipData({
+        x: screenX,
+        y: screenY,
+        radius: screenRadius,
+        items,
+        latLng: s.p,
+      });
+      onTooltipOpen(true);
+    };
+    // Make the tooltip helper available to the live-markers effect.
+    showTooltipForMarkerRef.current = showTooltipForMarker;
 
-      targetLayer.registerEventHandler(instance.id, "mouseover", (m) => {
-        // Delay tooltip open to avoid interfering with map interactions
+    // Add or update STATIC markers on markerLayer + register handlers.
+    // (Live actors handled by the parallel effect — see below.)
+    for (const instance of markerInstances) {
+      const spawn = newSpawnMap.get(instance.id);
+      markerLayer.add(instance);
+      if (!spawn) continue;
+
+      markerLayer.registerEventHandler(instance.id, "mouseover", (m) => {
         if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
         tooltipDelayRef.current = setTimeout(() => {
           tooltipDelayRef.current = null;
-          // Don't open tooltip if cursor is over a UI overlay (map controls, filters, etc.)
-          // Check the topmost element at the marker's screen position
           const canvas = map?.getContainer();
           if (canvas) {
             const rect = canvas.getBoundingClientRect();
@@ -1414,39 +1420,31 @@ function MarkersContent({
               if (topEl && !canvas.contains(topEl)) return;
             }
           }
-          showTooltipForMarker(m);
+          showTooltipForMarkerRef.current?.(m);
         }, 200);
       });
-      // Cancel pending tooltip delay on mouseout
-      targetLayer.registerEventHandler(instance.id, "mouseout", () => {
+      markerLayer.registerEventHandler(instance.id, "mouseout", () => {
         if (tooltipDelayRef.current) {
           clearTimeout(tooltipDelayRef.current);
           tooltipDelayRef.current = null;
         }
       });
-      // Note: full mouseout closing is handled by safe zone tracking in the parent component
-
-      targetLayer.registerEventHandler(instance.id, "click", (m) => {
-        // Cancel any pending hover delay and open immediately on click
+      markerLayer.registerEventHandler(instance.id, "click", (m) => {
         if (tooltipDelayRef.current) {
           clearTimeout(tooltipDelayRef.current);
           tooltipDelayRef.current = null;
         }
         justClickedMarkerRef.current = true;
-        // Skip tooltip on mobile — the MarkerPanel bottom sheet shows all the same info
         const isMobile = window.innerWidth < 768;
-        if (!isMobile) {
-          showTooltipForMarker(m);
-        }
-        const s = newSpawnMap.get(m.id);
+        if (!isMobile) showTooltipForMarkerRef.current?.(m);
+        const s = spawnMapRef.current.get(m.id);
         if (s && !s.address) {
           const nodeId = getNodeId(s);
           onClick(selectedNodeId === nodeId ? null : nodeId);
         }
       });
-
-      targetLayer.registerEventHandler(instance.id, "contextmenu", (m) => {
-        const s = newSpawnMap.get(m.id);
+      markerLayer.registerEventHandler(instance.id, "contextmenu", (m) => {
+        const s = spawnMapRef.current.get(m.id);
         if (!s) return;
         const nodeId = getNodeId(s);
         const isStacked = Boolean(s.cluster && s.cluster.length > 0);
@@ -1460,9 +1458,12 @@ function MarkersContent({
       });
     }
 
-
-    // Update spawn map ref
-    spawnMapRef.current = newSpawnMap;
+    // Update spawn map refs: static portion + union (with live).
+    staticSpawnMapRef.current = newSpawnMap;
+    spawnMapRef.current = new Map([
+      ...newSpawnMap,
+      ...liveSpawnMapRef.current,
+    ]);
 
     // Handle map click to close tooltip and deselect node
     // When a marker is clicked, justClickedMarkerRef is set to prevent
@@ -1479,20 +1480,13 @@ function MarkersContent({
 
     return () => {
       map.off("click", handleMapClick);
-      // Batch unregister event handlers and remove markers from both layers
-      const staticIds: string[] = [];
-      const liveIds: string[] = [];
-      for (const [id, s] of newSpawnMap) {
-        if (s.address && liveMarkerLayer) {
-          liveMarkerLayer.unregisterAllEventHandlers(id);
-          liveIds.push(id);
-        } else {
-          markerLayer.unregisterAllEventHandlers(id);
-          staticIds.push(id);
-        }
+      // Cleanup STATIC markers only. Live markers are owned by the parallel
+      // live-markers effect and cleaned up by its own teardown.
+      const staticIds = Array.from(newSpawnMap.keys());
+      for (const id of staticIds) {
+        markerLayer.unregisterAllEventHandlers(id);
       }
       if (staticIds.length > 0) markerLayer.removeMany(staticIds);
-      if (liveIds.length > 0) liveMarkerLayer?.removeMany(liveIds);
     };
   }, [
     map,
@@ -1510,7 +1504,8 @@ function MarkersContent({
     iconSizeByGroup,
     typeToGroup,
     typeToCategory,
-    throttledPlayer,
+    // throttledPlayer intentionally OMITTED — read via ref to avoid
+    // rebuilding every static marker every second when the player moves.
     markerOptions.zPos,
     colorBlindMode,
     colorBlindSeverity,
@@ -1518,6 +1513,282 @@ function MarkersContent({
     dynamicIconSizeFactor,
     iconLoadVersion, // Re-run when images finish loading to apply processed icons
     sharedIconNameLookup, // Re-resolve stale shared private icon coords
+  ]);
+
+  // Imperative live-actors pipeline.
+  // Bypasses React's render cycle entirely for live actors. Subscribes
+  // directly to useGameState.actors + user/settings stores; on each tick:
+  //   - reuses existing markers in-place (updateMarker for position)
+  //   - adds new actors with a single registerEventHandler pass
+  //   - removes gone actors via removeMany
+  // No useState, no useEffect re-runs, no React reconciliation, no setSpawns
+  // → no propagation to consumers that depend on spawns.
+  useEffect(() => {
+    const liveMarkerLayer = map?.liveMarkerLayer;
+    const markerLayerForSheets = map?.markerLayer;
+    if (!map || !liveMarkerLayer || !typesIdMap) return;
+
+    if (markerLayerForSheets) markerLayerForSheets.copySheets(liveMarkerLayer);
+
+    const dpr = window.devicePixelRatio || 1;
+
+    const processActors = () => {
+      const actorsList = useGameState.getState().actors || [];
+      const userState = useUserStore.getState();
+      const settingsState = useSettingsStore.getState();
+      // Live data renders unless mode is 'static'. (Preview-only modes
+      // collapse to 'live' for non-preview users, but both still mean
+      // "show live actors" — the only difference is static-marker muting,
+      // which is handled by the static effect.)
+      const isLiveActive = settingsState.liveMode !== "static";
+
+      if (!isLiveActive) {
+        if (liveSpawnMapRef.current.size > 0) {
+          const ids = Array.from(liveSpawnMapRef.current.keys());
+          for (const id of ids) liveMarkerLayer.unregisterAllEventHandlers(id);
+          liveMarkerLayer.removeMany(ids);
+          liveSpawnMapRef.current.clear();
+          spawnMapRef.current = new Map(staticSpawnMapRef.current);
+          map.requestRedraw();
+        }
+        return;
+      }
+
+      const activeFilters = new Set(userState.filters);
+      const currentMapName = userState.mapName;
+      const selectedNodeIdNow = userState.selectedNodeId;
+      const highlightSpawnIDsNow = useGameState.getState().highlightSpawnIDs;
+      const baseIconSizeNow = settingsState.baseIconSize;
+      const iconSizeByGroupNow = settingsState.iconSizeByGroup;
+      const iconSizeByFilterNow = settingsState.iconSizeByFilter;
+      const hideDiscoveredNow = settingsState.hideDiscoveredNodes;
+      const setDiscoverNodeFn = settingsState.setDiscoverNode;
+
+      const seen = new Set<string>();
+      const newSpawns = new Map<string, Spawn>();
+      let dirty = false;
+
+      for (const actor of actorsList) {
+        if (!actor.address) continue;
+        const displayType = typesIdMap[actor.type];
+        if (!displayType) continue;
+        if (!activeFilters.has(displayType)) continue;
+        if (actor.mapName && actor.mapName !== currentMapName) continue;
+
+        const id = String(actor.address);
+        seen.add(id);
+
+        let pos: [number, number] = [actor.x, actor.y];
+        if (rotationCache) pos = rotationCache.getRotated(actor.x, actor.y);
+
+        const nodeId = `${displayType}@${actor.x.toFixed(2)}:${actor.y.toFixed(
+          2,
+        )}`;
+        const spawn: Spawn = {
+          id: nodeId,
+          type: displayType,
+          p:
+            actor.z != null
+              ? ([actor.x, actor.y, actor.z] as [number, number, number])
+              : ([actor.x, actor.y] as [number, number]),
+          mapName: actor.mapName,
+          address: actor.address,
+          source: "live",
+        };
+        const isDiscoveredFlag = checkNodeDiscovered(
+          nodeId,
+          discoveryLookupRef.current,
+        );
+        if (isDiscoveredFlag && hideDiscoveredNow) continue;
+        newSpawns.set(id, spawn);
+
+        const existing = liveMarkerLayer.getMarker(id);
+        if (existing) {
+          // In-place position update — cheap, no buffer rebuild beyond version bump.
+          if (existing.latLng[0] !== pos[0] || existing.latLng[1] !== pos[1]) {
+            liveMarkerLayer.updateMarker(id, { latLng: pos });
+            dirty = true;
+          }
+          continue;
+        }
+
+        // New marker: resolve icon, build instance once.
+        const icon = icons.get(displayType);
+        let sheet = "icons";
+        let rect = { x: 0, y: 0, width: 64, height: 64 };
+        const markerIcon =
+          (typeof icon?.icon === "string" ? null : icon?.icon) ?? null;
+        const stringIcon =
+          typeof icon?.icon === "string" ? icon.icon : null;
+        if (stringIcon) {
+          const fullUrl = getIconsUrl(appName, stringIcon, iconsPath);
+          sheet = fullUrl;
+          liveMarkerLayer.addSheet(sheet, fullUrl);
+        } else if (markerIcon && "x" in markerIcon) {
+          rect = {
+            x: markerIcon.x as number,
+            y: markerIcon.y as number,
+            width: markerIcon.width as number,
+            height: markerIcon.height as number,
+          };
+        } else if (!markerIcon) {
+          sheet = DEFAULT_CIRCLE_SHEET;
+          const px = Math.round(64 * dpr);
+          rect = { x: 0, y: 0, width: px, height: px };
+        }
+
+        const iconBaseSize = icon?.size ?? 1;
+        const groupId = typeToGroup.get(displayType);
+        const groupMultiplier = groupId
+          ? (iconSizeByGroupNow[groupId] ?? 1)
+          : 1;
+        const categoryId = typeToCategory.get(displayType);
+        const categoryMultiplier = categoryId
+          ? (iconSizeByGroupNow[categoryId] ?? 1)
+          : 1;
+        const typeMultiplier = iconSizeByFilterNow[displayType] ?? 1;
+        const spawnRadius = markerOptions.radius * iconBaseSize;
+        const size =
+          (spawnRadius * 4 - 1) *
+          baseIconSizeNow *
+          categoryMultiplier *
+          groupMultiplier *
+          typeMultiplier *
+          dpr;
+
+        const instance: IconMarkerInstance = {
+          id,
+          latLng: pos,
+          size,
+          sheet,
+          rect,
+          key: displayType,
+          isHighlighted:
+            highlightSpawnIDsNow.includes(nodeId) ||
+            selectedNodeIdNow === nodeId,
+          isDiscovered: isDiscoveredFlag,
+          isMuted: false,
+          isSelected: selectedNodeIdNow === nodeId,
+          keepUpright: true,
+        };
+        liveMarkerLayer.add(instance);
+
+        // Register handlers ONCE per marker (not re-registered on subsequent
+        // ticks since we early-return for existing markers above).
+        liveMarkerLayer.registerEventHandler(id, "mouseover", (m) => {
+          if (tooltipDelayRef.current) clearTimeout(tooltipDelayRef.current);
+          tooltipDelayRef.current = setTimeout(() => {
+            tooltipDelayRef.current = null;
+            showTooltipForMarkerRef.current?.(m);
+          }, 200);
+        });
+        liveMarkerLayer.registerEventHandler(id, "mouseout", () => {
+          if (tooltipDelayRef.current) {
+            clearTimeout(tooltipDelayRef.current);
+            tooltipDelayRef.current = null;
+          }
+        });
+        liveMarkerLayer.registerEventHandler(id, "click", (m) => {
+          if (tooltipDelayRef.current) {
+            clearTimeout(tooltipDelayRef.current);
+            tooltipDelayRef.current = null;
+          }
+          justClickedMarkerRef.current = true;
+          const isMobile = window.innerWidth < 768;
+          if (!isMobile) showTooltipForMarkerRef.current?.(m);
+        });
+        liveMarkerLayer.registerEventHandler(id, "contextmenu", (m) => {
+          const s = spawnMapRef.current.get(m.id);
+          if (!s) return;
+          const nId = getNodeId(s);
+          const wasDiscovered = checkNodeDiscovered(
+            nId,
+            discoveryLookupRef.current,
+          );
+          setDiscoverNodeFn(nId, !wasDiscovered);
+        });
+        dirty = true;
+      }
+
+      // Remove gone actors.
+      const toRemove: string[] = [];
+      for (const id of liveSpawnMapRef.current.keys()) {
+        if (!seen.has(id)) toRemove.push(id);
+      }
+      if (toRemove.length > 0) {
+        for (const id of toRemove)
+          liveMarkerLayer.unregisterAllEventHandlers(id);
+        liveMarkerLayer.removeMany(toRemove);
+        dirty = true;
+      }
+
+      liveSpawnMapRef.current = newSpawns;
+      spawnMapRef.current = new Map([
+        ...staticSpawnMapRef.current,
+        ...newSpawns,
+      ]);
+      if (dirty) map.requestRedraw();
+    };
+
+    // Subscribe ONLY to the state that genuinely affects what live markers
+    // show. Note these are zustand subscriptions, NOT React useEffect deps
+    // — they don't tear down/rebuild the marker pipeline.
+    const unsubActors = useGameState.subscribe(
+      (s) => s.actors,
+      processActors,
+    );
+    const unsubHighlight = useGameState.subscribe(
+      (s) => s.highlightSpawnIDs,
+      processActors,
+    );
+    const unsubFilters = useUserStore.subscribe(
+      (s) => s.filters,
+      processActors,
+    );
+    const unsubMapName = useUserStore.subscribe(
+      (s) => s.mapName,
+      processActors,
+    );
+    const unsubSelected = useUserStore.subscribe(
+      (s) => s.selectedNodeId,
+      processActors,
+    );
+    const unsubLiveMode = useSettingsStore.subscribe(
+      (s) => s.liveMode,
+      processActors,
+    );
+    const unsubHideDiscovered = useSettingsStore.subscribe(
+      (s) => s.hideDiscoveredNodes,
+      processActors,
+    );
+    // Initial run.
+    processActors();
+
+    return () => {
+      unsubActors();
+      unsubHighlight();
+      unsubFilters();
+      unsubMapName();
+      unsubSelected();
+      unsubLiveMode();
+      unsubHideDiscovered();
+      const ids = Array.from(liveSpawnMapRef.current.keys());
+      for (const id of ids) liveMarkerLayer.unregisterAllEventHandlers(id);
+      if (ids.length > 0) liveMarkerLayer.removeMany(ids);
+      liveSpawnMapRef.current.clear();
+    };
+  }, [
+    map,
+    map?.liveMarkerLayer,
+    map?.markerLayer,
+    typesIdMap,
+    icons,
+    rotationCache,
+    markerOptions.radius,
+    appName,
+    iconsPath,
+    typeToGroup,
+    typeToCategory,
   ]);
 
   // Update high contrast uniforms without rebuilding markers
@@ -1566,12 +1837,15 @@ function MarkersContent({
 
     const rangeSq = audioAlertRange * audioAlertRange;
 
-    // Check if any spawn with audio alerts enabled is in range
+    // Check if any spawn with audio alerts enabled is in range.
+    // Skip predicted-only spawns (source === 'static' in combined mode) —
+    // they're faded ghost markers we haven't actually confirmed live, so
+    // alerting on them would fire on phantom locations.
     let anyInRange = false;
     for (const spawn of spawns) {
       if (!audioAlertByFilter[spawn.type]) continue;
+      if (spawn.source === "static") continue;
 
-      // Apply rotation to spawn position if needed
       let spawnX = spawn.p[0];
       let spawnY = spawn.p[1];
       if (rotationCache) {
@@ -1586,6 +1860,30 @@ function MarkersContent({
       if (dx * dx + dy * dy <= rangeSq) {
         anyInRange = true;
         break;
+      }
+    }
+
+    // Live actors: iterate raw actor list with type mapping.
+    if (!anyInRange && typesIdMap) {
+      const liveActorsList = useGameState.getState().actors || [];
+      for (const actor of liveActorsList) {
+        const displayType = typesIdMap[actor.type];
+        if (!displayType || !audioAlertByFilter[displayType]) continue;
+
+        let actorX = actor.x;
+        let actorY = actor.y;
+        if (rotationCache) {
+          const rotated = rotationCache.getRotated(actorX, actorY);
+          actorX = rotated[0];
+          actorY = rotated[1];
+        }
+
+        const dx = playerX - actorX;
+        const dy = playerY - actorY;
+        if (dx * dx + dy * dy <= rangeSq) {
+          anyInRange = true;
+          break;
+        }
       }
     }
 
@@ -1608,6 +1906,7 @@ function MarkersContent({
     audioAlertSound,
     audioAlertVolume,
     rotationCache,
+    typesIdMap,
   ]);
 
 
@@ -1763,7 +2062,12 @@ function MarkersContent({
 
   // Fit bounds when spawns change
   useEffect(() => {
-    if (!fitBoundsOnChange || liveMode || spawns.length === 0 || !map) {
+    if (
+      !fitBoundsOnChange ||
+      isLiveReadingActive(liveMode) ||
+      spawns.length === 0 ||
+      !map
+    ) {
       return;
     }
     if (firstRender.current) {

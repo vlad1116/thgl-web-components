@@ -4,7 +4,7 @@
   "meta": {
     "name": "Avowed Interactive Maps-DEV",
     "author": "Leon Machens",
-    "version": "1.8.6",
+    "version": "1.8.7",
     "minimum-overwolf-version": "0.241.0",
     "minimum-gep-version": "242.0",
     "description": "Avowed Interactive Maps – The Hidden Gaming Lair",
@@ -129,7 +129,7 @@
         "default": "F1"
       },
       "toggle_live_mode": {
-        "title": "Toggle Live Mode",
+        "title": "Cycle Live Mode",
         "action-type": "custom",
         "default": "F7"
       },

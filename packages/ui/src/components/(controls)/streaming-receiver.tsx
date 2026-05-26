@@ -1,6 +1,12 @@
 "use client";
 
-import { cn, useGameState, useSettingsStore } from "@repo/lib";
+import {
+  cn,
+  isLiveReadingActive,
+  useAccountStore,
+  useGameState,
+  useSettingsStore,
+} from "@repo/lib";
 import type { ActorPlayer, Actor } from "@repo/lib/overwolf";
 import Peer, { DataConnection } from "peerjs";
 import { RemotePlayer, usePeersStore } from "../(providers)/peers-store";
@@ -66,7 +72,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Cast, Copy, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ScrollArea, Switch } from "../(controls)";
+import { LiveModeControl, ScrollArea, Switch } from "../(controls)";
 
 export function StreamingReceiver({
   className,
@@ -229,16 +235,23 @@ export function StreamingReceiver({
     }
   }, [inPeer]);
 
-  // Automatic Live Mode control based on Me selection and AutoLiveMode setting
+  // Automatic Live Mode control based on Me selection and AutoLiveMode setting.
+  // Auto-enable picks 'combined' only for Elite (preview-release) users —
+  // free users get 'live' so we never store a mode they can't access.
   useEffect(() => {
-    if (withoutLiveMode && liveMode) {
-      setLiveMode(false);
+    const liveActive = isLiveReadingActive(liveMode);
+    if (withoutLiveMode && liveActive) {
+      setLiveMode("static");
       return; // Don't control Live Mode if disabled
     }
 
     const shouldBeLive = Boolean(inPeer && meSenderId && autoLiveModeWithMe);
-    if (liveMode !== shouldBeLive) {
-      setLiveMode(shouldBeLive);
+    if (shouldBeLive !== liveActive) {
+      const hasPreview =
+        useAccountStore.getState().perks.previewReleaseAccess;
+      setLiveMode(
+        shouldBeLive ? (hasPreview ? "combined" : "live") : "static",
+      );
     }
   }, [
     inPeer,
@@ -1329,9 +1342,7 @@ export function StreamingReceiver({
                 <div className="flex items-center gap-2 flex-wrap">
                   {!withoutLiveMode && (
                     <>
-                      <span className="text-xs text-muted-foreground">
-                        Live Mode: {liveMode ? "On" : "Off"}
-                      </span>
+                      <LiveModeControl size="sm" />
                       <Label className="flex items-center gap-1 text-xs h-auto cursor-pointer">
                         <Switch
                           checked={autoLiveModeWithMe}

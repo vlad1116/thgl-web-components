@@ -12,8 +12,8 @@ import Fuse from "fuse.js";
 import { useI18n } from ".";
 import {
   decodeFromBuffer,
-  isDebug,
-  useGameState,
+  isLiveReadingActive,
+  useEffectiveLiveMode,
   useSettingsStore,
   Region,
   DrawingsAndNodes,
@@ -28,17 +28,18 @@ import {
   getApiUrl,
 } from "@repo/lib";
 import { CaseSensitive, Hexagon } from "lucide-react";
-import {
-  buildActorNodes,
-  buildSpawnGrid,
-  type DiscoveryUpdate,
-} from "./actor-node-builder";
 import useSWRImmutable from "swr/immutable";
 import { toast } from "sonner";
 
 export type NodesCoordinates = {
   type: string;
   static?: boolean;
+  /**
+   * Marks a node whose spawns are dynamic static predictions
+   * (no live tracking confirmed). In combined mode these render muted.
+   * Set at build time; pre-baked once per static-data change.
+   */
+  predicted?: boolean;
   mapName?: string;
   spawns: (Omit<Spawn, "type" | "id"> & { id?: string })[];
   data?: Record<string, string[]>;
@@ -74,6 +75,11 @@ interface ContextValue {
   filters: FiltersConfig;
   globalFilters: GlobalFiltersConfig;
   allFilters: string[];
+  /**
+   * Filtered static spawns rendered on the static marker layer.
+   * Live actors flow imperatively into the renderer via useGameState
+   * subscriptions and are NOT included here.
+   */
   spawns: Spawns;
   icons: Icons;
   typesIdMap?: Record<string, string>;
@@ -276,9 +282,9 @@ export function CoordinatesProvider({
     }
   }, [publicSearchIsLoading]);
 
-  const liveMode = useSettingsStore((state) => state.liveMode);
+  const liveMode = useEffectiveLiveMode();
   const myFilters = useSettingsStore((state) => state.myFilters);
-  const actors = useGameState((state) => state.actors);
+  // Actors now flow directly into markers.tsx via useGameState subscription.
 
   // Reverse lookup: translated icon name → current icon coords from filter config.
   // Used to fix stale sprite x,y in old private nodes that lack filterId.
@@ -372,78 +378,53 @@ export function CoordinatesProvider({
     [staticNodes, typesIdMap],
   );
 
-  // Build spatial grid from static nodes (rebuilt only when staticNodes change)
-  const { staticNodesMap, spawnGrid, autoDiscoverSet } = useMemo(() => {
-    const staticNodesMap = new Map<string, NodesCoordinates[number]>();
-    for (const node of staticNodes) {
-      const key = `${node.type}::${node.mapName ?? ""}`;
-      staticNodesMap.set(key, node);
+  // Pre-baked once per static-data change: dynamic-static nodes (those that
+  // CAN be confirmed via live tracking) flagged as `predicted`. Spawns are
+  // passed by reference — no per-tick allocation. In combined mode, these
+  // render muted; the renderer reads `node.predicted` via the spawn's parent.
+  const predictedDynamicStaticNodes = useMemo<NodesCoordinates>(() => {
+    if (!typesIdMap || Object.keys(typesIdMap).length === 0) {
+      return emptyArray as NodesCoordinates;
     }
-    const spawnGrid = buildSpawnGrid(staticNodes, staticNodesMap);
-    const autoDiscoverSet = new Set(
-      filters
-        .flatMap((filter) => filter.values)
-        .filter((f) => f.autoDiscover)
-        .map((f) => f.id),
-    );
-    return { staticNodesMap, spawnGrid, autoDiscoverSet };
-  }, [staticNodes, filters]);
+    const trackedTypes = new Set(Object.values(typesIdMap));
+    return staticNodes
+      .filter(
+        (node) =>
+          !("static" in node && !!node.static) && trackedTypes.has(node.type),
+      )
+      .map((node) => ({ ...node, predicted: true }));
+  }, [staticNodes, typesIdMap]);
 
-  // Build actor nodes + collect discovery updates in a single pass
-  const { nodes, pendingDiscoveryUpdates } = useMemo<{
-    nodes: NodesCoordinates;
-    pendingDiscoveryUpdates: DiscoveryUpdate[];
-  }>(() => {
-    if (!isHydrated || !staticNodes) {
-      return {
-        nodes: emptyArray as NodesCoordinates,
-        pendingDiscoveryUpdates: [],
-      };
+  // Visible static node set. Recomputed only on filter/data changes —
+  // never on actor polls. Live actors flow imperatively into markers.tsx
+  // via useGameState subscriptions, so they're not in here.
+  const nodes = useMemo<NodesCoordinates>(() => {
+    if (!isHydrated || !staticNodes) return emptyArray as NodesCoordinates;
+    if (
+      !isLiveReadingActive(liveMode) ||
+      !typesIdMap ||
+      Object.keys(typesIdMap).length === 0
+    ) {
+      // Static (predicted) mode: customNodes + ALL static spawns.
+      return customNodes.concat(staticNodes);
     }
-    if (!liveMode || !typesIdMap || Object.keys(typesIdMap).length === 0) {
-      return {
-        nodes: customNodes.concat(staticNodes),
-        pendingDiscoveryUpdates: [],
-      };
+    if (liveMode === "live") {
+      // Live mode: only permanent landmarks (always-on). Dynamic predictions
+      // are hidden; the imperative effect renders live actors on top.
+      return customNodes.concat(realStaticNodes);
     }
-    const debug = isDebug();
-    const { isDiscoveredNode } = useSettingsStore.getState();
-
-    const { actorNodes, discoveryUpdates } = buildActorNodes(
-      actors,
-      typesIdMap,
-      staticNodesMap,
-      spawnGrid,
-      autoDiscoverSet,
-      isDiscoveredNode,
-      debug,
-      dict,
-    );
-
-    const resultNodes = customNodes.concat(realStaticNodes, actorNodes);
-
-    return { nodes: resultNodes, pendingDiscoveryUpdates: discoveryUpdates };
+    // Combined mode: permanent landmarks + predicted dynamic statics
+    // (rendered muted by markers.tsx via spawn.source === 'static').
+    return customNodes.concat(realStaticNodes, predictedDynamicStaticNodes);
   }, [
     isHydrated,
     liveMode,
-    actors,
     customNodes,
     staticNodes,
-    staticNodesMap,
-    spawnGrid,
-    autoDiscoverSet,
     realStaticNodes,
-    dict,
+    predictedDynamicStaticNodes,
+    typesIdMap,
   ]);
-
-  // Apply discovery updates (side effect, runs after render)
-  useEffect(() => {
-    if (pendingDiscoveryUpdates.length === 0) return;
-    const { setDiscoverNode } = useSettingsStore.getState();
-    for (const { nodeId, discovered } of pendingDiscoveryUpdates) {
-      setDiscoverNode(nodeId, discovered);
-    }
-  }, [pendingDiscoveryUpdates]);
 
   // Searchable nodes: static + custom (excludes live actors which change constantly)
   const searchableNodes = useMemo(
@@ -528,33 +509,25 @@ export function CoordinatesProvider({
 
   const [spawns, setSpawns] = useState<Spawns>([]);
 
-  // Use ref for nodes to break the dependency chain:
-  // actors → nodes → refreshSpawns → useEffect → setSpawns → markers teardown
-  // With the ref, refreshSpawns is stable and only re-runs on structural changes.
+  // Ref lets refreshSpawns read the latest node list without being recreated
+  // on every change — the callback's identity stays stable across renders.
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
 
-  // Structural fingerprint: detects when the SET of spawns changes (new/removed),
-  // ignoring position changes (which are handled by live position updates in markers.tsx).
-  // Uses type + mapName + spawn count + address sum per category for accurate change detection.
+  // Structural fingerprint: covers add/remove of static spawns plus edits
+  // to private nodes. Filter/search/mapName changes already trigger
+  // refreshSpawns via zustand subscribers, so this only catches changes to
+  // the underlying static data shape (rare — mostly initial load or save).
   const nodesFingerprint = useMemo(() => {
     let fp = "";
     for (const node of nodes) {
-      let addrSum = 0;
-      let posHash = 0;
       let privateHash = "";
       for (const s of node.spawns) {
-        addrSum += (s as any).address ?? 0;
-        // Include position in fingerprint for live actors so moves trigger refresh
-        if ((s as any).address) {
-          posHash += s.p[0] * 1000 + s.p[1];
-        }
-        // Include all editable fields for private nodes so edits trigger refresh
         if (s.isPrivate) {
           privateHash += `${s.name ?? ""}:${s.description ?? ""}:${s.radius ?? ""}:${s.color ?? ""}|`;
         }
       }
-      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${addrSum}:${posHash}:${privateHash};`;
+      fp += `${node.type}:${node.mapName ?? ""}:${node.spawns.length}:${privateHash};`;
     }
     return fp;
   }, [nodes]);
@@ -571,25 +544,103 @@ export function CoordinatesProvider({
     [clusterPrecision],
   );
 
-  const refreshSpawns = useCallback(
-    (state: UserStoreState) => {
-      // Read nodes from ref (always latest) instead of closure dependency.
-      // This prevents refreshSpawns from being recreated on every nodes change.
-      const currentNodes = nodesRef.current;
-      let newSpawns: (Spawns[number] & { score?: number })[] = [];
-      // Deduplication map: key = "x:y" coordinates (snapped by clusterPrecision)
+  // Shared per-node iteration helper. Used by both static and live refresh
+  // pipelines so the filter/cluster/source-tag logic stays in one place.
+  // Returns a sorted, clustered Spawns array for the supplied nodes.
+  const processNodes = useCallback(
+    (currentNodes: NodesCoordinates, state: UserStoreState): Spawns => {
+      const newSpawns: Spawn[] = [];
       const spawnsByCoordinate = new Map<string, Spawn>();
-      if (state.search) {
-        if (state.search.length < 3 || !searchIndex) {
-          setSpawns(newSpawns);
+      const selectedNodeId = state.selectedNodeId;
+
+      currentNodes.forEach((node) => {
+        if (node.mapName && node.mapName !== state.mapName) return;
+        const isFilterActive = state.filters.includes(node.type);
+
+        // Filter off but a spawn in this node is selected: include just that one.
+        if (!isFilterActive && selectedNodeId) {
+          const selectedSpawnData = node.spawns.find((s) => {
+            const sid = s.id ?? node.type;
+            const nodeId = sid.includes("@")
+              ? sid
+              : `${sid}@${s.p[0]}:${s.p[1]}`;
+            return nodeId === selectedNodeId;
+          });
+          if (selectedSpawnData) {
+            const spawn = {
+              ...selectedSpawnData,
+              id: selectedSpawnData.id ?? node.type,
+              mapName: node.mapName,
+              type: node.type,
+            } as Spawn;
+            const key = clusterKey(spawn.p);
+            if (!spawnsByCoordinate.has(key)) {
+              spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
+            } else {
+              spawnsByCoordinate.get(key)!.cluster!.push(spawn);
+            }
+            newSpawns.push(spawn);
+          }
           return;
         }
-        newSpawns = searchIndex
+        if (!isFilterActive) return;
+
+        const nodePredicted = node.predicted;
+        node.spawns.forEach((s) => {
+          const spawn = {
+            ...s,
+            id: s.id ?? node.type,
+            mapName: node.mapName,
+            type: node.type,
+            source: s.source ?? (nodePredicted ? "static" : undefined),
+          } as Spawn;
+          if (spawn.data) {
+            for (const filter of globalFilters) {
+              if (spawn.data[filter.group]) {
+                const values = spawn.data[filter.group];
+                if (!values.some((v) => state.globalFilters.includes(v))) {
+                  return;
+                }
+              }
+            }
+          }
+          const key = clusterKey(spawn.p);
+          if (!spawnsByCoordinate.has(key)) {
+            spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
+          } else {
+            spawnsByCoordinate.get(key)!.cluster!.push(spawn);
+          }
+          newSpawns.push(spawn);
+        });
+      });
+
+      const result = Array.from(spawnsByCoordinate.values());
+      result.sort((a, b) => {
+        if (a.mapName && b.mapName) return b.mapName.localeCompare(a.mapName);
+        return 0;
+      });
+      return result;
+    },
+    [clusterKey, globalFilters],
+  );
+
+  // Refresh: iterates static nodes (and search results when search is active).
+  // Runs on filter/search/mapName/data changes. Live actors are NOT included
+  // — they're rendered imperatively in markers.tsx and don't flow through here.
+  const refreshSpawns = useCallback(
+    (state: UserStoreState) => {
+      if (state.search) {
+        if (state.search.length < 3 || !searchIndex) {
+          setSpawns([]);
+          return;
+        }
+        const spawnsByCoordinate = new Map<string, Spawn>();
+        const results: (Spawn & { score?: number })[] = searchIndex
           .search(state.search)
-          .map((result) => ({ ...result.item, score: result.score }));
-        const privateMapName = newSpawns[0]?.mapName;
+          .map((r) => ({ ...r.item, score: r.score }));
+        const privateMapName = results[0]?.mapName;
         if (publicSearchSpawns) {
-          newSpawns.push(
+          results.push(
             ...publicSearchSpawns
               .filter((n) => n.mapName !== privateMapName)
               .map((spawn) => ({
@@ -600,7 +651,7 @@ export function CoordinatesProvider({
               })),
           );
         }
-        newSpawns.forEach((spawn) => {
+        results.forEach((spawn) => {
           const key = clusterKey(spawn.p);
           if (!spawnsByCoordinate.has(key)) {
             spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
@@ -608,139 +659,45 @@ export function CoordinatesProvider({
             spawnsByCoordinate.get(key)!.cluster!.push(spawn);
           }
         });
-      } else {
-        // For including the selected spawn even when its filter is off
-        const selectedNodeId = state.selectedNodeId;
-
-        currentNodes.forEach((node) => {
-          if (node.mapName && node.mapName !== state.mapName) {
-            return;
+        const sorted = Array.from(spawnsByCoordinate.values()).sort((a, b) => {
+          const aScore = (a as Spawn & { score?: number }).score;
+          const bScore = (b as Spawn & { score?: number }).score;
+          if (aScore !== undefined && bScore !== undefined) {
+            const scoreDiff = aScore - bScore;
+            if (scoreDiff !== 0) return scoreDiff;
           }
-          const isFilterActive = state.filters.includes(node.type);
-          // If filter is off, only include the specific selected spawn
-          if (!isFilterActive && selectedNodeId) {
-            const selectedSpawnData = node.spawns.find((s) => {
-              const sid = s.id ?? node.type;
-              const nodeId = sid.includes("@")
-                ? sid
-                : `${sid}@${s.p[0]}:${s.p[1]}`;
-              return nodeId === selectedNodeId;
-            });
-            if (selectedSpawnData) {
-              const spawn = {
-                ...selectedSpawnData,
-                id: selectedSpawnData.id ?? node.type,
-                mapName: node.mapName,
-                type: node.type,
-              } as Spawn;
-              const key = clusterKey(spawn.p);
-              if (!spawnsByCoordinate.has(key)) {
-                spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
-              } else {
-                spawnsByCoordinate.get(key)!.cluster!.push(spawn);
-              }
-              newSpawns.push(spawn);
-            }
-            return;
-          }
-          if (!isFilterActive) {
-            return;
-          }
-          node.spawns.forEach((s) => {
-            const spawn = {
-              ...s,
-              id: s.id ?? node.type,
-              mapName: node.mapName,
-              type: node.type,
-            } as Spawn;
-            if (spawn.data) {
-              for (const filter of globalFilters) {
-                if (spawn.data[filter.group]) {
-                  const values = spawn.data[filter.group];
-                  if (!values.some((v) => state.globalFilters.includes(v))) {
-                    return;
-                  }
-                }
-              }
-            }
-            const key = clusterKey(spawn.p);
-            if (!spawnsByCoordinate.has(key)) {
-              spawnsByCoordinate.set(key, { ...spawn, cluster: [] });
-            } else {
-              spawnsByCoordinate.get(key)!.cluster!.push(spawn);
-            }
-            newSpawns.push(spawn);
-          });
+          if (a.mapName && b.mapName) return b.mapName.localeCompare(a.mapName);
+          return 0;
         });
+        setSpawns(sorted);
+        return;
       }
-
-      newSpawns = Array.from(spawnsByCoordinate.values());
-      newSpawns.sort((a, b) => {
-        // Sort by score if both have scores (search mode)
-        if (a.score !== undefined && b.score !== undefined) {
-          const scoreDiff = a.score - b.score;
-          if (scoreDiff !== 0) {
-            return scoreDiff;
-          }
-        }
-        // Sort by mapName as secondary sort
-        if (a.mapName && b.mapName) {
-          return b.mapName.localeCompare(a.mapName);
-        }
-        return 0;
-      });
-
-      setSpawns(newSpawns);
+      setSpawns(processNodes(nodesRef.current, state));
     },
-    [searchIndex, publicSearchSpawns, clusterKey],
+    [processNodes, searchIndex, publicSearchSpawns, clusterKey],
   );
 
   useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-
-    const state = useUserStore.getState();
-    refreshSpawns(state);
-
-    const unsubscribeFilters = useUserStore.subscribe(
-      (state) => state.filters,
-      () => {
-        refreshSpawns(useUserStore.getState());
-      },
-    );
-    const unsubscribeSearch = useUserStore.subscribe(
-      (state) => state.search,
-      () => {
-        refreshSpawns(useUserStore.getState());
-      },
-    );
-    const unsubscribeGlobalFilters = useUserStore.subscribe(
-      (state) => state.globalFilters,
-      () => {
-        refreshSpawns(useUserStore.getState());
-      },
-    );
-    const unsubscribeMapName = useUserStore.subscribe(
-      (state) => state.mapName,
-      () => {
-        refreshSpawns(useUserStore.getState());
-      },
-    );
-    const unsubscribeSelectedNode = useUserStore.subscribe(
-      (state) => state.selectedNodeId,
-      () => {
-        refreshSpawns(useUserStore.getState());
-      },
-    );
-
-    return () => {
-      unsubscribeFilters();
-      unsubscribeSearch();
-      unsubscribeGlobalFilters();
-      unsubscribeMapName();
-      unsubscribeSelectedNode();
-    };
+    if (!isHydrated) return;
+    refreshSpawns(useUserStore.getState());
+    const unsubs = [
+      useUserStore.subscribe((s) => s.filters, () =>
+        refreshSpawns(useUserStore.getState()),
+      ),
+      useUserStore.subscribe((s) => s.search, () =>
+        refreshSpawns(useUserStore.getState()),
+      ),
+      useUserStore.subscribe((s) => s.globalFilters, () =>
+        refreshSpawns(useUserStore.getState()),
+      ),
+      useUserStore.subscribe((s) => s.mapName, () =>
+        refreshSpawns(useUserStore.getState()),
+      ),
+      useUserStore.subscribe((s) => s.selectedNodeId, () =>
+        refreshSpawns(useUserStore.getState()),
+      ),
+    ];
+    return () => unsubs.forEach((u) => u());
   }, [isHydrated, refreshSpawns, mapName, nodesFingerprint]);
 
   return (
