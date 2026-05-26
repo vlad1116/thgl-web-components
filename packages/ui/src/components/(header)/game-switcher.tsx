@@ -2,17 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
-import { cn } from "@repo/lib";
+import { cn, isOverwolf } from "@repo/lib";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
 import apps from "./global-menu.json";
 
-// Relative path so every tenant hits its own host (the public folder is
-// shared across the games-web container, so `/games/thgl-web/global_icons/*`
-// resolves on palia.th.gl, www.th.gl, palia.localhost:3100, etc.). Hitting
-// the absolute https://www.th.gl/global_icons/ URL was being served as
-// text/html by Bunny and getting blocked by Chrome's ORB cross-origin.
-const ICON_BASE_URL = "/games/thgl-web/global_icons/";
+// On games-web (and the THGL desktop app served from app.th.gl) the public
+// folder is shared across every tenant, so a relative path resolves on
+// palia.localhost:3100, palia.th.gl, www.th.gl, etc. Overwolf apps run on
+// the `overwolf-extension://` scheme where that path doesn't exist, so they
+// have to hit the absolute production URL. The legacy
+// `https://www.th.gl/global_icons/` URL was being rewritten to
+// `/www/global_icons/*` (no route → Bunny deploy-placeholder HTML → Chrome
+// ORB blocked it cross-origin), so we point at the actually-served
+// `/games/thgl-web/global_icons/` path in both cases.
+const ICON_BASE_URL = isOverwolf
+  ? "https://www.th.gl/games/thgl-web/global_icons/"
+  : "/games/thgl-web/global_icons/";
 
 type AppEntry = (typeof apps)[number];
 
