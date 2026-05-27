@@ -68,7 +68,14 @@ export function Account() {
       // Fetch profile for any authenticated user (regardless of subscription)
       const profile = await fetchProfile(userId);
 
-      const response = await fetch(TH_GL_URL + "/api/patreon", {
+      // Dev: hit the current host so the host-scoped cookie travels.
+      // Prod: round-trip to www.th.gl (or wherever TH_GL_URL points).
+      // The .th.gl-wide cookie carries either way in prod.
+      const patreonUrl =
+        process.env.NODE_ENV === "development"
+          ? "/api/patreon"
+          : `${TH_GL_URL}/api/patreon`;
+      const response = await fetch(patreonUrl, {
         credentials: "include",
       });
       try {

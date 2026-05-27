@@ -75,15 +75,48 @@ export function middleware(req: NextRequest) {
   // redirects) because the `has: { type: "host" }` rule there only does
   // exact-string matching, breaking `app.localhost:3100` in dev. We
   // already have host resolution here.
-  if (config.name === "thgl-app" && path === "/authenticate") {
+  // /authenticate is the Patreon OAuth entry point. Production: only
+  // thgl-app (app.th.gl) uses it — other tenants 404. Dev: allow it
+  // on any tenant subdomain so developers can sign in directly on
+  // paxdei.localhost / avowed.localhost / etc., avoiding the
+  // cross-subdomain cookie scoping mess that plagues *.localhost.
+  if (
+    path === "/authenticate" &&
+    (config.name === "thgl-app" || process.env.NODE_ENV === "development")
+  ) {
     // Derive redirect_uri from request host (app.th.gl → app.th.gl,
-    // app.localhost:3100 → app.localhost:3100 for dev). Must match
-    // what /api/patreon/redirect sends in postToken — both use the
-    // host header so they stay in sync.
+    // app.localhost:3100 → app.localhost:3100, paxdei.localhost:3100
+    // → paxdei.localhost:3100 in dev). Must match what
+    // /api/patreon/redirect sends in postToken — both use the host
+    // header so they stay in sync. Each tenant subdomain needs its
+    // exact redirect URI on Patreon's allowlist.
     const host = req.headers.get("host") ?? "app.th.gl";
     const protocol = host.includes("localhost") ? "http" : "https";
     const redirectUri = `${protocol}://${host}/api/patreon/redirect`;
-    const dest = `https://www.patreon.com/oauth2/authorize?response_type=code&client_id=${process.env.PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    // Encode return_to in the OAuth `state` so the redirect handler
+    // can bounce the user back to the page they came from. We keep
+    // the allow-list simple: same-host only (no open redirector).
+    const returnToRaw = url.searchParams.get("return_to") ?? "";
+    let stateParam = "";
+    if (returnToRaw) {
+      try {
+        const parsed = new URL(returnToRaw);
+        if (parsed.host === host) {
+          stateParam = Buffer.from(
+            JSON.stringify({ return_to: returnToRaw }),
+          ).toString("base64url");
+        }
+      } catch {
+        // ignore malformed return_to
+      }
+    }
+    const oauthParams = new URLSearchParams({
+      response_type: "code",
+      client_id: process.env.PATREON_CLIENT_ID ?? "",
+      redirect_uri: redirectUri,
+    });
+    if (stateParam) oauthParams.set("state", stateParam);
+    const dest = `https://www.patreon.com/oauth2/authorize?${oauthParams}`;
     return NextResponse.redirect(dest, 302);
   }
 
@@ -142,7 +175,11 @@ export function middleware(req: NextRequest) {
     config.name === "thgl-web" &&
     !path.startsWith("/www/") &&
     !path.startsWith("/games/thgl-web/") &&
-    !path.startsWith("/api/filters") // Global API, lives at app/api/filters
+    !path.startsWith("/api/filters") && // Global API, lives at app/api/filters
+    path !== "/api/patreon" // Global perks-refresh route (exact match).
+    // /api/patreon/authorize, /api/patreon/overwolf, and
+    // /api/patreon/redirect still rewrite to /www/ — those handlers
+    // are www-tenant-only in prod.
   ) {
     url.pathname = `/www${path}`;
     return NextResponse.rewrite(url);

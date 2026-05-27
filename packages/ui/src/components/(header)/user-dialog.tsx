@@ -255,7 +255,18 @@ function UnauthenticatedView() {
     setLoading(false);
   };
 
-  const authUrl = `${TH_GL_URL}/api/patreon/authorize?return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`;
+  // Production: round-trip through www.th.gl's authorize route (which
+  // supports the return_to state param). Dev: stay on the current
+  // tenant so the cookie ends up host-scoped and signed-in state
+  // actually applies to whatever subdomain the user was browsing.
+  // The /authenticate middleware handler is open to any tenant in dev
+  // (see middleware.ts).
+  const returnTo =
+    typeof window !== "undefined" ? window.location.href : "";
+  const authUrl =
+    process.env.NODE_ENV === "development" && typeof window !== "undefined"
+      ? `/authenticate?return_to=${encodeURIComponent(returnTo)}`
+      : `${TH_GL_URL}/api/patreon/authorize?return_to=${encodeURIComponent(returnTo)}`;
 
   return (
     <div className="space-y-4">

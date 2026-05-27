@@ -13,18 +13,38 @@ import {
 } from "@/games/thgl-web/lib/patreon";
 import { games } from "@repo/lib";
 
-export const maxDuration = 25;
-export async function GET(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) {
-    return Response.json({ error: "Invalid origin" }, { status: 403 });
-  }
-  const headers = {
+/**
+ * Account-perks refresh.
+ *
+ * Trades the stored Patreon refresh token for new perks + entitlement
+ * info, sets a fresh signed-userId cookie, and returns the resulting
+ * perks JSON. Called by the client (header/account.tsx) on app load
+ * to verify the cookie still represents an active supporter.
+ *
+ * Mounted at the top level (not under /www/) so every tenant —
+ * paxdei.th.gl, www.th.gl, app.th.gl, *.localhost — can call it
+ * against its own origin. That lets the host-scoped cookie travel
+ * with the request in dev where COOKIE_DOMAIN is unset and the
+ * cookie can't cross subdomains.
+ *
+ * Origin policy: allow missing Origin (same-origin GET requests
+ * from a tenant page don't set one) and echo the caller's Origin
+ * back via ACAO when present.
+ */
+
+function corsHeaders(request: NextRequest, extra: HeadersInit = {}) {
+  const origin = request.headers.get("origin") ?? "*";
+  return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, DELETE, OPTIONS",
     "Access-Control-Allow-Credentials": "true",
+    ...extra,
   };
+}
 
+export const maxDuration = 25;
+export async function GET(request: NextRequest) {
+  const headers = corsHeaders(request);
   try {
     const userIdCookie = request.cookies.get("userId");
     if (!userIdCookie?.value) {
@@ -49,10 +69,7 @@ export async function GET(request: NextRequest) {
     if (!patreonToken) {
       return Response.json(
         { error: "Token not found" },
-        {
-          status: 404,
-          headers,
-        },
+        { status: 404, headers },
       );
     }
 
@@ -71,13 +88,11 @@ export async function GET(request: NextRequest) {
     const signed = sign(userId, process.env.JWT_SECRET!);
     await setToken(userId, refreshTokenResult);
 
-    const patreonTokenRefreshed = refreshTokenResult;
-
     const responseHeaders = {
       "Set-Cookie": toCookieString(signed, 2678400),
       ...headers,
     };
-    const currentUserResponse = await getCurrentUser(patreonTokenRefreshed);
+    const currentUserResponse = await getCurrentUser(refreshTokenResult);
     const currentUserResult = (await currentUserResponse.json()) as PatreonUser;
     if (!currentUserResponse.ok) {
       return Response.json(
@@ -106,43 +121,22 @@ export async function GET(request: NextRequest) {
       decryptedUserId: userId,
       email: currentUser.data.attributes.email,
     };
-    return Response.json(result, {
-      headers: responseHeaders,
-    });
+    return Response.json(result, { headers: responseHeaders });
   } catch (err) {
     return Response.json(
       { error: "Internal Server Error", err },
-      {
-        status: 500,
-        headers,
-      },
+      { status: 500, headers },
     );
   }
 }
 
 export function DELETE(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) {
-    return Response.json({ error: "Invalid origin" }, { status: 403 });
-  }
-  const headers = {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, DELETE, OPTIONS",
-    "Access-Control-Allow-Credentials": "true",
+  const headers = corsHeaders(request, {
     "Set-Cookie": toCookieStringEmpty(),
-  };
+  });
   return Response.json({}, { headers });
 }
 
 export function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) {
-    return Response.json({ error: "Invalid origin" }, { status: 403 });
-  }
-  const headers = {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, DELETE, OPTIONS",
-    "Access-Control-Allow-Credentials": "true",
-  };
-  return Response.json({}, { headers });
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }

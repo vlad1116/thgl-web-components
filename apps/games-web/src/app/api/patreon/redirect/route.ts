@@ -15,8 +15,14 @@ const LOG = "[patreon/redirect]";
 
 export const maxDuration = 25;
 export async function GET(request: Request) {
-  // Patreon OAuth callback is only valid on app.th.gl — other tenants 404.
-  await requireApp("thgl-app");
+  // Patreon OAuth callback is restricted to app.th.gl in production
+  // so tenant subdomains can't accidentally claim the callback. In
+  // dev we relax this — see middleware /authenticate handler — so
+  // developers can sign in directly on paxdei.localhost / etc.
+  // without juggling cross-subdomain cookies.
+  if (process.env.NODE_ENV !== "development") {
+    await requireApp("thgl-app");
+  }
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error");
@@ -121,12 +127,34 @@ export async function GET(request: Request) {
     return Response.json({ error: "Token store failed" }, { status: 502 });
   }
 
+  // Honor the return_to encoded in OAuth `state` so the user lands
+  // back where they triggered /authenticate. Restrict to same-host to
+  // prevent the route being abused as an open redirector.
+  const stateRaw = searchParams.get("state");
+  let location = "/redirect";
+  if (stateRaw) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(stateRaw, "base64url").toString("utf-8"),
+      ) as { return_to?: string };
+      if (decoded.return_to) {
+        const parsed = new URL(decoded.return_to);
+        const expectedHost = request.headers.get("host");
+        if (expectedHost && parsed.host === expectedHost) {
+          location = decoded.return_to;
+        }
+      }
+    } catch {
+      // ignore — fall back to /redirect
+    }
+  }
+
   console.log(`${LOG} ok id=${currentUser.data.id} setting cookie + redirecting`);
   return new Response(null, {
     status: 302,
     headers: {
-      "Set-Cookie": toCookieString(signed, 2678400), // patreonToken.expires_in),
-      location: "/redirect",
+      "Set-Cookie": toCookieString(signed, 2678400),
+      location,
     },
   });
 }

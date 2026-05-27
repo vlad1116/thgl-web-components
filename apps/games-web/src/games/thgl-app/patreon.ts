@@ -218,11 +218,21 @@ export const CORS_HEADERS = {
 };
 
 export function toCookieString(userId: string, expiresIn: number) {
-  return `userId=${userId}; path=/; Max-Age=${expiresIn}; domain=${process.env.COOKIE_DOMAIN}; SameSite=Lax;`;
+  // Omit the domain attribute when COOKIE_DOMAIN is unset so the cookie
+  // is scoped to the current host. Useful in dev where *.localhost
+  // cookie scoping is unreliable across browsers — drop COOKIE_DOMAIN
+  // from .env.local and each tenant subdomain gets its own session.
+  const domain = process.env.COOKIE_DOMAIN
+    ? `; domain=${process.env.COOKIE_DOMAIN}`
+    : "";
+  return `userId=${userId}; path=/; Max-Age=${expiresIn}${domain}; SameSite=Lax;`;
 }
 
 export function toCookieStringEmpty() {
-  return `userId=; path=/; Max-Age=0; domain=${process.env.COOKIE_DOMAIN}; SameSite=Lax;`;
+  const domain = process.env.COOKIE_DOMAIN
+    ? `; domain=${process.env.COOKIE_DOMAIN}`
+    : "";
+  return `userId=; path=/; Max-Age=0${domain}; SameSite=Lax;`;
 }
 
 export async function getAccount() {
