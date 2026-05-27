@@ -5,6 +5,7 @@ import {
   cn,
   DrawingsAndNodes,
   FiltersApiError,
+  getCurrentGameId,
   saveFile,
   useAccountStore,
   useSettingsStore,
@@ -57,15 +58,6 @@ import { DeleteFilter } from "./delete-filter";
  */
 const hydratedGames = new Set<string>();
 
-function inferGameForHydrate(): string | null {
-  if (typeof window === "undefined") return null;
-  const path = window.location.pathname;
-  if (path.startsWith("/apps/")) return path.split("/")[2] ?? null;
-  const sub = window.location.hostname.split(".")[0];
-  if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub)) return null;
-  return sub;
-}
-
 export function MyFilters() {
   const [open, setOpen] = useState(false);
   const { filters, setFilters, toggleFilter } = useUserStore();
@@ -87,7 +79,7 @@ export function MyFilters() {
   // myFilters; local-only filters (no server id) survive untouched.
   useEffect(() => {
     if (!isSignedIn) return;
-    const game = inferGameForHydrate();
+    const game = getCurrentGameId();
     if (!game || hydratedGames.has(game)) return;
     hydratedGames.add(game);
     void hydrate(game);
@@ -296,7 +288,7 @@ function FilterRow({
 
   async function saveToAccount() {
     if (busyRef.current) return;
-    const game = myFilter.game ?? inferGameForHydrate();
+    const game = myFilter.game ?? getCurrentGameId();
     if (!game) {
       toast.error("Could not determine which game this filter belongs to");
       return;

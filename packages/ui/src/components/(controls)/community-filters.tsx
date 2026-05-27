@@ -8,6 +8,7 @@ import {
   apiVote,
   cn,
   FiltersApiError,
+  getCurrentGameId,
   serverFilterToLocal,
   useAccountStore,
   useSettingsStore,
@@ -43,21 +44,6 @@ import {
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 
-/**
- * Best-effort current-game inference. Matches the helper used by
- * settings.ts and my-filters.tsx. Catalog is per-game, so if we
- * can't infer a game (e.g. on www.th.gl, app.th.gl, localhost root)
- * we don't render the browser at all.
- */
-function inferGame(): string | null {
-  if (typeof window === "undefined") return null;
-  const path = window.location.pathname;
-  if (path.startsWith("/apps/")) return path.split("/")[2] ?? null;
-  const sub = window.location.hostname.split(".")[0];
-  if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub)) return null;
-  return sub;
-}
-
 type SortOrder = "top" | "new" | "recent";
 
 const PAGE_SIZE = 30;
@@ -69,7 +55,7 @@ export function CommunityFilters({
   compact?: boolean;
 } = {}) {
   const [open, setOpen] = useState(false);
-  const game = useMemo(inferGame, []);
+  const game = useMemo(getCurrentGameId, []);
   if (!game) return null;
 
   const trigger = compact ? (

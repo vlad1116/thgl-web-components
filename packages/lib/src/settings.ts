@@ -9,6 +9,7 @@ import {
   FiltersApiError,
   serverFilterToLocal,
 } from "./filters-api";
+import { getCurrentGameId } from "./games";
 
 export type LiveMode = "static" | "live" | "combined";
 
@@ -441,22 +442,6 @@ const getStorageName = () => {
   return "settings-storage";
 };
 
-/**
- * Best-effort current-game inference for filter sync. Matches the
- * settings store's storage-name logic (`/apps/<id>` for THGLApp pages)
- * and falls back to the subdomain (game.th.gl). Filters created
- * before this rework may have no `game` field; sync falls back to
- * this value at write time. Returns null if we can't tell.
- */
-function inferCurrentGame(): string | null {
-  if (typeof window === "undefined") return null;
-  const path = window.location.pathname;
-  if (path.startsWith("/apps/")) return path.split("/")[2] ?? null;
-  const sub = window.location.hostname.split(".")[0];
-  if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub)) return null;
-  return sub;
-}
-
 const SYNC_DEBOUNCE_MS = 1000;
 const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -480,7 +465,7 @@ function scheduleFilterSync(filter: DrawingsAndNodes) {
     id,
     setTimeout(() => {
       syncTimers.delete(id);
-      const game = filter.game ?? inferCurrentGame();
+      const game = filter.game ?? getCurrentGameId();
       if (!game) {
         console.error("[filter sync] no game id, skipping put", id);
         return;
@@ -1217,7 +1202,7 @@ export const useSettingsStore = create(
             myFilter = { ...myFilter, id: crypto.randomUUID() };
           }
           if (isSignedIn() && !myFilter.game) {
-            const inferred = inferCurrentGame();
+            const inferred = getCurrentGameId();
             if (inferred) myFilter = { ...myFilter, game: inferred };
           }
 

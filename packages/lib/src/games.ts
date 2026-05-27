@@ -1,3 +1,4 @@
+import { isOverwolf } from "./env";
 import { HOTKEYS } from "./thgl-app/hotkeys";
 
 export const DEFAULT_PATREON_TIER_IDS = [
@@ -823,3 +824,34 @@ export type Game = {
   premiumFeatures?: string[];
   partnerApps?: PartnerApp[];
 };
+
+/**
+ * Resolve the current game's canonical id from the runtime context.
+ * Works across all three places we render:
+ *
+ *   - Game tenant on the web (paxdei.th.gl, *.localhost): the first
+ *     subdomain matches `Game.id`. Skips infrastructural subdomains
+ *     like www/app where the answer is "no specific game".
+ *   - THGLApp WebView (app.th.gl/apps/<id>): the path segment after
+ *     `/apps/` matches `Game.id`.
+ *   - Overwolf extension (overwolf-extension://<extId>): hostname is
+ *     the extension id; look it up in the games registry to recover
+ *     the canonical id.
+ *
+ * Returns null when running SSR, on www/app roots, or when no game
+ * matches — callers should treat null as "don't render game-scoped
+ * UI" rather than guessing.
+ */
+export function getCurrentGameId(): string | null {
+  if (typeof window === "undefined") return null;
+  const path = window.location.pathname;
+  if (path.startsWith("/apps/")) return path.split("/")[2] ?? null;
+  if (isOverwolf) {
+    const ext = window.location.hostname;
+    return games.find((g) => g.overwolf?.id === ext)?.id ?? null;
+  }
+  const sub = window.location.hostname.split(".")[0];
+  if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub))
+    return null;
+  return sub;
+}
