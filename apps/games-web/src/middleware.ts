@@ -141,7 +141,8 @@ export function middleware(req: NextRequest) {
   if (
     config.name === "thgl-web" &&
     !path.startsWith("/www/") &&
-    !path.startsWith("/games/thgl-web/")
+    !path.startsWith("/games/thgl-web/") &&
+    !path.startsWith("/api/filters") // Global API, lives at app/api/filters
   ) {
     url.pathname = `/www${path}`;
     return NextResponse.rewrite(url);
