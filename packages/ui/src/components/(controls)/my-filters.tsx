@@ -10,6 +10,9 @@ import {
   useUserStore,
   writeFileOverwolf,
 } from "@repo/lib";
+import { CommunityFilters } from "./community-filters";
+import { AddSharedFilter } from "../(interactive-map)/add-shared-filter";
+import { UploadFilter } from "../(interactive-map)/upload-filter";
 import {
   Collapsible,
   CollapsibleContent,
@@ -107,9 +110,6 @@ export function MyFilters() {
   const ratio =
     filterNames.length > 0 ? activeFiltersLength / filterNames.length : 0;
 
-  if (filterNames.length === 0) {
-    return <></>;
-  }
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
@@ -160,7 +160,22 @@ export function MyFilters() {
           style={{ width: `${ratio * 100}%` }}
         />
       </div>
+      <div className="px-1.5 pt-1.5 grid grid-cols-3 gap-1">
+        <CommunityFilters compact />
+        <AddSharedFilter compact />
+        <UploadFilter compact />
+      </div>
       <CollapsibleContent className="flex flex-wrap w-[200px] md:w-full">
+        {filterNames.length === 0 && (
+          <p className="text-xs text-muted-foreground px-2 py-3 leading-snug">
+            No saved filters yet. Browse{" "}
+            <span className="text-foreground">Community</span> for public
+            filters, paste a{" "}
+            <span className="text-foreground">Code</span> a friend shared,
+            or <span className="text-foreground">Upload</span> a filter
+            file.
+          </p>
+        )}
         {myFilters
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((myFilter) => (

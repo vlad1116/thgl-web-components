@@ -41,6 +41,12 @@ import {
   Trash,
 } from "lucide-react";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { toast } from "sonner";
 
 /**
@@ -62,18 +68,50 @@ type SortOrder = "top" | "new" | "recent";
 
 const PAGE_SIZE = 30;
 
-export function CommunityFilters() {
+export function CommunityFilters({
+  compact = false,
+}: {
+  /** Tight icon+label sidebar variant. */
+  compact?: boolean;
+} = {}) {
   const [open, setOpen] = useState(false);
   const game = useMemo(inferGame, []);
   if (!game) return null;
+
+  const trigger = compact ? (
+    <TooltipProvider>
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button
+            size="sm"
+            type="button"
+            variant="outline"
+            className="w-full justify-center gap-1.5 h-8 text-xs"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            Community
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          Browse public filters from other players
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    <Button
+      size="sm"
+      type="button"
+      variant="secondary"
+      className="w-full justify-start gap-2"
+    >
+      <Globe className="h-4 w-4" />
+      Browse Community Filters
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="secondary">
-          <Globe className="h-4 w-4 mr-2" />
-          Community Filters
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Community Filters</DialogTitle>

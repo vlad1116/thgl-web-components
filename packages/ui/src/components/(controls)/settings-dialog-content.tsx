@@ -33,9 +33,6 @@ import { Slider } from "../ui/slider";
 import { ProfileManager } from "./profile-manager";
 import { Play, RotateCcw } from "lucide-react";
 import { playAlertSound, ALERT_SOUND_OPTIONS } from "./audio-alert";
-import { UploadFilter } from "../(interactive-map)/upload-filter";
-import { AddSharedFilter } from "../(interactive-map)/add-shared-filter";
-import { CommunityFilters } from "./community-filters";
 
 function Section({
   title,
@@ -268,14 +265,6 @@ export function SettingsDialogContent({
                 >
                   Reset
                 </Button>
-              </div>
-              <p className="text-xs font-medium text-muted-foreground">
-                Add Filter
-              </p>
-              <div className="flex items-center space-x-2 flex-wrap gap-2">
-                <UploadFilter />
-                <AddSharedFilter />
-                <CommunityFilters />
               </div>
             </div>
           </Section>

@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Hash, Users } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import {
@@ -41,7 +41,12 @@ import {
  */
 export function AddSharedFilter({
   onFilterAdded,
-}: { onFilterAdded?: (filterName: string) => void } = {}) {
+  compact = false,
+}: {
+  onFilterAdded?: (filterName: string) => void;
+  /** Tight icon+label sidebar variant. */
+  compact?: boolean;
+} = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [shareCode, setShareCode] = useState("");
@@ -88,14 +93,35 @@ export function AddSharedFilter({
     setIsLoading(false);
   };
 
+  const trigger = compact ? (
+    <TooltipProvider>
+      <Tooltip delayDuration={200} disableHoverableContent>
+        <TooltipTrigger asChild>
+          <Button
+            size="sm"
+            type="button"
+            variant="outline"
+            className="w-full justify-center gap-1.5 h-8 text-xs"
+          >
+            <Hash className="h-3.5 w-3.5" />
+            Code
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          Import a filter by share code
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    <Button size="sm" type="button" variant="secondary">
+      <Users className="h-4 w-4 mr-2" />
+      Add Shared Filter
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" type="button" variant="secondary">
-          <Users className="h-4 w-4 mr-2" />
-          Add Shared Filter
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Shared Filter</DialogTitle>
