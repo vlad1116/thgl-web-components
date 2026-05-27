@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { verify } from "jsonwebtoken";
 import { type NextRequest } from "next/server";
 import {

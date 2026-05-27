@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import Link from "next/link";

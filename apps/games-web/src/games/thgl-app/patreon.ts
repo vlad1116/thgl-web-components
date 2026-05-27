@@ -1,7 +1,7 @@
 import { type THGLAccount } from "@repo/lib";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
-import { kv } from "@vercel/kv";
+import { kv } from "@/lib/kv";
 import { tiers } from "./tiers";
 
 interface App {
