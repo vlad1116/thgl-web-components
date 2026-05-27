@@ -1,57 +1,35 @@
-import { put, list } from "@vercel/blob";
+/**
+ * Legacy shared-nodes endpoint. Disabled — see /api/shared-filters
+ * for the same rationale. The shared-nodes store has been dormant
+ * since 2024 (40 blobs total, no new writes), but we keep this stub
+ * around to give old clients a clean 410 instead of a 404.
+ */
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "OPTIONS",
   "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Headers": "*",
 };
 
-function errorJson(message: string, status: number) {
-  return Response.json({ error: message }, { status, headers });
+function gone() {
+  return Response.json(
+    {
+      error: "Gone",
+      message: "The shared-nodes endpoint is no longer available.",
+    },
+    { status: 410, headers },
+  );
 }
 
-export async function PUT(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const filename = searchParams.get("filename");
-    if (!filename) return errorJson("No filename provided", 400);
-    if (!request.body) return errorJson("No body provided", 400);
-
-    const existingName = filename.split("/shared-nodes/")[1];
-    const name = existingName || filename;
-    const blob = await put(`/shared-nodes/${name}`, request.body, {
-      access: "public",
-      contentType: "application/json",
-      cacheControlMaxAge: 0,
-      addRandomSuffix: !existingName,
-    });
-
-    return Response.json(blob, { headers });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[shared-nodes PUT] ${msg}`);
-    return errorJson(msg, 500);
-  }
+export function GET() {
+  return gone();
 }
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code");
-    if (!code) return errorJson("No code provided", 400);
-
-    const { blobs } = await list({ prefix: "shared-nodes/" });
-    const blob = blobs.find((blob) => blob.url.endsWith(code));
-    if (!blob) return errorJson("No shared node found", 404);
-    return Response.json(blob, { headers });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[shared-nodes GET] ${msg}`);
-    return errorJson(msg, 500);
-  }
+export function PUT() {
+  return gone();
 }
 
-export async function OPTIONS() {
+export function OPTIONS() {
   return new Response(null, { status: 204, headers });
 }
