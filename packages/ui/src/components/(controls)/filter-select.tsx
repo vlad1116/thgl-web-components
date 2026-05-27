@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Plus, User, Users } from "lucide-react";
+import { Check, ChevronsUpDown, Globe, Plus, User, Users } from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
@@ -9,8 +9,20 @@ import {
   CommandList,
 } from "../ui/command";
 import { useState } from "react";
-import { cn, useSettingsStore } from "@repo/lib";
+import { cn, DrawingsAndNodes, useSettingsStore } from "@repo/lib";
 import { ScrollArea } from "../ui/scroll-area";
+
+function FilterIcon({ filter }: { filter: DrawingsAndNodes }) {
+  // Public filters: globe. Synced (has server id) or legacy shared:
+  // people icon. Local-only: single user.
+  if (filter.visibility === "public") {
+    return <Globe className={cn("h-4 w-4 shrink-0")} />;
+  }
+  if (filter.id || filter.url) {
+    return <Users className={cn("h-4 w-4 shrink-0")} />;
+  }
+  return <User className={cn("h-4 w-4 shrink-0")} />;
+}
 
 export function FilterSelect({
   id,
@@ -50,11 +62,7 @@ export function FilterSelect({
         >
           {myFilter ? (
             <span className="truncate flex gap-2 items-center">
-              {!myFilter.isShared ? (
-                <User className={cn("h-4 w-4 shrink-0")} />
-              ) : (
-                <Users className={cn("h-4 w-4 shrink-0")} />
-              )}
+              <FilterIcon filter={myFilter} />
               <span>{myFilter.name.replace(/my_\d+_/, "")}</span>
             </span>
           ) : (
@@ -94,57 +102,28 @@ export function FilterSelect({
                       )}
                     />
                     <div className="flex gap-2 items-center">
-                      {!myFilter.isShared ? (
-                        <User className={cn("h-4 w-4 shrink-0")} />
-                      ) : (
-                        <Users className={cn("h-4 w-4 shrink-0")} />
-                      )}
+                      <FilterIcon filter={myFilter} />
                       <span>{myFilter.name.replace(/my_\d+_/, "")}</span>
                     </div>
                   </CommandItem>
                 ))}
                 {!isExistingFilter && (
-                  <>
-                    <CommandItem
-                      value={`private_${value}`}
-                      disabled={value.length === 0}
-                      onSelect={() => {
-                        const filterName = `my_${Date.now()}_${value}`;
-                        addMyFilter({
-                          name: filterName,
-                        });
-                        onFilterSelect?.(filterName);
-                        setValue(value);
-                        setOpen(false);
-                      }}
-                    >
-                      <Plus className={cn("mr-2 h-4 w-4")} />
-                      <span className="flex gap-2 items-center">
-                        <User className={cn("h-4 w-4 shrink-0")} /> Add private{" "}
-                        <i>{value}</i>
-                      </span>
-                    </CommandItem>
-                    <CommandItem
-                      value={`shared_${value}`}
-                      disabled={value.length === 0}
-                      onSelect={() => {
-                        const filterName = `my_${Date.now()}_${value}`;
-                        addMyFilter({
-                          name: filterName,
-                          isShared: true,
-                        });
-                        onFilterSelect?.(filterName);
-                        setValue(value);
-                        setOpen(false);
-                      }}
-                    >
-                      <Plus className={cn("mr-2 h-4 w-4")} />
-                      <span className="flex gap-2 items-center">
-                        <Users className={cn("h-4 w-4 shrink-0")} /> Add shared{" "}
-                        <i>{value ?? "filter"}</i>
-                      </span>
-                    </CommandItem>
-                  </>
+                  <CommandItem
+                    value={`new_${value}`}
+                    disabled={value.length === 0}
+                    onSelect={() => {
+                      const filterName = `my_${Date.now()}_${value}`;
+                      addMyFilter({ name: filterName });
+                      onFilterSelect?.(filterName);
+                      setValue(value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Plus className={cn("mr-2 h-4 w-4")} />
+                    <span className="flex gap-2 items-center">
+                      Add filter <i>{value}</i>
+                    </span>
+                  </CommandItem>
                 )}
               </ScrollArea>
             </CommandGroup>
