@@ -1576,7 +1576,6 @@ function MarkersContent({
         if (actor.mapName && actor.mapName !== currentMapName) continue;
 
         const id = String(actor.address);
-        seen.add(id);
 
         let pos: [number, number] = [actor.x, actor.y];
         if (rotationCache) pos = rotationCache.getRotated(actor.x, actor.y);
@@ -1584,6 +1583,16 @@ function MarkersContent({
         const nodeId = `${displayType}@${actor.x.toFixed(2)}:${actor.y.toFixed(
           2,
         )}`;
+        const isDiscoveredFlag = checkNodeDiscovered(
+          nodeId,
+          discoveryLookupRef.current,
+        );
+        // hideDiscoveredNow + discovered → omit from seen so the remove loop
+        // takes the marker off the layer. (If we added to seen first, the
+        // marker would stay rendered with stale state.)
+        if (isDiscoveredFlag && hideDiscoveredNow) continue;
+        seen.add(id);
+
         const spawn: Spawn = {
           id: nodeId,
           type: displayType,
@@ -1595,18 +1604,29 @@ function MarkersContent({
           address: actor.address,
           source: "live",
         };
-        const isDiscoveredFlag = checkNodeDiscovered(
-          nodeId,
-          discoveryLookupRef.current,
-        );
-        if (isDiscoveredFlag && hideDiscoveredNow) continue;
         newSpawns.set(id, spawn);
+        const newIsHighlighted =
+          highlightSpawnIDsNow.includes(nodeId) ||
+          selectedNodeIdNow === nodeId;
+        const newIsSelected = selectedNodeIdNow === nodeId;
 
         const existing = liveMarkerLayer.getMarker(id);
         if (existing) {
-          // In-place position update — cheap, no buffer rebuild beyond version bump.
-          if (existing.latLng[0] !== pos[0] || existing.latLng[1] !== pos[1]) {
-            liveMarkerLayer.updateMarker(id, { latLng: pos });
+          // In-place update — position OR derived flags (discovery, highlight,
+          // selection) so right-click-to-discover etc. reflect immediately.
+          const posChanged =
+            existing.latLng[0] !== pos[0] || existing.latLng[1] !== pos[1];
+          const flagsChanged =
+            !!existing.isDiscovered !== isDiscoveredFlag ||
+            !!existing.isHighlighted !== newIsHighlighted ||
+            !!existing.isSelected !== newIsSelected;
+          if (posChanged || flagsChanged) {
+            liveMarkerLayer.updateMarker(id, {
+              latLng: pos,
+              isDiscovered: isDiscoveredFlag,
+              isHighlighted: newIsHighlighted,
+              isSelected: newIsSelected,
+            });
             dirty = true;
           }
           continue;
@@ -1663,12 +1683,10 @@ function MarkersContent({
           sheet,
           rect,
           key: displayType,
-          isHighlighted:
-            highlightSpawnIDsNow.includes(nodeId) ||
-            selectedNodeIdNow === nodeId,
+          isHighlighted: newIsHighlighted,
           isDiscovered: isDiscoveredFlag,
           isMuted: false,
-          isSelected: selectedNodeIdNow === nodeId,
+          isSelected: newIsSelected,
           keepUpright: true,
         };
         liveMarkerLayer.add(instance);
@@ -1761,6 +1779,13 @@ function MarkersContent({
       (s) => s.hideDiscoveredNodes,
       processActors,
     );
+    // Re-process when a node gets marked discovered/undiscovered so the
+    // existing live marker reflects the new state immediately (right-click
+    // contextmenu fix).
+    const unsubDiscovered = useSettingsStore.subscribe(
+      (s) => s.discoveredNodes,
+      processActors,
+    );
     // Initial run.
     processActors();
 
@@ -1772,6 +1797,7 @@ function MarkersContent({
       unsubSelected();
       unsubLiveMode();
       unsubHideDiscovered();
+      unsubDiscovered();
       const ids = Array.from(liveSpawnMapRef.current.keys());
       for (const id of ids) liveMarkerLayer.unregisterAllEventHandlers(id);
       if (ids.length > 0) liveMarkerLayer.removeMany(ids);
