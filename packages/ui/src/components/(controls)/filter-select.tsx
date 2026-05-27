@@ -1,4 +1,11 @@
-import { Check, ChevronsUpDown, Globe, Plus, User, Users } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Cloud,
+  CloudOff,
+  Globe,
+  Plus,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
@@ -13,15 +20,16 @@ import { cn, DrawingsAndNodes, useSettingsStore } from "@repo/lib";
 import { ScrollArea } from "../ui/scroll-area";
 
 function FilterIcon({ filter }: { filter: DrawingsAndNodes }) {
-  // Public filters: globe. Synced (has server id) or legacy shared:
-  // people icon. Local-only: single user.
+  // Public → globe (visible to community)
+  // Synced private → cloud (saved to your account)
+  // Local only (incl. legacy isShared+url, since the blob backend is gone) → cloud-off
   if (filter.visibility === "public") {
     return <Globe className={cn("h-4 w-4 shrink-0")} />;
   }
-  if (filter.id || filter.url) {
-    return <Users className={cn("h-4 w-4 shrink-0")} />;
+  if (filter.id) {
+    return <Cloud className={cn("h-4 w-4 shrink-0")} />;
   }
-  return <User className={cn("h-4 w-4 shrink-0")} />;
+  return <CloudOff className={cn("h-4 w-4 shrink-0")} />;
 }
 
 export function FilterSelect({

@@ -41,12 +41,6 @@ import {
   Trash,
 } from "lucide-react";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { toast } from "sonner";
 
 /**
@@ -79,24 +73,14 @@ export function CommunityFilters({
   if (!game) return null;
 
   const trigger = compact ? (
-    <TooltipProvider>
-      <Tooltip delayDuration={200} disableHoverableContent>
-        <TooltipTrigger asChild>
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            className="w-full justify-center gap-1.5 h-8 text-xs"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            Community
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Browse public filters from other players
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <button
+      type="button"
+      title="Browse community filters"
+      aria-label="Browse community filters"
+      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+    >
+      <Globe className="h-3.5 w-3.5" />
+    </button>
   ) : (
     <Button
       size="sm"
@@ -300,7 +284,9 @@ function Card({
   onCommentChange,
   onImported,
 }: CardProps) {
-  const isSignedIn = useAccountStore((s) => !!s.decryptedUserId);
+  const myUserId = useAccountStore((s) => s.decryptedUserId);
+  const isSignedIn = !!myUserId;
+  const isOwn = !!myUserId && meta.userId === myUserId;
   const addMyFilter = useSettingsStore((s) => s.addMyFilter);
   const [importing, setImporting] = useState(false);
   const [voting, setVoting] = useState(false);
@@ -327,6 +313,13 @@ function Card({
 
   async function handleImport() {
     if (importing) return;
+    if (isOwn) {
+      // Importing your own public filter would just create a
+      // duplicate local copy. Block it client-side; the user already
+      // has the original in My Filters.
+      toast("This is already your filter");
+      return;
+    }
     setImporting(true);
     try {
       const full = await apiGetFilter(meta.id);
@@ -356,7 +349,7 @@ function Card({
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           type="button"
-          className="grow flex items-center gap-2 text-left truncate"
+          className="grow flex items-center gap-2 text-left truncate min-w-0"
           onClick={onToggle}
         >
           <ChevronDown
@@ -366,6 +359,11 @@ function Card({
             )}
           />
           <span className="truncate font-medium">{displayName}</span>
+          {isOwn && (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary shrink-0">
+              Yours
+            </span>
+          )}
         </button>
         <span className="flex items-center gap-1 text-sm text-muted-foreground shrink-0 tabular-nums">
           <Heart className="h-4 w-4" />
@@ -380,7 +378,8 @@ function Card({
           size="sm"
           variant="secondary"
           onClick={handleImport}
-          disabled={importing}
+          disabled={importing || isOwn}
+          title={isOwn ? "This is already in your filters" : undefined}
         >
           {importing && <ReloadIcon className="mr-1 h-3 w-3 animate-spin" />}
           Import

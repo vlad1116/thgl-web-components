@@ -4,12 +4,6 @@ import {
   useSettingsStore,
 } from "@repo/lib";
 import { Button } from "../ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -91,25 +85,15 @@ export function UploadFilter({
 
   if (compact) {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={200} disableHoverableContent>
-          <TooltipTrigger asChild>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={handleClick}
-              className="w-full justify-center gap-1.5 h-8 text-xs"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Upload
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            Upload a filter file from disk
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <button
+        type="button"
+        onClick={handleClick}
+        title="Upload filter from file"
+        aria-label="Upload filter from file"
+        className="p-1 text-muted-foreground hover:text-primary transition-colors"
+      >
+        <Upload className="h-3.5 w-3.5" />
+      </button>
     );
   }
 

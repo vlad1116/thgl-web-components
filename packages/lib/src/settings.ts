@@ -6,6 +6,7 @@ import {
   apiDeleteFilter,
   apiListFilters,
   apiPutFilter,
+  FiltersApiError,
   serverFilterToLocal,
 } from "./filters-api";
 
@@ -490,6 +491,30 @@ function scheduleFilterSync(filter: DrawingsAndNodes) {
         payload: { nodes: filter.nodes, drawing: filter.drawing },
         visibility: filter.visibility ?? "private",
       }).catch((err) => {
+        // Account switched on this device (or somehow we have a stale
+        // server id we don't own). Strip the local id so the filter
+        // visibly drops back to local-only and the user can choose
+        // to re-save it under their current account.
+        if (err instanceof FiltersApiError && err.status === 403) {
+          const state = useSettingsStore.getState();
+          const updatedFilters = state.myFilters.map((f) =>
+            f.id === id
+              ? {
+                  ...f,
+                  id: undefined,
+                  visibility: undefined,
+                  shareCode: undefined,
+                  voteCount: undefined,
+                  commentCount: undefined,
+                }
+              : f,
+          );
+          state.setMyFilters(updatedFilters);
+          console.warn(
+            `[filter sync] ${id} owned by another account; demoting to local-only`,
+          );
+          return;
+        }
         console.error("[filter sync] put failed", id, err);
       });
     }, SYNC_DEBOUNCE_MS),

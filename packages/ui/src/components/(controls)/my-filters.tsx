@@ -1,5 +1,6 @@
 "use client";
 import {
+  apiPutFilter,
   apiSetShare,
   cn,
   DrawingsAndNodes,
@@ -22,6 +23,9 @@ import {
   CaseSensitive,
   ChevronRight,
   Clipboard,
+  Cloud,
+  CloudOff,
+  CloudUpload,
   Copy,
   Download,
   EllipsisVertical,
@@ -30,8 +34,6 @@ import {
   LogIn,
   Pencil,
   Trash,
-  User,
-  Users,
   XCircle,
 } from "lucide-react";
 import {
@@ -140,6 +142,11 @@ export function MyFilters() {
             </span>
           </button>
         </CollapsibleTrigger>
+        <div className="flex items-center shrink-0">
+          <CommunityFilters compact />
+          <AddSharedFilter compact />
+          <UploadFilter compact />
+        </div>
         <button
           className="text-[10px] text-muted-foreground hover:text-primary px-1.5 py-1 transition-colors shrink-0 uppercase tracking-wide"
           onClick={() => {
@@ -159,11 +166,6 @@ export function MyFilters() {
           className="h-full bg-primary/50 transition-all duration-300 rounded-full"
           style={{ width: `${ratio * 100}%` }}
         />
-      </div>
-      <div className="px-1.5 pt-1.5 grid grid-cols-3 gap-1">
-        <CommunityFilters compact />
-        <AddSharedFilter compact />
-        <UploadFilter compact />
       </div>
       <CollapsibleContent className="flex flex-wrap w-[200px] md:w-full">
         {filterNames.length === 0 && (
@@ -259,7 +261,9 @@ function FilterRow({
   const busyRef = useRef(false);
   const isSynced = !!myFilter.id;
   const isPublic = myFilter.visibility === "public";
-  const isLegacyShared = !!myFilter.url && !myFilter.id; // pre-rework local data
+  // Legacy: pre-rework localStorage with isShared + url but no server id.
+  // The blob endpoint is 410-Gone now, so these are effectively local-only.
+  const isLegacy = !!myFilter.url && !myFilter.id;
   const displayName = myFilter.name.replace(/my_\d+_/, "");
 
   async function callShare(input: {
@@ -284,6 +288,45 @@ function FilterRow({
     } catch (err) {
       const msg =
         err instanceof FiltersApiError ? err.message : "Sharing failed";
+      toast.error(msg);
+    } finally {
+      busyRef.current = false;
+    }
+  }
+
+  async function saveToAccount() {
+    if (busyRef.current) return;
+    const game = myFilter.game ?? inferGameForHydrate();
+    if (!game) {
+      toast.error("Could not determine which game this filter belongs to");
+      return;
+    }
+    busyRef.current = true;
+    try {
+      const id = crypto.randomUUID();
+      const updated = await apiPutFilter(id, {
+        game,
+        name: myFilter.name,
+        payload: { nodes: myFilter.nodes, drawing: myFilter.drawing },
+        visibility: "private",
+      });
+      onShareChange({
+        ...myFilter,
+        id: updated.id,
+        game: updated.game,
+        visibility: updated.visibility,
+        shareCode: updated.shareCode ?? undefined,
+        voteCount: updated.voteCount,
+        commentCount: updated.commentCount,
+        updatedAt: updated.updatedAt,
+        // Drop legacy fields — vestigial after the rework.
+        url: undefined,
+        isShared: undefined,
+      });
+      toast.success(`"${displayName}" saved to your account`);
+    } catch (err) {
+      const msg =
+        err instanceof FiltersApiError ? err.message : "Save failed";
       toast.error(msg);
     } finally {
       busyRef.current = false;
@@ -335,10 +378,10 @@ function FilterRow({
       >
         {isPublic ? (
           <Globe className="h-5 w-5 shrink-0" />
-        ) : isSynced || isLegacyShared ? (
-          <Users className="h-5 w-5 shrink-0" />
+        ) : isSynced ? (
+          <Cloud className="h-5 w-5 shrink-0" />
         ) : (
-          <User className="h-5 w-5 shrink-0" />
+          <CloudOff className="h-5 w-5 shrink-0" />
         )}
         <span className="truncate">{displayName}</span>
       </button>
@@ -351,20 +394,25 @@ function FilterRow({
             {!isSignedIn && (
               <DropdownMenuItem
                 onClick={() => {
-                  // Patreon OAuth entry point lives on www.th.gl. Open in
-                  // a new tab so the user's in-progress map state isn't
-                  // lost. After auth, they come back to /support-me/account
-                  // and can return here.
-                  window.open(
-                    "https://www.th.gl/support-me/patreon",
-                    "_blank",
-                    "noopener",
-                  );
+                  useAccountStore.getState().setShowUserDialog(true);
                 }}
               >
                 <LogIn className="mr-2 h-4 w-4" />
                 <span>Sign in to share</span>
               </DropdownMenuItem>
+            )}
+            {isSignedIn && !isSynced && (
+              <>
+                <DropdownMenuItem onClick={saveToAccount}>
+                  <CloudUpload className="mr-2 h-4 w-4" />
+                  <span>
+                    {isLegacy
+                      ? "Save to my account (replace legacy share)"
+                      : "Save to my account"}
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
             )}
             {isSignedIn && isSynced && (
               <>

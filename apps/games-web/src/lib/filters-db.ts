@@ -1,4 +1,4 @@
-import { libsql, arg, type LibSqlStmt } from "@/lib/libsql";
+import { libsql, arg } from "@/lib/libsql";
 
 /**
  * Typed data access for the shared-filters feature.
@@ -277,43 +277,56 @@ export async function setShareCode(
   return getFilterById(id);
 }
 
-/** Toggle a vote. Returns true if the vote was added, false if removed. */
+/**
+ * Toggle a vote. Race-safe: relies on the (filter_id, user_id) PRIMARY
+ * KEY + INSERT OR IGNORE to decide who actually wrote, then only
+ * increments vote_count if our statement was the one to mutate. Two
+ * concurrent toggles can't drift vote_count past 1 per user.
+ */
 export async function toggleVote(
   filterId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
   const now = Math.floor(Date.now() / 1000);
-  // Check existence first to keep the response truthful. Race window
-  // between this read and the write is tiny; idempotent toggle from
-  // the user's perspective.
-  const [existing] = await libsql([
+  // Try to insert; if the (filter_id, user_id) row already exists,
+  // INSERT OR IGNORE leaves affected_row_count = 0 and we know to
+  // delete instead.
+  const [insertResult] = await libsql([
     {
-      sql: "SELECT 1 FROM filter_votes WHERE filter_id = ? AND user_id = ?",
-      args: [arg.text(filterId), arg.text(userId)],
+      sql: "INSERT OR IGNORE INTO filter_votes (filter_id, user_id, created_at) VALUES (?, ?, ?)",
+      args: [arg.text(filterId), arg.text(userId), arg.int(now)],
     },
   ]);
-  const alreadyVoted = existing.rows.length > 0;
-  const stmts: LibSqlStmt[] = [];
-  if (alreadyVoted) {
-    stmts.push({
-      sql: "DELETE FROM filter_votes WHERE filter_id = ? AND user_id = ?",
-      args: [arg.text(filterId), arg.text(userId)],
-    });
-    stmts.push({
-      sql: "UPDATE user_filters SET vote_count = MAX(vote_count - 1, 0) WHERE id = ?",
-      args: [arg.text(filterId)],
-    });
+  let voted: boolean;
+  if ((insertResult.affected_row_count ?? 0) > 0) {
+    // We added the vote — bump the denormalized count.
+    await libsql([
+      {
+        sql: "UPDATE user_filters SET vote_count = vote_count + 1 WHERE id = ?",
+        args: [arg.text(filterId)],
+      },
+    ]);
+    voted = true;
   } else {
-    stmts.push({
-      sql: "INSERT INTO filter_votes (filter_id, user_id, created_at) VALUES (?, ?, ?)",
-      args: [arg.text(filterId), arg.text(userId), arg.int(now)],
-    });
-    stmts.push({
-      sql: "UPDATE user_filters SET vote_count = vote_count + 1 WHERE id = ?",
-      args: [arg.text(filterId)],
-    });
+    // Row was already there → toggle off. Delete + decrement, but
+    // only decrement if the delete actually removed a row (defends
+    // against two concurrent "off" toggles double-decrementing).
+    const [deleteResult] = await libsql([
+      {
+        sql: "DELETE FROM filter_votes WHERE filter_id = ? AND user_id = ?",
+        args: [arg.text(filterId), arg.text(userId)],
+      },
+    ]);
+    if ((deleteResult.affected_row_count ?? 0) > 0) {
+      await libsql([
+        {
+          sql: "UPDATE user_filters SET vote_count = MAX(vote_count - 1, 0) WHERE id = ?",
+          args: [arg.text(filterId)],
+        },
+      ]);
+    }
+    voted = false;
   }
-  await libsql(stmts);
   const [countResult] = await libsql([
     {
       sql: "SELECT vote_count FROM user_filters WHERE id = ?",
@@ -323,7 +336,7 @@ export async function toggleVote(
   const voteCount = countResult.rows[0]
     ? Number(countResult.rows[0][0].value)
     : 0;
-  return { voted: !alreadyVoted, voteCount };
+  return { voted, voteCount };
 }
 
 export async function hasVoted(

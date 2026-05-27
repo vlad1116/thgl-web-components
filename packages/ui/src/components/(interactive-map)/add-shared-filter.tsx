@@ -94,24 +94,14 @@ export function AddSharedFilter({
   };
 
   const trigger = compact ? (
-    <TooltipProvider>
-      <Tooltip delayDuration={200} disableHoverableContent>
-        <TooltipTrigger asChild>
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            className="w-full justify-center gap-1.5 h-8 text-xs"
-          >
-            <Hash className="h-3.5 w-3.5" />
-            Code
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          Import a filter by share code
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <button
+      type="button"
+      title="Import filter by share code"
+      aria-label="Import filter by share code"
+      className="p-1 text-muted-foreground hover:text-primary transition-colors"
+    >
+      <Hash className="h-3.5 w-3.5" />
+    </button>
   ) : (
     <Button size="sm" type="button" variant="secondary">
       <Users className="h-4 w-4 mr-2" />
