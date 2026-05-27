@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { useAccountStore } from "./account";
 import { withStorageDOMEvents } from "./dom";
-import { putSharedFilters } from "./shared-nodes";
+import {
+  apiDeleteFilter,
+  apiListFilters,
+  apiPutFilter,
+  serverFilterToLocal,
+} from "./filters-api";
 
 export type LiveMode = "static" | "live" | "combined";
 
@@ -98,6 +103,17 @@ export type Drawing = {
 
 export type DrawingsAndNodes = {
   name: string;
+  // New server-managed fields. Populated for filters synced to the
+  // Bunny DB (signed-in users). Anonymous filters have neither.
+  id?: string;
+  game?: string;
+  visibility?: "private" | "public";
+  shareCode?: string;
+  voteCount?: number;
+  commentCount?: number;
+  updatedAt?: number;
+  // Legacy fields kept so existing localStorage data renders. New code
+  // doesn't read them — they're inert after the shared-filters rework.
   isShared?: boolean;
   url?: string;
   nodes?: PrivateNode[];
@@ -335,6 +351,12 @@ export interface ProfileActions {
   addMyFilter: (myFilter: DrawingsAndNodes) => void;
   removeMyFilter: (myFilterName: string) => void;
   removeMyNode: (nodeId: string) => void;
+  /**
+   * Replace this game's filters in local state with the server's view.
+   * Local filters without an `id` (anonymous / not yet synced) are
+   * preserved. Called on signed-in mount per game tenant.
+   */
+  hydrateFiltersFromServer: (game: string) => Promise<void>;
   toggleShowGrid: () => void;
   toggleShowFilters: () => void;
   // Peer Link / Mesh settings
@@ -417,6 +439,79 @@ const getStorageName = () => {
   }
   return "settings-storage";
 };
+
+/**
+ * Best-effort current-game inference for filter sync. Matches the
+ * settings store's storage-name logic (`/apps/<id>` for THGLApp pages)
+ * and falls back to the subdomain (game.th.gl). Filters created
+ * before this rework may have no `game` field; sync falls back to
+ * this value at write time. Returns null if we can't tell.
+ */
+function inferCurrentGame(): string | null {
+  if (typeof window === "undefined") return null;
+  const path = window.location.pathname;
+  if (path.startsWith("/apps/")) return path.split("/")[2] ?? null;
+  const sub = window.location.hostname.split(".")[0];
+  if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub)) return null;
+  return sub;
+}
+
+const SYNC_DEBOUNCE_MS = 1000;
+const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function isSignedIn(): boolean {
+  return !!useAccountStore.getState().decryptedUserId;
+}
+
+/**
+ * Schedule a debounced PUT for a filter that already has a server `id`.
+ * Coalesces rapid edits (drawing nodes, dragging shapes) into one
+ * round-trip per second per filter. Anonymous users (no server id) are
+ * no-ops — filters stay local.
+ */
+function scheduleFilterSync(filter: DrawingsAndNodes) {
+  if (!filter.id) return;
+  if (!isSignedIn()) return;
+  const id = filter.id;
+  const existing = syncTimers.get(id);
+  if (existing) clearTimeout(existing);
+  syncTimers.set(
+    id,
+    setTimeout(() => {
+      syncTimers.delete(id);
+      const game = filter.game ?? inferCurrentGame();
+      if (!game) {
+        console.error("[filter sync] no game id, skipping put", id);
+        return;
+      }
+      void apiPutFilter(id, {
+        game,
+        name: filter.name,
+        payload: { nodes: filter.nodes, drawing: filter.drawing },
+        visibility: filter.visibility ?? "private",
+      }).catch((err) => {
+        console.error("[filter sync] put failed", id, err);
+      });
+    }, SYNC_DEBOUNCE_MS),
+  );
+}
+
+/** Immediate (non-debounced) server delete. Anonymous = no-op. */
+function fireFilterDelete(id: string) {
+  if (!isSignedIn()) return;
+  // Cancel any pending PUT for this id so we don't race the delete.
+  const existing = syncTimers.get(id);
+  if (existing) {
+    clearTimeout(existing);
+    syncTimers.delete(id);
+  }
+  void apiDeleteFilter(id).catch((err) => {
+    // 404 means it was never on the server (anonymous-created local-only
+    // filter, never synced). That's not an error.
+    if (err && typeof err === "object" && "status" in err && err.status === 404) return;
+    console.error("[filter sync] delete failed", id, err);
+  });
+}
 
 // Cache for isDiscoveredNode results - invalidated when discoveredNodes changes
 let discoveredCache: Map<string, boolean> | null = null;
@@ -1085,27 +1180,28 @@ export const useSettingsStore = create(
             filter.name === name ? { ...filter, ...myFilter } : filter,
           );
           updateSettings({ myFilters: updatedFilters });
-          // Update shared filters if this filter has a URL
           const updatedFilter = updatedFilters.find((f) => f.name === name);
-          if (updatedFilter?.url) {
-            putSharedFilters(updatedFilter.name, updatedFilter);
-          }
+          if (updatedFilter) scheduleFilterSync(updatedFilter);
         },
 
         addMyFilter: async (myFilter) => {
-          if (myFilter.isShared && !myFilter.url) {
-            const blob = await putSharedFilters(myFilter.name, myFilter);
-            myFilter.url = blob.url;
+          // For signed-in users without a server id yet, assign one
+          // locally so subsequent edits can sync. The first PUT will
+          // create the row server-side via the upsert.
+          if (isSignedIn() && !myFilter.id) {
+            myFilter = { ...myFilter, id: crypto.randomUUID() };
+          }
+          if (isSignedIn() && !myFilter.game) {
+            const inferred = inferCurrentGame();
+            if (inferred) myFilter = { ...myFilter, game: inferred };
           }
 
           const state = get();
-
+          // Dedupe by server id when available (importing a public
+          // filter twice = no-op).
           if (
-            myFilter.isShared &&
-            myFilter.url &&
-            state.myFilters.some(
-              (filter) => filter.isShared && filter.url === myFilter.url,
-            )
+            myFilter.id &&
+            state.myFilters.some((f) => f.id === myFilter.id)
           ) {
             return;
           }
@@ -1113,14 +1209,17 @@ export const useSettingsStore = create(
           updateSettings({
             myFilters: [...state.myFilters, myFilter],
           });
+          scheduleFilterSync(myFilter);
         },
 
         removeMyFilter: (myFilterName: string) => {
           const state = get();
+          const target = state.myFilters.find((f) => f.name === myFilterName);
           const updatedFilters = state.myFilters.filter(
             (filter) => filter.name !== myFilterName,
           );
           updateSettings({ myFilters: updatedFilters });
+          if (target?.id) fireFilterDelete(target.id);
         },
 
         removeMyNode: async (nodeId: string) => {
@@ -1128,18 +1227,50 @@ export const useSettingsStore = create(
           const myFilter = state.myFilters.find((filter) =>
             filter.nodes?.some((node) => node.id === nodeId),
           );
-          if (!myFilter) {
-            return;
-          }
-          myFilter.nodes = myFilter.nodes?.filter((node) => node.id !== nodeId);
-          if (myFilter.url) {
-            await putSharedFilters(myFilter.url, myFilter);
-          }
+          if (!myFilter) return;
+          const updated: DrawingsAndNodes = {
+            ...myFilter,
+            nodes: myFilter.nodes?.filter((node) => node.id !== nodeId),
+          };
           updateSettings({
             myFilters: state.myFilters.map((filter) =>
-              filter.name === myFilter.name ? myFilter : filter,
+              filter.name === updated.name ? updated : filter,
             ),
           });
+          scheduleFilterSync(updated);
+        },
+
+        hydrateFiltersFromServer: async (game: string) => {
+          if (!isSignedIn()) return;
+          let serverFilters;
+          try {
+            serverFilters = await apiListFilters(game);
+          } catch (err) {
+            console.error("[filter hydrate] failed", err);
+            return;
+          }
+          const state = get();
+          // Keep local filters that aren't on the server (anonymous /
+          // local-only / wrong game) untouched. Replace any that have a
+          // server `id` with the server's view.
+          const serverById = new Map(
+            serverFilters.map((f) => [f.id, serverFilterToLocal(f)]),
+          );
+          const merged: DrawingsAndNodes[] = [];
+          const seenIds = new Set<string>();
+          for (const local of state.myFilters) {
+            if (local.id && serverById.has(local.id)) {
+              merged.push(serverById.get(local.id)!);
+              seenIds.add(local.id);
+            } else {
+              merged.push(local);
+            }
+          }
+          // Append server-only filters (created on another device).
+          for (const [id, filter] of serverById) {
+            if (!seenIds.has(id)) merged.push(filter);
+          }
+          updateSettings({ myFilters: merged });
         },
 
         toggleShowGrid: () => {
