@@ -117,7 +117,7 @@ Required for full functionality:
 - `PALIA_API_KEY`, `PALIA_REVALIDATE_SECRET` — palia leaderboard / rummage-pile / weekly-wants webhook.
 - `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, `PATREON_SPECIAL_USERS`, `JWT_SECRET`, `COOKIE_DOMAIN` — thgl-app + thgl-web Patreon OAuth flow. `redirect_uri` is derived from the incoming request host (each tenant round-trips to itself), so no per-host env var is needed; just ensure both `https://app.th.gl/api/patreon/redirect` and `https://www.th.gl/api/patreon/redirect` are in the Patreon OAuth app's redirect_uri allowlist.
 - `NEXT_PUBLIC_BASE_URL` — base URL for server-side self-fetches.
-- `KV_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN` — Patreon token store (Vercel KV / Upstash).
+- `BUNNY_DATABASE_URL`, `BUNNY_DATABASE_AUTH_TOKEN` — Patreon token store (Bunny Database, libSQL).
 - `POSTGRES_*` (thgl-web shared filters / nodes / suggestions).
 - `BLOB_READ_WRITE_TOKEN` (thgl-web shared profile images).
 
@@ -174,7 +174,8 @@ docker build -f apps/games-web/Dockerfile -t games-web .
 docker run --rm -p 3100:3100 \
   -e PATREON_CLIENT_ID=… \
   -e JWT_SECRET=… \
-  -e KV_URL=… \
+  -e BUNNY_DATABASE_URL=… \
+  -e BUNNY_DATABASE_AUTH_TOKEN=… \
   games-web
 ```
 
@@ -194,5 +195,5 @@ Container is PATCHed to use the new tag.
   for `[onRequestError]` to find anything we should care about.
 - `/api/patreon/redirect` and the `getAccount` helper log tagged
   `[patreon/redirect]` and `[getAccount]` lines on each failure mode
-  (missing env var, JWT verify failure, KV unreachable, Patreon API
-  rejecting the token, etc.).
+  (missing env var, JWT verify failure, Bunny DB unreachable, Patreon
+  API rejecting the token, etc.).

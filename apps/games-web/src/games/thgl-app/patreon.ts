@@ -1,7 +1,7 @@
 import { type THGLAccount } from "@repo/lib";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
-import { kv } from "@/lib/kv";
+import { getToken } from "@/lib/tokens";
 import { tiers } from "./tiers";
 
 interface App {
@@ -257,15 +257,15 @@ export async function getAccount() {
         console.error(`[getAccount] jwt verify failed: ${msg}`);
         return account;
       }
-      const patreonToken = await kv
-        .get<PatreonToken>(`token:${id}`)
-        .catch((err) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[getAccount] kv.get failed for ${id}: ${msg}`);
-          return null;
-        });
+      const patreonToken = await getToken(id).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[getAccount] token fetch failed for ${id}: ${msg}`);
+        return null;
+      });
       if (!patreonToken) {
-        console.error(`[getAccount] no PatreonToken in KV for id=${id}`);
+        console.error(
+          `[getAccount] no token available for id=${id} (storage error or expired)`,
+        );
         return account;
       }
       const currentUserResponse = await getCurrentUser(patreonToken);

@@ -69,7 +69,6 @@
     "eslint-config-turbo": "2.5.2",
     "zustand": "5.0.8",
     "fuse.js": "7.0.0",
-    "@vercel/kv": "3.0.0",
     "peerjs": "1.5.4",
     "react-markdown": "10.1.0",
     "remark-gfm": "4.0.1",

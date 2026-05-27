@@ -1,4 +1,4 @@
-import { kv } from "@/lib/kv";
+import { getToken, setToken } from "@/lib/tokens";
 import { verify } from "jsonwebtoken";
 import { type NextRequest } from "next/server";
 import {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const patreonToken = await kv.get<PatreonToken>(`token:${userId}`);
+    const patreonToken = await getToken(userId);
     if (!patreonToken) {
       return Response.json(
         { error: "Token not found" },
@@ -67,9 +67,7 @@ export async function POST(request: NextRequest) {
         headers: CORS_HEADERS,
       });
     }
-    await kv.set(`token:${userId}`, refreshTokenResult, {
-      ex: 2678400, // refreshTokenResult.expires_in,
-    });
+    await setToken(userId, refreshTokenResult);
 
     const patreonTokenRefreshed = refreshTokenResult;
 

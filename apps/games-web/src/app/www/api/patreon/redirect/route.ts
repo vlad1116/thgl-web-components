@@ -1,4 +1,4 @@
-import { kv } from "@/lib/kv";
+import { setToken } from "@/lib/tokens";
 import { sign } from "jsonwebtoken";
 import {
   type PatreonToken,
@@ -77,9 +77,7 @@ export async function GET(request: Request) {
   const currentUser = currentUserResult as PatreonUser;
 
   const signed = sign(currentUser.data.id, process.env.JWT_SECRET!);
-  await kv.set(`token:${currentUser.data.id}`, patreonToken, {
-    ex: 2678400,
-  });
+  await setToken(currentUser.data.id, patreonToken);
 
   return new Response(null, {
     status: 302,

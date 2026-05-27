@@ -1,4 +1,4 @@
-import { kv } from "@/lib/kv";
+import { setToken } from "@/lib/tokens";
 import { sign } from "jsonwebtoken";
 import {
   type PatreonToken,
@@ -112,12 +112,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    await kv.set(`token:${currentUser.data.id}`, patreonToken, {
-      ex: 2678400, // patreonToken.expires_in,
-    });
+    await setToken(currentUser.data.id, patreonToken);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`${LOG} kv.set failed for id=${currentUser.data.id}: ${msg}`);
+    console.error(
+      `${LOG} setToken failed for id=${currentUser.data.id}: ${msg}`,
+    );
     return Response.json({ error: "Token store failed" }, { status: 502 });
   }
 

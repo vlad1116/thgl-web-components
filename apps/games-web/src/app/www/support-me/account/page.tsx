@@ -1,4 +1,4 @@
-import { kv } from "@/lib/kv";
+import { getToken } from "@/lib/tokens";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -8,7 +8,6 @@ import { Button } from "@repo/ui/controls";
 import { SignOut } from "@/games/thgl-web/components/sign-out";
 import {
   type PatreonError,
-  type PatreonToken,
   type PatreonUser,
   getCurrentEntitledTiers,
   getCurrentUser,
@@ -41,7 +40,7 @@ export default async function SupportMeAccount() {
   if (userId?.value) {
     try {
       const id = verify(userId.value, process.env.JWT_SECRET!) as string;
-      const patreonToken = await kv.get<PatreonToken>(`token:${id}`);
+      const patreonToken = await getToken(id);
 
       if (patreonToken) {
         const currentUserResponse = await getCurrentUser(patreonToken);

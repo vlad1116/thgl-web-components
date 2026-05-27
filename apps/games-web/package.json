@@ -23,7 +23,6 @@
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
     "@vercel/blob": "1.0.0",
-    "@vercel/kv": "catalog:",
     "@vercel/postgres": "0.10.0",
     "fuse.js": "catalog:",
     "jsonwebtoken": "catalog:",
