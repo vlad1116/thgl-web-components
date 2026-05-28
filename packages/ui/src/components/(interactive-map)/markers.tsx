@@ -453,7 +453,11 @@ function MarkersContent({
   // Label layer for rendering per-marker text labels
   // Cache for text label canvases (keyed by text content + fontSize)
   const labelCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
-  const activeLabelIds = useRef<Set<string>>(new Set());
+  // labelId → last-rendered state, used for incremental diff so live-actor
+  // label updates can be applied without tearing down the whole label set.
+  const activeLabelIds = useRef<
+    Map<string, { pos: [number, number]; text: string }>
+  >(new Map());
 
   // Helper to extract RGB (without alpha) from color string
   const getRgbFromColor = (colorStr: string): string => {
@@ -1941,18 +1945,6 @@ function MarkersContent({
     const markerLayer = map?.markerLayer;
     if (!map || !markerLayer) return;
 
-    // Remove previous labels
-    for (const labelId of activeLabelIds.current) {
-      markerLayer.remove(labelId);
-    }
-    activeLabelIds.current.clear();
-
-    // Check if any filter has a label mode set
-    const hasAnyLabels = Object.values(labelModeByFilter).some(
-      (m) => m && m !== "off",
-    );
-    if (!hasAnyLabels) return;
-
     const dpr = window.devicePixelRatio || 1;
     const fontSize = Math.round(14 * labelTextSize);
     const pad = 6;
@@ -1997,15 +1989,17 @@ function MarkersContent({
       return entry;
     };
 
-    // Helper: add a label marker to the main marker layer
-    const addLabel = (id: string, pos: [number, number], text: string) => {
+    // Place a label on the main marker layer. Caller is responsible for
+    // tracking the entry in activeLabelIds.
+    const placeLabel = (labelId: string, anchorId: string, pos: [number, number], text: string) => {
       const { canvas, width, height } = getTextCanvas(text);
       const sheetName = `__label_${text}__${fontSize}`;
       markerLayer.setSheet(sheetName, canvas);
-      const labelId = `__label_${id}`;
-      // Get the icon marker's size to offset label above it
-      const iconMarker = markerLayer.getMarker(id);
-      const iconSize = iconMarker?.size ?? 40 * dpr;
+      // Anchor over the icon marker (static OR live layer) if present.
+      const iconSize =
+        markerLayer.getMarker(anchorId)?.size ??
+        map.liveMarkerLayer?.getMarker(anchorId)?.size ??
+        40 * dpr;
       markerLayer.add({
         id: labelId,
         latLng: pos,
@@ -2018,57 +2012,134 @@ function MarkersContent({
         keepUpright: true,
         noHitTest: true,
       });
-      activeLabelIds.current.add(labelId);
     };
 
-    // Add "always" and "hotkey" mode labels
-    for (const [id, spawn] of spawnMapRef.current) {
-      const mode = labelModeByFilter[spawn.type];
-      if (!mode || mode === "off" || mode === "inRange") continue;
-      if (mode === "hotkey" && !showLabelsActive) continue;
-
-      let pos: [number, number] = [spawn.p[0], spawn.p[1]];
-      if (rotationCache) {
-        pos = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+    // Diff-based label sync — called on mount, on React-dep changes, and on
+    // live-actor / player-position subscription updates. The label set lives
+    // on the main marker layer, but its inputs include live actors merged
+    // into spawnMapRef.current by the live-marker effect. Without the
+    // imperative re-sync below, live-fish labels never appear (the React
+    // effect doesn't see actor mutations) and stick to stale positions when
+    // they do (no per-tick update path).
+    const syncLabels = () => {
+      const hasAnyLabels = Object.values(labelModeByFilter).some(
+        (m) => m && m !== "off",
+      );
+      if (!hasAnyLabels) {
+        if (activeLabelIds.current.size === 0) return;
+        for (const labelId of activeLabelIds.current.keys()) {
+          markerLayer.remove(labelId);
+        }
+        activeLabelIds.current.clear();
+        map.requestRedraw();
+        return;
       }
-      addLabel(id, pos, t(spawn.type));
-    }
 
-    // For "inRange" mode, add labels for markers near the player
-    if (rotatedPlayer) {
-      const playerX = rotatedPlayer.x;
-      const playerY = rotatedPlayer.y;
-      const rangeSq = audioAlertRange * audioAlertRange;
+      // Build the target set: labelId → desired state.
+      const target = new Map<
+        string,
+        { anchorId: string; pos: [number, number]; text: string }
+      >();
 
-      const useSpatialGrid =
-        spatialGridRef.current && spatialGridRef.current.size > 100;
+      // "always" and "hotkey" mode labels
+      for (const [id, spawn] of spawnMapRef.current) {
+        const mode = labelModeByFilter[spawn.type];
+        if (!mode || mode === "off" || mode === "inRange") continue;
+        if (mode === "hotkey" && !showLabelsActive) continue;
 
-      const itemsToCheck = useSpatialGrid
-        ? spatialGridRef.current!.getNearby(playerX, playerY, audioAlertRange)
-        : Array.from(spawnMapRef.current.entries()).map(([id, spawn]) => {
-            let latLng: [number, number] = [spawn.p[0], spawn.p[1]];
-            if (rotationCache) {
-              latLng = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
-            }
-            return { id, spawn, latLng };
-          });
+        let pos: [number, number] = [spawn.p[0], spawn.p[1]];
+        if (rotationCache) {
+          pos = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+        }
+        target.set(`__label_${id}`, { anchorId: id, pos, text: t(spawn.type) });
+      }
 
-      for (const item of itemsToCheck) {
-        const mode = labelModeByFilter[item.spawn.type];
-        if (mode !== "inRange") continue;
+      // "inRange" mode labels
+      if (rotatedPlayer) {
+        const playerX = rotatedPlayer.x;
+        const playerY = rotatedPlayer.y;
+        const rangeSq = audioAlertRange * audioAlertRange;
 
-        const dx = playerX - item.latLng[0];
-        const dy = playerY - item.latLng[1];
-        if (dx * dx + dy * dy <= rangeSq) {
-          addLabel(item.id, item.latLng, t(item.spawn.type));
+        const useSpatialGrid =
+          spatialGridRef.current && spatialGridRef.current.size > 100;
+
+        const itemsToCheck = useSpatialGrid
+          ? spatialGridRef.current!.getNearby(playerX, playerY, audioAlertRange)
+          : Array.from(spawnMapRef.current.entries()).map(([id, spawn]) => {
+              let latLng: [number, number] = [spawn.p[0], spawn.p[1]];
+              if (rotationCache) {
+                latLng = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+              }
+              return { id, spawn, latLng };
+            });
+
+        for (const item of itemsToCheck) {
+          const mode = labelModeByFilter[item.spawn.type];
+          if (mode !== "inRange") continue;
+
+          const dx = playerX - item.latLng[0];
+          const dy = playerY - item.latLng[1];
+          if (dx * dx + dy * dy <= rangeSq) {
+            target.set(`__label_${item.id}`, {
+              anchorId: item.id,
+              pos: item.latLng,
+              text: t(item.spawn.type),
+            });
+          }
         }
       }
-    }
+
+      // Diff target vs activeLabelIds.
+      let dirty = false;
+      for (const [labelId, next] of target) {
+        const prev = activeLabelIds.current.get(labelId);
+        if (!prev) {
+          placeLabel(labelId, next.anchorId, next.pos, next.text);
+          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          dirty = true;
+          continue;
+        }
+        const posChanged =
+          prev.pos[0] !== next.pos[0] || prev.pos[1] !== next.pos[1];
+        const textChanged = prev.text !== next.text;
+        if (textChanged) {
+          // Text drives the sheet — easiest path is remove + re-place.
+          markerLayer.remove(labelId);
+          placeLabel(labelId, next.anchorId, next.pos, next.text);
+          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          dirty = true;
+        } else if (posChanged) {
+          markerLayer.updateMarker(labelId, { latLng: next.pos });
+          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          dirty = true;
+        }
+      }
+
+      // Remove gone labels.
+      for (const labelId of Array.from(activeLabelIds.current.keys())) {
+        if (!target.has(labelId)) {
+          markerLayer.remove(labelId);
+          activeLabelIds.current.delete(labelId);
+          dirty = true;
+        }
+      }
+
+      if (dirty) map.requestRedraw();
+    };
+
+    syncLabels();
+
+    // Live actors mutate spawnMapRef via zustand subscriptions outside React
+    // (see live-marker effect at ~line 1525). Mirror that subscription so
+    // labels track live fish/etc. Static spawn changes re-run via the
+    // `spawns` dep, and player movement re-runs via the `rotatedPlayer` dep,
+    // so neither needs its own subscription here.
+    const unsubActors = useGameState.subscribe((s) => s.actors, syncLabels);
 
     return () => {
-      // Clean up labels from the main marker layer
+      unsubActors();
       if (map?.markerLayer) {
-        for (const labelId of activeLabelIds.current) {
+        for (const labelId of activeLabelIds.current.keys()) {
           map.markerLayer.remove(labelId);
         }
       }
