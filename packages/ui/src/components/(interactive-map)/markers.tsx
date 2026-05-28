@@ -1574,6 +1574,11 @@ function MarkersContent({
 
       for (const actor of actorsList) {
         if (!actor.address) continue;
+        // Memory readers may flag actors as hidden (e.g. Palia villagers with
+        // bHiddenForRelevance = 1, looted rummage piles, faded characters).
+        // Respect that — otherwise we render markers for entities the game
+        // has hidden.
+        if (actor.hidden) continue;
         const displayType = typesIdMap[actor.type];
         if (!displayType) continue;
         if (!activeFilters.has(displayType)) continue;
