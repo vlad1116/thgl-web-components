@@ -254,7 +254,12 @@ function SingleItemTooltip({
   onClose?: () => void;
 }) {
   const t = useT();
-  const name = t(item.termId, { fallback: item.type }) || item.termId;
+  // Private nodes use the user-supplied raw name as termId — don't run it
+  // through translation (which would return the filter-name fallback when
+  // the user-supplied string isn't a known key).
+  const name = item.isPrivate
+    ? item.termId
+    : t(item.termId, { fallback: item.type }) || item.termId;
   const typeName = t(item.type, { fallback: item.type });
   const groupName = item.group ? t(item.group, { fallback: item.group }) : null;
   const itemCoords = useMemo(
@@ -465,8 +470,9 @@ function ClusterTooltip({
           <div className="space-y-0.5 pr-2">
             {items.map((item, i) => {
               const discoveryId = itemIds[i];
-              const name =
-                t(item.termId, { fallback: item.type }) || item.termId;
+              const name = item.isPrivate
+                ? item.termId
+                : t(item.termId, { fallback: item.type }) || item.termId;
 
               return (
                 <div
