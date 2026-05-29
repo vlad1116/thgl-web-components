@@ -76,6 +76,8 @@ export function StreamingSender({
     setPeerCode,
     playerName,
     setPlayerName,
+    playerColor,
+    setPlayerColor,
     autoJoinPeer,
     setAutoJoinPeer,
     _hasHydrated,
@@ -85,6 +87,8 @@ export function StreamingSender({
       setPeerCode: state.setPeerCode,
       playerName: state.playerName,
       setPlayerName: state.setPlayerName,
+      playerColor: state.playerColor,
+      setPlayerColor: state.setPlayerColor,
       autoJoinPeer: state.autoJoinPeer,
       setAutoJoinPeer: state.setAutoJoinPeer,
       _hasHydrated: state._hasHydrated,
@@ -165,15 +169,16 @@ export function StreamingSender({
 
   useEffect(() => {
     if (player && peerRef.current && playerName) {
-      // Include player name and ID like the simulator
+      // Include player name, color and ID like the simulator
       const enhancedPlayer = {
         ...player,
         id: peerRef.current.id,
         name: playerName,
+        color: playerColor,
       };
       sendToConnections({ player: enhancedPlayer });
     }
-  }, [player, playerName]);
+  }, [player, playerName, playerColor]);
 
   useEffect(() => {
     if (actors) {
@@ -920,14 +925,33 @@ export function StreamingSender({
             {/* Player Name input (shown above Peer Code) */}
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="playerName">Player Name</Label>
-              <Input
-                id="playerName"
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Enter a name to help identify your player"
-                className="flex-1"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="playerName"
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Enter a name to help identify your player"
+                  className="flex-1"
+                />
+                <label
+                  className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-md border border-input"
+                  title="Marker color"
+                  style={{ backgroundColor: playerColor }}
+                >
+                  <input
+                    type="color"
+                    aria-label="Marker color"
+                    value={playerColor}
+                    onChange={(e) => setPlayerColor(e.target.value)}
+                    className="absolute inset-0 size-full cursor-pointer opacity-0"
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your name and color appear on teammates&apos; maps so they can
+                tell your marker apart.
+              </p>
             </div>
 
             {/* Peer Code input */}

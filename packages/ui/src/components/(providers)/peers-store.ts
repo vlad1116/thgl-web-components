@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import type { ActorPlayer, Actor } from "@repo/lib/overwolf";
 
-// Extended player type that includes id and name from remote peers
+// Extended player type that includes id, name and color from remote peers
 export type RemotePlayer = ActorPlayer & {
   id: string;
   name: string;
+  color?: string;
 };
 
 type PeersState = {

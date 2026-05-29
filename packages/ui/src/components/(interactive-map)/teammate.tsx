@@ -26,12 +26,15 @@ export function Teammate({
 }): JSX.Element {
   const map = useMap();
   const marker = useRef<PlayerMarker | null>(null);
+  const labelIdRef = useRef<string | null>(null);
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
   const playerIconSize = useSettingsStore((state) => state.playerIconSize);
   const colorBlindMode = useSettingsStore((state) => state.colorBlindMode);
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
   );
+  const showPeerLabels = useSettingsStore((state) => state.showPeerLabels);
+  const labelTextSize = useSettingsStore((state) => state.labelTextSize);
 
   const iconImageCache = useRef<Map<string, HTMLImageElement>>(new Map());
 
@@ -39,8 +42,9 @@ export function Teammate({
     iconUrl: string,
     mode: ColorBlindMode,
     severity: number,
+    tint?: string,
   ): Promise<HTMLImageElement> {
-    const cacheKey = `${iconUrl}:${mode}:${severity.toFixed(2)}`;
+    const cacheKey = `${iconUrl}:${mode}:${severity.toFixed(2)}:${tint ?? ""}`;
     const cached = iconImageCache.current.get(cacheKey);
     if (cached) {
       return cached;
@@ -55,25 +59,46 @@ export function Teammate({
       image.src = iconUrl;
     });
 
-    // If no color blind transform needed, return original
-    if (mode === "none" || severity <= 0) {
+    // If no transform needed, return original
+    if ((mode === "none" || severity <= 0) && !tint) {
       iconImageCache.current.set(cacheKey, img);
       return img;
     }
 
-    // Apply color blind transform
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext("2d")!;
+
+    // Draw a colored disc *behind* the icon so the peer's color identifies
+    // them at a glance without altering the icon's own colors/outlines.
+    if (tint) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const r = Math.min(canvas.width, canvas.height) / 2 - 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = tint;
+      ctx.fill();
+      // Subtle dark rim so the disc reads against any map background.
+      ctx.lineWidth = Math.max(1, r * 0.12);
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.stroke();
+    }
+
+    // Icon on top, unmodified.
     ctx.drawImage(img, 0, 0);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    applyColorBlindTransform(
-      imageData.data,
-      mode as Exclude<ColorBlindMode, "none">,
-      severity,
-    );
-    ctx.putImageData(imageData, 0, 0);
+
+    // Apply color blind transform on top of the (optionally) tinted icon
+    if (mode !== "none" && severity > 0) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      applyColorBlindTransform(
+        imageData.data,
+        mode as Exclude<ColorBlindMode, "none">,
+        severity,
+      );
+      ctx.putImageData(imageData, 0, 0);
+    }
 
     // Create a new image from the processed canvas
     const processedImg = await new Promise<HTMLImageElement>(
@@ -87,6 +112,85 @@ export function Teammate({
 
     iconImageCache.current.set(cacheKey, processedImg);
     return processedImg;
+  }
+
+  // Render the peer's name as a text label anchored above their marker.
+  // Mirrors the marker-label approach in markers.tsx (canvas text → WebGL
+  // marker on the main marker layer, kept upright and non-interactive).
+  function placeOrUpdateLabel(position: [number, number]) {
+    const markerLayer = map?.markerLayer;
+    if (!markerLayer || !marker.current) {
+      return;
+    }
+
+    const labelId = `${marker.current.id}-label`;
+    const shouldShow = showPeerLabels && Boolean(player.name);
+    if (!shouldShow) {
+      if (labelIdRef.current) {
+        markerLayer.remove(labelIdRef.current);
+        labelIdRef.current = null;
+      }
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const fontSize = Math.round(13 * labelTextSize);
+    const pad = 5;
+    const text = player.name;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    const font = `700 ${fontSize}px Arial, system-ui, sans-serif`;
+    ctx.font = font;
+    const metrics = ctx.measureText(text);
+    const w = Math.ceil(metrics.width) + pad * 2;
+    const h = fontSize + pad * 2;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.scale(dpr, dpr);
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Dark outline for legibility over any map background
+    ctx.fillStyle = "#1a1a1a";
+    for (const [dx, dy] of [
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+      [1, 1],
+      [0, -1],
+      [0, 1],
+      [-1, 0],
+      [1, 0],
+    ]) {
+      ctx.fillText(text, w / 2 + dx, h / 2 + dy);
+    }
+    // White text for legibility regardless of the peer's chosen color.
+    ctx.fillStyle = "#FFFFFFEE";
+    ctx.fillText(text, w / 2, h / 2);
+
+    const sheetName = `__teammate_label_${labelId}`;
+    markerLayer.setSheet(sheetName, canvas);
+
+    // Offset the label just above the marker icon (icon size is in device px).
+    const iconSizeDevice =
+      Math.max(10, Math.round(30 * baseIconSize * playerIconSize)) * dpr;
+    // Re-add to pick up new sheet/size when the name or text size changes.
+    markerLayer.remove(labelId);
+    markerLayer.add({
+      id: labelId,
+      latLng: position,
+      size: h * dpr,
+      sizeW: w * dpr,
+      screenOffsetY: -(iconSizeDevice / 2 + (h * dpr) / 2 + 4),
+      sheet: sheetName,
+      rect: { x: 0, y: 0, width: canvas.width, height: canvas.height },
+      keepUpright: true,
+      noHitTest: true,
+      alwaysOnTop: true,
+    });
+    labelIdRef.current = labelId;
   }
 
   useEffect(() => {
@@ -110,6 +214,7 @@ export function Teammate({
         iconUrl,
         colorBlindMode,
         colorBlindSeverity,
+        player.color,
       );
 
       const tile = tilesConfig[map.mapName];
@@ -150,6 +255,8 @@ export function Teammate({
           y: teammatePosition[1],
         });
       }
+
+      placeOrUpdateLabel(teammatePosition);
     };
 
     run();
@@ -157,8 +264,28 @@ export function Teammate({
     return () => {
       marker.current?.remove();
       marker.current = null;
+      if (labelIdRef.current) {
+        map.markerLayer?.remove(labelIdRef.current);
+        labelIdRef.current = null;
+      }
     };
   }, [map?.mapName, player?.mapName]);
+
+  // Re-render the name label when its inputs change.
+  useEffect(() => {
+    if (!marker.current) return;
+    let teammatePosition: [number, number] = [player.x, player.y];
+    const rotationDegrees = map?._rotationDegrees;
+    const rotationCenter = map?._rotationCenter;
+    if (rotationDegrees && rotationCenter) {
+      teammatePosition = rotateCoordinate(
+        [player.x, player.y],
+        rotationDegrees,
+        rotationCenter,
+      );
+    }
+    placeOrUpdateLabel(teammatePosition);
+  }, [showPeerLabels, player.name, player.color, labelTextSize]);
 
   // Update icon when size or color-blind mode changes
   useEffect(() => {
@@ -173,13 +300,20 @@ export function Teammate({
         iconUrl,
         colorBlindMode,
         colorBlindSeverity,
+        player.color,
       );
       marker.current?.setIcon(iconImage);
       const size = Math.max(10, Math.round(30 * baseIconSize * playerIconSize));
       marker.current?.setSize(size);
     };
     run();
-  }, [baseIconSize, playerIconSize, colorBlindMode, colorBlindSeverity]);
+  }, [
+    baseIconSize,
+    playerIconSize,
+    colorBlindMode,
+    colorBlindSeverity,
+    player.color,
+  ]);
 
   useThrottledEffect(
     () => {
@@ -204,6 +338,13 @@ export function Teammate({
         x: teammatePosition[0],
         y: teammatePosition[1],
       });
+
+      // Keep the name label following the marker without rebuilding the canvas.
+      if (labelIdRef.current) {
+        map.markerLayer?.updateMarker(labelIdRef.current, {
+          latLng: teammatePosition,
+        });
+      }
     },
     [map?.mapName, player],
     50,

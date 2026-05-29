@@ -203,6 +203,8 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   peerCode: "",
   lastMeSenderId: "",
   playerName: "",
+  playerColor: "#38bdf8",
+  showPeerLabels: true,
   autoJoinPeer: false,
   autoLiveModeWithMe: true,
 };
@@ -270,6 +272,8 @@ export type ProfileSettings = {
   peerCode: string;
   lastMeSenderId: string;
   playerName: string;
+  playerColor: string;
+  showPeerLabels: boolean;
   autoJoinPeer: boolean;
   autoLiveModeWithMe: boolean;
 
@@ -365,6 +369,8 @@ export interface ProfileActions {
   setPeerCode: (code: string) => void;
   setLastMeSenderId: (id: string) => void;
   setPlayerName: (name: string) => void;
+  setPlayerColor: (color: string) => void;
+  setShowPeerLabels: (show: boolean) => void;
   setAutoJoinPeer: (autoJoin: boolean) => void;
   setAutoLiveModeWithMe: (autoLiveMode: boolean) => void;
 }
@@ -1308,6 +1314,14 @@ export const useSettingsStore = create(
 
         setPlayerName: (name: string) => {
           updateSettings({ playerName: name });
+        },
+
+        setPlayerColor: (color: string) => {
+          updateSettings({ playerColor: color });
+        },
+
+        setShowPeerLabels: (show: boolean) => {
+          updateSettings({ showPeerLabels: show });
         },
 
         setAutoJoinPeer: (autoJoin: boolean) => {

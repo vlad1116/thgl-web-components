@@ -48,6 +48,7 @@ export class PlayerMarker {
   private _lastRawRotation: number = 0;
   private _accumulatedSpins: number = 0;
   private _markerLayer: IconMarkerLayer | null = null;
+  private _sheetName: string;
   private _iconUrl?: string;
   private _iconSheet?: HTMLCanvasElement;
   private _iconWidth: number = 36;
@@ -64,6 +65,10 @@ export class PlayerMarker {
     options: PlayerMarkerOptions,
   ) {
     this._id = options.id;
+    // Unique sheet per marker so each player/teammate can have its own
+    // icon (and color). A shared name would let markers overwrite each
+    // other's texture, collapsing them all to the last one rendered.
+    this._sheetName = `player-${options.id}`;
     this._latLng = latLng;
     this._displayLatLng = [...latLng] as [number, number];
     this._targetLatLng = [...latLng] as [number, number];
@@ -117,7 +122,7 @@ export class PlayerMarker {
     this._iconWidth = canvas.width;
     this._iconHeight = canvas.height;
     if (this._markerLayer) {
-      this._markerLayer.setSheet("player", canvas);
+      this._markerLayer.setSheet(this._sheetName, canvas);
     }
     this._updateMarker();
   }
@@ -130,7 +135,7 @@ export class PlayerMarker {
 
     // Set up the player icon sheet if we have one
     if (this._iconSheet) {
-      markerLayer.setSheet("player", this._iconSheet);
+      markerLayer.setSheet(this._sheetName, this._iconSheet);
     }
 
     // Add the marker instance
@@ -232,7 +237,7 @@ export class PlayerMarker {
       id: this._id,
       latLng: this._latLng,
       size: this._size * dpr,
-      sheet: "player",
+      sheet: this._sheetName,
       rect: { x: 0, y: 0, width: this._iconWidth, height: this._iconHeight },
       rotation: (this._rotation * Math.PI) / 180, // Convert to radians
       keepUpright: true, // Player icon should always face up

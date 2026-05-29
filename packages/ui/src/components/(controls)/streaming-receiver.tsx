@@ -94,6 +94,8 @@ export function StreamingReceiver({
     setAutoJoinPeer,
     autoLiveModeWithMe,
     setAutoLiveModeWithMe,
+    showPeerLabels,
+    setShowPeerLabels,
     _hasHydrated,
   } = useSettingsStore(
     useShallow((state) => ({
@@ -107,6 +109,8 @@ export function StreamingReceiver({
       setAutoJoinPeer: state.setAutoJoinPeer,
       autoLiveModeWithMe: state.autoLiveModeWithMe,
       setAutoLiveModeWithMe: state.setAutoLiveModeWithMe,
+      showPeerLabels: state.showPeerLabels,
+      setShowPeerLabels: state.setShowPeerLabels,
       _hasHydrated: state._hasHydrated,
     })),
   );
@@ -1337,23 +1341,34 @@ export function StreamingReceiver({
                   : "Join Peer Mesh"}
             </Button>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Apps ({peerSenderIds.length})</Label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {!withoutLiveMode && (
-                    <>
-                      <LiveModeControl size="sm" />
-                      <Label className="flex items-center gap-1 text-xs h-auto cursor-pointer">
-                        <Switch
-                          checked={autoLiveModeWithMe}
-                          onCheckedChange={setAutoLiveModeWithMe}
-                          className="scale-75"
-                        />
-                        Auto Live Mode
-                      </Label>
-                    </>
-                  )}
+              {!withoutLiveMode && (
+                <div className="space-y-1.5 rounded-md border p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Live mode
+                    </Label>
+                    <LiveModeControl size="sm" />
+                  </div>
+                  <Label className="flex items-center gap-1.5 text-xs h-auto cursor-pointer">
+                    <Switch
+                      checked={autoLiveModeWithMe}
+                      onCheckedChange={setAutoLiveModeWithMe}
+                      className="scale-75"
+                    />
+                    Auto Live Mode
+                  </Label>
                 </div>
+              )}
+              <div className="flex items-center justify-between gap-2">
+                <Label>Apps ({peerSenderIds.length})</Label>
+                <Label className="flex items-center gap-1.5 text-xs h-auto cursor-pointer">
+                  <Switch
+                    checked={showPeerLabels}
+                    onCheckedChange={setShowPeerLabels}
+                    className="scale-75"
+                  />
+                  Show names
+                </Label>
               </div>
               <div className="relative">
                 <ScrollArea className="h-40 rounded-md border p-2">
