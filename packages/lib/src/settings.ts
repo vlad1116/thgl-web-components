@@ -172,7 +172,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   traceLineColor: "#1ccdd1B3",
   traceLineStyle: "dots" as "dots" | "line",
   audioAlertsMuted: false,
-  audioAlertRange: 1000,
+  audioAlertRange: 5000,
   audioAlertSound: "chime" as const,
   audioAlertVolume: 0.5,
   showAudioAlertRange: false,
@@ -814,7 +814,7 @@ export const useSettingsStore = create(
             traceLineStyle: "dots",
             // Audio alerts
             audioAlertsMuted: false,
-            audioAlertRange: 1000,
+            audioAlertRange: 5000,
             audioAlertSound: "chime",
             audioAlertVolume: 0.5,
             showAudioAlertRange: false,

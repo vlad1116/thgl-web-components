@@ -321,6 +321,14 @@ export function Player({
       alertCircleDisplayRef.current = [...pos] as [number, number];
     }
 
+    // Apply the current radius immediately so range changes take effect even
+    // while an animation loop is already running with a stale closure value.
+    if (alertCircleLayerRef.current?.getShape("audio-alert-range")) {
+      alertCircleLayerRef.current.updateShape("audio-alert-range", {
+        radius: audioAlertRange,
+      });
+    }
+
     // Start animation loop if not running
     if (alertCircleRafRef.current) return;
     let lastTs = performance.now();
@@ -353,6 +361,7 @@ export function Player({
       if (existing) {
         layer.updateShape("audio-alert-range", {
           center: [...display] as [number, number],
+          radius: audioAlertRange,
         });
       } else {
         layer.addShape({
