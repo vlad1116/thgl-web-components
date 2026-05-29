@@ -1847,16 +1847,16 @@ function MarkersContent({
   // authoritative filtered list from useCoordinates() — it excludes
   // disabled filters immediately, avoiding stale-ref race conditions.
   useEffect(() => {
-    if (
-      audioAlertsMuted ||
-      !throttledPlayer ||
-      spawns.length === 0
-    )
-      return;
+    // Need a player position and at least one enabled alert. Note we do NOT
+    // bail on spawns.length === 0: in live mode `spawns` holds only permanent
+    // landmarks + custom nodes, so a purely-live tracked type would otherwise
+    // never reach the live-actor check below.
+    if (audioAlertsMuted || !throttledPlayer) return;
 
-    // Check if any audio alert is enabled
     const hasAnyAudioAlert = Object.values(audioAlertByFilter).some(Boolean);
     if (!hasAnyAudioAlert) return;
+
+    const rangeSq = audioAlertRange * audioAlertRange;
 
     // Apply rotation to player position if needed
     let playerX = throttledPlayer.x;
@@ -1870,68 +1870,86 @@ function MarkersContent({
       playerY = rotatedPlayer[1];
     }
 
-    const rangeSq = audioAlertRange * audioAlertRange;
+    const checkProximity = () => {
+      // Check if any spawn with audio alerts enabled is in range.
+      // Skip predicted-only spawns (source === 'static' in combined mode) —
+      // they're faded ghost markers we haven't actually confirmed live, so
+      // alerting on them would fire on phantom locations.
+      let anyInRange = false;
+      for (const spawn of spawns) {
+        if (!audioAlertByFilter[spawn.type]) continue;
+        if (spawn.source === "static") continue;
 
-    // Check if any spawn with audio alerts enabled is in range.
-    // Skip predicted-only spawns (source === 'static' in combined mode) —
-    // they're faded ghost markers we haven't actually confirmed live, so
-    // alerting on them would fire on phantom locations.
-    let anyInRange = false;
-    for (const spawn of spawns) {
-      if (!audioAlertByFilter[spawn.type]) continue;
-      if (spawn.source === "static") continue;
-
-      let spawnX = spawn.p[0];
-      let spawnY = spawn.p[1];
-      if (rotationCache) {
-        const rotatedSpawn = rotationCache.getRotated(spawnX, spawnY);
-        spawnX = rotatedSpawn[0];
-        spawnY = rotatedSpawn[1];
-      }
-
-      const dx = playerX - spawnX;
-      const dy = playerY - spawnY;
-
-      if (dx * dx + dy * dy <= rangeSq) {
-        anyInRange = true;
-        break;
-      }
-    }
-
-    // Live actors: iterate raw actor list with type mapping.
-    if (!anyInRange && typesIdMap) {
-      const liveActorsList = useGameState.getState().actors || [];
-      for (const actor of liveActorsList) {
-        const displayType = typesIdMap[actor.type];
-        if (!displayType || !audioAlertByFilter[displayType]) continue;
-
-        let actorX = actor.x;
-        let actorY = actor.y;
+        let spawnX = spawn.p[0];
+        let spawnY = spawn.p[1];
         if (rotationCache) {
-          const rotated = rotationCache.getRotated(actorX, actorY);
-          actorX = rotated[0];
-          actorY = rotated[1];
+          const rotatedSpawn = rotationCache.getRotated(spawnX, spawnY);
+          spawnX = rotatedSpawn[0];
+          spawnY = rotatedSpawn[1];
         }
 
-        const dx = playerX - actorX;
-        const dy = playerY - actorY;
+        const dx = playerX - spawnX;
+        const dy = playerY - spawnY;
+
         if (dx * dx + dy * dy <= rangeSq) {
           anyInRange = true;
           break;
         }
       }
-    }
 
-    if (anyInRange) {
-      // Play sound only on transition from none to some in range
-      if (!hasAlertedRef.current) {
-        hasAlertedRef.current = true;
-        playAlertSound(audioAlertSound, audioAlertVolume);
+      // Live actors: iterate raw actor list with type mapping. Read fresh from
+      // the store on every call so the subscription below sees current actors.
+      if (!anyInRange && typesIdMap) {
+        const liveActorsList = useGameState.getState().actors || [];
+        for (const actor of liveActorsList) {
+          const displayType = typesIdMap[actor.type];
+          if (!displayType || !audioAlertByFilter[displayType]) continue;
+
+          let actorX = actor.x;
+          let actorY = actor.y;
+          if (rotationCache) {
+            const rotated = rotationCache.getRotated(actorX, actorY);
+            actorX = rotated[0];
+            actorY = rotated[1];
+          }
+
+          const dx = playerX - actorX;
+          const dy = playerY - actorY;
+          if (dx * dx + dy * dy <= rangeSq) {
+            anyInRange = true;
+            break;
+          }
+        }
       }
-    } else {
-      // Reset when all spawns are out of range
-      hasAlertedRef.current = false;
-    }
+
+      if (anyInRange) {
+        // Play sound only on transition from none to some in range
+        if (!hasAlertedRef.current) {
+          hasAlertedRef.current = true;
+          playAlertSound(audioAlertSound, audioAlertVolume);
+        }
+      } else {
+        // Reset when all spawns are out of range
+        hasAlertedRef.current = false;
+      }
+    };
+
+    // Initial check covers player movement (throttledPlayer dep), static-spawn
+    // and settings changes.
+    checkProximity();
+
+    // Live actors flow imperatively into useGameState.actors and are NOT in
+    // this effect's deps, so without a direct subscription a tracked actor
+    // moving into range while the player stands still would never trigger an
+    // alert (the marker appears but no sound plays). Mirror the live-marker
+    // pipeline: re-check on every actor tick.
+    const unsubActors = useGameState.subscribe(
+      (s) => s.actors,
+      checkProximity,
+    );
+    return () => {
+      unsubActors();
+    };
   }, [
     throttledPlayer,
     spawns,
