@@ -18,6 +18,9 @@ type SkillProps = {
       type: string;
       params: (string | number)[];
     }[];
+    /** Pre-resolved numeric values for this level's description placeholders
+     *  (buff-reference chains resolved at extraction time). */
+    descParams?: number[];
   }[];
   bonuses?: {
     type: string;
@@ -264,11 +267,20 @@ export function SkillView({
                   const key = `${entryId}_level_${level.level}_desc`;
                   const resolved = dict[key] ? resolveDict(dict, key) : undefined;
                   if (resolved && resolved !== key) {
-                    // Strip HTML, then fill `{N}` placeholders from this
-                    // level's own bonus params (each skill level carries its
-                    // own scaling numbers).
+                    // Strip HTML, then fill `{N}` placeholders. Prefer the
+                    // pre-resolved `level.descParams` (buff-reference chains
+                    // resolved at extraction time, e.g. skill_formation's
+                    // +20/30/40% per level); fall back to the naive
+                    // bonus-param walk when absent.
                     const stripped = resolved.replace(/<[^>]+>/g, "").trim();
-                    levelDesc = fillSkillLevelPlaceholders(stripped, level.bonuses);
+                    if (level.descParams && level.descParams.length > 0) {
+                      levelDesc = stripped.replace(/\{(\d+)\}/g, (_, idx) => {
+                        const v = level.descParams?.[parseInt(idx, 10)];
+                        return v != null ? String(v) : "?";
+                      });
+                    } else {
+                      levelDesc = fillSkillLevelPlaceholders(stripped, level.bonuses);
+                    }
                   }
                 }
 
