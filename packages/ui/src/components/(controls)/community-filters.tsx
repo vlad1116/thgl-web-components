@@ -16,7 +16,7 @@ import {
   type FilterComment,
   type ServerFilterMeta,
 } from "@repo/lib";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -55,7 +55,14 @@ export function CommunityFilters({
   compact?: boolean;
 } = {}) {
   const [open, setOpen] = useState(false);
-  const game = useMemo(getCurrentGameId, []);
+  // getCurrentGameId() is client-only (reads window.location); on the server
+  // it returns null, so without this guard the component renders nothing
+  // server-side then pops in after hydration, shifting sibling buttons and
+  // triggering a hydration mismatch. Defer the game lookup to after mount so
+  // the server render and the first client render agree (both null).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const game = mounted ? getCurrentGameId() : null;
   if (!game) return null;
 
   const trigger = compact ? (
