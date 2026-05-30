@@ -325,6 +325,7 @@ export interface ProfileActions {
   toggleShowAudioAlertRange: () => void;
   toggleAudioAlertByFilter: (filterId: string) => void;
   setAudioAlertByFilters: (filterIds: string[], enabled: boolean) => void;
+  resetAudioAlerts: () => void;
   setLabelModeByFilter: (filterId: string, mode: LabelMode) => void;
   setLabelModeByFilters: (filterIds: string[], mode: LabelMode) => void;
   setLabelTextSize: (size: number) => void;
@@ -1040,6 +1041,13 @@ export const useSettingsStore = create(
           updateSettings({
             audioAlertByFilter: { ...state.audioAlertByFilter, ...updates },
           });
+        },
+
+        resetAudioAlerts: () => {
+          // Clear every per-filter audio alert back to off. Distinct from the
+          // global mute (audioAlertsMuted), which only silences without
+          // changing the per-filter toggles.
+          updateSettings({ audioAlertByFilter: {} });
         },
 
         setLabelModeByFilter: (filterId: string, mode: LabelMode) => {

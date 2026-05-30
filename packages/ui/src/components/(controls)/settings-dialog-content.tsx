@@ -540,6 +540,33 @@ export function SettingsDialogContent({
                     onCheckedChange={settingsStore.toggleAudioAlertsMuted}
                   />
                 </div>
+                {(() => {
+                  const enabledCount = Object.values(
+                    profileSettings.audioAlertByFilter,
+                  ).filter(Boolean).length;
+                  return (
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>
+                        Reset Per-Filter Alerts
+                        {enabledCount > 0 && (
+                          <span className="text-muted-foreground font-normal">
+                            {" "}
+                            ({enabledCount} on)
+                          </span>
+                        )}
+                      </Label>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        disabled={enabledCount === 0}
+                        onClick={settingsStore.resetAudioAlerts}
+                      >
+                        Reset all
+                      </Button>
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center gap-2 justify-between">
                   <Label htmlFor="audio-alert-sound">Alert Sound</Label>
                   <div className="flex items-center gap-2">
