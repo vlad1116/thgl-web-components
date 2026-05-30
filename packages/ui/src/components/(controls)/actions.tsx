@@ -45,7 +45,18 @@ export function Actions({
             {mapControls}
             <div
               className="flex items-center rounded-md border border-input bg-background divide-x divide-input overflow-hidden [&_button]:border-0 [&_button]:shadow-none [&_button]:rounded-none [&_button]:h-8 [&_button]:w-8"
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                // Plain actions (add node, add drawing) should dismiss this
+                // popover after tapping. But some controls (whiteboard, peer
+                // mesh) open their own dialog, which is rendered inside this
+                // PopoverContent — closing the popover would unmount that
+                // just-opened dialog along with it, so the dialog never
+                // appears ("menu disappears"). Leave the popover open for any
+                // trigger that owns a nested overlay (aria-haspopup); Radix's
+                // layered dismissal keeps it mounted behind the dialog.
+                if ((e.target as HTMLElement).closest("[aria-haspopup]")) return;
+                setOpen(false);
+              }}
             >
               {children}
             </div>
