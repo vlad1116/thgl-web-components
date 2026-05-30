@@ -34,6 +34,42 @@ import {
   createProcessedImageKey,
 } from "./icon-cache";
 
+type ZPosConfig = { xyMaxDistance: number; zDistance: number };
+
+// Player-relative elevation indicator (the up/down height arrows). Given a
+// marker's already-rotated XY, its raw world Z, and the current player,
+// returns the arrow direction + signed magnitude. Shared by the static
+// rebuild, the static player-move effect, and the live-actor pipeline so
+// every marker source shows consistent height arrows.
+function computeRelativeZPos(
+  spawnZ: number | undefined,
+  markerX: number,
+  markerY: number,
+  player: { x: number; y: number; z: number } | null | undefined,
+  rotationCache: { getRotated: (x: number, y: number) => [number, number] } | null,
+  cfg: ZPosConfig | undefined,
+): { zPos: "top" | "bottom" | null; zValue: number | undefined } {
+  if (!cfg || !player || spawnZ === undefined) {
+    return { zPos: null, zValue: undefined };
+  }
+  let px = player.x;
+  let py = player.y;
+  if (rotationCache) {
+    const rp = rotationCache.getRotated(px, py);
+    px = rp[0];
+    py = rp[1];
+  }
+  const dx = px - markerX;
+  const dy = py - markerY;
+  if (dx * dx + dy * dy > cfg.xyMaxDistance * cfg.xyMaxDistance) {
+    return { zPos: null, zValue: undefined };
+  }
+  const dz = player.z - spawnZ;
+  if (dz > cfg.zDistance) return { zPos: "bottom", zValue: -dz };
+  if (dz < -cfg.zDistance) return { zPos: "top", zValue: -dz };
+  return { zPos: null, zValue: undefined };
+}
+
 export function Markers({
   appName,
   markerOptions,
@@ -1519,6 +1555,60 @@ function MarkersContent({
     sharedIconNameLookup, // Re-resolve stale shared private icon coords
   ]);
 
+  // Player-relative height arrows (up/down elevation indicators).
+  //
+  // zPos/zValue are also computed where markers are built (static rebuild and
+  // live-actor pipeline), but those read the player via ref/snapshot and don't
+  // re-run on every 1s player tick (the static rebuild deliberately excludes
+  // player from its deps to avoid rebuilding every marker). So the arrows are
+  // absent whenever the player position arrives after the build (the norm in
+  // live mode) and don't update as the player moves while spawns are static.
+  // This effect keeps them current by recomputing zPos/zValue on player
+  // movement and applying via updateMarker: cheap O(N) field updates, no icon
+  // reprocessing or rebuild. Covers both layers. Guarded on a present player
+  // so it never clobbers the no-player absolute-elevation "needle" mode.
+  useEffect(() => {
+    if (!map || !markerOptions.zPos || !throttledPlayer) return;
+    const cfg = markerOptions.zPos;
+    const player = throttledPlayer;
+
+    const refresh = (
+      layer: typeof map.markerLayer,
+      spawnMap: Map<string, Spawn>,
+    ) => {
+      if (!layer) return false;
+      let dirty = false;
+      for (const [id, spawn] of spawnMap) {
+        let mx = spawn.p[0];
+        let my = spawn.p[1];
+        if (rotationCache) {
+          const rm = rotationCache.getRotated(spawn.p[0], spawn.p[1]);
+          mx = rm[0];
+          my = rm[1];
+        }
+        const { zPos, zValue } = computeRelativeZPos(
+          spawn.p[2],
+          mx,
+          my,
+          player,
+          rotationCache,
+          cfg,
+        );
+        const existing = layer.getMarker(id);
+        if (!existing) continue;
+        if ((existing.zPos ?? null) !== zPos || existing.z !== zValue) {
+          layer.updateMarker(id, { z: zValue, zPos });
+          dirty = true;
+        }
+      }
+      return dirty;
+    };
+
+    const staticDirty = refresh(map.markerLayer, staticSpawnMapRef.current);
+    const liveDirty = refresh(map.liveMarkerLayer, liveSpawnMapRef.current);
+    if (staticDirty || liveDirty) map.requestRedraw();
+  }, [map, throttledPlayer, markerOptions.zPos, rotationCache]);
+
   // Imperative live-actors pipeline.
   // Bypasses React's render cycle entirely for live actors. Subscribes
   // directly to useGameState.actors + user/settings stores; on each tick:
@@ -1567,6 +1657,7 @@ function MarkersContent({
       const iconSizeByFilterNow = settingsState.iconSizeByFilter;
       const hideDiscoveredNow = settingsState.hideDiscoveredNodes;
       const setDiscoverNodeFn = settingsState.setDiscoverNode;
+      const playerNow = useGameState.getState().player;
 
       const seen = new Set<string>();
       const newSpawns = new Map<string, Spawn>();
@@ -1619,22 +1710,36 @@ function MarkersContent({
           selectedNodeIdNow === nodeId;
         const newIsSelected = selectedNodeIdNow === nodeId;
 
+        const { zPos, zValue } = computeRelativeZPos(
+          spawn.p[2],
+          pos[0],
+          pos[1],
+          playerNow,
+          rotationCache,
+          markerOptions.zPos,
+        );
+
         const existing = liveMarkerLayer.getMarker(id);
         if (existing) {
           // In-place update — position OR derived flags (discovery, highlight,
-          // selection) so right-click-to-discover etc. reflect immediately.
+          // selection, height arrow) so right-click-to-discover etc. reflect
+          // immediately.
           const posChanged =
             existing.latLng[0] !== pos[0] || existing.latLng[1] !== pos[1];
           const flagsChanged =
             !!existing.isDiscovered !== isDiscoveredFlag ||
             !!existing.isHighlighted !== newIsHighlighted ||
-            !!existing.isSelected !== newIsSelected;
+            !!existing.isSelected !== newIsSelected ||
+            (existing.zPos ?? null) !== zPos ||
+            existing.z !== zValue;
           if (posChanged || flagsChanged) {
             liveMarkerLayer.updateMarker(id, {
               latLng: pos,
               isDiscovered: isDiscoveredFlag,
               isHighlighted: newIsHighlighted,
               isSelected: newIsSelected,
+              z: zValue,
+              zPos,
             });
             dirty = true;
           }
@@ -1697,6 +1802,8 @@ function MarkersContent({
           isMuted: false,
           isSelected: newIsSelected,
           keepUpright: true,
+          z: zValue,
+          zPos,
         };
         liveMarkerLayer.add(instance);
 
