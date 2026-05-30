@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
 // refreshed, or the OS shuts down — the remote side has to detect the dead
 // connection via ICE timeout, and that signal sometimes never propagates up
 // to PeerJS. Result: stale entries pile up in the leader's receiverConns /
-// senderIds maps every time someone refreshes (reported by Elsia on Discord).
+// senderIds maps every time someone refreshes.
 //
 // Watch the underlying RTCPeerConnection's state directly so we react to
 // "failed"/"closed" event-driven, plus give "disconnected" a 30s grace
