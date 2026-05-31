@@ -103,7 +103,7 @@ jobs:
 
             if [ "$HTTP" = "200" ] || [ "$HTTP" = "204" ]; then
               echo "Update succeeded on attempt $attempt"
-              exit 0
+              break
             fi
 
             echo "Attempt $attempt: HTTP $HTTP"
@@ -114,8 +114,66 @@ jobs:
               echo "Non-retryable error, giving up" >&2
               exit 1
             fi
+            if [ "$attempt" = "5" ]; then
+              echo "Update failed after 5 attempts" >&2
+              exit 1
+            fi
             sleep $((attempt * 10))
           done
 
-          echo "Update failed after 5 attempts" >&2
-          exit 1
+      # During a Magic Container rollout Bunny serves its own
+      # "We're deploying your app!" placeholder page — and that page
+      # carries Cache-Control: max-age=25600000 (~296 days). Any edge
+      # that serves a request mid-rollout caches the placeholder for
+      # ~10 months, since our app's s-maxage=60 never applies (the
+      # response never came from our app). The only reliable fix is to
+      # purge the pull zone AFTER the new container is actually live,
+      # so every edge re-pulls the real app.
+      - name: Wait for rollout and purge edge cache
+        if: vars.BUNNY_GAMES_WEB_APP_ID != ''
+        env:
+          API_KEY: ${{ secrets.BUNNY_ACCOUNT_API_KEY }}
+          # Pull zone id is not secret (it's in every CDN-PullZone
+          # response header). Override via repo var if it ever changes.
+          PULL_ZONE_ID: ${{ vars.BUNNY_GAMES_WEB_PULLZONE_ID || '5829962' }}
+          PROBE_URL: "https://www.th.gl/"
+        run: |
+          set -uo pipefail
+
+          purge() {
+            curl -s -o /dev/null -w "purge HTTP %{http_code}\n" -X POST \
+              -H "AccessKey: $API_KEY" \
+              "https://api.bunny.net/pullzone/$PULL_ZONE_ID/purgeCache"
+          }
+
+          # Poll the live site until it stops returning the placeholder.
+          # Require 3 consecutive clean responses (~30s stable) so we
+          # don't purge while the rollout is still flapping between the
+          # placeholder and the new container.
+          clean=0
+          live=0
+          for i in $(seq 1 90); do
+            body=$(curl -fsS --max-time 10 "$PROBE_URL" 2>/dev/null || true)
+            if [ -n "$body" ] && ! printf '%s' "$body" | grep -q "We're deploying your app"; then
+              clean=$((clean + 1))
+              echo "Clean response $clean/3 (poll $i)"
+              if [ "$clean" -ge 3 ]; then live=1; break; fi
+            else
+              clean=0
+              echo "Still deploying or unreachable (poll $i)"
+            fi
+            sleep 10
+          done
+
+          if [ "$live" != "1" ]; then
+            echo "::warning::App did not report healthy within ~15min; purging anyway"
+          fi
+
+          # Purge once now to evict any placeholder cached during rollout.
+          purge
+          # Magic Containers roll out per-region; a region that lagged
+          # could re-cache the placeholder just after our first purge.
+          # A second purge 60s later closes that window.
+          sleep 60
+          purge
+          echo "Edge cache purged"

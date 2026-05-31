@@ -70,6 +70,44 @@ const nextConfig = {
         },
       ],
     },
+    // Hashed build assets are content-addressed (the hash is in the
+    // filename), so a given URL's bytes never change. Cache them
+    // immutably. This rule comes after the catch-all so it wins for
+    // this path. Critical: without it, chunks inherited the 60s
+    // s-maxage above, so the edge re-fetched them every minute — and a
+    // re-fetch landing mid-deploy (when the old hash no longer exists
+    // at origin) cached Bunny's 404 HTML in place of the JS, which the
+    // browser then choked on with "Unexpected token '<'".
+    {
+      source: "/_next/static/:path*",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=31536000, immutable",
+        },
+        {
+          key: "CDN-Cache-Control",
+          value: "public, max-age=31536000, immutable",
+        },
+      ],
+    },
+    // Optimized images keyed by (url, w, q). Source files (map-tile
+    // previews, etc.) can change under a stable URL, so don't make
+    // these immutable — cache a day at the edge with a week of SWR,
+    // and let the browser revalidate hourly via ETag.
+    {
+      source: "/_next/image",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=3600, must-revalidate",
+        },
+        {
+          key: "CDN-Cache-Control",
+          value: "public, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      ],
+    },
   ],
 };
 
