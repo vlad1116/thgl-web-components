@@ -13,6 +13,7 @@ import {
   openFileOrFiles,
   FiltersConfig,
 } from "@repo/lib";
+import { useT } from "../(providers)";
 import { Label } from "../ui/label";
 import { toast } from "sonner";
 import { ReactNode } from "react";
@@ -31,7 +32,7 @@ import {
 } from "../ui/select";
 import { Slider } from "../ui/slider";
 import { ProfileManager } from "./profile-manager";
-import { Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw, X } from "lucide-react";
 import { playAlertSound, ALERT_SOUND_OPTIONS } from "./audio-alert";
 
 function Section({
@@ -73,6 +74,7 @@ export function SettingsDialogContent({
 }) {
   const settingsStore = useSettingsStore();
   const profileSettings = useSettingsStore((state) => state);
+  const t = useT();
   return (
     <DialogContent
       onMouseDown={(e) => e.stopPropagation()}
@@ -541,29 +543,67 @@ export function SettingsDialogContent({
                   />
                 </div>
                 {(() => {
-                  const enabledCount = Object.values(
+                  // List the filters that currently have an audio alert set,
+                  // so it's easy to remember what you turned on (and silence a
+                  // stray one) instead of getting dinged with no idea why.
+                  const enabledIds = Object.entries(
                     profileSettings.audioAlertByFilter,
-                  ).filter(Boolean).length;
+                  )
+                    .filter(([, on]) => on)
+                    .map(([id]) => id);
                   return (
-                    <div className="flex items-center justify-between gap-2">
-                      <Label>
-                        Reset Per-Filter Alerts
-                        {enabledCount > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label>
+                          Active Alerts
                           <span className="text-muted-foreground font-normal">
                             {" "}
-                            ({enabledCount} on)
+                            ({enabledIds.length})
                           </span>
-                        )}
-                      </Label>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        disabled={enabledCount === 0}
-                        onClick={settingsStore.resetAudioAlerts}
-                      >
-                        Reset all
-                      </Button>
+                        </Label>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          disabled={enabledIds.length === 0}
+                          onClick={settingsStore.resetAudioAlerts}
+                        >
+                          Reset all
+                        </Button>
+                      </div>
+                      {enabledIds.length === 0 ? (
+                        <p className="text-muted-foreground text-xs">
+                          No audio alerts set. Enable one with the gear icon
+                          next to a filter.
+                        </p>
+                      ) : (
+                        <ScrollArea className="max-h-40">
+                          <ul className="space-y-0.5 pr-2">
+                            {enabledIds.map((id) => {
+                              const name = t(id) || id;
+                              return (
+                                <li
+                                  key={id}
+                                  className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-muted/50"
+                                >
+                                  <span className="truncate">{name}</span>
+                                  <button
+                                    type="button"
+                                    aria-label={`Turn off alert for ${name}`}
+                                    title="Turn off this alert"
+                                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                                    onClick={() =>
+                                      settingsStore.toggleAudioAlertByFilter(id)
+                                    }
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </ScrollArea>
+                      )}
                     </div>
                   );
                 })()}

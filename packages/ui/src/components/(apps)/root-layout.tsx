@@ -10,7 +10,11 @@ import {
   LocaleSwitcher,
 } from "../(controls)";
 import Link from "next/link";
-import { getStaticDictionary, isValidLocale } from "../../dicts";
+import {
+  getFullDictionary,
+  getStaticDictionary,
+  isValidLocale,
+} from "../../dicts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -48,15 +52,34 @@ export function createRootLayout(appConfig: AppConfig) {
       notFound();
     }
 
-    // Only ship UI strings to the client (~6KB) — game-specific dict (up
-    // to ~1MB for big games) bloats every page's RSC payload. Server pages
-    // that need game ID translations still call getFullDictionary directly.
-    // Pages with client-side game ID translation (map page) wrap their
-    // content in a nested I18NProvider with the full dict.
-    const [dict, version] = await Promise.all([
+    // Ship UI strings + filter group/value display NAMES to the client.
+    // The full game dict (up to ~1MB) — which also carries long descriptions
+    // — still isn't shipped globally; pages needing full game-id translation
+    // (the map) wrap their content in a nested provider with it. But the
+    // header lives here at the root, and components in it (the Settings dialog:
+    // Active Alerts list, Per-Filter Icon Sizes) need to resolve filter names.
+    // So augment the static UI dict with names only — a small, descriptions-
+    // free slice — instead of the whole dict.
+    const [staticDict, fullDict, version] = await Promise.all([
       getStaticDictionary(appConfig.name, locale),
+      getFullDictionary(appConfig.name, locale),
       fetchVersion(appConfig.name),
     ]);
+
+    const dict: Record<string, string> = { ...staticDict };
+    // Copy a name key plus, if its value is an @-pointer, the pointer target
+    // (translate() resolves "@xxx" via dict["@xxx"], which would otherwise be
+    // missing from this slice and render as the raw pointer).
+    const addName = (key: string) => {
+      const value = fullDict[key];
+      if (!value) return;
+      dict[key] = value;
+      if (value[0] === "@" && fullDict[value]) dict[value] = fullDict[value];
+    };
+    for (const group of version.data.filters) {
+      addName(group.group);
+      for (const value of group.values) addName(value.id);
+    }
 
     return (
       <html lang={locale}>
