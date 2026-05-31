@@ -24,6 +24,7 @@ import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "
 import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
+import { toast } from "sonner";
 import { AdditionalTooltipType } from "../(content)";
 import { playAlertSound } from "../(controls)/audio-alert";
 import {
@@ -409,6 +410,7 @@ function MarkersContent({
   const liveMode = useEffectiveLiveMode();
   const {
     audioAlertsMuted,
+    audioAlertNotifications,
     audioAlertRange,
     audioAlertByFilter,
     audioAlertSound,
@@ -416,6 +418,7 @@ function MarkersContent({
   } = useSettingsStore(
     useShallow((state) => ({
       audioAlertsMuted: state.audioAlertsMuted,
+      audioAlertNotifications: state.audioAlertNotifications,
       audioAlertRange: state.audioAlertRange,
       audioAlertByFilter: state.audioAlertByFilter,
       audioAlertSound: state.audioAlertSound,
@@ -1978,11 +1981,13 @@ function MarkersContent({
     }
 
     const checkProximity = () => {
-      // Check if any spawn with audio alerts enabled is in range.
-      // Skip predicted-only spawns (source === 'static' in combined mode) —
-      // they're faded ghost markers we haven't actually confirmed live, so
-      // alerting on them would fire on phantom locations.
-      let anyInRange = false;
+      // Collect the distinct alert TYPES in range (not just a boolean) so the
+      // fire-time notification can name what dinged. Skip predicted-only
+      // spawns (source === 'static' in combined mode) — they're faded ghost
+      // markers we haven't confirmed live, so alerting on them would fire on
+      // phantom locations. The per-type guard makes the loop cheap (only
+      // enabled-alert types do any work).
+      const inRangeTypes = new Set<string>();
       for (const spawn of spawns) {
         if (!audioAlertByFilter[spawn.type]) continue;
         if (spawn.source === "static") continue;
@@ -1999,14 +2004,13 @@ function MarkersContent({
         const dy = playerY - spawnY;
 
         if (dx * dx + dy * dy <= rangeSq) {
-          anyInRange = true;
-          break;
+          inRangeTypes.add(spawn.type);
         }
       }
 
       // Live actors: iterate raw actor list with type mapping. Read fresh from
       // the store on every call so the subscription below sees current actors.
-      if (!anyInRange && typesIdMap) {
+      if (typesIdMap) {
         const liveActorsList = useGameState.getState().actors || [];
         for (const actor of liveActorsList) {
           const displayType = typesIdMap[actor.type];
@@ -2023,17 +2027,24 @@ function MarkersContent({
           const dx = playerX - actorX;
           const dy = playerY - actorY;
           if (dx * dx + dy * dy <= rangeSq) {
-            anyInRange = true;
-            break;
+            inRangeTypes.add(displayType);
           }
         }
       }
 
-      if (anyInRange) {
-        // Play sound only on transition from none to some in range
+      if (inRangeTypes.size > 0) {
+        // Play sound (and notify) only on transition from none to some.
         if (!hasAlertedRef.current) {
           hasAlertedRef.current = true;
           playAlertSound(audioAlertSound, audioAlertVolume);
+          if (audioAlertNotifications) {
+            const names = [...inRangeTypes].map((tp) => t(tp) || tp);
+            const label =
+              names.length <= 2
+                ? names.join(", ")
+                : `${names[0]} +${names.length - 1} more`;
+            toast(`🔔 ${label} nearby`);
+          }
         }
       } else {
         // Reset when all spawns are out of range
@@ -2061,12 +2072,14 @@ function MarkersContent({
     throttledPlayer,
     spawns,
     audioAlertsMuted,
+    audioAlertNotifications,
     audioAlertRange,
     audioAlertByFilter,
     audioAlertSound,
     audioAlertVolume,
     rotationCache,
     typesIdMap,
+    t,
   ]);
 
 

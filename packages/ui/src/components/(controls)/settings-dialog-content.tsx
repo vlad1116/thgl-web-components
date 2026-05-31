@@ -542,6 +542,21 @@ export function SettingsDialogContent({
                     onCheckedChange={settingsStore.toggleAudioAlertsMuted}
                   />
                 </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="audio-alert-notifications">
+                    Show Notification
+                    <span className="block text-muted-foreground text-xs font-normal">
+                      Pop up which alert fired, so you know what dinged.
+                    </span>
+                  </Label>
+                  <Switch
+                    id="audio-alert-notifications"
+                    checked={profileSettings.audioAlertNotifications}
+                    onCheckedChange={
+                      settingsStore.toggleAudioAlertNotifications
+                    }
+                  />
+                </div>
                 {(() => {
                   // List the filters that currently have an audio alert set,
                   // so it's easy to remember what you turned on (and silence a
