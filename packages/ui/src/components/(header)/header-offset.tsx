@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, JSX } from "react";
 import { cn } from "@repo/lib";
 import { ErrorBoundary, ScrollArea } from "../(controls)";
 

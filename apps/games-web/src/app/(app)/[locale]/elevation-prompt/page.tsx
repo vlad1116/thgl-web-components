@@ -20,7 +20,10 @@ function ElevationPromptContent() {
 
   const handleAlwaysRelaunch = async () => {
     // Save the setting to C++ (persistent) then relaunch
-    await postWebviewMessage({ action: "setAlwaysRunAsAdmin", payload: { always: true } });
+    await postWebviewMessage({
+      action: "setAlwaysRunAsAdmin",
+      payload: { always: true },
+    });
     postWebviewMessage({ action: "relaunchAsAdmin", payload: {} });
   };
 
@@ -42,7 +45,7 @@ function ElevationPromptContent() {
     <div className="h-full flex flex-col bg-zinc-950">
       {/* Header bar with branding */}
       <header
-        className="px-3 h-[32px] shrink-0 border-b bg-gradient-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center"
+        className="px-3 h-[32px] shrink-0 border-b bg-linear-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center"
         onMouseDown={() => {
           window.chrome?.webview?.postMessage("drag");
         }}
@@ -86,12 +89,8 @@ function ElevationPromptContent() {
 
         {/* Description */}
         <div className="mt-4 space-y-2 text-sm text-zinc-400 leading-relaxed">
-          <p>
-            {t("elevation.description")}
-          </p>
-          <p className="text-zinc-500 text-xs">
-            {t("elevation.hint")}
-          </p>
+          <p>{t("elevation.description")}</p>
+          <p className="text-zinc-500 text-xs">{t("elevation.hint")}</p>
         </div>
 
         {/* Spacer */}

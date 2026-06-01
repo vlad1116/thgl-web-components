@@ -1,5 +1,7 @@
 import { cn } from "@repo/lib";
 
+import type { JSX } from "react";
+
 interface SubtitleProps {
   title: string | JSX.Element;
   order?: 2 | 3 | 4 | 5 | 6;

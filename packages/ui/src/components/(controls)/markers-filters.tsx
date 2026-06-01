@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type JSX } from "react";
 import { cn, FiltersConfig } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { MyFilters } from "./my-filters";
@@ -71,7 +71,9 @@ export function MarkersFilters({
     const result: FilteredEntry[] = [];
     for (const entry of entries) {
       if (entry.type === "category") {
-        const categoryName = (t(entry.category) || entry.category).toLowerCase();
+        const categoryName = (
+          t(entry.category) || entry.category
+        ).toLowerCase();
         if (categoryName.includes(q)) {
           result.push({ entry, valueFilter: null });
           continue;

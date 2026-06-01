@@ -14,8 +14,8 @@
   "scripts": {
     "build": "next build",
     "clean": "rimraf .next node_modules",
-    "dev": "next dev -p 3100 --turbopack",
-    "lint": "next lint",
+    "dev": "next dev -p 3100",
+    "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "start": "next start -p 3100"
   },
@@ -39,7 +39,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "autoprefixer": "catalog:",
+    "@tailwindcss/postcss": "catalog:",
     "postcss": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"

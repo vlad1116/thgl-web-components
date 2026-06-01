@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { cn, localizePath, useUserStore } from "@repo/lib";
 import { ScrollArea } from "../ui/scroll-area";
 
@@ -38,7 +38,12 @@ export function MapSelect({
           type="button"
         >
           <Map className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate font-medium">
+          {/* `mapName` comes from the client-authoritative user store, which
+              can differ from the SSR-rendered value (the store is a
+              module-level singleton reused across SSR requests). The client
+              value is the correct one, so suppress the expected text-only
+              hydration mismatch here rather than flashing a placeholder. */}
+          <span className="truncate font-medium" suppressHydrationWarning>
             {t(mapName) || mapName}
           </span>
           <ChevronDown

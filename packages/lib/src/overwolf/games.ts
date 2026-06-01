@@ -59,7 +59,9 @@ export function gameLaunched(
 }
 
 export function gameRunning(
-  gameInfo: overwolf.games.RunningGameInfo,
+  gameInfo:
+    | overwolf.games.RunningGameInfo
+    | overwolf.games.GetRunningGameInfoResult,
   gameClassId: number,
 ) {
   if (!gameInfo) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState, type JSX } from "react";
 import { cn, useAccountStore } from "@repo/lib";
 import { X } from "lucide-react";
 import { useT } from "../(providers)";

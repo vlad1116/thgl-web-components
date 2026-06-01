@@ -1,5 +1,4 @@
 "use client";
-
 import {
   DebugPanel,
   InteractiveMap,
@@ -15,6 +14,8 @@ import { Actions, MapControls } from "../(controls)";
 import { StreamingReceiver, Whiteboard } from "../(peer)";
 import type { AppConfig, MarkerOptions, TilesConfig } from "@repo/lib";
 import { AdditionalTooltipType } from "../(content)";
+
+import type { JSX } from "react";
 
 const MARKER_OPTIONS: MarkerOptions = {
   imageSprite: true,

@@ -1,6 +1,6 @@
 import { cn, useAccountStore, useSettingsStore } from "@repo/lib";
 import { useOverwolfState } from "@repo/lib/overwolf";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState, type JSX } from "react";
 import Moveable from "react-moveable";
 import { ExternalAnchor } from "../(header)";
 import { Move } from "lucide-react";
@@ -57,7 +57,7 @@ export function AdsContainer({
     <>
       <div
         ref={containerRef}
-        className={cn("fixed z-[12000] will-change-transform", className)}
+        className={cn("fixed z-12000 will-change-transform", className)}
         style={
           transformId
             ? {

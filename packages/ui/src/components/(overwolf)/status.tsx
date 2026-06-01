@@ -14,7 +14,6 @@ export function Status() {
       ) {
         const toastId = toast.error("Access is denied", {
           duration: Infinity,
-          important: true,
           closeButton: true,
           description: (
             <>

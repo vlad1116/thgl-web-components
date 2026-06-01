@@ -1,5 +1,5 @@
 import { cn } from "@repo/lib";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type JSX } from "react";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { AdsContainer } from "./ads-container";
 import { useOverwolfState } from "@repo/lib/overwolf";

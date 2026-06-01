@@ -14,7 +14,7 @@ export function GameCard({ game }: { game: Game }) {
     >
       <Card className="overflow-hidden hover:shadow-lg transition">
         {/* Preview Image with Overlapping Metadata */}
-        <div className="relative aspect-[1200/700] w-full bg-muted overflow-hidden">
+        <div className="relative aspect-1200/700 w-full bg-muted overflow-hidden">
           {previewImageUrl ? (
             <Image
               src={previewImageUrl}
@@ -46,7 +46,7 @@ export function GameCard({ game }: { game: Game }) {
                 alt={`${game.title} logo`}
                 width={32}
                 height={32}
-                className="rounded flex-shrink-0"
+                className="rounded shrink-0"
                 sizes="32px"
               />
               <h2 className="text-lg font-semibold truncate">{game.title}</h2>

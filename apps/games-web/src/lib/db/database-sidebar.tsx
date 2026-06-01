@@ -2,6 +2,8 @@
 import { Sidebar } from "@repo/ui/data";
 import { useParams } from "next/navigation";
 
+import type { JSX } from "react";
+
 export function DatabaseSidebar({
   menu,
 }: {

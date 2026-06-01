@@ -24,7 +24,9 @@ function fetchTooltip(
   if (cached) return Promise.resolve(cached);
   const existing = pending.get(key);
   if (existing) return existing;
-  const promise = fetch(`/api/db/entity-tooltip?id=${entityId}&locale=${locale}`)
+  const promise = fetch(
+    `/api/db/entity-tooltip?id=${entityId}&locale=${locale}`,
+  )
     .then((res) => (res.ok ? res.json() : null))
     .then((d) => {
       if (d && !d.error) {
@@ -121,7 +123,7 @@ export function EntityTooltip({
         pos &&
         createPortal(
           <div
-            className="fixed z-[99999] w-72 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-3 pointer-events-none"
+            className="fixed z-99999 w-72 rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-3 pointer-events-none"
             style={{
               left: pos.x,
               top: pos.y,
@@ -157,10 +159,7 @@ export function EntityTooltip({
                 {data.bonuses.length > 0 && (
                   <ul className="space-y-1">
                     {data.bonuses.map((b, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-1.5 text-xs"
-                      >
+                      <li key={i} className="flex items-start gap-1.5 text-xs">
                         <span className="text-amber-500 mt-px shrink-0">
                           &#x25C6;
                         </span>
@@ -170,10 +169,14 @@ export function EntityTooltip({
                   </ul>
                 )}
                 {data.extras && data.extras.length > 0 && (
-                  <ul className={`space-y-1 ${data.bonuses.length > 0 || data.desc ? "mt-2 pt-2 border-t border-slate-800/50" : ""}`}>
+                  <ul
+                    className={`space-y-1 ${data.bonuses.length > 0 || data.desc ? "mt-2 pt-2 border-t border-slate-800/50" : ""}`}
+                  >
                     {data.extras.map((e, i) => (
                       <li key={i} className="text-xs">
-                        <span className="text-muted-foreground">{e.label}: </span>
+                        <span className="text-muted-foreground">
+                          {e.label}:{" "}
+                        </span>
                         <span className="text-slate-200">{e.value}</span>
                       </li>
                     ))}

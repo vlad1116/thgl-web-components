@@ -189,7 +189,7 @@ export function DiscordMessage({
               <span className="block my-6 space-y-2 text-center">
                 <span className="block relative mx-auto aspect-video w-full max-w-3xl rounded overflow-hidden">
                   <Image
-                    src={src}
+                    src={typeof src === "string" ? src : "#"}
                     alt={alt}
                     fill
                     className="object-contain"
@@ -208,7 +208,7 @@ export function DiscordMessage({
             // Check if the only child is an img (span with block class)
             if (
               React.Children.count(children) === 1 &&
-              React.isValidElement(children) &&
+              React.isValidElement<{ className?: string }>(children) &&
               children.props?.className?.includes("block my-6")
             ) {
               // Return the image directly without the p wrapper

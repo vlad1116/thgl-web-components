@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { cn } from "@/games/thgl-web/lib/utils";
 import { games } from "@repo/lib";
 import { faqEntries } from "@/games/thgl-web/lib/faq-entries";
@@ -73,7 +73,7 @@ export function Hero(): JSX.Element {
     <div className="w-full overflow-hidden mx-auto border-x border-[#1d1d1f] relative shrink-0">
       <div
         className={cn(
-          "relative transition-all !duration-1000",
+          "relative transition-all duration-1000!",
           title ? (pathname === "/" ? "" : "mt-[-15%] mb-[-15%]") : "mt-[-53%]",
         )}
       >

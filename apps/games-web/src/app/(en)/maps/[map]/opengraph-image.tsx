@@ -1,1 +1,1 @@
-export { default, generateImageMetadata } from "../../../[locale]/maps/[map]/opengraph-image";
+export { default, alt } from "../../../[locale]/maps/[map]/opengraph-image";

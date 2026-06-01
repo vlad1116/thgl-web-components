@@ -43,7 +43,10 @@ function isOneTimeItem(item: LootItem): boolean {
 // Generate paliapedia URL from item ID
 function getPaliapediaUrl(itemId: string): string {
   // Remove DA_ItemType_ prefix and convert to lowercase with hyphens
-  const slug = itemId.replace(/^DA_ItemType_/, "").toLowerCase().replace(/_/g, "-");
+  const slug = itemId
+    .replace(/^DA_ItemType_/, "")
+    .toLowerCase()
+    .replace(/_/g, "-");
   return `https://paliapedia.com/item/${slug}/`;
 }
 
@@ -148,9 +151,9 @@ const rarityBgColors: Record<string, string> = {
 
 // Get item name translation from rummage-loot.json
 function getItemName(itemId: string, locale: Locale): string {
-  const translation = itemTranslations[itemId as keyof typeof itemTranslations] as
-    | Record<Locale, string>
-    | undefined;
+  const translation = itemTranslations[
+    itemId as keyof typeof itemTranslations
+  ] as Record<Locale, string> | undefined;
   if (translation) {
     return translation[locale] || translation.en;
   }
@@ -254,8 +257,12 @@ function createColumns(
       },
       sortingFn: (rowA, rowB) => {
         // Sort by adjusted chance
-        const a = parseFloat(adjustedChances.get(rowA.original.id) || rowA.original.chance);
-        const b = parseFloat(adjustedChances.get(rowB.original.id) || rowB.original.chance);
+        const a = parseFloat(
+          adjustedChances.get(rowA.original.id) || rowA.original.chance,
+        );
+        const b = parseFloat(
+          adjustedChances.get(rowB.original.id) || rowB.original.chance,
+        );
         return a - b;
       },
     },
@@ -326,7 +333,7 @@ function createColumns(
               <MinusIcon className="h-3.5 w-3.5" />
             </Button>
             <span
-              className={`min-w-[2.5rem] text-center font-mono text-sm font-semibold rounded-md px-2 py-1 ${
+              className={`min-w-10 text-center font-mono text-sm font-semibold rounded-md px-2 py-1 ${
                 count > 0
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                   : "bg-muted/30 text-muted-foreground"
@@ -465,7 +472,15 @@ export default function LootTables({
         handleIncrement,
         handleDecrement,
       ),
-    [activeTab, activePool.items, tracker, locale, t, handleIncrement, handleDecrement],
+    [
+      activeTab,
+      activePool.items,
+      tracker,
+      locale,
+      t,
+      handleIncrement,
+      handleDecrement,
+    ],
   );
 
   // Calculate total collected for current pool
@@ -480,7 +495,7 @@ export default function LootTables({
   return (
     <section
       id="loot-tables"
-      className="mt-8 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8"
+      className="mt-8 rounded-2xl bg-linear-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8"
     >
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">

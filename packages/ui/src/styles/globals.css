@@ -1,6 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@config "../../tailwind.config.ts";
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 @layer base {
   :root {
@@ -113,5 +131,26 @@
 }
 
 .pm-textarea {
-  @apply !text-neutral-200 !bg-transparent !p-0 text-shadow !border-none !text-center !-translate-x-1/2 text-lg font-bold;
+  @apply text-neutral-200! bg-transparent! p-0! border-none! text-center! -translate-x-1/2! text-lg font-bold;
+  /* Tailwind v4 @apply can't reference the custom `.text-shadow` class, so
+     inline the same shadow here. */
+  text-shadow:
+    0 0 2px black,
+    0 0 2px black;
+}
+
+/* Styled thin scrollbar used by sidebars, the DB search dropdown, skill
+   trees, etc. The definition originally lived in the removed
+   homm-olden-era-web app's CSS; it's restored here in the shared @repo/ui
+   stylesheet so every consumer (web + desktop) gets the same treatment. */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: hsl(var(--ring) / 0.5);
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background-color: transparent;
 }

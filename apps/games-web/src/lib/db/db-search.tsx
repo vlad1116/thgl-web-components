@@ -177,7 +177,11 @@ export function DbSearch({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="h-7 sm:h-8 w-24 sm:w-40 md:w-48 sm:focus:w-64 transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-4 sm:pr-8 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
+          // Responsive widths use `!` so they win over @repo/ui's
+          // late-loaded plain `.w-24` utility (the page bundles two Tailwind
+          // stylesheets; the library's base utility would otherwise override
+          // these and keep the input collapsed on desktop).
+          className="h-7 sm:h-8 w-24 sm:w-40! md:w-48! sm:focus:w-64! transition-all rounded-md border border-neutral-700 bg-zinc-800/50 pl-8 pr-4 sm:pr-8 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-amber-800/50 focus:ring-1 focus:ring-amber-800/30"
         />
         {query ? (
           <button
@@ -202,7 +206,7 @@ export function DbSearch({
         (() => {
           const dropdown = (
             <div
-              className={`sidebar-scroll max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-[99999] ${
+              className={`sidebar-scroll max-h-96 overflow-auto rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-99999 ${
                 isMobile
                   ? "fixed left-2 right-2 top-14"
                   : "absolute right-0 top-full mt-1 w-80"
@@ -214,9 +218,7 @@ export function DbSearch({
                   onClick={() => navigate(entry)}
                   onMouseEnter={() => setSelectedIndex(i)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                    i === selectedIndex
-                      ? "bg-zinc-800"
-                      : "hover:bg-zinc-800/50"
+                    i === selectedIndex ? "bg-zinc-800" : "hover:bg-zinc-800/50"
                   }`}
                 >
                   {entry.icon && (
@@ -260,7 +262,7 @@ export function DbSearch({
         (() => {
           const noResults = (
             <div
-              className={`rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-[99999] p-4 text-center text-sm text-muted-foreground ${
+              className={`rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl z-99999 p-4 text-center text-sm text-muted-foreground ${
                 isMobile
                   ? "fixed left-2 right-2 top-14"
                   : "absolute right-0 top-full mt-1 w-80"
@@ -269,9 +271,7 @@ export function DbSearch({
               No results for &ldquo;{query}&rdquo;
             </div>
           );
-          return isMobile
-            ? createPortal(noResults, document.body)
-            : noResults;
+          return isMobile ? createPortal(noResults, document.body) : noResults;
         })()}
     </div>
   );

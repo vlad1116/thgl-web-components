@@ -19,6 +19,8 @@ const NitroPayVideoPlayer = dynamic(
 );
 import { ScriptLoader } from "./nitro-script";
 
+import type { JSX } from "react";
+
 export function FloatingAds({ id }: { id: string }): JSX.Element {
   // Generate generic obfuscated IDs (shared across all subdomains for better dynamic flooring)
   const videoId = getObfuscatedAdId(AD_TYPES.VIDEO);

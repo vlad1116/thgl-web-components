@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type JSX } from "react";
 import {
   SimpleWebMap,
   SimpleWebMarkers,

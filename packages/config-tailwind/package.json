@@ -1,16 +1,17 @@
 {
-    "name": "@repo/tailwind-config",
-    "version": "0.0.0",
-    "private": true,
-    "exports": {
-        ".": "./tailwind.config.ts"
-    },
-    "dependencies": {
-        "tailwindcss": "catalog:",
-        "tailwindcss-animate": "catalog:"
-    },
-    "devDependencies": {
-        "@repo/eslint-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*"
-    }
+  "name": "@repo/tailwind-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./tailwind.config.ts"
+  },
+  "dependencies": {
+    "tailwindcss": "catalog:",
+    "tailwindcss-animate": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*"
+  }
 }

@@ -42,8 +42,7 @@ const RARITY_TIERS = [
   {
     quality: 1,
     label: "Common",
-    cardClass:
-      "border-slate-700/60 hover:border-slate-500/70 bg-slate-900/30",
+    cardClass: "border-slate-700/60 hover:border-slate-500/70 bg-slate-900/30",
     pillClass: "bg-slate-800 text-slate-300 border-slate-700",
     heading: "text-slate-300",
   },
@@ -97,7 +96,7 @@ export function WeaponsGrid({ weapons }: { weapons: WeaponItem[] }) {
                   id={w.id}
                   className={`group border rounded-lg p-3 transition-colors flex flex-col gap-2 scroll-mt-20 ${tier.cardClass}`}
                 >
-                  <div className="aspect-[169/50] bg-black/30 rounded flex items-center justify-center overflow-hidden">
+                  <div className="aspect-169/50 bg-black/30 rounded flex items-center justify-center overflow-hidden">
                     <Image
                       src={getIconsUrl(APP_NAME, w.icon)}
                       alt=""

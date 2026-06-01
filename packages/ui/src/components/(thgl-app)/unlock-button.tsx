@@ -23,7 +23,7 @@ export function UnlockButton({ onClick }: { onClick: () => void }) {
   return (
     <div
       className={cn(
-        "lock fixed p-1 z-[99999] flex gap-2 items-center",
+        "lock fixed p-1 z-99999 flex gap-2 items-center",
         hintVisible ? "border-neutral-800 bg-zinc-800/30" : "",
       )}
     >

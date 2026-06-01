@@ -33,7 +33,7 @@ export function PaliaTime() {
     return (
       <div
         className={cn(
-          "fixed z-[9999] flex gap-3",
+          "fixed z-9999 flex gap-3",
           !overlayMode ? "right-2 top-1" : "top-2 left-28",
         )}
       >

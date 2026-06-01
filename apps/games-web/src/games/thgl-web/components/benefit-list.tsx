@@ -39,7 +39,7 @@ export function BenefitList({
           <li key={index} className="flex gap-3">
             {isStringIcon ? (
               <span
-                className={`${ICON_SIZES[iconSize]} flex-shrink-0`}
+                className={`${ICON_SIZES[iconSize]} shrink-0`}
                 aria-hidden="true"
               >
                 {item.icon as string}
@@ -47,9 +47,7 @@ export function BenefitList({
             ) : (
               (() => {
                 const Icon = item.icon as LucideIcon;
-                return (
-                  <Icon className={`${ICON_SIZES[iconSize]} flex-shrink-0`} />
-                );
+                return <Icon className={`${ICON_SIZES[iconSize]} shrink-0`} />;
               })()
             )}
             <div>

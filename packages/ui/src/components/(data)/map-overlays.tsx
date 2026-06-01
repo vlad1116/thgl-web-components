@@ -196,11 +196,7 @@ type NpcKnowledgeData = {
   global: KnowledgeCategory[];
 };
 
-export function ZoneDetailsPanel({
-  appName,
-}: {
-  appName: string;
-}) {
+export function ZoneDetailsPanel({ appName }: { appName: string }) {
   const zone = useUserStore((state) => state.selectedZone);
   const setSelectedZone = useUserStore((state) => state.setSelectedZone);
 
@@ -236,7 +232,11 @@ export function ZoneDetailsPanel({
           word.length > 3 &&
           regionKey.toLowerCase().startsWith(word.toLowerCase())
         ) {
-          return { region: regionKey, categories, global: knowledgeData.global };
+          return {
+            region: regionKey,
+            categories,
+            global: knowledgeData.global,
+          };
         }
       }
     }
@@ -374,10 +374,7 @@ function CategoryList({
       {expanded && (
         <div className="pl-5 py-0.5">
           {category.items.map((item) => (
-            <div
-              key={item}
-              className="text-xs text-muted-foreground py-0.5"
-            >
+            <div key={item} className="text-xs text-muted-foreground py-0.5">
               {item}
             </div>
           ))}
@@ -556,7 +553,8 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
       return;
     }
 
-    const getCanvas = () => document.querySelector("canvas") as HTMLElement | null;
+    const getCanvas = () =>
+      document.querySelector("canvas") as HTMLElement | null;
 
     const handler = (e: {
       latlng: [number, number];
@@ -722,10 +720,11 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
           </div>
         )}
       </Collapsible>
-      {zoneTooltip && !selectedZone &&
+      {zoneTooltip &&
+        !selectedZone &&
         createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none bg-popover text-popover-foreground border rounded-md shadow-md px-3 py-2 max-w-[350px]"
+            className="fixed z-9999 pointer-events-none bg-popover text-popover-foreground border rounded-md shadow-md px-3 py-2 max-w-[350px]"
             style={{
               left: zoneTooltip.x + 16,
               top: zoneTooltip.y - 8,

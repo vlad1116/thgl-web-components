@@ -1,5 +1,12 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+} from "react";
 import { createPortal } from "react-dom";
 import { Spawns, useCoordinates, useT } from "../(providers)";
 import { useMap } from "./store";
@@ -20,7 +27,11 @@ import {
   useUserStore,
 } from "@repo/lib";
 import { useShallow } from "zustand/react/shallow";
-import { IconMarkerLayer, type IconMarkerInstance, DEFAULT_CIRCLE_SHEET } from "@repo/lib/web-map";
+import {
+  IconMarkerLayer,
+  type IconMarkerInstance,
+  DEFAULT_CIRCLE_SHEET,
+} from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
 import { useThrottle } from "@uidotdev/usehooks";
@@ -47,7 +58,9 @@ function computeRelativeZPos(
   markerX: number,
   markerY: number,
   player: { x: number; y: number; z: number } | null | undefined,
-  rotationCache: { getRotated: (x: number, y: number) => [number, number] } | null,
+  rotationCache: {
+    getRotated: (x: number, y: number) => [number, number];
+  } | null,
   cfg: ZPosConfig | undefined,
 ): { zPos: "top" | "bottom" | null; zValue: number | undefined } {
   if (!cfg || !player || spawnZ === undefined) {
@@ -101,38 +114,36 @@ export function Markers({
   const isHoverCardVisible = tooltipIsOpen && !isDrawing;
 
   // Block wheel events from reaching the map canvas when over the tooltip
-  const tooltipWheelRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      tooltipRef.current = node;
-      if (!node) return;
+  const tooltipWheelRef = useCallback((node: HTMLDivElement | null) => {
+    tooltipRef.current = node;
+    if (!node) return;
 
-      const handleWheel = (e: WheelEvent) => {
-        // Check if inside a scrollable child that can still scroll
-        let el = e.target as HTMLElement | null;
-        while (el && el !== node) {
-          if (el.scrollHeight > el.clientHeight) {
-            const atTop = el.scrollTop <= 0;
-            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-              // Let the scrollable child handle it, but still block page/map scroll
-              e.stopPropagation();
-              return;
-            }
+    const handleWheel = (e: WheelEvent) => {
+      // Check if inside a scrollable child that can still scroll
+      let el = e.target as HTMLElement | null;
+      while (el && el !== node) {
+        if (el.scrollHeight > el.clientHeight) {
+          const atTop = el.scrollTop <= 0;
+          const atBottom =
+            el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+          if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+            // Let the scrollable child handle it, but still block page/map scroll
+            e.stopPropagation();
+            return;
           }
-          el = el.parentElement;
         }
-        // Block both page scroll and map zoom
-        e.preventDefault();
-        e.stopPropagation();
-      };
+        el = el.parentElement;
+      }
+      // Block both page scroll and map zoom
+      e.preventDefault();
+      e.stopPropagation();
+    };
 
-      node.addEventListener("wheel", handleWheel, {
-        passive: false,
-        capture: true,
-      });
-    },
-    [],
-  );
+    node.addEventListener("wheel", handleWheel, {
+      passive: false,
+      capture: true,
+    });
+  }, []);
 
   // Track if mouse is in the "safe zone" (marker, tooltip, or between them)
   useEffect(() => {
@@ -181,7 +192,12 @@ export function Markers({
 
         // Expanded tooltip rect with small padding for easier hover
         const pad = 5;
-        if (mouseX >= tl - pad && mouseX <= tr + pad && mouseY >= tt - pad && mouseY <= tb + pad) {
+        if (
+          mouseX >= tl - pad &&
+          mouseX <= tr + pad &&
+          mouseY >= tt - pad &&
+          mouseY <= tb + pad
+        ) {
           return true;
         }
 
@@ -263,7 +279,7 @@ export function Markers({
                 coordinateCopyFormat={markerOptions.coordinateCopyFormat}
               />
             </TooltipPositioner>,
-            document.body
+            document.body,
           )
         : null}
     </>
@@ -335,9 +351,10 @@ const TooltipPositioner = React.forwardRef<
       ref={(node) => {
         innerRef.current = node;
         if (typeof ref === "function") ref(node);
-        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        else if (ref)
+          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
       }}
-      className="cursor-default z-[999999] rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md outline-none w-[260px] max-h-[70vh]"
+      className="cursor-default z-999999 rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md outline-none w-[260px] max-h-[70vh]"
       onClick={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       style={{
@@ -479,9 +496,11 @@ function MarkersContent({
   // Counter to trigger re-render when images finish loading
   const [iconLoadVersion, setIconLoadVersion] = useState(0);
 
-
   // Spatial grid for efficient proximity queries (audio alerts, z-position)
-  const spatialGridRef = useRef<SpatialGrid<{ id: string; spawn: Spawn; latLng: [number, number] }>>();
+  const spatialGridRef =
+    useRef<SpatialGrid<{ id: string; spawn: Spawn; latLng: [number, number] }>>(
+      undefined,
+    );
 
   // Audio alert tracking - tracks if we've already alerted for current in-range spawns
   const hasAlertedRef = useRef<boolean>(false);
@@ -491,7 +510,9 @@ function MarkersContent({
 
   // Label layer for rendering per-marker text labels
   // Cache for text label canvases (keyed by text content + fontSize)
-  const labelCanvasCache = useRef<Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>>(new Map());
+  const labelCanvasCache = useRef<
+    Map<string, { canvas: HTMLCanvasElement; width: number; height: number }>
+  >(new Map());
   // labelId → last-rendered state, used for incremental diff so live-actor
   // label updates can be applied without tearing down the whole label set.
   const activeLabelIds = useRef<
@@ -524,7 +545,7 @@ function MarkersContent({
     sourceImg: HTMLImageElement,
     iconRect: { x: number; y: number; width: number; height: number } | null,
     color: string,
-    isGameIcon: boolean
+    isGameIcon: boolean,
   ): { img: HTMLImageElement; width: number; height: number } => {
     const width = iconRect?.width ?? sourceImg.naturalWidth;
     const height = iconRect?.height ?? sourceImg.naturalHeight;
@@ -580,7 +601,17 @@ function MarkersContent({
         ctx.shadowOffsetY = 0;
         // Draw icon multiple times to intensify the glow
         for (let i = 0; i < 3; i++) {
-          ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+          ctx.drawImage(
+            sourceImg,
+            srcX,
+            srcY,
+            width,
+            height,
+            iconX,
+            iconY,
+            width,
+            height,
+          );
         }
         // Reset shadow for final clean draw
         ctx.shadowColor = "transparent";
@@ -588,7 +619,17 @@ function MarkersContent({
       }
 
       // Draw the original icon on top
-      ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+      ctx.drawImage(
+        sourceImg,
+        srcX,
+        srcY,
+        width,
+        height,
+        iconX,
+        iconY,
+        width,
+        height,
+      );
 
       // Apply opacity
       outputCanvas.width = totalSize;
@@ -611,11 +652,20 @@ function MarkersContent({
   // Returns a canvas element directly (no data URL conversion needed).
   // Padding accommodates shadow blur (2px) + max high contrast outline (6px).
   const ICON_PADDING = 8;
-  const processedIconCache = useRef<Map<string, { canvas: HTMLCanvasElement; logicalWidth: number; logicalHeight: number }>>(new Map());
+  const processedIconCache = useRef<
+    Map<
+      string,
+      { canvas: HTMLCanvasElement; logicalWidth: number; logicalHeight: number }
+    >
+  >(new Map());
   const processSheetIcon = (
     sourceImg: HTMLImageElement,
     rect: { x: number; y: number; width: number; height: number },
-  ): { canvas: HTMLCanvasElement; logicalWidth: number; logicalHeight: number } => {
+  ): {
+    canvas: HTMLCanvasElement;
+    logicalWidth: number;
+    logicalHeight: number;
+  } => {
     // Render at device pixel ratio for crisp icons on high-DPI displays.
     const dpr = window.devicePixelRatio || 1;
     const logicalW = rect.width + ICON_PADDING * 2;
@@ -637,9 +687,14 @@ function MarkersContent({
     // filtering from bleeding adjacent icon pixels across boundaries.
     ctx.drawImage(
       sourceImg,
-      rect.x, rect.y, rect.width, rect.height,
-      ICON_PADDING, ICON_PADDING,
-      rect.width, rect.height,
+      rect.x,
+      rect.y,
+      rect.width,
+      rect.height,
+      ICON_PADDING,
+      ICON_PADDING,
+      rect.width,
+      rect.height,
     );
 
     return { canvas, logicalWidth: logicalW, logicalHeight: logicalH };
@@ -726,13 +781,22 @@ function MarkersContent({
         return rotated;
       },
     };
-  }, [map, map?.rotationDegrees, map?._rotationDegrees, map?.rotationCenter, map?._rotationCenter]);
+  }, [
+    map,
+    map?.rotationDegrees,
+    map?._rotationDegrees,
+    map?.rotationCenter,
+    map?._rotationCenter,
+  ]);
 
   // Memoize rotated player position for label rendering
   const rotatedPlayer = useMemo(() => {
     if (!throttledPlayer) return null;
     if (!rotationCache) return { x: throttledPlayer.x, y: throttledPlayer.y };
-    const rotated = rotationCache.getRotated(throttledPlayer.x, throttledPlayer.y);
+    const rotated = rotationCache.getRotated(
+      throttledPlayer.x,
+      throttledPlayer.y,
+    );
     return { x: rotated[0], y: rotated[1] };
   }, [throttledPlayer, rotationCache]);
 
@@ -741,7 +805,10 @@ function MarkersContent({
   // Reverse lookup: translated icon name → current icon coords from filter config.
   // Used to fix stale sprite x,y in old shared private nodes that lack filterId.
   const sharedIconNameLookup = useMemo(() => {
-    const lookup = new Map<string, { x: number; y: number; width: number; height: number; filterId: string }>();
+    const lookup = new Map<
+      string,
+      { x: number; y: number; width: number; height: number; filterId: string }
+    >();
     for (const filter of filters) {
       for (const value of filter.values) {
         if (typeof value.icon !== "string") {
@@ -781,7 +848,9 @@ function MarkersContent({
     markerLayer.setColorBlindSeverity(colorBlindSeverity);
 
     // Set dynamic icon sizing
-    markerLayer.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
+    markerLayer.setDynamicSizeFactor(
+      dynamicIconSize ? dynamicIconSizeFactor : 0,
+    );
 
     // Set high contrast mode
     markerLayer.setHighContrastMode(highContrastMode);
@@ -792,7 +861,9 @@ function MarkersContent({
     if (liveMarkerLayer) {
       liveMarkerLayer.setColorBlindMode(colorBlindMode);
       liveMarkerLayer.setColorBlindSeverity(colorBlindSeverity);
-      liveMarkerLayer.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
+      liveMarkerLayer.setDynamicSizeFactor(
+        dynamicIconSize ? dynamicIconSizeFactor : 0,
+      );
       liveMarkerLayer.setHighContrastMode(highContrastMode);
       liveMarkerLayer.setHighContrastColor(highContrastColor);
       liveMarkerLayer.setHighContrastThickness(highContrastThickness);
@@ -804,7 +875,11 @@ function MarkersContent({
     const newSpawnMap = new Map<string, Spawn>();
     // Track raw Z values for height visualization without player
     const markerZValues = new Map<number, number>(); // index in markerInstances -> raw Z
-    const newSpatialGrid = new SpatialGrid<{ id: string; spawn: Spawn; latLng: [number, number] }>(100);
+    const newSpatialGrid = new SpatialGrid<{
+      id: string;
+      spawn: Spawn;
+      latLng: [number, number];
+    }>(100);
 
     const handleSpawn = (spawn: Spawn) => {
       if (spawn.mapName && spawn.mapName !== map.mapName) {
@@ -826,8 +901,8 @@ function MarkersContent({
                 a.id?.includes("@")
                   ? a.id
                   : `${a.id || a.type}@${a.p[0]}:${a.p[1]}`,
-                discoveryLookup
-              )
+                discoveryLookup,
+              ),
           )
         ) {
           isDiscovered = false;
@@ -838,7 +913,9 @@ function MarkersContent({
         return;
       }
 
-      const id = String(spawn.address ?? (isStacked ? `${nodeId}:${isStacked}` : nodeId));
+      const id = String(
+        spawn.address ?? (isStacked ? `${nodeId}:${isStacked}` : nodeId),
+      );
       newSpawnMap.set(id, spawn);
 
       const isHighlighted =
@@ -854,7 +931,13 @@ function MarkersContent({
         : 1;
       const typeMultiplier = iconSizeByFilter[spawn.type] ?? 1;
       const spawnRadius = spawn.radius ?? markerOptions.radius * iconBaseSize;
-      let size = (spawnRadius * 4 - 1) * baseIconSize * categoryMultiplier * groupMultiplier * typeMultiplier * dpr;
+      let size =
+        (spawnRadius * 4 - 1) *
+        baseIconSize *
+        categoryMultiplier *
+        groupMultiplier *
+        typeMultiplier *
+        dpr;
 
       // Get icon from filter config (NOT resolved to URL yet - we need the raw icon data)
       const markerIcon =
@@ -862,7 +945,8 @@ function MarkersContent({
         (typeof icon?.icon === "string" ? null : icon?.icon) ||
         null;
       // String icons are direct image filenames (e.g. "sifuu.webp")
-      const stringIcon = !spawn.icon && typeof icon?.icon === "string" ? icon.icon : null;
+      const stringIcon =
+        !spawn.icon && typeof icon?.icon === "string" ? icon.icon : null;
 
       let rect = { x: 0, y: 0, width: 64, height: 64 };
       let sheet = "icons"; // Default to the main sprite sheet
@@ -885,7 +969,8 @@ function MarkersContent({
           typeof markerIcon.y === "number";
 
         // Check if this is from the game-icons sprite sheets (local paths)
-        const isGameIconsSprite = iconUrlStr.includes("/game-icons/") && hasValidSpriteCoords;
+        const isGameIconsSprite =
+          iconUrlStr.includes("/game-icons/") && hasValidSpriteCoords;
 
         // Treat as standalone only if it's a data URL, external URL, or has no sprite coords
         const isStandaloneIcon =
@@ -906,7 +991,11 @@ function MarkersContent({
               }
             : null;
           // Include iconRect in cache key so different icons on same sprite sheet have different cache entries
-          const cacheKey = createProcessedImageKey(fullIconUrl, nodeColor, iconRect);
+          const cacheKey = createProcessedImageKey(
+            fullIconUrl,
+            nodeColor,
+            iconRect,
+          );
 
           // Check if we have a cached processed image (shared cache)
           const cachedProcessed = getProcessedImage(cacheKey);
@@ -914,14 +1003,28 @@ function MarkersContent({
             // Use cached processed image with stored dimensions
             sheet = cacheKey;
             markerLayer.setSheet(sheet, cachedProcessed.img);
-            rect = { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height };
+            rect = {
+              x: 0,
+              y: 0,
+              width: cachedProcessed.width,
+              height: cachedProcessed.height,
+            };
             useProcessedIcon = true; // Color is already baked in
           } else {
             // Check if source image is loaded (shared cache)
             const cachedSource = getSourceImage(fullIconUrl);
             if (cachedSource) {
               // Process the image
-              const { img: processedImg, width: procWidth, height: procHeight } = processIconWithGlow(cachedSource, iconRect, nodeColor, isGameIconsSprite);
+              const {
+                img: processedImg,
+                width: procWidth,
+                height: procHeight,
+              } = processIconWithGlow(
+                cachedSource,
+                iconRect,
+                nodeColor,
+                isGameIconsSprite,
+              );
               setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
               sheet = cacheKey;
               markerLayer.setSheet(sheet, processedImg);
@@ -1009,7 +1112,12 @@ function MarkersContent({
           sheet = processedKey;
           markerLayer.setSheet(sheet, cached.canvas);
           // Use physical pixel dimensions for UV mapping (canvas.width matches texture size)
-          rect = { x: 0, y: 0, width: cached.canvas.width, height: cached.canvas.height };
+          rect = {
+            x: 0,
+            y: 0,
+            width: cached.canvas.width,
+            height: cached.canvas.height,
+          };
         } else {
           const processed = processSheetIcon(spriteSheetSource, rect);
           processedIconCache.current.set(processedKey, processed);
@@ -1018,7 +1126,12 @@ function MarkersContent({
           sheet = processedKey;
           markerLayer.setSheet(sheet, processed.canvas);
           // Use physical pixel dimensions for UV mapping (canvas.width matches texture size)
-          rect = { x: 0, y: 0, width: processed.canvas.width, height: processed.canvas.height };
+          rect = {
+            x: 0,
+            y: 0,
+            width: processed.canvas.width,
+            height: processed.canvas.height,
+          };
         }
       }
 
@@ -1079,14 +1192,16 @@ function MarkersContent({
         isMuted: liveMode === "combined" && spawn.source === "static",
         isSelected: selectedNodeId === nodeId,
         keepUpright: true,
-        tint: spawn.isPrivate && markerIcon && !useProcessedIcon ? spawn.color : undefined,
+        tint:
+          spawn.isPrivate && markerIcon && !useProcessedIcon
+            ? spawn.color
+            : undefined,
         isStacked,
         spiderOffsetX,
         spiderOffsetY,
       };
 
       markerInstances.push(instance);
-
 
       // Track raw Z for height visualization without player.
       // Skip z=0 — these are spawns without real elevation data and
@@ -1103,7 +1218,6 @@ function MarkersContent({
       );
     };
 
-
     // Pre-process static spawns. Live actors are handled by the imperative
     // pipeline below (writes to liveMarkerLayer, bypasses React entirely).
     const processedSpawns: Spawn[] = [];
@@ -1115,7 +1229,7 @@ function MarkersContent({
       // Check how many unique types are in this cluster (including the parent)
       // Only include items whose type has an active filter (is in the icons map or is private)
       const allItems = [spawn, ...spawn.cluster].filter(
-        (item) => icons.has(item.type) || item.isPrivate
+        (item) => icons.has(item.type) || item.isPrivate,
       );
       if (allItems.length === 0) continue; // all types filtered out
       const typeGroups = new Map<string, (Spawn | Omit<Spawn, "cluster">)[]>();
@@ -1133,8 +1247,10 @@ function MarkersContent({
 
       // Mixed-type: create one sub-spawn per type group, arranged in a circle
       const groupCount = typeGroups.size;
-      const iconSize = (markerOptions.radius * (icons.get(spawn.type)?.size ?? 1) * 4 - 1)
-        * baseIconSize * dpr;
+      const iconSize =
+        (markerOptions.radius * (icons.get(spawn.type)?.size ?? 1) * 4 - 1) *
+        baseIconSize *
+        dpr;
       const radius = iconSize * 0.75; // 3/4 icon size from center
       let groupIdx = 0;
       for (const [type, items] of typeGroups) {
@@ -1145,9 +1261,12 @@ function MarkersContent({
         // Use the first item as the representative spawn
         const representative = items[0] as Spawn;
         // Build sub-cluster from remaining same-type items (if any)
-        const subCluster = items.length > 1
-          ? items.slice(1).map((item) => ({ ...item } as Omit<Spawn, "cluster">))
-          : undefined;
+        const subCluster =
+          items.length > 1
+            ? items
+                .slice(1)
+                .map((item) => ({ ...item }) as Omit<Spawn, "cluster">)
+            : undefined;
 
         // Create synthetic spawn with spider offset.
         // Use the parent's position as center so all groups share the same origin.
@@ -1166,7 +1285,6 @@ function MarkersContent({
 
     processedSpawns.forEach(handleSpawn);
 
-
     // Process shared private spawns
     const sharedPrivateSpawns = sharedMyFilters.flatMap<Spawns[number]>(
       (myFilter) => {
@@ -1174,10 +1292,22 @@ function MarkersContent({
           myFilter.nodes?.map((node) => {
             // Resolve stale sprite coords for old private nodes missing filterId
             let icon = node.icon;
-            if (icon && !icon.filterId && icon.name && icon.url?.includes("/icons/")) {
+            if (
+              icon &&
+              !icon.filterId &&
+              icon.name &&
+              icon.url?.includes("/icons/")
+            ) {
               const current = sharedIconNameLookup.get(icon.name);
               if (current) {
-                icon = { ...icon, x: current.x, y: current.y, width: current.width, height: current.height, filterId: current.filterId };
+                icon = {
+                  ...icon,
+                  x: current.x,
+                  y: current.y,
+                  width: current.width,
+                  height: current.height,
+                  filterId: current.filterId,
+                };
               }
             }
             return {
@@ -1194,11 +1324,9 @@ function MarkersContent({
             };
           }) ?? []
         );
-      }
+      },
     );
     sharedPrivateSpawns.forEach(handleSpawn);
-
-
 
     // Height visualization without player: absolute or relative to selected marker
     if (markerZValues.size > 0) {
@@ -1207,7 +1335,10 @@ function MarkersContent({
       if (selectedNodeId) {
         for (const [idx, z] of markerZValues) {
           const inst = markerInstances[idx];
-          if (inst.id === selectedNodeId || inst.id === String(selectedNodeId)) {
+          if (
+            inst.id === selectedNodeId ||
+            inst.id === String(selectedNodeId)
+          ) {
             referenceZ = z;
             break;
           }
@@ -1221,7 +1352,8 @@ function MarkersContent({
 
       // Use 5th/95th percentile to ignore outliers
       const p05 = allZ[Math.floor(allZ.length * 0.05)] ?? allZ[0]!;
-      const p95 = allZ[Math.ceil(allZ.length * 0.95 - 1)] ?? allZ[allZ.length - 1]!;
+      const p95 =
+        allZ[Math.ceil(allZ.length * 0.95 - 1)] ?? allZ[allZ.length - 1]!;
 
       if (referenceZ !== undefined) {
         // Relative mode: show height relative to selected marker
@@ -1250,7 +1382,6 @@ function MarkersContent({
       }
     }
 
-
     // Add center dots for spiderfied clusters.
     // Insert each dot right before the first spider marker of that cluster
     // so it renders behind the spider icons but not on top of unrelated markers.
@@ -1259,7 +1390,10 @@ function MarkersContent({
       // First pass: find indices where center dots need to be inserted
       const seenCenters = new Set<string>();
       const insertAtIndex = new Set<number>(); // indices that need a dot before them
-      const dotDataByIndex = new Map<number, { key: string; inst: IconMarkerInstance }>();
+      const dotDataByIndex = new Map<
+        number,
+        { key: string; inst: IconMarkerInstance }
+      >();
       const len = markerInstances.length;
       for (let ci = 0; ci < len; ci++) {
         const inst = markerInstances[ci];
@@ -1281,13 +1415,22 @@ function MarkersContent({
           if (insertAtIndex.has(ci)) {
             const { key, inst } = dotDataByIndex.get(ci)!;
             const centerId = `__center_${key}`;
-            newSpawnMap.set(centerId, { id: centerId, p: inst.latLng, type: "__center" } as Spawn);
+            newSpawnMap.set(centerId, {
+              id: centerId,
+              p: inst.latLng,
+              type: "__center",
+            } as Spawn);
             newInstances[wi++] = {
               id: centerId,
               latLng: inst.latLng,
               size: Math.max(inst.size * 0.25, 6 * dpr),
               sheet: DEFAULT_CIRCLE_SHEET,
-              rect: { x: 0, y: 0, width: Math.round(64 * dpr), height: Math.round(64 * dpr) },
+              rect: {
+                x: 0,
+                y: 0,
+                width: Math.round(64 * dpr),
+                height: Math.round(64 * dpr),
+              },
               key: "__center",
               keepUpright: true,
               noHitTest: true,
@@ -1302,7 +1445,6 @@ function MarkersContent({
         for (let k = 0; k < wi; k++) markerInstances[k] = newInstances[k];
       }
     }
-
 
     // Update spatial grid ref
     spatialGridRef.current = newSpatialGrid;
@@ -1323,7 +1465,6 @@ function MarkersContent({
       markerLayer.removeMany(toRemove);
     }
 
-
     // Share icon sheets with live marker layer so live actors can use the same sprites
     if (liveMarkerLayer) {
       markerLayer.copySheets(liveMarkerLayer);
@@ -1334,96 +1475,129 @@ function MarkersContent({
     // projection / item-building logic.
     const showTooltipForMarker = (m: IconMarkerInstance) => {
       const s = spawnMapRef.current.get(m.id);
-        if (!s) return;
+      if (!s) return;
 
-        const canvas = map.getContainer();
-        if (!canvas) return;
+      const canvas = map.getContainer();
+      if (!canvas) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const state = (map as any).lastState;
-        if (!state) return;
+      const rect = canvas.getBoundingClientRect();
+      const state = (map as any).lastState;
+      if (!state) return;
 
-        const worldPos = state.projection(m.latLng);
-        const view = state.viewMatrix;
-        const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
-        const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
-        let screenX = (clipX * 0.5 + 0.5) * rect.width;
-        let screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
+      const worldPos = state.projection(m.latLng);
+      const view = state.viewMatrix;
+      const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
+      const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
+      let screenX = (clipX * 0.5 + 0.5) * rect.width;
+      let screenY = (1 - (clipY * 0.5 + 0.5)) * rect.height;
 
-        // Offset for spiderfied markers (screen-space, scaled by dynamic icon size)
-        if (m.spiderOffsetX || m.spiderOffsetY) {
-          const midZoom = (state.minZoom + state.maxZoom) * 0.5;
-          const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
-          const zoomSizeScale = factor > 0.001
-            ? Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), factor)))
-            : 1;
-          screenX += (m.spiderOffsetX ?? 0) * zoomSizeScale / dpr;
-          screenY += (m.spiderOffsetY ?? 0) * zoomSizeScale / dpr;
-        }
-
-        // Offset tooltip to elevated icon position when height stem is active
-        if (state.pitch > 0 && m.zPos) {
-          const rawZ = typeof m.z === "number" ? m.z : 0;
-          let hI = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
-          if (hI === undefined) hI = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / 200);
-          let dir = (m.zPos === "top" || m.zPos === "needle") ? 1 : (m.zPos === "bottom" || m.zPos === "needle-down") ? -1 : 0;
-          if (dir !== 0 && hI >= 0.01) {
-            const heightWorld = 20 * hI * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
-            const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
-            const heightClip = heightWorld * viewScale * (2 / (rect.height * dpr));
-            screenY -= heightClip * dir * rect.height / 2;
-          }
-        }
-
-        const group = typeToGroup.get(s.type);
-        const nodeId = getNodeId(s);
-        const isStacked = Boolean(s.cluster && s.cluster.length > 0);
-
-        const items: TooltipItems = [
-          {
-            id: nodeId,
-            termId: (s.name ?? s.id ?? s.type).replace(/my_\d+_/, ""),
-            description: s.description,
-            type: s.type,
-            group,
-            isPrivate: s.isPrivate,
-            isLive: Boolean(s.address),
-            data: s.data,
-            p: s.p,
-          },
-        ];
-
-        if (isStacked) {
-          items.push(
-            ...s.cluster!.map((stackedSpawn) => {
-              const stackedGroup = stackedSpawn.type !== s.type
-                ? typeToGroup.get(stackedSpawn.type)
-                : group;
-              return {
-                id: stackedSpawn.id,
-                termId: (stackedSpawn.name ?? stackedSpawn.id ?? stackedSpawn.type).replace(/my_\d+_/, ""),
-                description: stackedSpawn.description,
-                type: stackedSpawn.type,
-                group: stackedGroup,
-                isPrivate: stackedSpawn.isPrivate,
-                isLive: Boolean(stackedSpawn.address),
-                data: stackedSpawn.data,
-                p: stackedSpawn.p,
-              };
-            })
-          );
-        }
-
-        // Compute screen-pixel radius by projecting the icon edge
+      // Offset for spiderfied markers (screen-space, scaled by dynamic icon size)
+      if (m.spiderOffsetX || m.spiderOffsetY) {
         const midZoom = (state.minZoom + state.maxZoom) * 0.5;
         const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
-        const zoomSizeScale = factor > 0.001
-          ? Math.max(0.25, Math.min(2.5, Math.pow(Math.pow(2, state.zoom - midZoom), factor)))
+        const zoomSizeScale =
+          factor > 0.001
+            ? Math.max(
+                0.25,
+                Math.min(
+                  2.5,
+                  Math.pow(Math.pow(2, state.zoom - midZoom), factor),
+                ),
+              )
+            : 1;
+        screenX += ((m.spiderOffsetX ?? 0) * zoomSizeScale) / dpr;
+        screenY += ((m.spiderOffsetY ?? 0) * zoomSizeScale) / dpr;
+      }
+
+      // Offset tooltip to elevated icon position when height stem is active
+      if (state.pitch > 0 && m.zPos) {
+        const rawZ = typeof m.z === "number" ? m.z : 0;
+        let hI =
+          m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
+        if (hI === undefined)
+          hI = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / 200);
+        let dir =
+          m.zPos === "top" || m.zPos === "needle"
+            ? 1
+            : m.zPos === "bottom" || m.zPos === "needle-down"
+              ? -1
+              : 0;
+        if (dir !== 0 && hI >= 0.01) {
+          const heightWorld =
+            20 *
+            hI *
+            Math.abs(Math.sin(state.pitch)) *
+            Math.pow(2, state.zoom) *
+            500;
+          const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
+          const heightClip =
+            heightWorld * viewScale * (2 / (rect.height * dpr));
+          screenY -= (heightClip * dir * rect.height) / 2;
+        }
+      }
+
+      const group = typeToGroup.get(s.type);
+      const nodeId = getNodeId(s);
+      const isStacked = Boolean(s.cluster && s.cluster.length > 0);
+
+      const items: TooltipItems = [
+        {
+          id: nodeId,
+          termId: (s.name ?? s.id ?? s.type).replace(/my_\d+_/, ""),
+          description: s.description,
+          type: s.type,
+          group,
+          isPrivate: s.isPrivate,
+          isLive: Boolean(s.address),
+          data: s.data,
+          p: s.p,
+        },
+      ];
+
+      if (isStacked) {
+        items.push(
+          ...s.cluster!.map((stackedSpawn) => {
+            const stackedGroup =
+              stackedSpawn.type !== s.type
+                ? typeToGroup.get(stackedSpawn.type)
+                : group;
+            return {
+              id: stackedSpawn.id,
+              termId: (
+                stackedSpawn.name ??
+                stackedSpawn.id ??
+                stackedSpawn.type
+              ).replace(/my_\d+_/, ""),
+              description: stackedSpawn.description,
+              type: stackedSpawn.type,
+              group: stackedGroup,
+              isPrivate: stackedSpawn.isPrivate,
+              isLive: Boolean(stackedSpawn.address),
+              data: stackedSpawn.data,
+              p: stackedSpawn.p,
+            };
+          }),
+        );
+      }
+
+      // Compute screen-pixel radius by projecting the icon edge
+      const midZoom = (state.minZoom + state.maxZoom) * 0.5;
+      const factor = dynamicIconSize ? dynamicIconSizeFactor : 0;
+      const zoomSizeScale =
+        factor > 0.001
+          ? Math.max(
+              0.25,
+              Math.min(
+                2.5,
+                Math.pow(Math.pow(2, state.zoom - midZoom), factor),
+              ),
+            )
           : 1;
-        const halfWorld = (m.size * zoomSizeScale) / 2;
-        const edgeClipX = view[0] * (worldPos.x + halfWorld) + view[3] * worldPos.y + view[6];
-        const edgeScreenX = (edgeClipX * 0.5 + 0.5) * rect.width;
-        const screenRadius = Math.abs(edgeScreenX - screenX);
+      const halfWorld = (m.size * zoomSizeScale) / 2;
+      const edgeClipX =
+        view[0] * (worldPos.x + halfWorld) + view[3] * worldPos.y + view[6];
+      const edgeScreenX = (edgeClipX * 0.5 + 0.5) * rect.width;
+      const screenRadius = Math.abs(edgeScreenX - screenX);
 
       onTooltipData({
         x: screenX,
@@ -1455,8 +1629,10 @@ function MarkersContent({
             if (state) {
               const worldPos = state.projection(m.latLng);
               const view = state.viewMatrix;
-              const clipX = view[0] * worldPos.x + view[3] * worldPos.y + view[6];
-              const clipY = view[1] * worldPos.x + view[4] * worldPos.y + view[7];
+              const clipX =
+                view[0] * worldPos.x + view[3] * worldPos.y + view[6];
+              const clipY =
+                view[1] * worldPos.x + view[4] * worldPos.y + view[7];
               const sx = (clipX * 0.5 + 0.5) * rect.width + rect.left;
               const sy = (1 - (clipY * 0.5 + 0.5)) * rect.height + rect.top;
               const topEl = document.elementFromPoint(sx, sy);
@@ -1491,7 +1667,10 @@ function MarkersContent({
         if (!s) return;
         const nodeId = getNodeId(s);
         const isStacked = Boolean(s.cluster && s.cluster.length > 0);
-        const wasDiscovered = checkNodeDiscovered(nodeId, discoveryLookupRef.current);
+        const wasDiscovered = checkNodeDiscovered(
+          nodeId,
+          discoveryLookupRef.current,
+        );
         if (isStacked) {
           s.cluster!.forEach((stackedSpawn) => {
             setDiscoverNode(getNodeId(stackedSpawn), !wasDiscovered);
@@ -1503,10 +1682,7 @@ function MarkersContent({
 
     // Update spawn map refs: static portion + union (with live).
     staticSpawnMapRef.current = newSpawnMap;
-    spawnMapRef.current = new Map([
-      ...newSpawnMap,
-      ...liveSpawnMapRef.current,
-    ]);
+    spawnMapRef.current = new Map([...newSpawnMap, ...liveSpawnMapRef.current]);
 
     // Handle map click to close tooltip and deselect node
     // When a marker is clicked, justClickedMarkerRef is set to prevent
@@ -1709,8 +1885,7 @@ function MarkersContent({
         };
         newSpawns.set(id, spawn);
         const newIsHighlighted =
-          highlightSpawnIDsNow.includes(nodeId) ||
-          selectedNodeIdNow === nodeId;
+          highlightSpawnIDsNow.includes(nodeId) || selectedNodeIdNow === nodeId;
         const newIsSelected = selectedNodeIdNow === nodeId;
 
         const { zPos, zValue } = computeRelativeZPos(
@@ -1755,8 +1930,7 @@ function MarkersContent({
         let rect = { x: 0, y: 0, width: 64, height: 64 };
         const markerIcon =
           (typeof icon?.icon === "string" ? null : icon?.icon) ?? null;
-        const stringIcon =
-          typeof icon?.icon === "string" ? icon.icon : null;
+        const stringIcon = typeof icon?.icon === "string" ? icon.icon : null;
         if (stringIcon) {
           const fullUrl = getIconsUrl(appName, stringIcon, iconsPath);
           sheet = fullUrl;
@@ -1870,10 +2044,7 @@ function MarkersContent({
     // Subscribe ONLY to the state that genuinely affects what live markers
     // show. Note these are zustand subscriptions, NOT React useEffect deps
     // — they don't tear down/rebuild the marker pipeline.
-    const unsubActors = useGameState.subscribe(
-      (s) => s.actors,
-      processActors,
-    );
+    const unsubActors = useGameState.subscribe((s) => s.actors, processActors);
     const unsubHighlight = useGameState.subscribe(
       (s) => s.highlightSpawnIDs,
       processActors,
@@ -2061,10 +2232,7 @@ function MarkersContent({
     // moving into range while the player stands still would never trigger an
     // alert (the marker appears but no sound plays). Mirror the live-marker
     // pipeline: re-check on every actor tick.
-    const unsubActors = useGameState.subscribe(
-      (s) => s.actors,
-      checkProximity,
-    );
+    const unsubActors = useGameState.subscribe((s) => s.actors, checkProximity);
     return () => {
       unsubActors();
     };
@@ -2081,7 +2249,6 @@ function MarkersContent({
     typesIdMap,
     t,
   ]);
-
 
   // Label rendering using canvas-rendered text as WebGL markers on the main marker layer
   useEffect(() => {
@@ -2120,7 +2287,16 @@ function MarkersContent({
 
       // Text shadow (outline)
       const shadowColor = "#594f42";
-      for (const [dx, dy] of [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]]) {
+      for (const [dx, dy] of [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+        [0, -1],
+        [0, 1],
+        [-1, 0],
+        [1, 0],
+      ]) {
         ctx.fillStyle = shadowColor;
         ctx.fillText(text, w / 2 + dx, h / 2 + dy);
       }
@@ -2134,7 +2310,12 @@ function MarkersContent({
 
     // Place a label on the main marker layer. Caller is responsible for
     // tracking the entry in activeLabelIds.
-    const placeLabel = (labelId: string, anchorId: string, pos: [number, number], text: string) => {
+    const placeLabel = (
+      labelId: string,
+      anchorId: string,
+      pos: [number, number],
+      text: string,
+    ) => {
       const { canvas, width, height } = getTextCanvas(text);
       const sheetName = `__label_${text}__${fontSize}`;
       markerLayer.setSheet(sheetName, canvas);
@@ -2148,7 +2329,7 @@ function MarkersContent({
         latLng: pos,
         size: height * dpr,
         sizeW: width * dpr,
-        screenOffsetY: -(iconSize / 2 + height * dpr / 2 + 2),
+        screenOffsetY: -(iconSize / 2 + (height * dpr) / 2 + 2),
         sheet: sheetName,
         // Use physical pixel dimensions for UV mapping (canvas is DPR-scaled)
         rect: { x: 0, y: 0, width: canvas.width, height: canvas.height },
@@ -2238,7 +2419,10 @@ function MarkersContent({
         const prev = activeLabelIds.current.get(labelId);
         if (!prev) {
           placeLabel(labelId, next.anchorId, next.pos, next.text);
-          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          activeLabelIds.current.set(labelId, {
+            pos: next.pos,
+            text: next.text,
+          });
           dirty = true;
           continue;
         }
@@ -2249,11 +2433,17 @@ function MarkersContent({
           // Text drives the sheet — easiest path is remove + re-place.
           markerLayer.remove(labelId);
           placeLabel(labelId, next.anchorId, next.pos, next.text);
-          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          activeLabelIds.current.set(labelId, {
+            pos: next.pos,
+            text: next.text,
+          });
           dirty = true;
         } else if (posChanged) {
           markerLayer.updateMarker(labelId, { latLng: next.pos });
-          activeLabelIds.current.set(labelId, { pos: next.pos, text: next.text });
+          activeLabelIds.current.set(labelId, {
+            pos: next.pos,
+            text: next.text,
+          });
           dirty = true;
         }
       }

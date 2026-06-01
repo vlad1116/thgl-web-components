@@ -131,7 +131,10 @@ export async function POST(request: Request) {
     return Response.json({ message: "Invalid tag" }, { status: 400 });
   }
 
-  revalidateTag(tag);
+  // Next.js 16 requires a cacheLife profile as the second argument.
+  // "max" marks the tagged data stale for background revalidation; the
+  // synchronous Bunny purge below handles immediate edge invalidation.
+  revalidateTag(tag, "max");
 
   const path = TAG_TO_PATH[tag];
   const purgedUrls = path ? paliaUrlsForPath(path) : [];

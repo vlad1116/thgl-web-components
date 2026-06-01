@@ -67,7 +67,7 @@ export function SingleComment({
   const [editNewImages, setEditNewImages] = useState<File[]>([]);
   const [editKeepImageIds, setEditKeepImageIds] = useState<number[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const deleteTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Vote mutation
   const { trigger: triggerVote, isMutating: isVoting } = useSWRMutation(
@@ -368,7 +368,7 @@ function CommentImageGallery({ images }: { images: CommentImage[] }) {
       {openUrl &&
         createPortal(
           <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 cursor-pointer"
+            className="fixed inset-0 z-10000 flex items-center justify-center bg-black/80 cursor-pointer"
             onClick={() => setOpenUrl(null)}
           >
             <img

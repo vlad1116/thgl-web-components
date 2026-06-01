@@ -9,6 +9,8 @@ import {
 } from "../ui/table";
 import { useT } from "../(providers)";
 
+import type { JSX } from "react";
+
 export type Troops = {
   id: string;
   supplyCost?: number;

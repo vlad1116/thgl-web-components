@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, type JSX } from "react";
 import type { StoreApi } from "zustand";
 import { createStore, useStore } from "zustand";
 import {

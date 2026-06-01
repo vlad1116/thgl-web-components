@@ -45,17 +45,21 @@ async function getWhatsNewUpdates() {
   ]);
 
   // Convert app updates to changelog entries
-  const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 3).map((msg) => {
-    const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
-    const version = versionMatch?.[1] || versionMatch?.[2];
+  const changelogEntries: ChangelogEntry[] = appUpdates
+    .slice(0, 3)
+    .map((msg) => {
+      const versionMatch = msg.text.match(
+        /\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m,
+      );
+      const version = versionMatch?.[1] || versionMatch?.[2];
 
-    return {
-      version,
-      date: new Date(msg.timestamp).toISOString().split("T")[0],
-      content: msg.text,
-      timestamp: msg.timestamp,
-    };
-  });
+      return {
+        version,
+        date: new Date(msg.timestamp).toISOString().split("T")[0],
+        content: msg.text,
+        timestamp: msg.timestamp,
+      };
+    });
 
   return mergeUpdates(gameUpdates, changelogEntries, 5);
 }
@@ -134,7 +138,7 @@ export default async function HomePage() {
       />
 
       {/* Companion App Showcase */}
-      <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 md:p-12">
+      <div className="bg-linear-to-r from-primary/10 to-primary/5 rounded-2xl p-8 md:p-12">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div className="space-y-6">
             <div className="inline-block px-3 py-1 bg-primary/20 rounded-full text-xs text-primary font-semibold">
@@ -150,7 +154,7 @@ export default async function HomePage() {
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-start space-x-3">
-                <Gamepad2 className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <Gamepad2 className="h-5 w-5 text-primary shrink-0 mt-1" />
                 <div>
                   <p className="font-semibold text-sm">In-Game Overlays</p>
                   <p className="text-xs text-muted-foreground">
@@ -159,7 +163,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <Monitor className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <Monitor className="h-5 w-5 text-primary shrink-0 mt-1" />
                 <div>
                   <p className="font-semibold text-sm">Second Screen</p>
                   <p className="text-xs text-muted-foreground">
@@ -168,7 +172,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <Shield className="h-5 w-5 text-primary shrink-0 mt-1" />
                 <div>
                   <p className="font-semibold text-sm">Safe & Approved</p>
                   <p className="text-xs text-muted-foreground">
@@ -177,7 +181,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <Download className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                <Download className="h-5 w-5 text-primary shrink-0 mt-1" />
                 <div>
                   <p className="font-semibold text-sm">Free Download</p>
                   <p className="text-xs text-muted-foreground">~7MB only</p>

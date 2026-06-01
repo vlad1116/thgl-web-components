@@ -7,6 +7,8 @@ import Link from "next/link";
 import { requireApp } from "@/lib/get-app-config";
 import { type Item, columns } from "./columns";
 
+import type { JSX } from "react";
+
 export const metadata: Metadata = {
   alternates: {
     canonical: "/db/deviant-locations",

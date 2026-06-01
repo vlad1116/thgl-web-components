@@ -7,6 +7,8 @@ import Link from "next/link";
 import { requireApp } from "@/lib/get-app-config";
 import { type Item, columns } from "./columns";
 
+import type { JSX } from "react";
+
 export const metadata: Metadata = {
   alternates: {
     canonical: "/db/mod-locations",
@@ -275,8 +277,8 @@ export default async function ModLocations(): Promise<JSX.Element> {
               <p className="text-sm">
                 The document provides a comprehensive list of mod locations for
                 the Once Human game. It details the mod list, item types, drop
-                locations, enemy types, and map regions. Some notable mods include
-                Elemental Amplifier, Thunderclap, Weakspot DMG Boost,
+                locations, enemy types, and map regions. Some notable mods
+                include Elemental Amplifier, Thunderclap, Weakspot DMG Boost,
                 Rejuvenating, and Flame Resonance, each found in different
                 locations and gatherable by orbs in the silos.
                 <br />

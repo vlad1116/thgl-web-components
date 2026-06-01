@@ -2,6 +2,8 @@ import { PageShell } from "@/games/thgl-web/components/page-shell";
 import { PageHeader } from "@/games/thgl-web/components/page-header";
 import Link from "next/link";
 
+import type { JSX } from "react";
+
 export const metadata = {
   title: "Legal Notice (Impressum) – The Hidden Gaming Lair",
   description:
@@ -37,10 +39,7 @@ export default function LegalNotice(): JSX.Element {
       <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
         <ol className="flex items-center gap-1">
           <li>
-            <Link
-              href="/"
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
@@ -48,17 +47,13 @@ export default function LegalNotice(): JSX.Element {
           <li aria-current="page">Legal Notice</li>
         </ol>
       </nav>
-
       <hr className="border-border" />
-
       {/* Website Owner Section */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Website Owner</h2>
         <p className="text-muted-foreground">Leon Machens</p>
       </section>
-
       <hr className="border-border" />
-
       {/* Contact Section */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Contact</h2>
@@ -81,9 +76,7 @@ export default function LegalNotice(): JSX.Element {
           </p>
         </div>
       </section>
-
       <hr className="border-border" />
-
       {/* Disclaimer Section */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Disclaimer</h2>

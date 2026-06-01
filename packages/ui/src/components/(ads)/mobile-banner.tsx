@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, type JSX } from "react";
 import { getNitroAds } from "./nitro-pay";
 import { AdFreeContainer } from "./ad-free-container";
 import { cn } from "@repo/lib";

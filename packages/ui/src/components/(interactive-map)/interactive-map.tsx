@@ -8,7 +8,7 @@ import {
   createAffineProjection,
   IconMarkerLayer,
 } from "@repo/lib/web-map";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type JSX } from "react";
 import { useMapStore, type GameMap } from "./store";
 import { ContextMenu } from "./context-menu";
 import { useT } from "../(providers)";
@@ -173,13 +173,23 @@ export function InteractiveMap({
     // Set default view from tile config so resetView always goes to a valid position
     if (mapTileOptions.fitBounds) {
       const [[lat1, lng1], [lat2, lng2]] = mapTileOptions.fitBounds;
-      const defaultCenter: [number, number] = [(lat1 + lat2) / 2, (lng1 + lng2) / 2];
+      const defaultCenter: [number, number] = [
+        (lat1 + lat2) / 2,
+        (lng1 + lng2) / 2,
+      ];
       const containerWidth = containerRef.current.clientWidth || 300;
       const containerHeight = containerRef.current.clientHeight || 200;
-      const defaultZoom = calculateFitZoom(mapTileOptions.fitBounds, containerWidth, containerHeight);
+      const defaultZoom = calculateFitZoom(
+        mapTileOptions.fitBounds,
+        containerWidth,
+        containerHeight,
+      );
       webmap.setDefaultView(defaultCenter, defaultZoom);
     } else if (mapTileOptions.view?.center) {
-      webmap.setDefaultView(mapTileOptions.view.center, mapTileOptions.view.zoom ?? minZoom);
+      webmap.setDefaultView(
+        mapTileOptions.view.center,
+        mapTileOptions.view.zoom ?? minZoom,
+      );
     }
 
     // Create and add marker layers
@@ -212,7 +222,8 @@ export function InteractiveMap({
       gameMap.rotationCenter = mapTileOptions.rotation.center;
       // Legacy aliases for backward compatibility
       gameMap._rotationDegrees = mapTileOptions.rotation.angle;
-      gameMap._rotationRadians = (mapTileOptions.rotation.angle * Math.PI) / 180;
+      gameMap._rotationRadians =
+        (mapTileOptions.rotation.angle * Math.PI) / 180;
       gameMap._rotationCenter = mapTileOptions.rotation.center;
     }
     // Legacy alias for canvas (used in markers.tsx)
@@ -265,10 +276,7 @@ export function InteractiveMap({
       setViewByMap(mapName, [c.lat, c.lng], webmap.getZoom());
       setMap(null);
       webmap.destroy();
-      if (
-        containerRef.current &&
-        canvas.parentNode === containerRef.current
-      ) {
+      if (containerRef.current && canvas.parentNode === containerRef.current) {
         containerRef.current.removeChild(canvas);
       }
       mapRefsRef.current = {
@@ -321,7 +329,14 @@ export function InteractiveMap({
         mapRefsRef.current.tileLayer = null;
       }
     };
-  }, [map, mapTileOptions, colorBlindMode, colorBlindSeverity, isOverlay, mapFilter]);
+  }, [
+    map,
+    mapTileOptions,
+    colorBlindMode,
+    colorBlindSeverity,
+    isOverlay,
+    mapFilter,
+  ]);
 
   // Update color blind mode on marker layers
   useEffect(() => {
@@ -338,7 +353,7 @@ export function InteractiveMap({
   return (
     <>
       <div
-        className={cn(`h-full !bg-inherit outline-none relative`)}
+        className={cn(`h-full bg-inherit! outline-none relative`)}
         ref={containerRef}
       />
       <ContextMenu

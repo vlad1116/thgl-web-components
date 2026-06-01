@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type JSX } from "react";
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
 import { useSettingsStore, useUserStore } from "@repo/lib";
@@ -61,9 +61,7 @@ export function Regions(): JSX.Element {
     const rotationDegrees = map._rotationDegrees;
     const rotationCenter = map._rotationCenter;
 
-    const applyRotation = (
-      point: [number, number],
-    ): [number, number] => {
+    const applyRotation = (point: [number, number]): [number, number] => {
       if (rotationDegrees && rotationCenter) {
         return rotateCoordinate(point, rotationDegrees, rotationCenter);
       }
@@ -115,7 +113,9 @@ export function Regions(): JSX.Element {
 
   // Sync dynamic size factor to region drawing layer
   useEffect(() => {
-    layerRef.current?.setDynamicSizeFactor(dynamicIconSize ? dynamicIconSizeFactor : 0);
+    layerRef.current?.setDynamicSizeFactor(
+      dynamicIconSize ? dynamicIconSizeFactor : 0,
+    );
   }, [dynamicIconSize, dynamicIconSizeFactor]);
 
   return <></>;

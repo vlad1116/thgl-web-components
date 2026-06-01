@@ -99,13 +99,7 @@ export function CommunityFilters({
   );
 }
 
-function Browser({
-  game,
-  onClose,
-}: {
-  game: string;
-  onClose: () => void;
-}) {
+function Browser({ game, onClose }: { game: string; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [sort, setSort] = useState<SortOrder>("top");
@@ -191,9 +185,7 @@ function Browser({
         </Select>
       </div>
 
-      {error && (
-        <p className="text-sm text-orange-500">{error}</p>
-      )}
+      {error && <p className="text-sm text-orange-500">{error}</p>}
 
       <div className="overflow-y-auto flex-1 -mx-2 px-2">
         {items.length === 0 && !loading && (
@@ -226,7 +218,10 @@ function Browser({
                   setItems((prev) =>
                     prev.map((i) =>
                       i.id === item.id
-                        ? { ...i, commentCount: Math.max(0, i.commentCount + delta) }
+                        ? {
+                            ...i,
+                            commentCount: Math.max(0, i.commentCount + delta),
+                          }
                         : i,
                     ),
                   );
@@ -296,8 +291,7 @@ function Card({
       const res = await apiVote(meta.id);
       onVoteChange(res.voted, res.voteCount);
     } catch (err) {
-      const msg =
-        err instanceof FiltersApiError ? err.message : "Vote failed";
+      const msg = err instanceof FiltersApiError ? err.message : "Vote failed";
       toast.error(msg);
     } finally {
       setVoting(false);
@@ -516,17 +510,14 @@ function CardDetails({
         )}
         <ul className="space-y-1.5 max-h-48 overflow-y-auto">
           {comments.map((c) => (
-            <li
-              key={c.id}
-              className="text-xs flex gap-2 items-start group"
-            >
+            <li key={c.id} className="text-xs flex gap-2 items-start group">
               <span className="text-muted-foreground shrink-0 tabular-nums">
                 {formatTimestamp(c.createdAt)}
               </span>
               <span className="text-muted-foreground shrink-0">
                 {c.userId === myUserId ? "you" : c.userId}:
               </span>
-              <span className="grow break-words">{c.body}</span>
+              <span className="grow wrap-break-word">{c.body}</span>
               {c.userId === myUserId && (
                 <button
                   type="button"
@@ -586,4 +577,3 @@ function formatTimestamp(seconds: number): string {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
   return new Date(seconds * 1000).toLocaleDateString();
 }
-

@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import type { ChangeEvent } from "react";
-import { faqEntries, allLabels, type FAQLabel } from "@/games/thgl-web/lib/faq-entries";
+import {
+  faqEntries,
+  allLabels,
+  type FAQLabel,
+} from "@/games/thgl-web/lib/faq-entries";
 import { FaqLabelBadge } from "@/games/thgl-web/components/faq-label-badge";
 
 export function FAQList() {
@@ -62,7 +66,7 @@ export function FAQList() {
             onChange={handleSearchChange}
             placeholder="Search by headline or question"
             aria-label="Search frequent questions"
-            className="w-full rounded-md border border-muted-foreground/30 bg-background px-3 py-2 text-sm shadow-sm outline-none ring-brand/20 focus:border-brand focus:ring-2"
+            className="w-full rounded-md border border-muted-foreground/30 bg-background px-3 py-2 text-sm shadow-xs outline-hidden ring-brand/20 focus:border-brand focus:ring-2"
           />
         </div>
 
@@ -124,7 +128,7 @@ export function FAQList() {
           {filteredEntries.map((faq) => (
             <div
               key={faq.id}
-              className="rounded-lg border border-muted-foreground/20 bg-background/60 p-4 shadow-sm transition-colors hover:border-muted-foreground/40"
+              className="rounded-lg border border-muted-foreground/20 bg-background/60 p-4 shadow-xs transition-colors hover:border-muted-foreground/40"
             >
               <div className="space-y-3">
                 <Link

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, type JSX } from "react";
 import { getNitroAds } from "./nitro-pay";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { AdFreeContainer } from "./ad-free-container";
@@ -68,19 +68,18 @@ function FloatingBannerInner({
   const isCompact = variant === "compact";
   const isBig = variant === "sidebar-big";
 
-  const sizes: [string, string][] =
-    isCompact
+  const sizes: [string, string][] = isCompact
+    ? [
+        ["300", "250"],
+        ["320", "100"],
+      ]
+    : isBig
       ? [
+          ["300", "600"],
           ["300", "250"],
-          ["320", "100"],
+          ["160", "600"],
         ]
-      : isBig
-        ? [
-            ["300", "600"],
-            ["300", "250"],
-            ["160", "600"],
-          ]
-        : [["160", "600"]];
+      : [["160", "600"]];
 
   const width = isCompact ? "w-[300px]" : isBig ? "w-[300px]" : "w-[160px]";
   const height = isCompact ? "h-[250px]" : "h-[600px]";

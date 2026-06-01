@@ -1,13 +1,18 @@
 "use client";
 
-import { cn, FiltersConfig, useAccountStore, useSettingsStore } from "@repo/lib";
+import {
+  cn,
+  FiltersConfig,
+  useAccountStore,
+  useSettingsStore,
+} from "@repo/lib";
 import {
   HOTKEYS,
   setInputPassThrough,
   togglePreferedWindow,
   useOverwolfState,
 } from "@repo/lib/overwolf";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, type JSX } from "react";
 import { UnlockButton } from "./unlock-button";
 import { OverwolfSettingsDialogContent } from "./settings-dialog-content";
 import { useCoordinates } from "../(providers)";
@@ -23,7 +28,13 @@ import {
 import { Hotkey } from "./hotkey";
 import { AppStatus } from "./app-status";
 import { GameSwitcher } from "../(header)/game-switcher";
-import { HeaderSwitch, DiscordIcon, GitHubIcon, RedditIcon, WindowControlSymbols } from "../(header)";
+import {
+  HeaderSwitch,
+  DiscordIcon,
+  GitHubIcon,
+  RedditIcon,
+  WindowControlSymbols,
+} from "../(header)";
 import { CircleUser, ExternalLink, Menu, Settings } from "lucide-react";
 import { ExternalAnchor } from "../(header)/external-anchor";
 import { Separator } from "../ui/separator";
@@ -50,7 +61,6 @@ export function AppHeader({
   const { typesIdMap } = useCoordinates();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
 
   useEffect(() => {
     if (isOverlay) {
@@ -94,7 +104,7 @@ export function AppHeader({
       ) : (
         <>
           <header
-            className="px-2 h-[32px] fixed left-0 right-0 top-0 border-b bg-gradient-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center pointer-events-auto z-[999999]"
+            className="px-2 h-[32px] fixed left-0 right-0 top-0 border-b bg-linear-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center pointer-events-auto z-999999"
             onDoubleClick={() =>
               isOverlay
                 ? null
@@ -120,59 +130,56 @@ export function AppHeader({
                 className="flex items-center gap-2"
                 onMouseDown={(e) => e.stopPropagation()}
               >
-              <Button
-                onClick={settingsStore.toggleLockedWindow}
-                size="xs"
-              >
-                Hide Controls
-              </Button>
+                <Button onClick={settingsStore.toggleLockedWindow} size="xs">
+                  Hide Controls
+                </Button>
 
-              <Tooltip delayDuration={200} disableHoverableContent>
-                <TooltipTrigger>
-                  <HeaderSwitch
-                    checked={!settingsStore.overlayMode}
-                    label="2nd Screen"
-                    onChange={(checked) => {
-                      settingsStore.setOverlayMode(!checked);
-                      togglePreferedWindow(gameClassId);
-                    }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="w-64" side="bottom">
-                  <p>
-                    Switch between 2nd screen mode and overlay mode. The overlay
-                    mode requires that the game is running and it's enabled in
-                    the Overwolf overlay settings.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-
-              {typesIdMap && Object.keys(typesIdMap).length > 0 && (
                 <Tooltip delayDuration={200} disableHoverableContent>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <LiveModeControl />
-                    </div>
+                  <TooltipTrigger>
+                    <HeaderSwitch
+                      checked={!settingsStore.overlayMode}
+                      label="2nd Screen"
+                      onChange={(checked) => {
+                        settingsStore.setOverlayMode(!checked);
+                        togglePreferedWindow(gameClassId);
+                      }}
+                    />
                   </TooltipTrigger>
                   <TooltipContent className="w-64" side="bottom">
                     <p>
-                      The live mode shows the current locations of some nodes on
-                      the map in a limited range. Disable it to see the spawn
-                      locations instead. Check the filter tooltip for the live
-                      mode support.
+                      Switch between 2nd screen mode and overlay mode. The
+                      overlay mode requires that the game is running and it's
+                      enabled in the Overwolf overlay settings.
                     </p>
-                    <Label className="flex items-center gap-2 justify-between">
-                      Cycle Live Mode
-                      <Hotkey
-                        name={HOTKEYS.TOGGLE_LIVE_MODE}
-                        gameClassId={gameClassId}
-                      />
-                    </Label>
                   </TooltipContent>
                 </Tooltip>
-              )}
 
-              <AppStatus gameClassId={gameClassId} />
+                {typesIdMap && Object.keys(typesIdMap).length > 0 && (
+                  <Tooltip delayDuration={200} disableHoverableContent>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <LiveModeControl />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="w-64" side="bottom">
+                      <p>
+                        The live mode shows the current locations of some nodes
+                        on the map in a limited range. Disable it to see the
+                        spawn locations instead. Check the filter tooltip for
+                        the live mode support.
+                      </p>
+                      <Label className="flex items-center gap-2 justify-between">
+                        Cycle Live Mode
+                        <Hotkey
+                          name={HOTKEYS.TOGGLE_LIVE_MODE}
+                          gameClassId={gameClassId}
+                        />
+                      </Label>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
+                <AppStatus gameClassId={gameClassId} />
               </div>
             </nav>
 
@@ -197,7 +204,9 @@ export function AppHeader({
                 size="icon"
                 variant="outline"
                 className="h-6 w-6 mx-0.5"
-                onClick={() => account.setShowUserDialog(!account.showUserDialog)}
+                onClick={() =>
+                  account.setShowUserDialog(!account.showUserDialog)
+                }
                 title="Account"
               >
                 <CircleUser
@@ -273,11 +282,11 @@ export function AppHeader({
           {isMenuOpen && (
             <>
               <div
-                className="fixed inset-0 z-[999998]"
+                className="fixed inset-0 z-999998"
                 onClick={() => setIsMenuOpen(false)}
               />
               <div
-                className="fixed top-[32px] right-0 w-64 bg-zinc-900/95 backdrop-blur-xl border-b border-l border-neutral-800 p-3 flex flex-col gap-2 z-[999998] pointer-events-auto"
+                className="fixed top-[32px] right-0 w-64 bg-zinc-900/95 backdrop-blur-xl border-b border-l border-neutral-800 p-3 flex flex-col gap-2 z-999998 pointer-events-auto"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 {/* Social links + debug */}

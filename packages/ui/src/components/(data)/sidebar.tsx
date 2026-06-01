@@ -9,7 +9,7 @@ import {
 } from "../ui/collapsible";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 

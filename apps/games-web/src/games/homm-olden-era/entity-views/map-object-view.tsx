@@ -60,7 +60,9 @@ function FormatReward({
     case "SideResReward": {
       const parts: string[] = [];
       for (let i = 0; i < params.length; i += 2) {
-        parts.push(`${Number(params[i + 1]).toLocaleString()} ${resolveDict(dict, String(params[i]))}`);
+        parts.push(
+          `${Number(params[i + 1]).toLocaleString()} ${resolveDict(dict, String(params[i]))}`,
+        );
       }
       return <>{parts.join(", ")}</>;
     }
@@ -74,7 +76,11 @@ function FormatReward({
     case "HeroStatsReward": {
       const stats: string[] = [];
       for (let i = 0; i < params.length; i += 2) {
-        stats.push(`+${params[i + 1]} ${String(params[i]).replace(/([A-Z])/g, " $1").trim()}`);
+        stats.push(
+          `+${params[i + 1]} ${String(params[i])
+            .replace(/([A-Z])/g, " $1")
+            .trim()}`,
+        );
       }
       return <>{stats.join(", ")}</>;
     }
@@ -89,11 +95,23 @@ function FormatReward({
       return <>{params.length} specific spells</>;
     case "HeroRandomItemsReward": {
       const artifactLink = (text: string) => (
-        <Link prefetch={false} href={localizePath("/db/artifacts", locale)} className="text-amber-400 hover:text-amber-300 transition-colors">{text}</Link>
+        <Link
+          prefetch={false}
+          href={localizePath("/db/artifacts", locale)}
+          className="text-amber-400 hover:text-amber-300 transition-colors"
+        >
+          {text}
+        </Link>
       );
-      if (params.length <= 1) return <>Random {params[0]} {artifactLink("artifact")}</>;
+      if (params.length <= 1)
+        return (
+          <>
+            Random {params[0]} {artifactLink("artifact")}
+          </>
+        );
       const rarityCounts = new Map<string, number>();
-      for (const p of params) rarityCounts.set(String(p), (rarityCounts.get(String(p)) ?? 0) + 1);
+      for (const p of params)
+        rarityCounts.set(String(p), (rarityCounts.get(String(p)) ?? 0) + 1);
       return (
         <>
           {[...rarityCounts.entries()].map(([rarity, count], idx) => (
@@ -101,8 +119,8 @@ function FormatReward({
               {idx > 0 && " + "}
               {count > 1 ? `${count}× ${rarity}` : rarity}
             </span>
-          ))}
-          {" "}{artifactLink("artifacts")}
+          ))}{" "}
+          {artifactLink("artifacts")}
         </>
       );
     }
@@ -117,18 +135,36 @@ function FormatReward({
       return <>Level up</>;
     case "HeroItemReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
+        <EntityLink
+          itemId={String(params[0])}
+          database={database}
+          dict={dict}
+          locale={locale}
+          iconsHash={iconsHash}
+        />
       );
     case "HeroUnitsReward":
       return (
         <span className="inline-flex items-center gap-1">
           {params[1] && <span>{params[1]}×</span>}
-          <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
+          <EntityLink
+            itemId={String(params[0])}
+            database={database}
+            dict={dict}
+            locale={locale}
+            iconsHash={iconsHash}
+          />
         </span>
       );
     case "HeroSkillAdditionReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
+        <EntityLink
+          itemId={String(params[0])}
+          database={database}
+          dict={dict}
+          locale={locale}
+          iconsHash={iconsHash}
+        />
       );
     case "HeroBoxUnitsReward":
       return (
@@ -136,29 +172,55 @@ function FormatReward({
           {params.map((p, i) => (
             <span key={i}>
               {i > 0 && ", "}
-              <EntityLink itemId={String(p)} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
+              <EntityLink
+                itemId={String(p)}
+                database={database}
+                dict={dict}
+                locale={locale}
+                iconsHash={iconsHash}
+              />
             </span>
           ))}
         </span>
       );
     case "HeroSkillReward":
       return (
-        <EntityLink itemId={String(params[0])} database={database} dict={dict} locale={locale} iconsHash={iconsHash} />
+        <EntityLink
+          itemId={String(params[0])}
+          database={database}
+          dict={dict}
+          locale={locale}
+          iconsHash={iconsHash}
+        />
       );
     case "RandomHeroSkillReward":
       return <>Random skill ({params[0]} choices)</>;
     case "SideRandomBuffReward": {
       const duration = Number(params[params.length - 1]);
       const durationType = String(params[params.length - 2]);
-      const durationLabel = durationType === "ForSeveralDays" ? `${duration} days` : `${duration} rounds`;
+      const durationLabel =
+        durationType === "ForSeveralDays"
+          ? `${duration} days`
+          : `${duration} rounds`;
       return <>Random curse ({durationLabel})</>;
     }
     default:
-      return <>{type.replace(/Reward$/, "").replace(/([A-Z])/g, " $1").trim()}: {params.join(", ")}</>;
+      return (
+        <>
+          {type
+            .replace(/Reward$/, "")
+            .replace(/([A-Z])/g, " $1")
+            .trim()}
+          : {params.join(", ")}
+        </>
+      );
   }
 }
 
-function substituteTemplateValues(text: string, values?: (string | number)[]): string {
+function substituteTemplateValues(
+  text: string,
+  values?: (string | number)[],
+): string {
   if (!values || values.length === 0) return text;
   let result = text;
   for (let i = 0; i < values.length; i++) {
@@ -189,9 +251,13 @@ export function MapObjectView({
   iconsHash?: string;
 }) {
   const groupLabel = resolveDict(dict, props.group);
-  const rawDesc = desc && desc !== name && !desc.includes("_desc") && !desc.includes("_description")
-    ? desc
-    : undefined;
+  const rawDesc =
+    desc &&
+    desc !== name &&
+    !desc.includes("_desc") &&
+    !desc.includes("_description")
+      ? desc
+      : undefined;
   const resolvedDesc = rawDesc
     ? substituteTemplateValues(rawDesc, props.templateValues)
     : undefined;
@@ -199,7 +265,14 @@ export function MapObjectView({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+        {icon && (
+          <SpriteIcon
+            icon={icon}
+            appName={APP_NAME}
+            size={64}
+            iconsHash={iconsHash}
+          />
+        )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -231,9 +304,7 @@ export function MapObjectView({
         const narrative = resolveDict(dict, `${entryId}_narrative`);
         if (narrative.endsWith("_narrative")) return null;
         return (
-          <p className="text-sm text-muted-foreground italic">
-            {narrative}
-          </p>
+          <p className="text-sm text-muted-foreground italic">{narrative}</p>
         );
       })()}
 
@@ -262,65 +333,91 @@ export function MapObjectView({
         </div>
       )}
 
-      {props.spellOfferings && props.spellOfferings.length > 0 && (() => {
-        const school = props.spellOfferings[0].school;
-        const schoolLabel = resolveDictWithFallback(dict, `ui.school_${school}`, school);
-        return (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm uppercase tracking-wider text-muted-foreground">
-                Spell Offerings
-              </h2>
-              <Link prefetch={false}
-                href={localizePath(`/db/spells/${school}`, locale)}
-                className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
-              >
-                Browse {schoolLabel} Spells →
-              </Link>
-            </div>
-            <div className="border border-slate-800 rounded-lg overflow-hidden">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-900/60 border-b border-slate-800">
-                    <th className="px-4 py-2 text-sm font-medium text-muted-foreground">Spell Slot</th>
-                    {(() => {
+      {props.spellOfferings &&
+        props.spellOfferings.length > 0 &&
+        (() => {
+          const school = props.spellOfferings[0].school;
+          const schoolLabel = resolveDictWithFallback(
+            dict,
+            `ui.school_${school}`,
+            school,
+          );
+          return (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm uppercase tracking-wider text-muted-foreground">
+                  Spell Offerings
+                </h2>
+                <Link
+                  prefetch={false}
+                  href={localizePath(`/db/spells/${school}`, locale)}
+                  className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  Browse {schoolLabel} Spells →
+                </Link>
+              </div>
+              <div className="border border-slate-800 rounded-lg overflow-hidden">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-900/60 border-b border-slate-800">
+                      <th className="px-4 py-2 text-sm font-medium text-muted-foreground">
+                        Spell Slot
+                      </th>
+                      {(() => {
+                        const allTiers = new Set<number>();
+                        for (const o of props.spellOfferings!)
+                          for (const tc of o.tierChances) allTiers.add(tc.tier);
+                        return [...allTiers]
+                          .sort((a, b) => a - b)
+                          .map((tier) => (
+                            <th
+                              key={tier}
+                              className="px-4 py-2 text-sm font-medium text-muted-foreground text-center"
+                            >
+                              Tier {tier}
+                            </th>
+                          ));
+                      })()}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {props.spellOfferings.map((offering, i) => {
                       const allTiers = new Set<number>();
-                      for (const o of props.spellOfferings!) for (const tc of o.tierChances) allTiers.add(tc.tier);
-                      return [...allTiers].sort((a, b) => a - b).map(tier => (
-                        <th key={tier} className="px-4 py-2 text-sm font-medium text-muted-foreground text-center">
-                          Tier {tier}
-                        </th>
-                      ));
-                    })()}
-                  </tr>
-                </thead>
-                <tbody>
-                  {props.spellOfferings.map((offering, i) => {
-                    const allTiers = new Set<number>();
-                    for (const o of props.spellOfferings!) for (const tc of o.tierChances) allTiers.add(tc.tier);
-                    const sortedTiers = [...allTiers].sort((a, b) => a - b);
-                    const chanceMap = new Map(offering.tierChances.map(tc => [tc.tier, tc.chance]));
-                    return (
-                      <tr key={i} className="border-b border-slate-800/50 last:border-0">
-                        <td className="px-4 py-2 text-sm">Spell {i + 1}</td>
-                        {sortedTiers.map(tier => (
-                          <td key={tier} className="px-4 py-2 text-sm text-center tabular-nums">
-                            {chanceMap.has(tier) ? (
-                              <span className="text-amber-400">{chanceMap.get(tier)}%</span>
-                            ) : (
-                              <span className="text-slate-600">—</span>
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      for (const o of props.spellOfferings!)
+                        for (const tc of o.tierChances) allTiers.add(tc.tier);
+                      const sortedTiers = [...allTiers].sort((a, b) => a - b);
+                      const chanceMap = new Map(
+                        offering.tierChances.map((tc) => [tc.tier, tc.chance]),
+                      );
+                      return (
+                        <tr
+                          key={i}
+                          className="border-b border-slate-800/50 last:border-0"
+                        >
+                          <td className="px-4 py-2 text-sm">Spell {i + 1}</td>
+                          {sortedTiers.map((tier) => (
+                            <td
+                              key={tier}
+                              className="px-4 py-2 text-sm text-center tabular-nums"
+                            >
+                              {chanceMap.has(tier) ? (
+                                <span className="text-amber-400">
+                                  {chanceMap.get(tier)}%
+                                </span>
+                              ) : (
+                                <span className="text-slate-600">—</span>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {props.variants && props.totalChance && props.variants.length > 0 && (
         <div>
@@ -329,9 +426,13 @@ export function MapObjectView({
           </h2>
           <div className="space-y-1.5">
             {props.variants.map((v, i) => {
-              const pct = Math.round((v.chance / props.totalChance!) * 1000) / 10;
+              const pct =
+                Math.round((v.chance / props.totalChance!) * 1000) / 10;
               return (
-                <div key={i} className="border border-slate-800/60 rounded-lg bg-slate-900/20 overflow-hidden">
+                <div
+                  key={i}
+                  className="border border-slate-800/60 rounded-lg bg-slate-900/20 overflow-hidden"
+                >
                   <div className="flex items-start gap-3 px-4 py-2.5">
                     <span className="text-sm font-semibold tabular-nums text-amber-400 shrink-0 pt-px w-12">
                       {pct}%
@@ -340,21 +441,45 @@ export function MapObjectView({
                       {v.rewards.map((r, j) => (
                         <span key={j}>
                           {j > 0 && " + "}
-                          <FormatReward type={r.type} params={r.params} dict={dict} database={database} locale={locale} iconsHash={iconsHash} />
+                          <FormatReward
+                            type={r.type}
+                            params={r.params}
+                            dict={dict}
+                            database={database}
+                            locale={locale}
+                            iconsHash={iconsHash}
+                          />
                         </span>
                       ))}
                       {v.guarded && !v.guards && (
-                        <span className="ml-2 text-xs text-red-400">(guarded)</span>
+                        <span className="ml-2 text-xs text-red-400">
+                          (guarded)
+                        </span>
                       )}
                     </div>
                   </div>
                   {v.guards && v.guards.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap px-4 py-1.5 bg-red-950/20 border-t border-red-900/20">
-                      <span className="text-xs text-red-400/70 shrink-0">Guarded by</span>
+                      <span className="text-xs text-red-400/70 shrink-0">
+                        Guarded by
+                      </span>
                       {v.guards.map((g, gi) => (
-                        <span key={gi} className="inline-flex items-center gap-1">
-                          <span className="text-xs text-red-400/90 tabular-nums">{g.count}×</span>
-                          <EntityLink itemId={g.sid} database={database} dict={dict} locale={locale} iconsHash={iconsHash} showIcon={false} className="text-xs !text-red-400 hover:!text-red-300" />
+                        <span
+                          key={gi}
+                          className="inline-flex items-center gap-1"
+                        >
+                          <span className="text-xs text-red-400/90 tabular-nums">
+                            {g.count}×
+                          </span>
+                          <EntityLink
+                            itemId={g.sid}
+                            database={database}
+                            dict={dict}
+                            locale={locale}
+                            iconsHash={iconsHash}
+                            showIcon={false}
+                            className="text-xs text-red-400! hover:text-red-300!"
+                          />
                         </span>
                       ))}
                     </div>

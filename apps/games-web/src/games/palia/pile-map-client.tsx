@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { notFound, useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, type JSX } from "react";
 import { Button } from "@repo/ui/controls";
 import Link from "next/link";
 import {
@@ -57,8 +57,7 @@ export default function PileMapClient({
   const isBahariBay = mapParam === "bahari-bay";
   const isElderwood = mapParam === "elderwood";
   const isRoyalHighlands = mapParam === "royal-highlands";
-  const isKillimaValley =
-    !isBahariBay && !isElderwood && !isRoyalHighlands;
+  const isKillimaValley = !isBahariBay && !isElderwood && !isRoyalHighlands;
   const timedLootPiles = deobfuscateAndDecode<TimedLootPiles>(
     encodedTimedLootPiles,
   );

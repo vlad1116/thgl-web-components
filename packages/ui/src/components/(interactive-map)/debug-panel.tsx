@@ -62,8 +62,7 @@ function DebugPanelInner() {
         const liveStats = liveMarkerLayer?.stats;
 
         const totalMarkers =
-          (markerStats?.totalInstances ?? 0) +
-          (liveStats?.totalInstances ?? 0);
+          (markerStats?.totalInstances ?? 0) + (liveStats?.totalInstances ?? 0);
         const visibleMarkers =
           (markerStats?.visibleInstances ?? 0) +
           (liveStats?.visibleInstances ?? 0);
@@ -75,7 +74,8 @@ function DebugPanelInner() {
         const sheetGroups =
           (markerStats?.sheetGroups ?? 0) + (liveStats?.sheetGroups ?? 0);
         const cullSkipped =
-          (markerStats?.cullSkipped ?? false) || (liveStats?.cullSkipped ?? false);
+          (markerStats?.cullSkipped ?? false) ||
+          (liveStats?.cullSkipped ?? false);
 
         const zoom = map ? map.getZoom().toFixed(2) : "?";
 
@@ -110,11 +110,13 @@ function DebugPanelInner() {
 
   return (
     <div
-      className="fixed bottom-2 right-2 z-[9999] rounded bg-black/80 px-3 py-2 font-mono text-xs text-green-400 pointer-events-none select-none"
+      className="fixed bottom-2 right-2 z-9999 rounded bg-black/80 px-3 py-2 font-mono text-xs text-green-400 pointer-events-none select-none"
       style={{ minWidth: 220 }}
     >
       <div className="mb-1 text-green-300 font-bold">Debug</div>
-      <div>FPS: {stats.fps} ({stats.frameTime}ms)</div>
+      <div>
+        FPS: {stats.fps} ({stats.frameTime}ms)
+      </div>
       <div>
         Memory: {stats.memoryUsed} / {stats.memoryTotal} MB
       </div>

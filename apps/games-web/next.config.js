@@ -3,6 +3,12 @@ const nextConfig = {
   // Standalone output for Docker container deployment
   output: "standalone",
   images: {
+    // Next.js 16 blocks optimizing images served from local/private IPs by
+    // default (returns 400 "url parameter is not allowed"). In development
+    // assets are served from a local host (e.g. localhost:33033 via
+    // DATA_FORGE_*), so allow it there. Production assets come from
+    // cdn.th.gl, so keep the secure default in prod.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [
       {
         protocol: "https",

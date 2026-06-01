@@ -1,5 +1,4 @@
 "use client";
-
 import { THGLAppConfig, TilesConfig, Version } from "@repo/lib";
 import { MapContainer, StreamingSender } from "../(desktop)";
 import {
@@ -15,6 +14,8 @@ import {
 import { Whiteboard } from "../(peer)";
 import { AdditionalTooltipType } from "../(content)";
 import { MapControls } from "../(controls)";
+
+import type { JSX } from "react";
 
 export type AppMapProps = {
   appConfig: THGLAppConfig;
@@ -53,7 +54,7 @@ export function AppMap({
         iconsPath={version?.more.icons}
         additionalTooltip={additionalTooltip}
       />
-      <div className="fixed top-[40px] right-2 mt-[1px] z-[500] flex gap-1.5 items-center">
+      <div className="fixed top-[40px] right-2 mt-px z-500 flex gap-1.5 items-center">
         <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden [&_button]:border-0 [&_button]:shadow-none [&_button]:rounded-none [&_button]:h-8 [&_button]:w-8">
           <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
           <StreamingSender

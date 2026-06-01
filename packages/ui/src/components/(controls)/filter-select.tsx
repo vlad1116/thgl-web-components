@@ -15,7 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { cn, DrawingsAndNodes, useSettingsStore } from "@repo/lib";
 import { ScrollArea } from "../ui/scroll-area";
 

@@ -1,6 +1,6 @@
 import type { OwAd } from "@overwolf/types/owads";
 import { useAccountStore } from "@repo/lib";
-import type { ReactNode } from "react";
+import type { ReactNode, JSX } from "react";
 import { useEffect, useState } from "react";
 import { trackEvent } from "../(header)";
 

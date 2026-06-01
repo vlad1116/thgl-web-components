@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {this.state.error?.message && (
               <div className="p-3 rounded border border-destructive/30 bg-destructive/10">
-                <p className="text-sm font-mono text-foreground break-words">
+                <p className="text-sm font-mono text-foreground wrap-break-word">
                   {this.state.error.name && this.state.error.name !== "Error"
                     ? `${this.state.error.name}: `
                     : ""}

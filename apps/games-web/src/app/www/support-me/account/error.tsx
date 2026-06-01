@@ -23,7 +23,7 @@ export default function Error({
         <SignOut />
       </div>
 
-      <pre className="text-xs text-muted-foreground break-words whitespace-pre-wrap border-t pt-4 border-muted">
+      <pre className="text-xs text-muted-foreground wrap-break-word whitespace-pre-wrap border-t pt-4 border-muted">
         {error.message}
       </pre>
     </div>

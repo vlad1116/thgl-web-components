@@ -35,14 +35,16 @@ function ContentWithLinks({
 }) {
   if (!text) {
     return (
-      <p className={`whitespace-pre-wrap break-words ${className}`.trim()} />
+      <p
+        className={`whitespace-pre-wrap wrap-break-word ${className}`.trim()}
+      />
     );
   }
 
   const parts = text.split(urlSplitRegex);
 
   return (
-    <p className={`whitespace-pre-wrap break-words ${className}`.trim()}>
+    <p className={`whitespace-pre-wrap wrap-break-word ${className}`.trim()}>
       {parts.map((part, index) => {
         if (urlExactRegex.test(part)) {
           const label = part.replace(/^https?:\/\//i, "");
@@ -187,7 +189,7 @@ export function SuggestionsIssuesList({
           onChange={handleSearchChange}
           placeholder="Search suggestions and issues..."
           aria-label="Search suggestions and issues"
-          className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm shadow-sm outline-none ring-primary/20 focus:border-primary focus:ring-2"
+          className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm shadow-xs outline-hidden ring-primary/20 focus:border-primary focus:ring-2"
         />
 
         {allTags.length > 0 && (
@@ -341,7 +343,7 @@ function SuggestionIssueCard({
             aria-expanded={isExpanded}
             aria-controls={contentId}
             type="button"
-            className="flex-shrink-0"
+            className="shrink-0"
           >
             {isExpanded ? (
               <ChevronUp className="h-4 w-4" />

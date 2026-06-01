@@ -122,7 +122,8 @@ export function MechanicTerm({
         const rect = ref.current.getBoundingClientRect();
         const tooltipW = 260;
         let x = rect.left;
-        if (x + tooltipW > window.innerWidth - 8) x = window.innerWidth - tooltipW - 8;
+        if (x + tooltipW > window.innerWidth - 8)
+          x = window.innerWidth - tooltipW - 8;
         if (x < 8) x = 8;
         const y = rect.top > 160 ? rect.top - 4 : rect.bottom + 4;
         setPos({ x, y });
@@ -152,11 +153,14 @@ export function MechanicTerm({
         pos &&
         createPortal(
           <div
-            className="fixed z-[99999] w-[260px] rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-2.5 pointer-events-none"
+            className="fixed z-99999 w-[260px] rounded-lg border border-neutral-700 bg-zinc-900 shadow-2xl p-2.5 pointer-events-none"
             style={{
               left: pos.x,
               top: pos.y,
-              transform: ref.current && ref.current.getBoundingClientRect().top > 160 ? "translateY(-100%)" : undefined,
+              transform:
+                ref.current && ref.current.getBoundingClientRect().top > 160
+                  ? "translateY(-100%)"
+                  : undefined,
             }}
           >
             <div className="text-xs font-medium text-amber-400 mb-1">

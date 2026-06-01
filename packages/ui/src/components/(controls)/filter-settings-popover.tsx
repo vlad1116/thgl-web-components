@@ -71,7 +71,9 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
 
   const siblingEnabledCount = useMemo(
     () =>
-      siblingIds ? siblingIds.filter((id) => userFilters.includes(id)).length : 0,
+      siblingIds
+        ? siblingIds.filter((id) => userFilters.includes(id)).length
+        : 0,
     [siblingIds, userFilters],
   );
   const allSiblingsEnabled =
@@ -101,7 +103,9 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const audioAlertsMuted = useSettingsStore((s) => s.audioAlertsMuted);
   const labelModeByFilter = useSettingsStore((s) => s.labelModeByFilter);
   const setLabelModeByFilter = useSettingsStore((s) => s.setLabelModeByFilter);
-  const setLabelModeByFilters = useSettingsStore((s) => s.setLabelModeByFilters);
+  const setLabelModeByFilters = useSettingsStore(
+    (s) => s.setLabelModeByFilters,
+  );
   // For groups, calculate if all/some/none have audio enabled
   const groupAudioState = useMemo(() => {
     if (!isGroup) return null;
@@ -137,7 +141,9 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
     return "mixed";
   }, [isGroup, isGroup ? props.filterIds : null, labelModeByFilter]);
 
-  const labelMode = isGroup ? "off" : (labelModeByFilter[props.filterId] ?? "off");
+  const labelMode = isGroup
+    ? "off"
+    : (labelModeByFilter[props.filterId] ?? "off");
 
   const iconSize = isGroup
     ? (iconSizeByGroup[props.groupId] ?? 1)
@@ -179,7 +185,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-64 space-y-3 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent"
+        className="w-64 space-y-3 max-h-(--radix-popover-content-available-height) overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent"
         side="right"
       >
         {!isGroup && (
@@ -218,9 +224,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
         )}
 
         <div className="space-y-1.5">
-          <Label className="text-xs">
-            Icon Size {isGroup && "(Group)"}
-          </Label>
+          <Label className="text-xs">Icon Size {isGroup && "(Group)"}</Label>
           <div className="flex items-center gap-2">
             <Slider
               value={[iconSize]}
@@ -237,10 +241,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
 
         <div className="flex items-center justify-between">
           <Label className="text-xs">Audio Alert {isGroup && "(All)"}</Label>
-          <Switch
-            checked={audioEnabled}
-            onCheckedChange={handleAudioToggle}
-          />
+          <Switch checked={audioEnabled} onCheckedChange={handleAudioToggle} />
         </div>
 
         {isGroup && groupAudioState === "some" && (

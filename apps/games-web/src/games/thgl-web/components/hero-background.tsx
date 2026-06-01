@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { type Game, games } from "@repo/lib";
 
 export function HeroBackground(): JSX.Element {

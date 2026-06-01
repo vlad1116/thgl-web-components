@@ -1,6 +1,8 @@
 import { ExternalLink } from "lucide-react";
 import { ExternalAnchor } from "./external-anchor";
 
+import type { JSX } from "react";
+
 export function ReleaseNotesLink({ href }: { href: string }): JSX.Element {
   return (
     <ExternalAnchor

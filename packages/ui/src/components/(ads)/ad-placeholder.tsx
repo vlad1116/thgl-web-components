@@ -1,9 +1,10 @@
 "use client";
-
 import { cn } from "@repo/lib";
 import { AdFreeContainer } from "./ad-free-container";
 import { AdBlockMessage } from "./ad-block-message";
 import { AdLoadingMessage } from "./ad-loading-message";
+
+import type { JSX } from "react";
 
 type AdPlaceholderType = "loading" | "blocked";
 

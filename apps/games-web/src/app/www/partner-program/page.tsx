@@ -42,10 +42,7 @@ export default function PartnerProgramPage() {
       <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
         <ol className="flex items-center gap-1">
           <li>
-            <Link
-              href="/"
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
@@ -143,9 +140,7 @@ export default function PartnerProgramPage() {
         <h2 className="text-3xl font-bold text-center">How to Join</h2>
         <ol className="space-y-4 text-muted-foreground">
           <li className="flex gap-3">
-            <span className="text-foreground font-semibold flex-shrink-0">
-              1.
-            </span>
+            <span className="text-foreground font-semibold shrink-0">1.</span>
             <div>
               Join the{" "}
               <a
@@ -158,18 +153,14 @@ export default function PartnerProgramPage() {
             </div>
           </li>
           <li className="flex gap-3">
-            <span className="text-foreground font-semibold flex-shrink-0">
-              2.
-            </span>
+            <span className="text-foreground font-semibold shrink-0">2.</span>
             <div>
               Send me a DM (<strong className="text-foreground">devleon</strong>
               ) and tell me what you do
             </div>
           </li>
           <li className="flex gap-3">
-            <span className="text-foreground font-semibold flex-shrink-0">
-              3.
-            </span>
+            <span className="text-foreground font-semibold shrink-0">3.</span>
             <div>I'll set you up with access, a code, and shareable assets</div>
           </li>
         </ol>

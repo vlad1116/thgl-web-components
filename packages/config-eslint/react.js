@@ -1,45 +1,23 @@
-const { resolve } = require("node:path");
+const baseConfig = require("./base.js");
+const reactRefreshImport = require("eslint-plugin-react-refresh");
+const reactRefresh = reactRefreshImport.default ?? reactRefreshImport;
 
-const project = resolve(process.cwd(), "tsconfig.json");
-
-/*
- * This is a custom ESLint configuration for use a library
- * that utilizes React.
+/**
+ * Flat config for React libraries / Vite (Overwolf) apps. Migrated from the
+ * previous `react.js` eslintrc.
  *
- * This config extends the Vercel Engineering Style Guide.
- * For more information, see https://github.com/vercel/style-guide
- *
+ * @type {import("eslint").Linter.Config[]}
  */
-
-module.exports = {
-  parserOptions: {
-    project,
-  },
-  globals: {
-    JSX: true,
-  },
-  plugins: ["only-warn", "react-refresh"],
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project,
-      },
+module.exports = [
+  ...baseConfig,
+  {
+    files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
+    plugins: { "react-refresh": reactRefresh },
+    rules: {
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
     },
   },
-  ignorePatterns: ["node_modules/", "dist/", ".eslintrc.js", "**/*.css"],
-  // add rules configurations here
-  rules: {
-    "import/no-default-export": "off",
-    "react-refresh/only-export-components": [
-      "warn",
-      { allowConstantExport: true },
-    ],
-    "import/no-extraneous-dependencies": [
-      "error",
-      {
-        devDependencies: true,
-      },
-    ],
-    "import/no-relative-packages": "off",
-  },
-};
+];

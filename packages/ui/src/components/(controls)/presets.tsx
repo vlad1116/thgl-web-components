@@ -10,7 +10,7 @@ import {
 import { ChevronRight, Delete } from "lucide-react";
 import { Input } from "../ui/input";
 import { useSettingsStore, useUserStore } from "@repo/lib";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 
 export function Presets(): JSX.Element {
   const coordinates = useCoordinates();

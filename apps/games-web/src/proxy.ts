@@ -12,8 +12,12 @@ import { getAppConfigByHost } from "./configs";
  *
  * Per-game static assets (favicon, OG image) live under public/games/<slug>/
  * and are rewritten transparently based on the host.
+ *
+ * Next.js 16 renamed the `middleware` convention to `proxy` (Node.js
+ * runtime). This file uses no edge-only APIs — Buffer and process.env
+ * are natively available — so the switch is behaviour-preserving.
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const host = req.headers.get("host") || "";
 
   // Redirect the apex domain (th.gl) to the canonical www host. Both
@@ -189,9 +193,7 @@ export function middleware(req: NextRequest) {
   // under /db/* during the games-web migration. Permanent-redirect the
   // old paths so external links + Search Console history stay intact.
   if (config.name === "once-human") {
-    const legacy = ONCE_HUMAN_LEGACY_REDIRECTS.find((r) =>
-      r.test.test(path),
-    );
+    const legacy = ONCE_HUMAN_LEGACY_REDIRECTS.find((r) => r.test.test(path));
     if (legacy) {
       url.pathname = path.replace(legacy.test, legacy.replacement);
       return NextResponse.redirect(url, 308);

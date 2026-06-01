@@ -35,7 +35,7 @@ export function AppSubscriptionCard({
         </div>
 
         {/* Actions or Message */}
-        <div className="flex-grow flex flex-col justify-center gap-3 w-full">
+        <div className="grow flex flex-col justify-center gap-3 w-full">
           {hasTier && userId ? (
             <>
               <Button className="w-full" asChild>

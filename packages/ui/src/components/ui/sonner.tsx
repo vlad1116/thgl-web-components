@@ -13,7 +13,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       position="top-right"
-      pauseWhenPageIsHidden={false}
       toastOptions={{
         duration: 5000,
         classNames: {

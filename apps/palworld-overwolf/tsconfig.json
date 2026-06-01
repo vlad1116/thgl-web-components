@@ -2,11 +2,10 @@
   "exclude": ["node_modules"],
   "extends": "@repo/typescript-config/vite.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "outDir": "dist",
     "paths": {
-      "@/*": ["./src/*"],
-    },
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src", "scripts", ".eslintrc.js", "*.config.js", "*.config.ts"],
+  "include": ["src", "scripts", ".eslintrc.js", "*.config.js", "*.config.ts"]
 }

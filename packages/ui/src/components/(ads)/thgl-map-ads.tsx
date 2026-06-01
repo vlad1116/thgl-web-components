@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type JSX } from "react";
 import { getNitroAds } from "./nitro-pay";
 import { ScriptLoader } from "./nitro-script";
 import { THGLAppConfig } from "@repo/lib";
@@ -168,7 +168,16 @@ function useAdFormat(isOverlay: boolean): AdFormat | null {
 
     // Fallback
     return DESKTOP_SMALL_SIDEBAR;
-  }, [hydrated, isOverlay, isSmallHeight, isSmallWindow, isNarrowTall, isWideMedium, isWideTall, isLargeOverlay]);
+  }, [
+    hydrated,
+    isOverlay,
+    isSmallHeight,
+    isSmallWindow,
+    isNarrowTall,
+    isWideMedium,
+    isWideTall,
+    isLargeOverlay,
+  ]);
 }
 
 export function THGLMapAds({
@@ -257,7 +266,11 @@ function NitroPayAd({
     <MovableAdsContainer
       className="right-0 bottom-0"
       transformId={
-        appConfig.name + "-" + (isOverlay ? "overlay" : "map") + "-" + adFormat.variant
+        appConfig.name +
+        "-" +
+        (isOverlay ? "overlay" : "map") +
+        "-" +
+        adFormat.variant
       }
     >
       <div
@@ -287,7 +300,11 @@ function NitroPayAdLoading({
     <MovableAdsContainer
       className="right-0 bottom-0"
       transformId={
-        appConfig.name + "-" + (isOverlay ? "overlay" : "map") + "-" + adFormat.variant
+        appConfig.name +
+        "-" +
+        (isOverlay ? "overlay" : "map") +
+        "-" +
+        adFormat.variant
       }
     >
       <div

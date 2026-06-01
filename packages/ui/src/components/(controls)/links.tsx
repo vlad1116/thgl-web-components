@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, type JSX } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -372,7 +372,7 @@ export function Links({
       {/* Hidden measurer — nav items then external items */}
       <div
         ref={measureRef}
-        className="flex items-center gap-1 absolute -left-[9999px] opacity-0 pointer-events-none"
+        className="flex items-center gap-1 absolute left-[-9999px] opacity-0 pointer-events-none"
         aria-hidden
       >
         {allItems.map((item) => (

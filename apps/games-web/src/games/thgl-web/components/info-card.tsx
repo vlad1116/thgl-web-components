@@ -37,10 +37,7 @@ export function InfoCard({
             <h3 className="text-lg font-semibold">{title}</h3>
           )}
           {badge && (
-            <Badge
-              variant={badge.variant || "secondary"}
-              className="flex-shrink-0"
-            >
+            <Badge variant={badge.variant || "secondary"} className="shrink-0">
               {badge.label}
             </Badge>
           )}

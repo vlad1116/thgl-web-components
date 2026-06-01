@@ -2,6 +2,8 @@ import { PageShell } from "@/games/thgl-web/components/page-shell";
 import { PageHeader } from "@/games/thgl-web/components/page-header";
 import Link from "next/link";
 
+import type { JSX } from "react";
+
 export const metadata = {
   title: "Privacy Policy - The Hidden Gaming Lair",
   description:
@@ -49,10 +51,7 @@ export default function PrivacyPolicy(): JSX.Element {
       <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
         <ol className="flex items-center gap-1">
           <li>
-            <Link
-              href="/"
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
@@ -60,9 +59,7 @@ export default function PrivacyPolicy(): JSX.Element {
           <li aria-current="page">Privacy Policy</li>
         </ol>
       </nav>
-
       <hr className="border-border" />
-
       {/* Data Collection Section */}
       <section id="data-collection" className="space-y-4">
         <h2 className="text-2xl font-bold">Data Collection</h2>
@@ -92,9 +89,7 @@ export default function PrivacyPolicy(): JSX.Element {
           </p>
         </div>
       </section>
-
       <hr className="border-border" />
-
       {/* Cookies Section */}
       <section id="cookies" className="space-y-4">
         <h2 className="text-2xl font-bold">Cookies</h2>
@@ -117,9 +112,7 @@ export default function PrivacyPolicy(): JSX.Element {
           </p>
         </div>
       </section>
-
       <hr className="border-border" />
-
       {/* Data Security Section */}
       <section id="data-security" className="space-y-4">
         <h2 className="text-2xl font-bold">Data Security</h2>
@@ -128,9 +121,7 @@ export default function PrivacyPolicy(): JSX.Element {
           data from unauthorized access, misuse, or loss.
         </p>
       </section>
-
       <hr className="border-border" />
-
       {/* Contact Section */}
       <section id="contact" className="space-y-4">
         <h2 className="text-2xl font-bold">Contact</h2>
@@ -154,9 +145,7 @@ export default function PrivacyPolicy(): JSX.Element {
           </p>
         </div>
       </section>
-
       <hr className="border-border" />
-
       {/* Policy Changes Section */}
       <section id="policy-changes" className="space-y-4">
         <h2 className="text-2xl font-bold">Policy Changes</h2>

@@ -126,7 +126,8 @@ export function SimpleWebMap({
       // Calculate zoom to fit bounds with padding (zoom out slightly for breathing room)
       const containerWidth = containerRef.current.clientWidth || 300;
       const containerHeight = containerRef.current.clientHeight || 200;
-      zoom = calculateFitZoom(boundsToFit, containerWidth, containerHeight) - 0.5;
+      zoom =
+        calculateFitZoom(boundsToFit, containerWidth, containerHeight) - 0.5;
     }
 
     // view prop overrides fitBounds
@@ -236,7 +237,7 @@ export function SimpleWebMap({
 
   return (
     <div
-      className={cn(`h-full !bg-inherit outline-none relative`, className)}
+      className={cn(`h-full bg-inherit! outline-none relative`, className)}
       ref={containerRef}
     >
       {webmapState && (

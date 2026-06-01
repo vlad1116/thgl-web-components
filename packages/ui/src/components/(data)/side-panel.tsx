@@ -25,7 +25,7 @@ export function SidePanel({
       {/* Desktop: right side panel */}
       <div
         className={cn(
-          "hidden md:flex flex-col fixed right-0 z-[13000] w-[360px] bg-card border-l shadow-lg pointer-events-auto",
+          "hidden md:flex flex-col fixed right-0 z-13000 w-[360px] bg-card border-l shadow-lg pointer-events-auto",
           "transition-transform duration-200 ease-out",
           visible ? "translate-x-0" : "translate-x-full",
         )}
@@ -88,7 +88,7 @@ function MobileBottomSheet({
     <div
       ref={sheetRef}
       className={cn(
-        "md:hidden fixed inset-x-0 bottom-0 z-[13000] bg-card border-t rounded-t-xl shadow-lg pointer-events-auto",
+        "md:hidden fixed inset-x-0 bottom-0 z-13000 bg-card border-t rounded-t-xl shadow-lg pointer-events-auto",
         !isDragging && "transition-transform duration-200 ease-out",
         visible ? "translate-y-0" : "translate-y-full",
       )}

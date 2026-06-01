@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type JSX } from "react";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
 import { rotateCoordinate } from "./rotation";

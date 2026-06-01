@@ -1,8 +1,9 @@
 "use client";
-
 import { AppConfig, type TilesConfig } from "@repo/lib";
 import dynamic from "next/dynamic";
 import { AdditionalTooltipType } from "../(content)";
+
+import type { JSX } from "react";
 
 const FullMap = dynamic(() => import("./full-map").then((mod) => mod.FullMap), {
   ssr: false,

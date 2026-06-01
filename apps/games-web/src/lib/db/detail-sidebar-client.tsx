@@ -65,7 +65,7 @@ export function DetailSidebarClient({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50"
+            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-amber-800/50"
           />
           {filter && (
             <button
@@ -78,49 +78,49 @@ export function DetailSidebarClient({
         </div>
       </div>
       <div className="sidebar-scroll overflow-y-auto min-h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
-      {filteredGroups.map((group) => (
-        <div key={group.label} className="mb-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
-            {group.label}
+        {filteredGroups.map((group) => (
+          <div key={group.label} className="mb-3">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
+              {group.label}
+            </div>
+            {group.items.map((item) => {
+              const isActive = item.id === activeId;
+              return (
+                <Link
+                  key={item.id}
+                  href={localizePath(`${itemBase}/${item.id}`, locale)}
+                  prefetch={false}
+                  className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors ${
+                    isActive
+                      ? "bg-amber-900/30 text-amber-400"
+                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
+                  }`}
+                >
+                  {item.icon && (
+                    <img
+                      alt=""
+                      role="presentation"
+                      className="shrink-0 object-none"
+                      src={item.icon.url}
+                      width={item.icon.width}
+                      height={item.icon.height}
+                      style={{
+                        objectPosition: `-${item.icon.x}px -${item.icon.y}px`,
+                        zoom: 20 / 64,
+                      }}
+                    />
+                  )}
+                  <span className="truncate text-sm">{item.name}</span>
+                </Link>
+              );
+            })}
           </div>
-          {group.items.map((item) => {
-            const isActive = item.id === activeId;
-            return (
-              <Link
-                key={item.id}
-                href={localizePath(`${itemBase}/${item.id}`, locale)}
-                prefetch={false}
-                className={`flex items-center gap-2 px-1.5 py-1.5 rounded transition-colors ${
-                  isActive
-                    ? "bg-amber-900/30 text-amber-400"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
-                }`}
-              >
-                {item.icon && (
-                  <img
-                    alt=""
-                    role="presentation"
-                    className="shrink-0 object-none"
-                    src={item.icon.url}
-                    width={item.icon.width}
-                    height={item.icon.height}
-                    style={{
-                      objectPosition: `-${item.icon.x}px -${item.icon.y}px`,
-                      zoom: 20 / 64,
-                    }}
-                  />
-                )}
-                <span className="truncate text-sm">{item.name}</span>
-              </Link>
-            );
-          })}
-        </div>
-      ))}
-      {query && filteredGroups.length === 0 && (
-        <div className="text-xs text-muted-foreground text-center py-4">
-          No matches
-        </div>
-      )}
+        ))}
+        {query && filteredGroups.length === 0 && (
+          <div className="text-xs text-muted-foreground text-center py-4">
+            No matches
+          </div>
+        )}
       </div>
     </nav>
   );

@@ -176,7 +176,7 @@ export default async function RummagePile({ params }: PageProps) {
                 />
                 <PaliaGrid force />
               </Suspense>
-              <div className="mt-8 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8">
+              <div className="mt-8 rounded-2xl bg-linear-to-br from-primary/5 via-transparent to-accent/5 border border-primary/20 p-6 md:p-8">
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-primary mb-2">
                     {t("rummagePile.cta.title")}
@@ -191,7 +191,7 @@ export default async function RummagePile({ params }: PageProps) {
                     href="https://www.th.gl/companion-app"
                     className="relative group"
                   >
-                    <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute -inset-px rounded-xl bg-linear-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full group-hover:border-primary/50 transition-colors">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
                         1
@@ -209,7 +209,7 @@ export default async function RummagePile({ params }: PageProps) {
                   </ExternalAnchor>
 
                   <div className="relative group">
-                    <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute -inset-px rounded-xl bg-linear-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
                         2
@@ -227,7 +227,7 @@ export default async function RummagePile({ params }: PageProps) {
                   </div>
 
                   <div className="relative group">
-                    <div className="absolute -inset-px rounded-xl bg-gradient-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute -inset-px rounded-xl bg-linear-to-b from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex flex-col items-center gap-4 rounded-xl bg-card/50 border border-border/50 p-5 h-full">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">
                         3

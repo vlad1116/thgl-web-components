@@ -2,7 +2,7 @@
 
 import { isOverwolf, useAccountStore } from "@repo/lib";
 import Script from "next/script";
-import type { ReactNode } from "react";
+import type { ReactNode, JSX } from "react";
 import { useEffect } from "react";
 import { create } from "zustand";
 import { getNitroAds, NitroAds } from "./nitro-pay";

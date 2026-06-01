@@ -37,7 +37,7 @@ export function NavCard({
       href={localizePath(href, locale)}
       className={cn("block", { "min-h-[200px]": bgImage })}
     >
-      <Card className="h-full w-full hover:border-primary transition-colors relative text-left overflow-hidden flex flex-col bg-gradient-to-b from-muted/50 to-black">
+      <Card className="h-full w-full hover:border-primary transition-colors relative text-left overflow-hidden flex flex-col bg-linear-to-b from-muted/50 to-black">
         <CardHeader className="relative z-10 grow p-0">
           <CardTitle className="bg-black/75 border-black px-2 py-2 flex justify-center items-center uppercase truncate text-md">
             <NavIcon

@@ -46,6 +46,8 @@ import { Ads400x600Desktop } from "./ads-400-600-desktop";
 import { AdditionalTooltipType } from "../(content)";
 import { MarkerPanel } from "../(data)";
 
+import type { JSX } from "react";
+
 export function App({
   appConfig,
   dict,
@@ -114,7 +116,11 @@ export function App({
               moreSettings={moreSettings}
               filters={filters}
             />
-            <HeaderOffset bypass={Boolean(isOverlay) || lockedWindow} full className={!isOverlay && !lockedWindow ? "pt-[32px]" : undefined}>
+            <HeaderOffset
+              bypass={Boolean(isOverlay) || lockedWindow}
+              full
+              className={!isOverlay && !lockedWindow ? "pt-[32px]" : undefined}
+            >
               <MapContainer isOverlay={Boolean(isOverlay)}>
                 <InteractiveMap
                   appTitle={appConfig.title}
@@ -140,16 +146,18 @@ export function App({
                   iconsPath={version?.more.icons}
                   className="top-[40px]"
                   mapEnTitles={Object.fromEntries(
-                    Object.keys(tiles).map((k) => [
-                      k,
-                      translate(dict, k),
-                    ]),
+                    Object.keys(tiles).map((k) => [k, translate(dict, k)]),
                   )}
                 />
               )}
               {lockedWindow ? lockedWindowComponents : null}
               {additionalComponents}
-              <Actions mapControls={<MapControls hidden={lockedWindow} alwaysShowFollowPlayer />} className="top-[40px]">
+              <Actions
+                mapControls={
+                  <MapControls hidden={lockedWindow} alwaysShowFollowPlayer />
+                }
+                className="top-[40px]"
+              >
                 <Whiteboard domain={appConfig.domain} hidden={lockedWindow} />
                 <StreamingSender
                   domain={appConfig.domain}
@@ -180,7 +188,9 @@ export function App({
                 <MarkerPanel
                   appName={appConfig.name}
                   additionalTooltip={additionalTooltip}
-                  coordinateCopyFormat={appConfig.markerOptions.coordinateCopyFormat}
+                  coordinateCopyFormat={
+                    appConfig.markerOptions.coordinateCopyFormat
+                  }
                   headerOffset="32px"
                 />
               )}

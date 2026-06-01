@@ -5,6 +5,7 @@
     "composite": false,
     "declaration": true,
     "declarationMap": true,
+    "ignoreDeprecations": "6.0",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
@@ -20,7 +21,5 @@
     "noEmit": true,
     "strictNullChecks": true
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

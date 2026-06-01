@@ -152,7 +152,7 @@ export function IconPicker({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0 max-h-[var(--radix-popover-content-available-height)] overflow-hidden flex flex-col">
+      <PopoverContent className="p-0 max-h-(--radix-popover-content-available-height) overflow-hidden flex flex-col">
         {icons === null ? (
           <div className="space-y-2 p-4">
             <Skeleton className="h-4 w-[250px]" />
@@ -172,41 +172,41 @@ export function IconPicker({
             </div>
             <div className="flex flex-wrap gap-1 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
               {selection.icons.map((icon) => (
-                  <button
-                    key={`${icon.name}-${icon.author}`}
-                    onClick={() => onChange(icon)}
-                    title={`${icon.name}${icon.author ? `made by ${icon.author}` : ""}`}
-                  >
-                    {icon.width !== 0 ? (
-                      <img
-                        src={
-                          appName
-                            ? getIconsUrl(appName, icon.url, iconsPath)
-                            : icon.url
-                        }
-                        alt={icon.name}
-                        className="object-none"
-                        width={icon.width}
-                        height={icon.height}
-                        style={{
-                          objectPosition: `-${icon.x}px -${icon.y}px`,
-                          zoom: 0.5,
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={
-                          appName
-                            ? getIconsUrl(appName, icon.url, iconsPath)
-                            : icon.url
-                        }
-                        alt={icon.name}
-                        loading="lazy"
-                        className="h-6 w-6 active:scale-105"
-                      />
-                    )}
-                  </button>
-                ))}
+                <button
+                  key={`${icon.name}-${icon.author}`}
+                  onClick={() => onChange(icon)}
+                  title={`${icon.name}${icon.author ? `made by ${icon.author}` : ""}`}
+                >
+                  {icon.width !== 0 ? (
+                    <img
+                      src={
+                        appName
+                          ? getIconsUrl(appName, icon.url, iconsPath)
+                          : icon.url
+                      }
+                      alt={icon.name}
+                      className="object-none"
+                      width={icon.width}
+                      height={icon.height}
+                      style={{
+                        objectPosition: `-${icon.x}px -${icon.y}px`,
+                        zoom: 0.5,
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={
+                        appName
+                          ? getIconsUrl(appName, icon.url, iconsPath)
+                          : icon.url
+                      }
+                      alt={icon.name}
+                      loading="lazy"
+                      className="h-6 w-6 active:scale-105"
+                    />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         ) : (

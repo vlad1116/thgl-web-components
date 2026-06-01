@@ -1,19 +1,30 @@
 "use client";
 import { cn, useAccountStore } from "@repo/lib";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import {
   sendDebugSnapshot,
   setCloseAction as setCloseActionApi,
   useLiveState,
   CloseAction,
 } from "@repo/lib/thgl-app";
+import { Button, Checkbox, Label } from "../(controls)";
 import {
-  Button,
-  Checkbox,
-  Label,
-} from "../(controls)";
-import { Bug, CircleUser, ExternalLink as ExternalLinkIcon, LogOut, Menu, Minus, Settings, Shield } from "lucide-react";
-import { ExternalAnchor, DiscordIcon, GitHubIcon, RedditIcon, WindowControlSymbols } from "../(header)";
+  Bug,
+  CircleUser,
+  ExternalLink as ExternalLinkIcon,
+  LogOut,
+  Menu,
+  Minus,
+  Settings,
+  Shield,
+} from "lucide-react";
+import {
+  ExternalAnchor,
+  DiscordIcon,
+  GitHubIcon,
+  RedditIcon,
+  WindowControlSymbols,
+} from "../(header)";
 import { AccountDialog } from "./account-dialog";
 import {
   Dialog,
@@ -90,7 +101,8 @@ export function AppHeader({
 
   const handleCloseChoice = (choice: "closeWindow" | "exit") => {
     if (rememberChoice) {
-      const action: CloseAction = choice === "closeWindow" ? "closeWindow" : "exit";
+      const action: CloseAction =
+        choice === "closeWindow" ? "closeWindow" : "exit";
       setCloseActionApi(action)
         .then(() => setCloseAction(action))
         .catch(console.error);
@@ -113,7 +125,7 @@ export function AppHeader({
       <WindowControlSymbols />
       <header
         className={cn(
-          "px-2 h-[32px] fixed left-0 right-0 top-0 border-b bg-gradient-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center pointer-events-auto z-[999999]",
+          "px-2 h-[32px] fixed left-0 right-0 top-0 border-b bg-linear-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center pointer-events-auto z-999999",
         )}
         onDoubleClick={() => {
           window.chrome.webview.postMessage("maximize");
@@ -182,10 +194,7 @@ export function AppHeader({
             title="Account"
           >
             <CircleUser
-              className={cn(
-                "h-3.5 w-3.5",
-                account.userId && "text-primary",
-              )}
+              className={cn("h-3.5 w-3.5", account.userId && "text-primary")}
             />
           </Button>
           {/* Burger menu — always visible */}
@@ -242,11 +251,11 @@ export function AppHeader({
       {isMenuOpen && (
         <>
           <div
-            className="fixed inset-0 z-[999998]"
+            className="fixed inset-0 z-999998"
             onClick={() => setIsMenuOpen(false)}
           />
           <div
-            className="fixed top-[32px] right-0 w-64 bg-zinc-900/95 backdrop-blur-xl border-b border-l border-neutral-800 p-3 flex flex-col gap-2 z-[999998] pointer-events-auto"
+            className="fixed top-[32px] right-0 w-64 bg-zinc-900/95 backdrop-blur-xl border-b border-l border-neutral-800 p-3 flex flex-col gap-2 z-999998 pointer-events-auto"
             onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Social links */}
@@ -319,10 +328,7 @@ export function AppHeader({
       )}
 
       {/* Debug snapshot dialog */}
-      <Dialog
-        open={isDebugDialogOpen}
-        onOpenChange={setIsDebugDialogOpen}
-      >
+      <Dialog open={isDebugDialogOpen} onOpenChange={setIsDebugDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Send Debug Snapshot</DialogTitle>
@@ -336,8 +342,8 @@ export function AppHeader({
               >
                 Discord server
               </a>{" "}
-              and describe your issue there. Only send debug logs if asked
-              by support.
+              and describe your issue there. Only send debug logs if asked by
+              support.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -355,8 +361,7 @@ export function AppHeader({
             )}
             {debugStatus === "error" && (
               <div className="text-sm text-red-600 dark:text-red-400 font-medium">
-                ✗ Failed to send debug snapshot. Check console for
-                details.
+                ✗ Failed to send debug snapshot. Check console for details.
               </div>
             )}
           </div>
@@ -371,10 +376,7 @@ export function AppHeader({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSendDebugSnapshot}
-              disabled={isSendingDebug}
-            >
+            <Button onClick={handleSendDebugSnapshot} disabled={isSendingDebug}>
               {isSendingDebug ? "Sending..." : "Send"}
             </Button>
           </DialogFooter>
@@ -389,9 +391,7 @@ export function AppHeader({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Close window</DialogTitle>
-            <DialogDescription>
-              What would you like to do?
-            </DialogDescription>
+            <DialogDescription>What would you like to do?</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 py-2">
             <button

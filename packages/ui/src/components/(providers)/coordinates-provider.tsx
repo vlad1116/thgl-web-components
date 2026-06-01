@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 import Fuse from "fuse.js";
 import { useI18n } from ".";
@@ -296,7 +297,10 @@ export function CoordinatesProvider({
   // Reverse lookup: translated icon name → current icon coords from filter config.
   // Used to fix stale sprite x,y in old private nodes that lack filterId.
   const iconNameLookup = useMemo(() => {
-    const lookup = new Map<string, { x: number; y: number; width: number; height: number; filterId: string }>();
+    const lookup = new Map<
+      string,
+      { x: number; y: number; width: number; height: number; filterId: string }
+    >();
     for (const filter of filters) {
       for (const value of filter.values) {
         if (typeof value.icon !== "string") {
@@ -317,10 +321,22 @@ export function CoordinatesProvider({
         const nodeMapName = node.mapName;
         // Resolve stale sprite coords for old private nodes missing filterId
         let icon = node.icon;
-        if (icon && !icon.filterId && icon.name && icon.url?.includes("/icons/")) {
+        if (
+          icon &&
+          !icon.filterId &&
+          icon.name &&
+          icon.url?.includes("/icons/")
+        ) {
           const current = iconNameLookup.get(icon.name);
           if (current) {
-            icon = { ...icon, x: current.x, y: current.y, width: current.width, height: current.height, filterId: current.filterId };
+            icon = {
+              ...icon,
+              x: current.x,
+              y: current.y,
+              width: current.width,
+              height: current.height,
+              filterId: current.filterId,
+            };
           }
         }
         const category = acc.find(
@@ -688,20 +704,25 @@ export function CoordinatesProvider({
     if (!isHydrated) return;
     refreshSpawns(useUserStore.getState());
     const unsubs = [
-      useUserStore.subscribe((s) => s.filters, () =>
-        refreshSpawns(useUserStore.getState()),
+      useUserStore.subscribe(
+        (s) => s.filters,
+        () => refreshSpawns(useUserStore.getState()),
       ),
-      useUserStore.subscribe((s) => s.search, () =>
-        refreshSpawns(useUserStore.getState()),
+      useUserStore.subscribe(
+        (s) => s.search,
+        () => refreshSpawns(useUserStore.getState()),
       ),
-      useUserStore.subscribe((s) => s.globalFilters, () =>
-        refreshSpawns(useUserStore.getState()),
+      useUserStore.subscribe(
+        (s) => s.globalFilters,
+        () => refreshSpawns(useUserStore.getState()),
       ),
-      useUserStore.subscribe((s) => s.mapName, () =>
-        refreshSpawns(useUserStore.getState()),
+      useUserStore.subscribe(
+        (s) => s.mapName,
+        () => refreshSpawns(useUserStore.getState()),
       ),
-      useUserStore.subscribe((s) => s.selectedNodeId, () =>
-        refreshSpawns(useUserStore.getState()),
+      useUserStore.subscribe(
+        (s) => s.selectedNodeId,
+        () => refreshSpawns(useUserStore.getState()),
       ),
     ];
     return () => unsubs.forEach((u) => u());

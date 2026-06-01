@@ -1,5 +1,7 @@
 import { HeaderLink } from "./header-link";
 
+import type { JSX } from "react";
+
 export function InteractiveMapLink({
   active,
 }: {

@@ -11,6 +11,8 @@ import {
   PaliaWeeklyWants,
 } from "../(data)";
 
+import type { JSX } from "react";
+
 const ADDITIONAL_CONTENT = {
   PlayerDetails: PlayerDetails,
   PaliaWeeklyWants: PaliaWeeklyWants,

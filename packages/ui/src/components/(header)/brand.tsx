@@ -1,5 +1,7 @@
 import { cn } from "@repo/lib";
 
+import type { JSX } from "react";
+
 export function Brand({
   title,
   className,

@@ -68,17 +68,21 @@ export default async function CompanionAppPage() {
   const appUpdates = await getUpdateMessages("thgl-companion-app");
 
   // Convert app updates to changelog entries
-  const changelogEntries: ChangelogEntry[] = appUpdates.slice(0, 5).map((msg) => {
-    const versionMatch = msg.text.match(/\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m);
-    const version = versionMatch?.[1] || versionMatch?.[2];
+  const changelogEntries: ChangelogEntry[] = appUpdates
+    .slice(0, 5)
+    .map((msg) => {
+      const versionMatch = msg.text.match(
+        /\*\*(\d+\.\d+\.\d+)\*\*|^#?\s*(\d+\.\d+\.\d+)/m,
+      );
+      const version = versionMatch?.[1] || versionMatch?.[2];
 
-    return {
-      version,
-      date: new Date(msg.timestamp).toISOString().split("T")[0],
-      content: msg.text,
-      timestamp: msg.timestamp,
-    };
-  });
+      return {
+        version,
+        date: new Date(msg.timestamp).toISOString().split("T")[0],
+        content: msg.text,
+        timestamp: msg.timestamp,
+      };
+    });
 
   return (
     <section className="space-y-16 px-4 pt-10 pb-20 mx-auto max-w-7xl">
@@ -130,16 +134,10 @@ export default async function CompanionAppPage() {
           }).replace(/</g, "\\u003c"),
         }}
       />
-      <nav
-        aria-label="Breadcrumb"
-        className="text-xs text-muted-foreground"
-      >
+      <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
         <ol className="flex items-center gap-1">
           <li>
-            <Link
-              href="/"
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
@@ -308,7 +306,7 @@ export default async function CompanionAppPage() {
       </div>
 
       {/* Advanced Features Section */}
-      <div className="bg-gradient-to-b from-primary/5 to-transparent -mx-4 px-4 py-16">
+      <div className="bg-linear-to-b from-primary/5 to-transparent -mx-4 px-4 py-16">
         <div className="max-w-6xl mx-auto">
           <SectionHeader
             title="More Than Just an Overlay"
@@ -469,7 +467,7 @@ export default async function CompanionAppPage() {
       </div>
 
       {/* Download CTA */}
-      <div className="bg-gradient-to-r from-primary/20 to-primary/5 rounded-lg p-12 text-center space-y-6">
+      <div className="bg-linear-to-r from-primary/20 to-primary/5 rounded-lg p-12 text-center space-y-6">
         <h2 className="text-3xl md:text-4xl font-bold">
           Ready to Enhance Your Gaming?
         </h2>

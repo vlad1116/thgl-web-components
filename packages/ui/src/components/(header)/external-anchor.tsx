@@ -1,6 +1,8 @@
 "use client";
 import { trackOutboundLinkClick } from "./plausible-tracker";
 
+import type { JSX } from "react";
+
 export function ExternalAnchor({
   onClick,
   ...props

@@ -45,7 +45,7 @@ export function TierCard({ tier }: { tier: Tier }) {
         </div>
 
         {/* Perks List */}
-        <ul className="flex-grow space-y-3">
+        <ul className="grow space-y-3">
           {perks.map((perk) => {
             const isIncluded = tier.perks.includes(perk.id);
             return (
@@ -57,9 +57,9 @@ export function TierCard({ tier }: { tier: Tier }) {
                 )}
               >
                 {isIncluded ? (
-                  <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                  <Check className="h-5 w-5 text-primary shrink-0" />
                 ) : (
-                  <X className="h-5 w-5 flex-shrink-0" />
+                  <X className="h-5 w-5 shrink-0" />
                 )}
                 <span>{perk.title}</span>
               </li>

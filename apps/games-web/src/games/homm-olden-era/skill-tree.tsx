@@ -5,7 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { localizePath } from "@repo/lib";
 import { Search as SearchIcon, X } from "lucide-react";
-import type { ResolvedIcon, SkillNode } from "@/games/homm-olden-era/skill-tree-data";
+import type {
+  ResolvedIcon,
+  SkillNode,
+} from "@/games/homm-olden-era/skill-tree-data";
 
 function Icon({ icon, size }: { icon: ResolvedIcon; size: number }) {
   const zoom = size / 64;
@@ -25,7 +28,13 @@ function Icon({ icon, size }: { icon: ResolvedIcon; size: number }) {
   );
 }
 
-function Chevron({ open, className = "w-3 h-3" }: { open: boolean; className?: string }) {
+function Chevron({
+  open,
+  className = "w-3 h-3",
+}: {
+  open: boolean;
+  className?: string;
+}) {
   return (
     <svg
       className={`${className} transition-transform ${open ? "rotate-90" : ""}`}
@@ -72,7 +81,13 @@ export function SkillTreeList({
   );
 }
 
-function SkillTreeItem({ skill, locale }: { skill: SkillNode; locale: string }) {
+function SkillTreeItem({
+  skill,
+  locale,
+}: {
+  skill: SkillNode;
+  locale: string;
+}) {
   const [open, setOpen] = useState(false);
   const hasSubs = skill.subSkills.length > 0;
 
@@ -164,7 +179,7 @@ export function SkillTreeSidebar({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-amber-800/50"
+            className="w-full h-7 rounded border border-neutral-700 bg-zinc-800/50 pl-7 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:border-amber-800/50"
           />
           {filter && (
             <button
@@ -177,26 +192,26 @@ export function SkillTreeSidebar({
         </div>
       </div>
       <div className="sidebar-scroll overflow-y-auto min-h-0">
-      {Array.from(groups.entries()).map(([groupId, items]) => (
-        <div key={groupId} className="mb-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
-            {groupId}
+        {Array.from(groups.entries()).map(([groupId, items]) => (
+          <div key={groupId} className="mb-3">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1 px-1.5">
+              {groupId}
+            </div>
+            {items.map((skill) => (
+              <SidebarSkillItem
+                key={skill.id}
+                skill={skill}
+                activeId={activeId}
+                locale={locale}
+              />
+            ))}
           </div>
-          {items.map((skill) => (
-            <SidebarSkillItem
-              key={skill.id}
-              skill={skill}
-              activeId={activeId}
-              locale={locale}
-            />
-          ))}
-        </div>
-      ))}
-      {query && groups.size === 0 && (
-        <div className="text-xs text-muted-foreground text-center py-4">
-          No matches
-        </div>
-      )}
+        ))}
+        {query && groups.size === 0 && (
+          <div className="text-xs text-muted-foreground text-center py-4">
+            No matches
+          </div>
+        )}
       </div>
     </nav>
   );

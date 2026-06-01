@@ -1,5 +1,7 @@
 import { HeaderLink } from "./header-link";
 
+import type { JSX } from "react";
+
 export function AppDownload({ active }: { active: boolean }): JSX.Element {
   return (
     <HeaderLink active={active}>

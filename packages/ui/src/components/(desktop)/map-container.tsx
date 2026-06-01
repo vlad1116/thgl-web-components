@@ -194,7 +194,7 @@ export function MapContainer({
     <>
       <div
         ref={mapContainerRef}
-        className={cn(`lock absolute inset-0 will-change-transform z-[11000]`, {
+        className={cn(`lock absolute inset-0 will-change-transform z-11000`, {
           "pointer-events-none": lockedWindow && noLockHover,
         })}
         style={mapTransformWithoutBorderRadius}
@@ -299,7 +299,7 @@ export function MapContainer({
           onDragStart={() => {
             mapRef.current!.classList.add("pointer-events-none");
           }}
-          className="!z-[12000]"
+          className="z-12000!"
           onDragEnd={() => {
             mapRef.current!.classList.remove("pointer-events-none");
           }}

@@ -1,7 +1,7 @@
 "use client";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { AdFreeContainer } from "./ad-free-container";
-import { useEffect } from "react";
+import { useEffect, type JSX } from "react";
 import { getNitroAds } from "./nitro-pay";
 import { IS_DEMO_MODE } from "./constants";
 import { AdPlaceholder } from "./ad-placeholder";
@@ -43,7 +43,14 @@ export function FloatingMobileBanner({
     }
     // Depend on the targeting *values* (not the object reference) — see
     // wide-skyscrapper.tsx for full context.
-  }, [matched, bannerId, targeting?.game, targeting?.platform, isLoading, isBlocked]);
+  }, [
+    matched,
+    bannerId,
+    targeting?.game,
+    targeting?.platform,
+    isLoading,
+    isBlocked,
+  ]);
 
   if (matched) {
     return <></>;
@@ -55,7 +62,7 @@ export function FloatingMobileBanner({
         type="loading"
         width="w-[320px]"
         height="h-[50px]"
-        className="fixed bottom-0 left-0 z-[99999]"
+        className="fixed bottom-0 left-0 z-99999"
       />
     );
   }
@@ -66,13 +73,13 @@ export function FloatingMobileBanner({
         type="blocked"
         width="w-[320px]"
         height="h-[50px]"
-        className="fixed bottom-0 left-0 z-[99999]"
+        className="fixed bottom-0 left-0 z-99999"
         hideBlockedText
       />
     );
   }
   return (
-    <AdFreeContainer className="fixed bottom-0 left-0 z-[99999]">
+    <AdFreeContainer className="fixed bottom-0 left-0 z-99999">
       <div
         className="rounded h-[50px] w-[320px] bg-zinc-800/30 flex flex-col justify-center text-gray-500"
         id={bannerId}

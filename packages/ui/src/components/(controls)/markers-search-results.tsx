@@ -1,7 +1,7 @@
 import { cn, getIconsUrl, useUserStore } from "@repo/lib";
 import { useMap } from "../(interactive-map)/store";
 import { useCoordinates, useT } from "../(providers)";
-import { useMemo } from "react";
+import { useMemo, type JSX } from "react";
 import { MapPin } from "lucide-react";
 
 export function MarkersSearchResults({

@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   type ReactNode,
+  type JSX,
 } from "react";
 import { DEFAULT_LOCALE, type Dict, translate } from "@repo/lib";
 

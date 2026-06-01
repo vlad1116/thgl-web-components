@@ -12,7 +12,6 @@ import { Partner } from "./partners";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { Youtube, Twitch, Globe } from "lucide-react";
 
 export function PartnerCarousel({ partners }: { partners: Partner[] }) {
   const plugin = useRef(
