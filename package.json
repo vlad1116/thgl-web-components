@@ -2,6 +2,7 @@
   "name": "the-hidden-gaming-lair",
   "private": true,
   "scripts": {
+    "bump": "node scripts/bump-version.mjs",
     "build": "turbo run build",
     "clean": "turbo run clean",
     "clean:all": "rimraf **/node_modules **/.next **/dist **/.turbo && bun install",
