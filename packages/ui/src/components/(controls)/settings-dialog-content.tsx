@@ -592,32 +592,34 @@ export function SettingsDialogContent({
                           next to a filter.
                         </p>
                       ) : (
-                        <ScrollArea className="max-h-40">
-                          <ul className="space-y-0.5 pr-2">
-                            {enabledIds.map((id) => {
-                              const name = t(id) || id;
-                              return (
-                                <li
-                                  key={id}
-                                  className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-muted/50"
+                        // Native overflow scroll — Radix ScrollArea needs a
+                        // definite height to scroll, and a max-height-only list
+                        // wouldn't (the viewport never overflows). This scrolls
+                        // reliably regardless of item count.
+                        <ul className="max-h-48 space-y-0.5 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ring/50 [&::-webkit-scrollbar-track]:bg-transparent">
+                          {enabledIds.map((id) => {
+                            const name = t(id) || id;
+                            return (
+                              <li
+                                key={id}
+                                className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-muted/50"
+                              >
+                                <span className="truncate">{name}</span>
+                                <button
+                                  type="button"
+                                  aria-label={`Turn off alert for ${name}`}
+                                  title="Turn off this alert"
+                                  className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                                  onClick={() =>
+                                    settingsStore.toggleAudioAlertByFilter(id)
+                                  }
                                 >
-                                  <span className="truncate">{name}</span>
-                                  <button
-                                    type="button"
-                                    aria-label={`Turn off alert for ${name}`}
-                                    title="Turn off this alert"
-                                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
-                                    onClick={() =>
-                                      settingsStore.toggleAudioAlertByFilter(id)
-                                    }
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </ScrollArea>
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       )}
                     </div>
                   );
