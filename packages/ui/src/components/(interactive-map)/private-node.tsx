@@ -4,6 +4,7 @@ import { useMap } from "./store";
 import { Button } from "../ui/button";
 import {
   type PrivateNode,
+  type PrivateNodeStyle,
   useSettingsStore,
   useConnectionStore,
   useUserStore,
@@ -15,11 +16,18 @@ import {
   type IconMarkerLayer,
 } from "@repo/lib/web-map";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { ColorPicker } from "../(controls)/color-picker";
 import { Slider } from "../ui/slider";
-import { Info, MapPin } from "lucide-react";
+import { ChevronDown, Info, MapPin } from "lucide-react";
 import { trackEvent } from "../(header)/plausible-tracker";
 import { IconPicker } from "../(controls)/icon-picker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -46,6 +54,16 @@ const PRIVATE_NODE_MARKER_ID = "__private_node_preview__";
 const PRIVATE_NODE_ICON_SHEET = "__private_node_icon_sheet__";
 const SHARED_PRIVATE_NODE_MARKER_ID = "__shared_private_node_preview__";
 
+// A short human label for a saved style, used in the "Use last" dropdown.
+function styleLabel(style: PrivateNodeStyle): string {
+  return (
+    style.name?.trim() ||
+    style.icon?.name ||
+    style.filter ||
+    "Untitled style"
+  );
+}
+
 export function PrivateNode({
   appName,
   hidden,
@@ -63,6 +81,12 @@ export function PrivateNode({
   const setTempPrivateNode = useSettingsStore(
     (state) => state.setTempPrivateNode,
   );
+  const recentPrivateNodeStyles = useSettingsStore(
+    (state) => state.recentPrivateNodeStyles,
+  );
+  const pushRecentPrivateNodeStyle = useSettingsStore(
+    (state) => state.pushRecentPrivateNodeStyle,
+  );
   const baseIconSize = useSettingsStore((state) => state.baseIconSize);
   const iconSizeByFilter = useSettingsStore((state) => state.iconSizeByFilter);
   const iconSizeByGroup = useSettingsStore((state) => state.iconSizeByGroup);
@@ -77,6 +101,11 @@ export function PrivateNode({
 
   // Version counter to trigger visual effect when marker is recreated
   const [markerVersion, setMarkerVersion] = useState(0);
+
+  // Signature of the last node we persisted. Used to ignore a repeated save
+  // (e.g. double-clicking "Save & next") when nothing has changed since, so we
+  // never create two identical nodes at the same spot.
+  const lastSavedSignatureRef = useRef<string | null>(null);
 
   // Local cache for colored circle images (not shared, specific to this component)
   const coloredCircleCache = useRef<Map<string, HTMLImageElement>>(new Map());
@@ -572,9 +601,7 @@ export function PrivateNode({
     return <></>;
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const saveNode = (keepOpen: boolean) => {
     if (!tempPrivateNode?.filter) {
       return;
     }
@@ -584,6 +611,22 @@ export function PrivateNode({
       return;
     }
     const storageCoord = tempPrivateNode.p;
+
+    // Guard against duplicate saves (e.g. double-clicking "Save & next"): if
+    // nothing changed since the last save, ignore this one. The signature
+    // covers everything that defines the node, including its position.
+    const signature = JSON.stringify({
+      filter: tempPrivateNode.filter,
+      name: tempPrivateNode.name ?? "",
+      description: tempPrivateNode.description ?? "",
+      color,
+      icon: tempPrivateNode.icon ?? null,
+      radius,
+      p: storageCoord,
+    });
+    if (signature === lastSavedSignatureRef.current) {
+      return;
+    }
 
     // Keep existing ID when editing, generate new one when creating
     const id = tempPrivateNode.id ?? `${tempPrivateNode.filter}_${Date.now()}`;
@@ -625,7 +668,43 @@ export function PrivateNode({
       ...filters.filter((f) => f !== tempPrivateNode.filter),
       tempPrivateNode.filter,
     ]);
-    setTempPrivateNode(null);
+    lastSavedSignatureRef.current = signature;
+
+    // Remember this style so it can be reapplied to future nodes.
+    pushRecentPrivateNodeStyle({
+      filter: tempPrivateNode.filter,
+      name: tempPrivateNode.name,
+      description: tempPrivateNode.description,
+      color,
+      icon: tempPrivateNode.icon ?? null,
+      radius,
+    });
+
+    if (keepOpen) {
+      // Keep the style fields for the next node; clear the id so the next save
+      // creates a new node instead of overwriting the one we just saved. The
+      // position is kept so the preview marker stays visible until the user
+      // clicks the map to place the next one.
+      setTempPrivateNode({ id: undefined });
+    } else {
+      setTempPrivateNode(null);
+    }
+  };
+
+  const applyStyle = (style: PrivateNodeStyle) => {
+    setTempPrivateNode({
+      filter: style.filter,
+      name: style.name,
+      description: style.description,
+      color: style.color,
+      icon: style.icon,
+      radius: style.radius,
+    });
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    saveNode(false);
   };
 
   return (
@@ -633,6 +712,8 @@ export function PrivateNode({
       open={isEditing}
       onOpenChange={(open) => {
         setTempPrivateNode(open ? { mapName } : null);
+        // Reset the duplicate-save guard so the next session starts clean.
+        lastSavedSignatureRef.current = null;
       }}
     >
       <Tooltip delayDuration={200} disableHoverableContent>
@@ -653,6 +734,52 @@ export function PrivateNode({
               <p className="text-sm text-muted-foreground">
                 Click on the map to change the node position.
               </p>
+              {!tempPrivateNode?.id && recentPrivateNodeStyles.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between gap-2 h-8"
+                      title="Reuse the style of a recently created node"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <span
+                          className="h-3 w-3 rounded-full border shrink-0"
+                          style={{
+                            backgroundColor:
+                              recentPrivateNodeStyles[0].color ?? "#FFFFFFCC",
+                          }}
+                        />
+                        <span className="truncate text-muted-foreground">
+                          Use last: {styleLabel(recentPrivateNodeStyles[0])}
+                        </span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="max-h-64 overflow-y-auto"
+                  >
+                    <DropdownMenuLabel>Recent node styles</DropdownMenuLabel>
+                    {recentPrivateNodeStyles.map((style, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        onClick={() => applyStyle(style)}
+                        className="gap-2"
+                      >
+                        <span
+                          className="h-3 w-3 rounded-full border shrink-0"
+                          style={{ backgroundColor: style.color ?? "#FFFFFFCC" }}
+                        />
+                        <span className="truncate">{styleLabel(style)}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
             <div className="grid gap-2">
               <div className="grid grid-cols-3 items-center gap-4">
@@ -785,6 +912,16 @@ export function PrivateNode({
           <div className="flex items-center space-x-2 mt-2">
             <Button size="sm" type="submit" disabled={!tempPrivateNode?.filter}>
               Save
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              type="button"
+              disabled={!tempPrivateNode?.filter}
+              onClick={() => saveNode(true)}
+              title="Save this node and keep the dialog open to add another with the same style"
+            >
+              Save & next
             </Button>
             <Button
               size="sm"

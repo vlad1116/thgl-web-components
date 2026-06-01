@@ -64,6 +64,19 @@ export type PrivateNode = {
   mapName: string;
 };
 
+// The reusable style of a private node (everything except its position and id).
+// A capped list of the most recent ones is persisted so the "Add Node" dialog
+// can offer them as one-click starting points when creating new nodes.
+export const MAX_RECENT_PRIVATE_NODE_STYLES = 10;
+export type PrivateNodeStyle = {
+  filter?: string;
+  name?: string;
+  description?: string;
+  icon: PrivateNode["icon"];
+  color?: string;
+  radius: number;
+};
+
 export type Drawing = {
   id: string;
   polylines?: {
@@ -184,6 +197,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   displayDiscordActivityStatus: true,
   presets: {},
   tempPrivateNode: null,
+  recentPrivateNodeStyles: [],
   tempPrivateDrawing: null,
   drawingColor: "#FFFFFFAA",
   drawingFillColor: "#FFFFFF33",
@@ -254,6 +268,7 @@ export type ProfileSettings = {
   displayDiscordActivityStatus: boolean;
   presets: Record<string, string[]>;
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
+  recentPrivateNodeStyles: PrivateNodeStyle[];
   tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null;
   drawingColor: string;
   drawingFillColor: string;
@@ -341,6 +356,7 @@ export interface ProfileActions {
   setTempPrivateNode: (
     tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null,
   ) => void;
+  pushRecentPrivateNodeStyle: (style: PrivateNodeStyle) => void;
   setTempPrivateDrawing: (
     tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null,
   ) => void;
@@ -1122,6 +1138,30 @@ export const useSettingsStore = create(
                   ...tempPrivateNode,
                 }
               : null,
+          });
+        },
+
+        pushRecentPrivateNodeStyle: (style) => {
+          const state = get();
+          const signature = (s: PrivateNodeStyle) =>
+            JSON.stringify({
+              filter: s.filter ?? "",
+              name: s.name ?? "",
+              description: s.description ?? "",
+              color: s.color ?? "",
+              icon: s.icon ?? null,
+              radius: s.radius,
+            });
+          const sig = signature(style);
+          // Move an identical style to the front instead of duplicating it.
+          const deduped = (state.recentPrivateNodeStyles ?? []).filter(
+            (s) => signature(s) !== sig,
+          );
+          updateSettings({
+            recentPrivateNodeStyles: [style, ...deduped].slice(
+              0,
+              MAX_RECENT_PRIVATE_NODE_STYLES,
+            ),
           });
         },
 
