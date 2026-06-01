@@ -22,7 +22,6 @@
   "dependencies": {
     "@repo/lib": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@vercel/postgres": "0.10.0",
     "fuse.js": "catalog:",
     "jsonwebtoken": "catalog:",
     "next": "catalog:",

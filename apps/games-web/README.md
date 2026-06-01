@@ -117,9 +117,7 @@ Required for full functionality:
 - `PALIA_API_KEY`, `PALIA_REVALIDATE_SECRET` — palia leaderboard / rummage-pile / weekly-wants webhook.
 - `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, `PATREON_SPECIAL_USERS`, `JWT_SECRET`, `COOKIE_DOMAIN` — thgl-app + thgl-web Patreon OAuth flow. `redirect_uri` is derived from the incoming request host (each tenant round-trips to itself), so no per-host env var is needed; just ensure both `https://app.th.gl/api/patreon/redirect` and `https://www.th.gl/api/patreon/redirect` are in the Patreon OAuth app's redirect_uri allowlist.
 - `NEXT_PUBLIC_BASE_URL` — base URL for server-side self-fetches.
-- `BUNNY_DATABASE_URL`, `BUNNY_DATABASE_AUTH_TOKEN` — Patreon token store (Bunny Database, libSQL).
-- `POSTGRES_*` (thgl-web shared filters / nodes / suggestions).
-- `BLOB_READ_WRITE_TOKEN` (thgl-web shared profile images).
+- `BUNNY_DATABASE_URL`, `BUNNY_DATABASE_AUTH_TOKEN` — Patreon token store + shared filters (Bunny Database, libSQL).
 
 Local dev uses `apps/games-web/.env.local` (gitignored). Production
 container env vars are set in the Bunny Magic Container settings.
