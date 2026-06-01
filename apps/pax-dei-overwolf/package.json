@@ -9,7 +9,8 @@
     "dev": "bunx --bun vite --port 6000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "release": "node scripts/release-overwolf.mjs"
+    "release": "node scripts/release-overwolf.mjs",
+    "promote": "node scripts/promote-overwolf.mjs"
   },
   "dependencies": {
     "react": "catalog:",

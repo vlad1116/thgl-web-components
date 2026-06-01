@@ -23,3 +23,10 @@ jobs:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           PREVIEW_ACCESS_CHANNEL_ID: 751
         run: bunx turbo run release --filter=palworld-overwolf...
+      - name: Promote tested build to production
+        env:
+          OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
+          OW_APP_ID: ebafpjfhleenmkcmdhlbdchpdalblhiellgfmmbb
+          PREVIEW_ACCESS_CHANNEL_NAME: preview-access
+        run: bunx turbo run promote --filter=palworld-overwolf
