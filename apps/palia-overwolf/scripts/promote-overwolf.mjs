@@ -44,18 +44,49 @@ console.log("Initialized OW CLI container");
 const promoteCmd = OwCliContainer.resolve(PromoteToProdCommand);
 const releaseCmd = OwCliContainer.resolve(ReleaseOpkCommand);
 
-console.log(
-  `Promoting version ${version} from channel "${SOURCE_CHANNEL}" to production...`,
-);
-const versionId = await promoteCmd.handler({
-  appId: APP_ID,
-  sourceChannel: SOURCE_CHANNEL,
-  version,
-});
-console.log(`Promoted to production (version id ${versionId})`);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-await releaseCmd.handler({
-  versionId,
-  percent: 100,
-});
-console.log(`Released version ${version} to 100% of production users.`);
+// After the release step releases the version to the preview channel, Overwolf
+// marks it "live" asynchronously (a few seconds later). promote-to-prod fails
+// with `400 Version is not live` until then, so retry that transient error.
+async function promoteWithRetry(args, attempts = 12, delayMs = 6000) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await promoteCmd.handler(args);
+    } catch (err) {
+      const msg =
+        typeof err === "string" ? err : (err?.message ?? JSON.stringify(err));
+      if (/not live/i.test(msg) && attempt < attempts) {
+        console.log(
+          `Version not live yet (attempt ${attempt}/${attempts}); retrying in ${delayMs / 1000}s...`,
+        );
+        await sleep(delayMs);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+try {
+  console.log(
+    `Promoting version ${version} from channel "${SOURCE_CHANNEL}" to production...`,
+  );
+  const versionId = await promoteWithRetry({
+    appId: APP_ID,
+    sourceChannel: SOURCE_CHANNEL,
+    version,
+  });
+  console.log(`Promoted to production (version id ${versionId})`);
+
+  await releaseCmd.handler({
+    versionId,
+    percent: 100,
+  });
+  console.log(`Released version ${version} to 100% of production users.`);
+} catch (err) {
+  const msg =
+    typeof err === "string" ? err : (err?.message ?? JSON.stringify(err));
+  console.error(`Failed to promote version ${version}: ${msg}`);
+  process.exit(1);
+}
