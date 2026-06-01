@@ -169,10 +169,10 @@ Each app contains a `src/config.ts` file for routing and game-specific setup.
 
 ## 📦 Deployment
 
-| Type          | How it works                                   |
-| ------------- | ---------------------------------------------- |
-| Websites      | Automatically deployed to **Vercel** on change |
-| Overwolf Apps | Must be manually updated (via `manifest.json`) |
+| Type          | How it works                                                              |
+| ------------- | ------------------------------------------------------------------------- |
+| Websites      | `games-web` multi-tenant **Bunny Magic Container**, redeployed on change (`games-web-deploy.yml`) |
+| Overwolf Apps | Must be manually updated (via `manifest.json`)                            |
 
 ## 🧠 Need Help?
 

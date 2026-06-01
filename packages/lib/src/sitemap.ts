@@ -48,7 +48,8 @@ type NamedMarker = {
 };
 
 // Each entry generates ~(1 + locales) URL entries with alternates XML.
-// Keep each sitemap chunk under ~15MB to stay within Vercel's 19MB ISR limit.
+// Keep each sitemap chunk small (~15MB) — well under common CDN/response
+// size limits and fast to generate per request in the container.
 const ENTRIES_PER_CHUNK = 150;
 
 export function createRobots(appConfig: AppConfig) {
