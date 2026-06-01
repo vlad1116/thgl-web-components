@@ -1,3 +1,4 @@
+import { useUserStore } from "../(providers)";
 import { useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -14,7 +15,7 @@ import { Separator } from "../ui/separator";
 import { toast } from "sonner";
 import { useMap } from "./store";
 import { useCoordinates, useI18n } from "../(providers)";
-import { mapArrayValues, useUserStore } from "@repo/lib";
+import { mapArrayValues } from "@repo/lib";
 
 export function ShareMapView({
   mapName,

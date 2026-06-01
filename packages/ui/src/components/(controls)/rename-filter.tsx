@@ -1,12 +1,9 @@
+import { useUserStore } from "../(providers)";
 import { Button, Label } from "../(controls)";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useState } from "react";
 import { Input } from "../ui/input";
-import {
-  type DrawingsAndNodes,
-  useSettingsStore,
-  useUserStore,
-} from "@repo/lib";
+import { type DrawingsAndNodes, useSettingsStore } from "@repo/lib";
 
 export function RenameFilter({
   myFilter,

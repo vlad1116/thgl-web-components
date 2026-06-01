@@ -1,4 +1,5 @@
-import { cn, useGameState, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { cn, useGameState } from "@repo/lib";
 import { Input } from "../ui/input";
 import { useCoordinates, useT } from "../(providers)";
 import Markdown from "markdown-to-jsx";
@@ -150,7 +151,8 @@ export function NodeDetails({
           </h3>
           <p className="italic flex gap-2 items-center">
             {t(spawn.type, { fallback: spawn.type })}
-            {filter?.group && ` | ${t(filter.group, { fallback: filter.group })}`}
+            {filter?.group &&
+              ` | ${t(filter.group, { fallback: filter.group })}`}
           </p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <span>

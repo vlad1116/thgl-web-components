@@ -1,4 +1,5 @@
 "use client";
+import { useUserStore } from "../(providers)";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useMap } from "./store";
@@ -6,11 +7,7 @@ import { Info, Spline } from "lucide-react";
 import { Button } from "../ui/button";
 import { ColorPicker } from "../(controls)/color-picker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import {
-  useSettingsStore,
-  useUserStore,
-  type Drawing,
-} from "@repo/lib";
+import { useSettingsStore, type Drawing } from "@repo/lib";
 import {
   DrawingManager,
   DrawingLayer,
@@ -80,7 +77,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       const transformPositions = (positions: [number, number][]) => {
         return positions.map((pos) => {
           if (rotationDegrees && rotationCenter) {
-            return inverseRotateCoordinate(pos, rotationDegrees, rotationCenter);
+            return inverseRotateCoordinate(
+              pos,
+              rotationDegrees,
+              rotationCenter,
+            );
           }
           return pos;
         });
@@ -472,7 +473,10 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     const editingName = isEditing ? tempPrivateDrawing?.name : null;
     const allDrawingFilters = [...myFilters, ...(staticDrawings || [])];
     const selectedDrawings = allDrawingFilters.filter(
-      (filter) => filters.includes(filter.name) && filter.drawing && filter.name !== editingName
+      (filter) =>
+        filters.includes(filter.name) &&
+        filter.drawing &&
+        filter.name !== editingName,
     );
 
     if (selectedDrawings.length === 0) {
@@ -578,7 +582,15 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         savedDrawingsLayerRef.current = null;
       }
     };
-  }, [map, filters, myFilters, staticDrawings, mapName, isEditing, tempPrivateDrawing?.name]);
+  }, [
+    map,
+    filters,
+    myFilters,
+    staticDrawings,
+    mapName,
+    isEditing,
+    tempPrivateDrawing?.name,
+  ]);
 
   // Sync dynamic size factor to drawing layers
   useEffect(() => {
@@ -650,7 +662,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button size="icon" variant={isEditing ? "secondary" : "outline"} aria-label="Add drawing">
+            <Button
+              size="icon"
+              variant={isEditing ? "secondary" : "outline"}
+              aria-label="Add drawing"
+            >
               <Spline className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -703,7 +719,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
                     // Check if this filter already has a drawing
                     const existingFilter = myFilters.find(
-                      (f) => f.name === value && f.drawing
+                      (f) => f.name === value && f.drawing,
                     );
                     if (existingFilter?.drawing) {
                       // Load the existing drawing
@@ -939,7 +955,11 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
             </div>
           </div>
           <div className="flex items-center space-x-2 mt-2">
-            <Button size="sm" type="submit" disabled={!tempPrivateDrawing?.name}>
+            <Button
+              size="sm"
+              type="submit"
+              disabled={!tempPrivateDrawing?.name}
+            >
               Save
             </Button>
             <Button

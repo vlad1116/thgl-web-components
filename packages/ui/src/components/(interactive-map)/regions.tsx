@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, type JSX } from "react";
+import { useUserStore } from "../(providers)";
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
-import { useSettingsStore, useUserStore } from "@repo/lib";
+import { useSettingsStore } from "@repo/lib";
 import { REGION_FILTERS, useCoordinates, useT } from "../(providers)";
 import { DrawingLayer } from "@repo/lib/web-map";
 

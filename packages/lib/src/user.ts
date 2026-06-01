@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { View } from "./search-params";
 import { FiltersConfig, GlobalFiltersConfig } from "./config";
@@ -16,7 +16,9 @@ export interface UserStoreState {
   selectedNodeId: string | null;
   setSelectedNodeId: (id: string | null) => void;
   selectedZone: { name: string; desc: string; group: string } | null;
-  setSelectedZone: (zone: { name: string; desc: string; group: string } | null) => void;
+  setSelectedZone: (
+    zone: { name: string; desc: string; group: string } | null,
+  ) => void;
   search: string;
   setSearch: (search: string) => void;
   searchIsLoading: boolean;
@@ -34,8 +36,6 @@ export interface UserStoreState {
   setGlobalFilters: (filters: string[]) => void;
   toggleGlobalFilter: (filter: string) => void;
 }
-
-export let useUserStore: ReturnType<typeof createUserStore>;
 
 const getStorageName = () => {
   if (typeof window !== "undefined") {
@@ -58,7 +58,7 @@ export function createUserStore(
   }[] = [],
   staticDrawings?: DrawingsAndNodes[],
 ) {
-  return create(
+  return createStore<UserStoreState>()(
     subscribeWithSelector(
       persist<UserStoreState>(
         (set) => {
@@ -105,11 +105,17 @@ export function createUserStore(
             },
             selectedNodeId: null,
             setSelectedNodeId: (id) => {
-              set({ selectedNodeId: id, ...(id ? { selectedZone: null } : {}) });
+              set({
+                selectedNodeId: id,
+                ...(id ? { selectedZone: null } : {}),
+              });
             },
             selectedZone: null,
             setSelectedZone: (zone) => {
-              set({ selectedZone: zone, ...(zone ? { selectedNodeId: null } : {}) });
+              set({
+                selectedZone: zone,
+                ...(zone ? { selectedNodeId: null } : {}),
+              });
             },
             search: "",
             setSearch: (search) => {
@@ -216,23 +222,9 @@ export function createUserStore(
   );
 }
 
-export function initUserStore(
-  view: View,
-  mapNames: string[],
-  filters: FiltersConfig,
-  globalFilters: GlobalFiltersConfig,
-  regionFilters: {
-    id: string;
-    Icon: any;
-  }[] = [],
-  staticDrawings?: DrawingsAndNodes[],
-) {
-  useUserStore = createUserStore(
-    view,
-    mapNames,
-    filters,
-    globalFilters,
-    regionFilters,
-    staticDrawings,
-  );
-}
+export type UserStore = ReturnType<typeof createUserStore>;
+
+// The React context + hooks that share this per-request store live in
+// @repo/ui (packages/ui/src/components/(providers)/user-store.tsx). They use
+// `createContext`, which is client-only and must NOT be pulled into this
+// server-importable barrel — keep only the framework-agnostic factory here.

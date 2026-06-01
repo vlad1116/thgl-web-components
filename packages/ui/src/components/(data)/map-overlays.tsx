@@ -1,5 +1,6 @@
 "use client";
 import { createPortal } from "react-dom";
+import { useUserStore, useUserStoreApi } from "../(providers)";
 import { useMapStore } from "../(interactive-map)/store";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -7,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { cn, useUserStore, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { cn, DATA_FORGE_CDN_URL } from "@repo/lib";
 import {
   ZoneOverlayLayer,
   DrawingLayer,
@@ -389,6 +390,7 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
   const map = useMapStore((state) => state.map);
   const filters = useUserStore((state) => state.filters);
   const setFilters = useUserStore((state) => state.setFilters);
+  const userStoreApi = useUserStoreApi();
   const t = useT();
 
   const { data: config } = useSWRImmutable<OverlayConfig>(configUrl, fetcher);
@@ -609,7 +611,7 @@ export function MapOverlays({ configUrl, basePath }: MapOverlaysProps) {
     }) => {
       // Defer to next tick so marker click can set selectedNodeId first
       setTimeout(() => {
-        if (useUserStore.getState().selectedNodeId) return; // marker was clicked
+        if (userStoreApi.getState().selectedNodeId) return; // marker was clicked
         _handleZoneClick(e);
       }, 0);
     };

@@ -1,13 +1,20 @@
+import { useUserStoreApi } from "../(providers)";
 import { HOTKEYS } from "@repo/lib/overwolf";
 import { useEffect } from "react";
 import { useMap } from "../(interactive-map)/store";
-import { getNodeId, type Spawn, useGameState, useSettingsStore, useUserStore } from "@repo/lib";
+import {
+  getNodeId,
+  type Spawn,
+  useGameState,
+  useSettingsStore,
+} from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { toast } from "sonner";
 
 export function MapHotkeys() {
   const map = useMap();
   const { nodes, typesIdMap } = useCoordinates();
+  const userStoreApi = useUserStoreApi();
   const t = useT();
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export function MapHotkeys() {
         }
         lastDiscoverTime = now;
 
-        const { filters } = useUserStore.getState();
+        const { filters } = userStoreApi.getState();
         const { player } = useGameState.getState();
         if (!player) {
           return;
@@ -85,7 +92,10 @@ export function MapHotkeys() {
         }
         const { spawns } = nodeSpawns.reduce(
           (nearest, spawn) => {
-            if (hideDiscoveredNodes && isDiscoveredNode(getNodeId(spawn as Spawn))) {
+            if (
+              hideDiscoveredNodes &&
+              isDiscoveredNode(getNodeId(spawn as Spawn))
+            ) {
               return nearest;
             }
             const distance = Math.sqrt(

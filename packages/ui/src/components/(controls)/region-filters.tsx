@@ -1,3 +1,4 @@
+import { useUserStore } from "../(providers)";
 import { useMemo, useState } from "react";
 import { REGION_FILTERS, useCoordinates, useT } from "../(providers)";
 import {
@@ -5,7 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { cn, useUserStore } from "@repo/lib";
+import { cn } from "@repo/lib";
 import { ChevronRight, Hexagon } from "lucide-react";
 
 export function RegionFilters() {

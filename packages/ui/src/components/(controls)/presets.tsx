@@ -1,4 +1,5 @@
 import { REGION_FILTERS, useCoordinates } from "../(providers)";
+import { useUserStore } from "../(providers)";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,7 @@ import {
 } from "../ui/dropdown-menu";
 import { ChevronRight, Delete } from "lucide-react";
 import { Input } from "../ui/input";
-import { useSettingsStore, useUserStore } from "@repo/lib";
+import { useSettingsStore } from "@repo/lib";
 import { useState, type JSX } from "react";
 
 export function Presets(): JSX.Element {

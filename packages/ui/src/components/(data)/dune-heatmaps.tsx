@@ -1,4 +1,5 @@
 "use client";
+import { useUserStore } from "../(providers)";
 import { useMapStore } from "../(interactive-map)/store";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -6,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { cn, useSettingsStore, useUserStore } from "@repo/lib";
+import { cn, useSettingsStore } from "@repo/lib";
 import { ImageOverlayLayer } from "@repo/lib/web-map";
 import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";

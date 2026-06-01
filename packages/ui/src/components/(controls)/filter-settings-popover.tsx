@@ -1,12 +1,13 @@
 "use client";
 
 import { Settings2 } from "lucide-react";
+import { useUserStore } from "../(providers)";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
-import { useSettingsStore, type LabelMode, useUserStore } from "@repo/lib";
+import { useSettingsStore, type LabelMode } from "@repo/lib";
 import { useMemo, useState } from "react";
 import { useCoordinates } from "../(providers)";
 import { FilterTooltip } from "./filter-tooltip";

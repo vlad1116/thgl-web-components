@@ -1,4 +1,5 @@
 "use client";
+import { useUserStore } from "../(providers)";
 import Peer, { DataConnection } from "peerjs";
 import { peerConfig } from "../(providers)/peer-mesh-utils";
 import {
@@ -17,7 +18,6 @@ import {
   PrivateNode,
   useConnectionStore,
   useSettingsStore,
-  useUserStore,
 } from "@repo/lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Presentation } from "lucide-react";

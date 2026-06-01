@@ -1,4 +1,5 @@
-import { cn, getIconsUrl, useUserStore } from "@repo/lib";
+import { cn, getIconsUrl } from "@repo/lib";
+import { useUserStore } from "../(providers)";
 import { useMap } from "../(interactive-map)/store";
 import { useCoordinates, useT } from "../(providers)";
 import { useMemo, type JSX } from "react";

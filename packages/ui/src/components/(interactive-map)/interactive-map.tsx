@@ -1,7 +1,8 @@
 "use client";
 
 import type { TilesConfig } from "@repo/lib";
-import { cn, getAppUrl, useSettingsStore, useUserStore } from "@repo/lib";
+import { useUserStore, useUserStoreApi } from "../(providers)";
+import { cn, getAppUrl, useSettingsStore } from "@repo/lib";
 import {
   WebMap,
   TileLayer,
@@ -45,6 +46,7 @@ export function InteractiveMap({
   const isHydrated = useUserStore((state) => state._hasHydrated);
   const mapFilter = useSettingsStore((state) => state.mapFilter);
   const mapName = useUserStore((state) => state.mapName);
+  const userStoreApi = useUserStoreApi();
   const colorBlindMode = useSettingsStore((state) => state.colorBlindMode);
   const colorBlindSeverity = useSettingsStore(
     (state) => state.colorBlindSeverity,
@@ -68,11 +70,11 @@ export function InteractiveMap({
       throw new Error("Map ref is not defined");
     }
 
-    const { viewByMap, setViewByMap } = useUserStore.getState();
+    const { viewByMap, setViewByMap } = userStoreApi.getState();
     const view = viewByMap[mapName] ?? {};
 
     // Only set map title if no marker is selected (marker pages have SSR titles)
-    if (!useUserStore.getState().selectedNodeId) {
+    if (!userStoreApi.getState().selectedNodeId) {
       document.title = t("map.pageTitle", {
         vars: { title: appTitle, map: t(mapName) },
       });

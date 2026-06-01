@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, type JSX } from "react";
+import { useUserStore } from "../(providers)";
 import { useMap } from "./store";
 import { PlayerMarker } from "./player-marker";
 import { rotateCoordinate } from "./rotation";
 import type { ActorPlayer } from "@repo/lib/overwolf";
-import {
-  getIconsUrl,
-  MarkerOptions,
-  TilesConfig,
-  useUserStore,
-} from "@repo/lib";
+import { getIconsUrl, MarkerOptions, TilesConfig } from "@repo/lib";
 import { useSettingsStore } from "@repo/lib";
 import { useT } from "../(providers)";
 import { applyColorBlindTransform } from "./color-blind";

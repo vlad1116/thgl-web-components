@@ -1,6 +1,7 @@
+import { useUserStore } from "../(providers)";
 import { ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn, useUserStore } from "@repo/lib";
+import { cn } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { useEffect } from "react";
 

@@ -20,8 +20,8 @@ import {
   DrawingsAndNodes,
   FiltersConfig,
   getAppUrl,
-  initUserStore,
-  useUserStore,
+  createUserStore,
+  type UserStore,
   UserStoreState,
   searchParamsToView,
   GlobalFiltersConfig,
@@ -29,6 +29,8 @@ import {
   getApiUrl,
 } from "@repo/lib";
 import { CaseSensitive, Hexagon } from "lucide-react";
+import { useStore } from "zustand";
+import { UserStoreContext } from "./user-store";
 import useSWRImmutable from "swr/immutable";
 import { toast } from "sonner";
 
@@ -138,7 +140,12 @@ export function CoordinatesProvider({
   clusterPrecision?: number;
 }): JSX.Element {
   const { t, dict, locale } = useI18n();
-  if (!useUserStore) {
+  // Create the user store once per provider instance (i.e. per request on
+  // the server, per mount on the client) and share it via UserStoreContext.
+  // This replaces the old module-level singleton, which leaked one tenant's
+  // state into another's SSR HTML and caused hydration mismatches.
+  const userStoreRef = useRef<UserStore | null>(null);
+  if (!userStoreRef.current) {
     const fIds = Object.values(filters).flatMap((f) =>
       f.values.map((v) => v.id),
     );
@@ -164,7 +171,7 @@ export function CoordinatesProvider({
     if (map) {
       view.map = map;
     }
-    initUserStore(
+    userStoreRef.current = createUserStore(
       view,
       mapNames,
       filters,
@@ -173,13 +180,17 @@ export function CoordinatesProvider({
       staticDrawings,
     );
   }
+  const userStore = userStoreRef.current;
 
-  const userStoreHasHydrated = useUserStore((state) => state._hasHydrated);
-  const search = useUserStore((state) => state.search);
+  const userStoreHasHydrated = useStore(
+    userStore,
+    (state) => state._hasHydrated,
+  );
+  const search = useStore(userStore, (state) => state.search);
   const settingsHasHydrated = useSettingsStore((state) => state._hasHydrated);
   const isHydrated = userStoreHasHydrated && settingsHasHydrated;
-  const mapName = useUserStore((state) => state.mapName);
-  const setMapName = useUserStore((state) => state.setMapName);
+  const mapName = useStore(userStore, (state) => state.mapName);
+  const setMapName = useStore(userStore, (state) => state.setMapName);
 
   useEffect(() => {
     if (map && map !== mapName) {
@@ -284,11 +295,11 @@ export function CoordinatesProvider({
   const publicSearchSpawns = publicSearchSpawnsByKeyword?.[search];
 
   useEffect(() => {
-    const state = useUserStore.getState();
+    const state = userStore.getState();
     if (state.searchIsLoading !== publicSearchIsLoading) {
       state.setSearchIsLoading(publicSearchIsLoading);
     }
-  }, [publicSearchIsLoading]);
+  }, [publicSearchIsLoading, userStore]);
 
   const liveMode = useEffectiveLiveMode();
   const myFilters = useSettingsStore((state) => state.myFilters);
@@ -702,49 +713,51 @@ export function CoordinatesProvider({
 
   useEffect(() => {
     if (!isHydrated) return;
-    refreshSpawns(useUserStore.getState());
+    refreshSpawns(userStore.getState());
     const unsubs = [
-      useUserStore.subscribe(
+      userStore.subscribe(
         (s) => s.filters,
-        () => refreshSpawns(useUserStore.getState()),
+        () => refreshSpawns(userStore.getState()),
       ),
-      useUserStore.subscribe(
+      userStore.subscribe(
         (s) => s.search,
-        () => refreshSpawns(useUserStore.getState()),
+        () => refreshSpawns(userStore.getState()),
       ),
-      useUserStore.subscribe(
+      userStore.subscribe(
         (s) => s.globalFilters,
-        () => refreshSpawns(useUserStore.getState()),
+        () => refreshSpawns(userStore.getState()),
       ),
-      useUserStore.subscribe(
+      userStore.subscribe(
         (s) => s.mapName,
-        () => refreshSpawns(useUserStore.getState()),
+        () => refreshSpawns(userStore.getState()),
       ),
-      useUserStore.subscribe(
+      userStore.subscribe(
         (s) => s.selectedNodeId,
-        () => refreshSpawns(useUserStore.getState()),
+        () => refreshSpawns(userStore.getState()),
       ),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [isHydrated, refreshSpawns, mapName, nodesFingerprint]);
+  }, [isHydrated, refreshSpawns, mapName, nodesFingerprint, userStore]);
 
   return (
-    <Context.Provider
-      value={{
-        isHydrated,
-        nodes,
-        staticDrawings,
-        regions,
-        allFilters,
-        filters,
-        spawns,
-        icons,
-        typesIdMap,
-        globalFilters,
-      }}
-    >
-      {children}
-    </Context.Provider>
+    <UserStoreContext.Provider value={userStore}>
+      <Context.Provider
+        value={{
+          isHydrated,
+          nodes,
+          staticDrawings,
+          regions,
+          allFilters,
+          filters,
+          spawns,
+          icons,
+          typesIdMap,
+          globalFilters,
+        }}
+      >
+        {children}
+      </Context.Provider>
+    </UserStoreContext.Provider>
   );
 }
 

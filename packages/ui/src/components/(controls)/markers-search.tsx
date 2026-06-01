@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, TilesConfig, useSettingsStore, useUserStore } from "@repo/lib";
+import { cn, TilesConfig, useSettingsStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
 import { ReactNode, useEffect, useRef, useState, type JSX } from "react";
 import { Input } from "../ui/input";
 import { MarkersSearchResults } from "./markers-search-results";

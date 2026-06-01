@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cn, useGameState, useSettingsStore, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { cn, useGameState, useSettingsStore } from "@repo/lib";
 import { SidePanel } from "./side-panel";
 import { useCoordinates, useT } from "../(providers)";
 import { Separator } from "../ui/separator";
@@ -375,11 +376,7 @@ export function MarkerPanel({
   );
 
   return (
-    <SidePanel
-      visible={visible}
-      onClose={close}
-      headerOffset={headerOffset}
-    >
+    <SidePanel visible={visible} onClose={close} headerOffset={headerOffset}>
       {panelContent}
     </SidePanel>
   );

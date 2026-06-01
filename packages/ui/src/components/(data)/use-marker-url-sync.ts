@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getNodeId, isOverwolf, Spawn, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { getNodeId, isOverwolf, Spawn } from "@repo/lib";
 import { useCoordinates, useT } from "../(providers)";
 import { useMapStore } from "../(interactive-map)";
 import { trackPageview } from "../(header)/plausible-tracker";
@@ -10,18 +11,12 @@ export function getMarkerDisplayName(
   spawn: { name?: string; id?: string; type: string },
   t: ReturnType<typeof useT>,
 ): string {
-  const termId = (spawn.name ?? spawn.id ?? spawn.type).replace(
-    /my_\d+_/,
-    "",
-  );
+  const termId = (spawn.name ?? spawn.id ?? spawn.type).replace(/my_\d+_/, "");
   return t(termId, { fallback: spawn.type });
 }
 
 /** Find a spawn by selectedNodeId, with fallback for coordinate mismatches from clustering */
-function findSpawn(
-  selectedNodeId: string,
-  spawns: Spawn[],
-): Spawn | null {
+function findSpawn(selectedNodeId: string, spawns: Spawn[]): Spawn | null {
   // Pass 1: exact match
   for (const s of spawns) {
     if (getNodeId(s) === selectedNodeId) return s;
@@ -88,7 +83,11 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
         for (const node of nodes) {
           if (node.mapName && node.mapName !== mapName) continue;
           for (const s of node.spawns) {
-            const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
+            const spawn = {
+              ...s,
+              id: s.id ?? node.type,
+              type: node.type,
+            } as Spawn;
             if (getNodeId(spawn) === target) return spawn;
           }
         }
@@ -117,7 +116,11 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
         for (const node of nodes) {
           if (node.mapName && node.mapName !== mapName) continue;
           for (const s of node.spawns) {
-            const spawn = { ...s, id: s.id ?? node.type, type: node.type } as Spawn;
+            const spawn = {
+              ...s,
+              id: s.id ?? node.type,
+              type: node.type,
+            } as Spawn;
             const name = getMarkerDisplayName(spawn, t);
             if (name === markerSlug) return spawn;
           }
@@ -179,7 +182,10 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
         const typeName = t(spawn.type, { fallback: spawn.type });
         const canonicalNodeId = getNodeId(spawn);
         // Use human name in path if the spawn has a translated/readable name
-        const rawId = (spawn.name ?? spawn.id ?? spawn.type).replace(/my_\d+_/, "");
+        const rawId = (spawn.name ?? spawn.id ?? spawn.type).replace(
+          /my_\d+_/,
+          "",
+        );
         const hasSpecificName = name !== rawId && name !== typeName;
         const slug = hasSpecificName
           ? encodeURIComponent(name)
@@ -203,7 +209,9 @@ export function useMarkerUrlSync(markerSlug: string | undefined) {
       // Deselected — restore base URL and title
       // But skip if we have a pending slug that hasn't resolved yet
       if (markerSlug && !hasResolved.current) return;
-      if (decodeURIComponent(location.pathname) !== decodeURIComponent(basePath)) {
+      if (
+        decodeURIComponent(location.pathname) !== decodeURIComponent(basePath)
+      ) {
         history.replaceState({}, "", basePath);
       }
       if (initialTitle.current) {

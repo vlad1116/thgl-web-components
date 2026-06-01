@@ -1,4 +1,5 @@
-import { cn, FiltersConfig, getIconsUrl, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { cn, FiltersConfig, getIconsUrl } from "@repo/lib";
 import {
   Collapsible,
   CollapsibleContent,
@@ -167,9 +168,7 @@ export function CollapsibleFilter({
                     <span className="truncate">{t(f.id) || f.id}</span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {t(f.id) || f.id}
-                </TooltipContent>
+                <TooltipContent side="top">{t(f.id) || f.id}</TooltipContent>
               </Tooltip>
               <div className="grow" />
               <FilterSettingsPopover

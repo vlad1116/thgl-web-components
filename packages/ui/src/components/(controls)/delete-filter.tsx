@@ -1,4 +1,5 @@
-import { DrawingsAndNodes, useSettingsStore, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { DrawingsAndNodes, useSettingsStore } from "@repo/lib";
 import {
   AlertDialog,
   AlertDialogAction,

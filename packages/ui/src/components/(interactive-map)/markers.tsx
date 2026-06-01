@@ -7,6 +7,7 @@ import React, {
   useState,
   type JSX,
 } from "react";
+import { useUserStore, useUserStoreApi } from "../(providers)";
 import { createPortal } from "react-dom";
 import { Spawns, useCoordinates, useT } from "../(providers)";
 import { useMap } from "./store";
@@ -24,7 +25,6 @@ import {
   useEffectiveLiveMode,
   useGameState,
   useSettingsStore,
-  useUserStore,
 } from "@repo/lib";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -463,6 +463,7 @@ function MarkersContent({
   );
   const sharedMyFilters = useConnectionStore((state) => state.myFilters);
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
+  const userStoreApi = useUserStoreApi();
   const highlightSpawnIDs = useGameState((state) => state.highlightSpawnIDs);
   const player = useGameState((state) => state.player);
   const throttledPlayer = useThrottle(player, 1000);
@@ -1807,7 +1808,7 @@ function MarkersContent({
 
     const processActors = () => {
       const actorsList = useGameState.getState().actors || [];
-      const userState = useUserStore.getState();
+      const userState = userStoreApi.getState();
       const settingsState = useSettingsStore.getState();
       // Live data renders unless mode is 'static'. (Preview-only modes
       // collapse to 'live' for non-preview users, but both still mean
@@ -2064,15 +2065,15 @@ function MarkersContent({
       (s) => s.highlightSpawnIDs,
       processActors,
     );
-    const unsubFilters = useUserStore.subscribe(
+    const unsubFilters = userStoreApi.subscribe(
       (s) => s.filters,
       processActors,
     );
-    const unsubMapName = useUserStore.subscribe(
+    const unsubMapName = userStoreApi.subscribe(
       (s) => s.mapName,
       processActors,
     );
-    const unsubSelected = useUserStore.subscribe(
+    const unsubSelected = userStoreApi.subscribe(
       (s) => s.selectedNodeId,
       processActors,
     );

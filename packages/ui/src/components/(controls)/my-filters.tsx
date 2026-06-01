@@ -9,9 +9,9 @@ import {
   saveFile,
   useAccountStore,
   useSettingsStore,
-  useUserStore,
   writeFileOverwolf,
 } from "@repo/lib";
+import { useUserStore } from "../(providers)";
 import { CommunityFilters } from "./community-filters";
 import { AddSharedFilter } from "../(interactive-map)/add-shared-filter";
 import { UploadFilter } from "../(interactive-map)/upload-filter";
@@ -164,10 +164,9 @@ export function MyFilters() {
           <p className="text-xs text-muted-foreground px-2 py-3 leading-snug">
             No saved filters yet. Browse{" "}
             <span className="text-foreground">Community</span> for public
-            filters, paste a{" "}
-            <span className="text-foreground">Code</span> a friend shared,
-            or <span className="text-foreground">Upload</span> a filter
-            file.
+            filters, paste a <span className="text-foreground">Code</span> a
+            friend shared, or <span className="text-foreground">Upload</span> a
+            filter file.
           </p>
         )}
         {myFilters
@@ -265,7 +264,9 @@ function FilterRow({
   }) {
     if (busyRef.current) return;
     if (!myFilter.id) {
-      toast.error("Filter not yet synced to your account — try again in a moment");
+      toast.error(
+        "Filter not yet synced to your account — try again in a moment",
+      );
       return;
     }
     busyRef.current = true;
@@ -317,8 +318,7 @@ function FilterRow({
       });
       toast.success(`"${displayName}" saved to your account`);
     } catch (err) {
-      const msg =
-        err instanceof FiltersApiError ? err.message : "Save failed";
+      const msg = err instanceof FiltersApiError ? err.message : "Save failed";
       toast.error(msg);
     } finally {
       busyRef.current = false;
@@ -344,7 +344,9 @@ function FilterRow({
         });
       } catch (err) {
         const msg =
-          err instanceof FiltersApiError ? err.message : "Could not generate share code";
+          err instanceof FiltersApiError
+            ? err.message
+            : "Could not generate share code";
         toast.error(msg);
         return;
       }
@@ -453,8 +455,7 @@ function FilterRow({
                 } else {
                   writeFileOverwolf(
                     JSON.stringify(myFilter),
-                    overwolf.io.paths.documents +
-                      "\\the-hidden-gaming-lair",
+                    overwolf.io.paths.documents + "\\the-hidden-gaming-lair",
                     fileName,
                   );
                 }

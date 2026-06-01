@@ -1,4 +1,5 @@
 import { Check, ChevronDown, Map } from "lucide-react";
+import { useUserStore } from "../(providers)";
 import { useLocale, useT } from "../(providers)";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
@@ -10,7 +11,7 @@ import {
   CommandList,
 } from "../ui/command";
 import { useState, type JSX } from "react";
-import { cn, localizePath, useUserStore } from "@repo/lib";
+import { cn, localizePath } from "@repo/lib";
 import { ScrollArea } from "../ui/scroll-area";
 
 export function MapSelect({

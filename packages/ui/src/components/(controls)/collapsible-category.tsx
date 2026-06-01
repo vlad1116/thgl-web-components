@@ -1,4 +1,5 @@
-import { cn, FiltersConfig, useUserStore } from "@repo/lib";
+import { useUserStore } from "../(providers)";
+import { cn, FiltersConfig } from "@repo/lib";
 import {
   Collapsible,
   CollapsibleContent,

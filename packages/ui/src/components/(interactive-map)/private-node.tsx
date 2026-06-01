@@ -1,4 +1,5 @@
 "use client";
+import { useUserStore } from "../(providers)";
 import { useEffect, useRef, useState } from "react";
 import { useMap } from "./store";
 import { Button } from "../ui/button";
@@ -7,7 +8,6 @@ import {
   type PrivateNodeStyle,
   useSettingsStore,
   useConnectionStore,
-  useUserStore,
   getIconsUrl,
 } from "@repo/lib";
 import {
@@ -57,10 +57,7 @@ const SHARED_PRIVATE_NODE_MARKER_ID = "__shared_private_node_preview__";
 // A short human label for a saved style, used in the "Use last" dropdown.
 function styleLabel(style: PrivateNodeStyle): string {
   return (
-    style.name?.trim() ||
-    style.icon?.name ||
-    style.filter ||
-    "Untitled style"
+    style.name?.trim() || style.icon?.name || style.filter || "Untitled style"
   );
 }
 
@@ -210,12 +207,32 @@ export function PrivateNode({
         ctx.shadowColor = rgbColor;
         ctx.shadowBlur = glowSize;
         for (let i = 0; i < 3; i++) {
-          ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+          ctx.drawImage(
+            sourceImg,
+            srcX,
+            srcY,
+            width,
+            height,
+            iconX,
+            iconY,
+            width,
+            height,
+          );
         }
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
       }
-      ctx.drawImage(sourceImg, srcX, srcY, width, height, iconX, iconY, width, height);
+      ctx.drawImage(
+        sourceImg,
+        srcX,
+        srcY,
+        width,
+        height,
+        iconX,
+        iconY,
+        width,
+        height,
+      );
       outputCanvas.width = totalSize;
       outputCanvas.height = totalSize;
       outputWidth = totalSize;
@@ -296,14 +313,23 @@ export function PrivateNode({
       if (cachedProcessed) {
         markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
         initialSheet = PRIVATE_NODE_ICON_SHEET;
-        initialRect = { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height };
+        initialRect = {
+          x: 0,
+          y: 0,
+          width: cachedProcessed.width,
+          height: cachedProcessed.height,
+        };
       } else {
         // Check if source image is cached
         const cachedSource = getSourceImage(fullIconUrl);
         if (cachedSource) {
           // Process and store in shared cache
           const isGameIcon = iconUrl.includes("game-icons");
-          const { img: processedImg, width: procWidth, height: procHeight } = processIconSync(cachedSource, iconRect, color, isGameIcon);
+          const {
+            img: processedImg,
+            width: procWidth,
+            height: procHeight,
+          } = processIconSync(cachedSource, iconRect, color, isGameIcon);
 
           // Store in shared cache so markers.tsx uses exact same entry
           setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
@@ -412,25 +438,31 @@ export function PrivateNode({
           markerLayer.setSheet(PRIVATE_NODE_ICON_SHEET, cachedProcessed.img);
           markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
             sheet: PRIVATE_NODE_ICON_SHEET,
-            rect: { x: 0, y: 0, width: cachedProcessed.width, height: cachedProcessed.height },
+            rect: {
+              x: 0,
+              y: 0,
+              width: cachedProcessed.width,
+              height: cachedProcessed.height,
+            },
           });
         } else {
           // Need to process - check source image cache
           const applyIcon = (sourceImg: HTMLImageElement) => {
             // Use the same processIconSync function for consistency
-            const { img: processedImg, width: procWidth, height: procHeight } = processIconSync(
-              sourceImg,
-              iconRect,
-              color,
-              isGameIcon,
-            );
+            const {
+              img: processedImg,
+              width: procWidth,
+              height: procHeight,
+            } = processIconSync(sourceImg, iconRect, color, isGameIcon);
 
             // Store in shared cache so markers.tsx uses the exact same entry
             setProcessedImage(cacheKey, processedImg, procWidth, procHeight);
 
             // Wait for the processed image to load before updating the marker
             const updateMarker = () => {
-              const currentMarker = markerLayer.getMarker(PRIVATE_NODE_MARKER_ID);
+              const currentMarker = markerLayer.getMarker(
+                PRIVATE_NODE_MARKER_ID,
+              );
               if (!currentMarker) {
                 return;
               }
@@ -514,7 +546,14 @@ export function PrivateNode({
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [isEditing, map, radius, baseIconSize, iconSizeByFilter, tempPrivateNode?.filter]);
+  }, [
+    isEditing,
+    map,
+    radius,
+    baseIconSize,
+    iconSizeByFilter,
+    tempPrivateNode?.filter,
+  ]);
 
   // Update marker position when coordinates change (e.g. from X/Y input fields)
   useEffect(() => {
@@ -531,10 +570,16 @@ export function PrivateNode({
       const rotationDegrees = map._rotationDegrees;
       const rotationCenter = map._rotationCenter;
       if (rotationDegrees && rotationCenter) {
-        displayLatLng = rotateCoordinate(p as [number, number], rotationDegrees, rotationCenter);
+        displayLatLng = rotateCoordinate(
+          p as [number, number],
+          rotationDegrees,
+          rotationCenter,
+        );
       }
       positionRef.current = displayLatLng;
-      markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, { latLng: displayLatLng });
+      markerLayer.updateMarker(PRIVATE_NODE_MARKER_ID, {
+        latLng: displayLatLng,
+      });
     });
 
     return () => cancelAnimationFrame(rafId);
@@ -719,7 +764,11 @@ export function PrivateNode({
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button size="icon" variant={isEditing ? "secondary" : "outline"} aria-label="Add node">
+            <Button
+              size="icon"
+              variant={isEditing ? "secondary" : "outline"}
+              aria-label="Add node"
+            >
               <MapPin className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -772,7 +821,9 @@ export function PrivateNode({
                       >
                         <span
                           className="h-3 w-3 rounded-full border shrink-0"
-                          style={{ backgroundColor: style.color ?? "#FFFFFFCC" }}
+                          style={{
+                            backgroundColor: style.color ?? "#FFFFFFCC",
+                          }}
                         />
                         <span className="truncate">{styleLabel(style)}</span>
                       </DropdownMenuItem>

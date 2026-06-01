@@ -1,3 +1,4 @@
+import { useUserStore } from "../(providers)";
 import { useEffect, useState } from "react";
 import {
   DropdownMenu,
@@ -7,7 +8,7 @@ import {
 import { ShareMapView } from "./share-map-view";
 import { Forward } from "lucide-react";
 import { useMap } from "./store";
-import { useSettingsStore, useUserStore } from "@repo/lib";
+import { useSettingsStore } from "@repo/lib";
 
 export function ContextMenu({
   contextMenuData,
