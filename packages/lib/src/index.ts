@@ -14,7 +14,6 @@ export * from "./i18n";
 export * from "./metadata";
 export * from "./search-params";
 export * from "./settings";
-export * from "./shared-nodes";
 export * from "./filters-api";
 export * from "./sitemap";
 export * from "./tailwind";

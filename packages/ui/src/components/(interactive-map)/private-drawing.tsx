@@ -7,7 +7,6 @@ import { Button } from "../ui/button";
 import { ColorPicker } from "../(controls)/color-picker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
-  putSharedFilters,
   useSettingsStore,
   useUserStore,
   type Drawing,
@@ -629,10 +628,6 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
         name: tempPrivateDrawing.name,
         drawing: tempPrivateDrawing as Drawing,
       });
-    }
-
-    if (myFilter?.isShared && myFilter.url) {
-      putSharedFilters(myFilter.url, myFilter);
     }
 
     setMyFilters(newMyFilters);

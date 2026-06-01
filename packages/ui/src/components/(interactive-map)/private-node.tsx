@@ -6,7 +6,6 @@ import {
   type PrivateNode,
   useSettingsStore,
   useConnectionStore,
-  putSharedFilters,
   useUserStore,
   getIconsUrl,
 } from "@repo/lib";
@@ -619,10 +618,6 @@ export function PrivateNode({
       trackEvent("Private Node: Add", {
         props: { filter: tempPrivateNode.filter },
       });
-    }
-
-    if (myFilter.isShared && myFilter.url) {
-      putSharedFilters(myFilter.url, myFilter);
     }
 
     setMyFilters(newMyFilters);
