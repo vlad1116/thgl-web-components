@@ -38,77 +38,90 @@ const nextConfig = {
   // we enable Bunny's "Vary by Header" for RSC, tell Bunny not to cache
   // RSC responses at all (client-side navigation fetches always hit
   // origin). Plain HTML requests still benefit from edge cache.
-  headers: async () => [
-    {
-      source: "/:path*",
-      has: [{ type: "header", key: "rsc" }],
-      headers: [
+  headers: async () => {
+    const rules = [
+      {
+        source: "/:path*",
+        has: [{ type: "header", key: "rsc" }],
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store",
+          },
+          {
+            key: "CDN-Cache-Control",
+            value: "no-store",
+          },
+        ],
+      },
+      {
+        source: "/:path*",
+        // Skip this rule for RSC requests — the rule above sets no-store
+        // for them. Without this `missing` guard, both rules match and the
+        // later one overrides, breaking the carve-out.
+        missing: [{ type: "header", key: "rsc" }],
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+          },
+          {
+            key: "CDN-Cache-Control",
+            value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+    ];
+
+    // The /_next/static and /_next/image overrides are PRODUCTION-ONLY.
+    // In `next dev` they break HMR — immutable caching serves stale
+    // chunks — and Next.js warns about custom Cache-Control on these
+    // routes. They aren't needed in dev (no CDN, no deploys) and only
+    // earn their keep behind Bunny in prod.
+    if (process.env.NODE_ENV === "production") {
+      rules.push(
+        // Hashed build assets are content-addressed (the hash is in the
+        // filename), so a given URL's bytes never change. Cache them
+        // immutably. Critical for container deploys: when a new image
+        // replaces the old one, the old chunks vanish from origin — a
+        // user still on the old HTML relies on the edge having kept
+        // them. Without this they'd inherit the 60s s-maxage, get
+        // evicted, then 404 into Bunny's HTML → "Unexpected token '<'".
         {
-          key: "Cache-Control",
-          value: "private, no-store",
+          source: "/_next/static/:path*",
+          headers: [
+            {
+              key: "Cache-Control",
+              value: "public, max-age=31536000, immutable",
+            },
+            {
+              key: "CDN-Cache-Control",
+              value: "public, max-age=31536000, immutable",
+            },
+          ],
         },
+        // Optimized images keyed by (url, w, q). Source files (map-tile
+        // previews, etc.) can change under a stable URL, so don't make
+        // these immutable — cache a day at the edge with a week of SWR,
+        // and let the browser revalidate hourly via ETag.
         {
-          key: "CDN-Cache-Control",
-          value: "no-store",
+          source: "/_next/image",
+          headers: [
+            {
+              key: "Cache-Control",
+              value: "public, max-age=3600, must-revalidate",
+            },
+            {
+              key: "CDN-Cache-Control",
+              value: "public, s-maxage=86400, stale-while-revalidate=604800",
+            },
+          ],
         },
-      ],
-    },
-    {
-      source: "/:path*",
-      // Skip this rule for RSC requests — the rule above sets no-store
-      // for them. Without this `missing` guard, both rules match and the
-      // later one overrides, breaking the carve-out.
-      missing: [{ type: "header", key: "rsc" }],
-      headers: [
-        {
-          key: "Cache-Control",
-          value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
-        },
-        {
-          key: "CDN-Cache-Control",
-          value: "public, s-maxage=60, stale-while-revalidate=300",
-        },
-      ],
-    },
-    // Hashed build assets are content-addressed (the hash is in the
-    // filename), so a given URL's bytes never change. Cache them
-    // immutably. This rule comes after the catch-all so it wins for
-    // this path. Critical: without it, chunks inherited the 60s
-    // s-maxage above, so the edge re-fetched them every minute — and a
-    // re-fetch landing mid-deploy (when the old hash no longer exists
-    // at origin) cached Bunny's 404 HTML in place of the JS, which the
-    // browser then choked on with "Unexpected token '<'".
-    {
-      source: "/_next/static/:path*",
-      headers: [
-        {
-          key: "Cache-Control",
-          value: "public, max-age=31536000, immutable",
-        },
-        {
-          key: "CDN-Cache-Control",
-          value: "public, max-age=31536000, immutable",
-        },
-      ],
-    },
-    // Optimized images keyed by (url, w, q). Source files (map-tile
-    // previews, etc.) can change under a stable URL, so don't make
-    // these immutable — cache a day at the edge with a week of SWR,
-    // and let the browser revalidate hourly via ETag.
-    {
-      source: "/_next/image",
-      headers: [
-        {
-          key: "Cache-Control",
-          value: "public, max-age=3600, must-revalidate",
-        },
-        {
-          key: "CDN-Cache-Control",
-          value: "public, s-maxage=86400, stale-while-revalidate=604800",
-        },
-      ],
-    },
-  ],
+      );
+    }
+
+    return rules;
+  },
 };
 
 module.exports = nextConfig;
