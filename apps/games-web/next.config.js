@@ -2,6 +2,11 @@
 const nextConfig = {
   // Standalone output for Docker container deployment
   output: "standalone",
+  experimental: {
+    // Persist Turbopack compiler artifacts to disk between dev runs for
+    // faster cold starts after a restart (Next 16 beta).
+    turbopackFileSystemCacheForDev: true,
+  },
   images: {
     // Next.js 16 blocks optimizing images served from local/private IPs by
     // default (returns 400 "url parameter is not allowed"). In development
