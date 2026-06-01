@@ -1838,6 +1838,34 @@ function MarkersContent({
       const setDiscoverNodeFn = settingsState.setDiscoverNode;
       const playerNow = useGameState.getState().player;
 
+      // Marker size from the icon base + the base / category / group / type
+      // size multipliers. Shared by the create and in-place-update paths so a
+      // size-slider change re-applies to already-rendered live markers (the
+      // static rebuild reacts to these settings via deps; the imperative live
+      // pipeline must recompute them itself).
+      const computeMarkerSize = (displayType: string) => {
+        const icon = icons.get(displayType);
+        const iconBaseSize = icon?.size ?? 1;
+        const groupId = typeToGroup.get(displayType);
+        const groupMultiplier = groupId
+          ? (iconSizeByGroupNow[groupId] ?? 1)
+          : 1;
+        const categoryId = typeToCategory.get(displayType);
+        const categoryMultiplier = categoryId
+          ? (iconSizeByGroupNow[categoryId] ?? 1)
+          : 1;
+        const typeMultiplier = iconSizeByFilterNow[displayType] ?? 1;
+        const spawnRadius = markerOptions.radius * iconBaseSize;
+        return (
+          (spawnRadius * 4 - 1) *
+          baseIconSizeNow *
+          categoryMultiplier *
+          groupMultiplier *
+          typeMultiplier *
+          dpr
+        );
+      };
+
       const seen = new Set<string>();
       const newSpawns = new Map<string, Spawn>();
       let dirty = false;
@@ -1899,9 +1927,11 @@ function MarkersContent({
 
         const existing = liveMarkerLayer.getMarker(id);
         if (existing) {
-          // In-place update — position OR derived flags (discovery, highlight,
-          // selection, height arrow) so right-click-to-discover etc. reflect
-          // immediately.
+          // In-place update — position OR derived state (discovery, highlight,
+          // selection, height arrow, size) so right-click-to-discover and
+          // icon-size slider changes reflect immediately without recreating
+          // the marker.
+          const size = computeMarkerSize(displayType);
           const posChanged =
             existing.latLng[0] !== pos[0] || existing.latLng[1] !== pos[1];
           const flagsChanged =
@@ -1909,10 +1939,12 @@ function MarkersContent({
             !!existing.isHighlighted !== newIsHighlighted ||
             !!existing.isSelected !== newIsSelected ||
             (existing.zPos ?? null) !== zPos ||
-            existing.z !== zValue;
+            existing.z !== zValue ||
+            existing.size !== size;
           if (posChanged || flagsChanged) {
             liveMarkerLayer.updateMarker(id, {
               latLng: pos,
+              size,
               isDiscovered: isDiscoveredFlag,
               isHighlighted: newIsHighlighted,
               isSelected: newIsSelected,
@@ -1948,24 +1980,7 @@ function MarkersContent({
           rect = { x: 0, y: 0, width: px, height: px };
         }
 
-        const iconBaseSize = icon?.size ?? 1;
-        const groupId = typeToGroup.get(displayType);
-        const groupMultiplier = groupId
-          ? (iconSizeByGroupNow[groupId] ?? 1)
-          : 1;
-        const categoryId = typeToCategory.get(displayType);
-        const categoryMultiplier = categoryId
-          ? (iconSizeByGroupNow[categoryId] ?? 1)
-          : 1;
-        const typeMultiplier = iconSizeByFilterNow[displayType] ?? 1;
-        const spawnRadius = markerOptions.radius * iconBaseSize;
-        const size =
-          (spawnRadius * 4 - 1) *
-          baseIconSizeNow *
-          categoryMultiplier *
-          groupMultiplier *
-          typeMultiplier *
-          dpr;
+        const size = computeMarkerSize(displayType);
 
         const instance: IconMarkerInstance = {
           id,
@@ -2076,6 +2091,22 @@ function MarkersContent({
       (s) => s.discoveredNodes,
       processActors,
     );
+    // Re-process on icon-size changes so the sliders resize live markers in
+    // place. Without these the static (predicted) markers resize via the
+    // rebuild effect's deps, but live markers stay frozen until a mode toggle
+    // recreates them.
+    const unsubBaseIconSize = useSettingsStore.subscribe(
+      (s) => s.baseIconSize,
+      processActors,
+    );
+    const unsubIconSizeByGroup = useSettingsStore.subscribe(
+      (s) => s.iconSizeByGroup,
+      processActors,
+    );
+    const unsubIconSizeByFilter = useSettingsStore.subscribe(
+      (s) => s.iconSizeByFilter,
+      processActors,
+    );
     // Initial run.
     processActors();
 
@@ -2088,6 +2119,9 @@ function MarkersContent({
       unsubLiveMode();
       unsubHideDiscovered();
       unsubDiscovered();
+      unsubBaseIconSize();
+      unsubIconSizeByGroup();
+      unsubIconSizeByFilter();
       const ids = Array.from(liveSpawnMapRef.current.keys());
       for (const id of ids) liveMarkerLayer.unregisterAllEventHandlers(id);
       if (ids.length > 0) liveMarkerLayer.removeMany(ids);
