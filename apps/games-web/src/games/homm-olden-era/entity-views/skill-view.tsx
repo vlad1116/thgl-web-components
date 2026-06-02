@@ -32,6 +32,22 @@ type SkillProps = {
   /** Pre-computed numeric values for `{N}` placeholders in the sub-skill's
    *  description (sourced by chasing buff references at extraction time). */
   descParams?: number[];
+  /** Summon scaling info (e.g. Summoner -> Avatar): how the summoned unit
+   *  inherits the hero's caster stats, plus its base stats. */
+  avatarSummon?: {
+    receiver: string;
+    receiverName: string;
+    spellPowerScaling?: number;
+    knowledgeScaling?: number;
+    base?: {
+      hp: number;
+      damageMin: number;
+      damageMax: number;
+      initiative: number;
+      speed: number;
+      tier: number;
+    };
+  };
 };
 
 /**
@@ -215,6 +231,58 @@ export function SkillView({
           </p>
         </div>
       )}
+
+      {props.avatarSummon && (() => {
+        const av = props.avatarSummon!;
+        const pct = (v?: number) =>
+          v == null ? null : `${Math.round(v * 100)}%`;
+        return (
+          <div>
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "ui.summoned_unit")}
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              {resolveDict(dict, "ui.summon_scaling_note")}
+            </p>
+            <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-1 text-sm">
+              {av.spellPowerScaling != null && (
+                <div>
+                  <span className="text-muted-foreground">
+                    {resolveDict(dict, "ui.summon_sp_scaling")}:{" "}
+                  </span>
+                  <span className="font-medium text-amber-300">
+                    {pct(av.spellPowerScaling)}
+                  </span>
+                </div>
+              )}
+              {av.knowledgeScaling != null && (
+                <div>
+                  <span className="text-muted-foreground">
+                    {resolveDict(dict, "ui.summon_knowledge_scaling")}:{" "}
+                  </span>
+                  <span className="font-medium text-amber-300">
+                    {pct(av.knowledgeScaling)}
+                  </span>
+                </div>
+              )}
+              {av.base && (
+                <div className="pt-1 text-muted-foreground">
+                  {resolveDict(dict, "ui.summon_base_stats")} (
+                  {resolveDict(dict, av.receiverName)}):{" "}
+                  <span className="text-slate-200">
+                    {resolveDict(dict, "ui.hp")} {av.base.hp} · {resolveDict(dict, "ui.dmg")}{" "}
+                    {av.base.damageMin === av.base.damageMax
+                      ? av.base.damageMin
+                      : `${av.base.damageMin}–${av.base.damageMax}`}{" "}
+                    · {resolveDict(dict, "ui.init")} {av.base.initiative} ·{" "}
+                    {resolveDict(dict, "ui.speed")} {av.base.speed}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {isSubSkill && props.bonuses && props.bonuses.length > 0 && (
         <div>
