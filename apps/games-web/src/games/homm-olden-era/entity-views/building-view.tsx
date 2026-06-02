@@ -25,6 +25,14 @@ type BuildingProps = {
     sids: string[];
     weeklyGrowth: number;
   }[];
+  /** Base resource-exchange matrix, present on Marketplace buildings. */
+  exchangeRates?: {
+    resName: string;
+    exchange: { name: string; inValue: number; outValue: number }[];
+  }[];
+  /** Artifact Merchant markup multipliers. */
+  extraChargePurchase?: number;
+  extraChargeSell?: number;
 };
 
 type IconSprite = {
@@ -113,6 +121,82 @@ export function BuildingView({
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {props.extraChargePurchase != null && (
+        <div>
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            {resolveDict(dict, "ui.artifact_trade")}
+          </h2>
+          <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-1 text-sm">
+            <div>
+              <span className="text-muted-foreground">
+                {resolveDict(dict, "ui.artifact_buy_price")}:{" "}
+              </span>
+              <span className="font-medium text-amber-300">
+                {props.extraChargePurchase}× {resolveDict(dict, "ui.artifact_base_value")}
+              </span>
+            </div>
+            {props.extraChargeSell != null && (
+              <div>
+                <span className="text-muted-foreground">
+                  {resolveDict(dict, "ui.artifact_sell_price")}:{" "}
+                </span>
+                <span className="font-medium text-amber-300">
+                  {resolveDict(dict, "ui.artifact_base_value")} ÷ {props.extraChargeSell}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {props.exchangeRates && props.exchangeRates.length > 0 && (
+        <div>
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            {resolveDict(dict, "ui.exchange_rates")}
+          </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            {resolveDict(dict, "ui.exchange_rates_note")}
+          </p>
+          <div className="border border-slate-800 rounded-lg overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="bg-slate-900/60 border-b border-slate-800">
+                  <th className="px-3 py-2 font-medium text-muted-foreground">
+                    {resolveDict(dict, "ui.exchange_give")}
+                  </th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">
+                    {resolveDict(dict, "ui.exchange_receive")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {props.exchangeRates.map((row) => (
+                  <tr
+                    key={row.resName}
+                    className="border-b border-slate-800/50 last:border-0 align-top"
+                  >
+                    <td className="px-3 py-2 whitespace-nowrap font-medium">
+                      {resolveDict(dict, `resource_${row.resName}`)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {row.exchange.map((ex) => (
+                          <span key={ex.name} className="text-muted-foreground">
+                            {ex.inValue} {resolveDict(dict, `resource_${row.resName}`)}
+                            {" → "}
+                            {ex.outValue} {resolveDict(dict, `resource_${ex.name}`)}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

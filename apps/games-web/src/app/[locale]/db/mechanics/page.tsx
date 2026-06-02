@@ -102,7 +102,7 @@ const battleMechanics = [
   {
     name: "Ranged Attacks",
     icon: "🏹",
-    desc: "Ranged units can attack at any range, but at close (adjacent) range they are replaced with a weaker Melee attack (with a damage reduction). Targets at long distance also take reduced Damage per hex beyond a threshold (capped). Some ranged units (e.g. with 'no_close' or 'no_range' variants) avoid one or both penalties.",
+    desc: "Ranged units can attack at any range, but suffer two penalties. Melee penalty: when forced to attack in melee (adjacent), they deal 50% less Damage (–50%), and their retaliation uses that weaker attack too. Distance penalty: targets more than 4 hexes away take –10% Damage for each additional hex, capped at 5 hexes (–50% maximum). The two penalties don't stack — melee range uses the flat –50%. Some ranged units (e.g. 'no_close' or 'no_range' variants) avoid one or both penalties.",
   },
   {
     name: "Magic Schools",
