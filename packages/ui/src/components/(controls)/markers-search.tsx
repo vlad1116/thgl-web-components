@@ -103,7 +103,7 @@ export function MarkersSearch({
 
       <div
         className={cn(
-          `fixed w-[200px] md:w-[300px] lg:w-[363px] top-[64px] z-500 pointer-events-none flex flex-col gap-1`,
+          `fixed w-[200px] md:w-[300px] lg:w-[363px] top-[64px] z-500 pointer-events-none flex flex-col gap-1 select-none`,
           `bottom-[60px] h-[calc(100vh-134px)] md:bottom-2 md:h-[calc(100vh-74px)]`,
           `transition-[left] duration-200`,
           panelVisible ? "left-2" : "left-[calc(-100%-8px)]",

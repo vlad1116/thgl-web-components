@@ -57,7 +57,7 @@ export default async function MobalyticsRootLayout({
     <html lang="en">
       <body
         className={cn(
-          "font-sans dark min-h-dscreen bg-black text-white antialiased select-none",
+          "font-sans dark min-h-dscreen bg-black text-white antialiased",
           fontSans.variable,
         )}
       >

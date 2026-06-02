@@ -22,7 +22,7 @@ export function Header({
   return (
     <header
       className={cn(
-        "px-2 h-[54px] z-99990 fixed left-0 right-0 top-0 border-b bg-linear-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center",
+        "px-2 h-[54px] z-99990 fixed left-0 right-0 top-0 border-b bg-linear-to-b backdrop-blur-2xl border-neutral-800 bg-zinc-800/30 flex items-center select-none",
         props.className,
       )}
       {...props}

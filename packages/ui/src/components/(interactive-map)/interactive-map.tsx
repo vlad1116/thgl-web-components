@@ -355,7 +355,7 @@ export function InteractiveMap({
   return (
     <>
       <div
-        className={cn(`h-full bg-inherit! outline-none relative`)}
+        className={cn(`h-full bg-inherit! outline-none relative select-none`)}
         ref={containerRef}
       />
       <ContextMenu
