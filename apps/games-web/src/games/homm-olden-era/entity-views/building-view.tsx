@@ -34,6 +34,8 @@ type BuildingProps = {
   /** Artifact Merchant markup multipliers. */
   extraChargePurchase?: number;
   extraChargeSell?: number;
+  /** Artifact Merchant stock per rarity (Common, Rare, Epic, Legendary). */
+  itemsCountPerRarity?: number[];
 };
 
 type IconSprite = {
@@ -131,6 +133,9 @@ export function BuildingView({
           <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
             {resolveDict(dict, "ui.artifact_trade")}
           </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            {resolveDict(dict, "ui.artifact_how_note")}
+          </p>
           <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-1 text-sm">
             <div>
               <span className="text-muted-foreground">
@@ -150,6 +155,34 @@ export function BuildingView({
                 </span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {props.itemsCountPerRarity && props.itemsCountPerRarity.length > 0 && (
+        <div>
+          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+            {resolveDict(dict, "ui.artifact_stock")}
+          </h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            {resolveDict(dict, "ui.artifact_stock_note")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["common", "rare", "epic", "legendary"] as const).map((rarity, i) => {
+              const count = props.itemsCountPerRarity![i];
+              if (count == null || count === 0) return null;
+              return (
+                <div
+                  key={rarity}
+                  className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
+                >
+                  <div className="text-lg font-semibold text-amber-300">{count}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {resolveDict(dict, `ui.rarity_${rarity}`)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
