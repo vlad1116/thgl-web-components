@@ -48,7 +48,15 @@ type SkillProps = {
       tier: number;
     };
   };
+  /** Diplomacy mechanic info (base join-chance curve + per-level efficiency). */
+  diplomacy?: {
+    efficiencyPerLevel: number[];
+    unitCostExtraCharge?: number;
+    valueChancePairs?: { value: number; chance: number }[];
+  };
 };
+
+const SKILL_LEVEL_LABELS = ["Basic", "Advanced", "Expert"];
 
 /**
  * Substitute `{0}`, `{1}`, … placeholders in a skill-level description using
@@ -276,6 +284,89 @@ export function SkillView({
                       : `${av.base.damageMin}–${av.base.damageMax}`}{" "}
                     · {resolveDict(dict, "ui.init")} {av.base.initiative} ·{" "}
                     {resolveDict(dict, "ui.speed")} {av.base.speed}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {props.diplomacy && (() => {
+        const d = props.diplomacy!;
+        const fmtPct = (v: number) =>
+          `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`;
+        return (
+          <div>
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "ui.diplomacy_how")}
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              {resolveDict(dict, "ui.diplomacy_how_note")}
+            </p>
+            <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-3 text-sm">
+              {/* Per-level efficiency */}
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                  {resolveDict(dict, "ui.diplomacy_efficiency")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {d.efficiencyPerLevel.map((eff, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded border border-slate-700 bg-slate-900/40"
+                    >
+                      {SKILL_LEVEL_LABELS[i] ?? `Lv. ${i + 1}`}:{" "}
+                      <span className="text-amber-300 font-medium">{fmtPct(eff)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {/* Base chance curve */}
+              {d.valueChancePairs && d.valueChancePairs.length > 0 && (
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                    {resolveDict(dict, "ui.diplomacy_base_chance")}
+                  </div>
+                  <div className="border border-slate-800 rounded overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-900/60 border-b border-slate-800 text-xs text-muted-foreground">
+                          <th className="px-3 py-1.5 font-medium">
+                            {resolveDict(dict, "ui.diplomacy_ratio")}
+                          </th>
+                          <th className="px-3 py-1.5 font-medium">
+                            {resolveDict(dict, "ui.diplomacy_chance")}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {d.valueChancePairs.map((p, i) => (
+                          <tr key={i} className="border-b border-slate-800/50 last:border-0">
+                            <td className="px-3 py-1.5">{p.value.toFixed(2)}×</td>
+                            <td
+                              className={`px-3 py-1.5 font-medium ${
+                                p.chance < 0 ? "text-red-400" : p.chance > 0 ? "text-green-400" : "text-slate-300"
+                              }`}
+                            >
+                              {fmtPct(p.chance)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Ratio = your army&rsquo;s strength vs the neutral squad
+                    (1.00× = even). The skill efficiency above adds on top.
+                  </p>
+                </div>
+              )}
+              {d.unitCostExtraCharge != null && (
+                <div className="text-muted-foreground">
+                  {resolveDict(dict, "ui.diplomacy_cost")}:{" "}
+                  <span className="text-amber-300 font-medium">
+                    {d.unitCostExtraCharge}× squad gold value
                   </span>
                 </div>
               )}
