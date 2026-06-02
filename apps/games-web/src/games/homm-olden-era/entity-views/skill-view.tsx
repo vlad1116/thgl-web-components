@@ -357,11 +357,20 @@ export function SkillView({
                     </table>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Ratio = your army&rsquo;s strength vs the neutral squad
-                    (1.00× = even). The skill efficiency above adds on top.
+                    One input only (1.00× = even strength). It is combined with
+                    the factors below — so an even fight is not automatically 0%.
                   </p>
                 </div>
               )}
+              {/* Other contributing factors */}
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                  {resolveDict(dict, "ui.diplomacy_factors")}
+                </div>
+                <p className="text-muted-foreground">
+                  {resolveDict(dict, "ui.diplomacy_factors_list")}
+                </p>
+              </div>
               {d.unitCostExtraCharge != null && (
                 <div className="text-muted-foreground">
                   {resolveDict(dict, "ui.diplomacy_cost")}:{" "}
