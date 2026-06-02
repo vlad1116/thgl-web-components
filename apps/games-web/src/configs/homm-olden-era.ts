@@ -79,6 +79,13 @@ export const hommOldenEra: AppConfig = {
       description: "config.internalLinks.map-objects.description",
     },
     {
+      href: "/db/maps",
+      title: "config.internalLinks.maps.title",
+      linkText: "config.internalLinks.maps.linkText",
+      iconName: "Map",
+      description: "config.internalLinks.maps.description",
+    },
+    {
       href: "/db/mechanics",
       title: "config.internalLinks.mechanics.title",
       linkText: "config.internalLinks.mechanics.linkText",
@@ -117,6 +124,7 @@ export const hommOldenEra: AppConfig = {
       },
       { href: "/db/buildings", type: "buildings", icon: "🏛" },
       { href: "/db/map-objects", type: "map_objects", icon: "🗺" },
+      { href: "/db/maps", type: "maps", icon: "🧭" },
     ],
     homeExtraLinks: [
       {
@@ -139,6 +147,7 @@ export const hommOldenEra: AppConfig = {
       faction_laws: "Faction Law",
       buildings: "Building",
       map_objects: "Map Object",
+      maps: "Map",
     },
     typeColors: {
       units: "bg-red-900/40 text-red-400",
@@ -153,6 +162,7 @@ export const hommOldenEra: AppConfig = {
       faction_laws: "bg-yellow-900/40 text-yellow-400",
       buildings: "bg-orange-900/40 text-orange-400",
       map_objects: "bg-teal-900/40 text-teal-400",
+      maps: "bg-sky-900/40 text-sky-400",
     },
     languageCount: 14,
   },

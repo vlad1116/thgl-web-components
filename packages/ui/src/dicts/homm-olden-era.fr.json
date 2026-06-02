@@ -23,6 +23,9 @@
   "config.internalLinks.map-objects.title": "Objets de carte",
   "config.internalLinks.map-objects.description": "Habitations, sites de ressources, rencontres d'aventure, sanctuaires magiques et plus.",
   "config.internalLinks.map-objects.linkText": "Voir les objets de carte",
+  "config.internalLinks.maps.title": "Maps",
+  "config.internalLinks.maps.description": "PvP map templates: game mode, win condition, player count, size, and schematic layout.",
+  "config.internalLinks.maps.linkText": "Browse Maps",
   "config.internalLinks.mechanics.title": "Mécaniques de jeu",
   "config.internalLinks.mechanics.description": "Comment fonctionnent les stats de combat, la chance, le moral et les formules de dégâts.",
   "config.internalLinks.mechanics.linkText": "Voir les mécaniques"

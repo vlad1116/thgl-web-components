@@ -12,6 +12,7 @@ import { SkillView } from "@/games/homm-olden-era/entity-views/skill-view";
 import { FactionView } from "@/games/homm-olden-era/entity-views/faction-view";
 import { BuildingView } from "@/games/homm-olden-era/entity-views/building-view";
 import { MapObjectView } from "@/games/homm-olden-era/entity-views/map-object-view";
+import { MapView } from "@/games/homm-olden-era/entity-views/map-view";
 
 const APP_NAME = "homm-olden-era";
 
@@ -302,6 +303,7 @@ export async function DatabaseEntryContent({
     faction_laws: "factions",
     buildings: "buildings",
     map_objects: "map-objects",
+    maps: "maps",
   };
   const sectionSegment = SECTION_BY_TYPE[entryType] ?? entryType;
   const sectionLabel = resolveDict(dict, sectionSegment);
@@ -339,6 +341,7 @@ export async function DatabaseEntryContent({
         )}
         {entryType === "buildings" && <BuildingView {...viewProps} />}
         {entryType === "map_objects" && <MapObjectView {...viewProps} />}
+        {entryType === "maps" && <MapView {...viewProps} />}
       </div>
     </>
   );
