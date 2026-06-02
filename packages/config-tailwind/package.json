@@ -7,8 +7,7 @@
     ".": "./tailwind.config.ts"
   },
   "dependencies": {
-    "tailwindcss": "catalog:",
-    "tailwindcss-animate": "catalog:"
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
