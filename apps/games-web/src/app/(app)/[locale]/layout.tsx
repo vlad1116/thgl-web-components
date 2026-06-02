@@ -60,7 +60,7 @@ export default async function RootLayout({
           <TooltipProvider><main className="grow min-h-0">{children}</main></TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
-          apiHost="https://metrics.th.gl"
+          apiHost="https://a.th.gl"
           domain="app.th.gl"
           version={version.version}
         />

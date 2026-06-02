@@ -67,7 +67,7 @@ export default async function MobalyticsRootLayout({
           </TooltipProvider>
         </I18NProvider>
         <PlausibleTracker
-          apiHost="https://metrics.th.gl"
+          apiHost="https://a.th.gl"
           domain={`${config.domain}.th.gl-mobalytics`}
         />
         <Toaster />

@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html className="scroll-smooth" lang="en">
       <head>
-        <PlausibleTracker apiHost="https://metrics.th.gl" domain="th.gl" />
+        <PlausibleTracker apiHost="https://a.th.gl" domain="th.gl" />
       </head>
       <body
         className={cn(

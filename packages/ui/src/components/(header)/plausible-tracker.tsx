@@ -11,9 +11,12 @@ import { useEffect } from "react";
  * listener. (The package's `localStorage.plausible_ignore` opt-out is
  * intentionally dropped — it was undocumented and unused here.)
  *
- * `apiHost` is intentionally configurable per surface: web tenants can point
- * it at a same-origin first-party proxy path (to dodge ad-blockers), while
- * Overwolf apps post directly to https://metrics.th.gl.
+ * `apiHost` is configurable so all surfaces can post to an innocuous
+ * subdomain (currently https://a.th.gl) that aliases the Plausible server
+ * instead of the obvious metrics.th.gl. This dodges both name-based
+ * ad-block heuristics and machine-wide DNS blockers (Pi-hole/AdGuard) that
+ * would catch metrics.th.gl. To rotate if it gets blocked, point a new
+ * subdomain at the server and change the host here / at the call sites.
  */
 
 type EventProps = Record<string, string | number | boolean>;

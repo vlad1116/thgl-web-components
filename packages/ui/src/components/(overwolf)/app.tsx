@@ -212,7 +212,7 @@ export function App({
       )}
       <Toaster />
       <PlausibleTracker
-        apiHost="https://metrics.th.gl"
+        apiHost="https://a.th.gl"
         domain={`${appConfig.domain}.th.gl-app`}
       />
     </div>

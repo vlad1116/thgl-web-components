@@ -165,7 +165,7 @@ export function createDbRootLayout(appConfig: AppConfig) {
           </I18NProvider>
 
           <PlausibleTracker
-            apiHost="https://metrics.th.gl"
+            apiHost="https://a.th.gl"
             domain={`${appConfig.domain}.th.gl`}
           />
           <Toaster />
