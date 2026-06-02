@@ -179,6 +179,8 @@ export function proxy(req: NextRequest) {
     config.name === "thgl-web" &&
     !path.startsWith("/www/") &&
     !path.startsWith("/games/thgl-web/") &&
+    path !== "/favicon.ico" && // Shared root favicon (app/favicon.ico); a
+    // nested app/www/favicon.ico is not a served route, so rewriting here 404s.
     !path.startsWith("/api/filters") && // Global API, lives at app/api/filters
     path !== "/api/patreon" // Global perks-refresh route (exact match).
     // /api/patreon/authorize, /api/patreon/overwolf, and
