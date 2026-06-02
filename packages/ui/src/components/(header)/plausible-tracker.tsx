@@ -1,12 +1,61 @@
 "use client";
-import type { EventOptions, PlausibleOptions } from "plausible-tracker";
-import Plausible from "plausible-tracker";
 import { useEffect } from "react";
 
-let plausible: ReturnType<typeof Plausible> | null = null;
+/**
+ * Lightweight, dependency-free Plausible tracker.
+ *
+ * Replaces the deprecated `plausible-tracker` npm package (last release
+ * 2023). It sends the same wire format that package did: a `text/plain`
+ * POST to `${apiHost}/api/event` with the `{n,u,d,r,w,h,p}` payload, plus
+ * automatic SPA pageviews via a `history.pushState` patch + `popstate`
+ * listener. (The package's `localStorage.plausible_ignore` opt-out is
+ * intentionally dropped — it was undocumented and unused here.)
+ *
+ * `apiHost` is intentionally configurable per surface: web tenants can point
+ * it at a same-origin first-party proxy path (to dodge ad-blockers), while
+ * Overwolf apps post directly to https://metrics.th.gl.
+ */
+
+type EventProps = Record<string, string | number | boolean>;
+
+let config: { domain: string; apiHost: string; trackLocalhost: boolean } | null =
+  null;
 let lastActionTimestamp = 0;
 const KEEP_ALIVE_TIMEOUT = 4 * 60 * 1000;
-let timeoutId: NodeJS.Timeout | null = null;
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+const isLocalhost = () =>
+  /^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^\[::1\]$/.test(
+    location.hostname,
+  ) || location.protocol === "file:";
+
+const sendEvent = (eventName: string, props?: EventProps) => {
+  if (!config) {
+    return;
+  }
+  if (!config.trackLocalhost && isLocalhost()) {
+    return;
+  }
+
+  const payload = {
+    n: eventName,
+    u: location.href,
+    d: config.domain,
+    r: document.referrer || null,
+    w: window.innerWidth,
+    h: 0,
+    p: props ? JSON.stringify(props) : undefined,
+  };
+
+  try {
+    const req = new XMLHttpRequest();
+    req.open("POST", `${config.apiHost}/api/event`, true);
+    req.setRequestHeader("Content-Type", "text/plain");
+    req.send(JSON.stringify(payload));
+  } catch {
+    // Network/security errors must never break the app.
+  }
+};
 
 const keepAlive = () => {
   if (timeoutId) {
@@ -24,16 +73,26 @@ const keepAlive = () => {
 };
 
 export const initPlausible = (domain: string, apiHost: string) => {
-  if (plausible) {
+  if (config) {
     return;
   }
 
-  plausible = Plausible({
-    domain,
-    apiHost,
-    trackLocalhost: true,
-  });
-  plausible.enableAutoPageviews();
+  config = { domain, apiHost, trackLocalhost: true };
+
+  // Auto pageviews: fire the initial view, then on every SPA navigation.
+  // Next's App Router and the Overwolf SPAs both navigate via
+  // history.pushState, so patching it (plus popstate for back/forward)
+  // matches the old package's enableAutoPageviews().
+  trackPageview();
+  window.addEventListener("popstate", () => trackPageview());
+  const originalPushState = history.pushState.bind(history);
+  history.pushState = function pushState(
+    ...args: Parameters<History["pushState"]>
+  ) {
+    originalPushState(...args);
+    trackPageview();
+  };
+
   lastActionTimestamp = Date.now();
 
   let isHidden = document.hidden;
@@ -55,22 +114,18 @@ export const initPlausible = (domain: string, apiHost: string) => {
   });
 };
 
-export const trackEvent = (
-  eventName: string,
-  options?: EventOptions | undefined,
-  eventData?: PlausibleOptions | undefined,
-) => {
-  if (plausible) {
+export const trackEvent = (eventName: string, options?: { props?: EventProps }) => {
+  if (config) {
     lastActionTimestamp = Date.now();
-    plausible.trackEvent(eventName, options, eventData);
+    sendEvent(eventName, options?.props);
     keepAlive();
   }
 };
 
 export const trackPageview = () => {
-  if (plausible) {
+  if (config) {
     lastActionTimestamp = Date.now();
-    plausible.trackPageview();
+    sendEvent("pageview");
     keepAlive();
   }
 };
