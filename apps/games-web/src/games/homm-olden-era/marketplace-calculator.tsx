@@ -33,22 +33,17 @@ type ExchangeRow = {
  * amount at 1, 2, 3, 4 Marketplaces. Each gives m = baseReceived/observed - 1.
  * Fill `markupByMarkets` with those fractions and set `MARKUP_CALIBRATED`.
  */
-const MARKUP_CALIBRATED = false;
-// Markup fraction `m` indexed by effective Marketplace count (1-based).
-// e.g. markupByMarkets[1] = m at one Marketplace. Pending in-game data.
-const markupByMarkets: Record<number, number> = {};
+// Markup fraction `m` as a function of effective Marketplace count, calibrated
+// from in-game readings of the "Markup: X%" label:
+//   1 Marketplace -> 300%, 2 -> 250%  (cross-checked across every resource:
+//   wood 250x(1+m), gemstones 500x(1+m), etc.)
+// That's a clean linear -50% per Marketplace, reaching 0% at 7:
+//   m = 3.0 - 0.5 * (effectiveMarkets - 1), floored at 0.
+function markupFraction(effectiveMarkets: number): number {
+  return Math.max(0, 3.0 - 0.5 * (effectiveMarkets - 1));
+}
 function markupMultiplier(effectiveMarkets: number): number {
-  if (!MARKUP_CALIBRATED) return 1; // show base rate until calibrated
-  // Clamp to the highest calibrated count; markup only shrinks beyond it.
-  const counts = Object.keys(markupByMarkets).map(Number).sort((a, b) => a - b);
-  if (counts.length === 0) return 1;
-  const key = effectiveMarkets <= counts[0]
-    ? counts[0]
-    : effectiveMarkets >= counts[counts.length - 1]
-      ? counts[counts.length - 1]
-      : effectiveMarkets;
-  const m = markupByMarkets[key] ?? 0;
-  return 1 / (1 + m);
+  return 1 / (1 + markupFraction(effectiveMarkets));
 }
 
 const RESOURCE_ORDER = [
@@ -102,8 +97,8 @@ export function MarketplaceCalculator({
   const pair = give === receive ? undefined : rateByPair.get(`${give}>${receive}`);
   // Effective Marketplaces: the slider + (Economy skill counts as one extra).
   const effectiveMarkets = markets + (economySkill ? 1 : 0);
-  const mult =
-    markupsDisabled || !MARKUP_CALIBRATED ? 1 : markupMultiplier(effectiveMarkets);
+  const markup = markupsDisabled ? 0 : markupFraction(effectiveMarkets);
+  const mult = markupsDisabled ? 1 : markupMultiplier(effectiveMarkets);
   // Base: spend `inValue` of `give` to get `outValue` of `receive`.
   const baseReceived = pair ? (amount / pair.inValue) * pair.outValue : 0;
   const received = Math.floor(baseReceived * mult);
@@ -204,6 +199,15 @@ export function MarketplaceCalculator({
         </label>
       </div>
 
+      {/* Markup readout (mirrors the in-game "Markup: X%" label) */}
+      <div className="text-sm text-muted-foreground">
+        Markup:{" "}
+        <span className="text-amber-300 font-medium">
+          {Math.round(markup * 100)}%
+        </span>
+        {markup === 0 && " (no markup)"}
+      </div>
+
       {/* Result */}
       <div className="flex items-center gap-2 text-lg font-medium border-t border-slate-800/50 pt-3">
         <span className="inline-flex items-center gap-1.5">
@@ -218,14 +222,6 @@ export function MarketplaceCalculator({
           </span>
         )}
       </div>
-
-      {!MARKUP_CALIBRATED && !markupsDisabled && (
-        <p className="text-xs text-muted-foreground">
-          Showing the <strong>base (no-markup)</strong> rate — what you get with
-          markups disabled or many Marketplaces. The exact per-Marketplace
-          markup curve is being calibrated and will make the slider live.
-        </p>
-      )}
     </div>
   );
 }
