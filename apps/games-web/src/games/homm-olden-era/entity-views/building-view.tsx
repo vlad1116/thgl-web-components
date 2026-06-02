@@ -7,6 +7,7 @@ import {
   ResourceCostList,
   buildResourceIconLookup,
 } from "@/games/homm-olden-era/resource-cost";
+import { MarketplaceCalculator } from "@/games/homm-olden-era/marketplace-calculator";
 
 const APP_NAME = "homm-olden-era";
 
@@ -153,53 +154,38 @@ export function BuildingView({
         </div>
       )}
 
-      {props.exchangeRates && props.exchangeRates.length > 0 && (
-        <div>
-          <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-            {resolveDict(dict, "ui.exchange_rates")}
-          </h2>
-          <p className="text-xs text-muted-foreground mb-3">
-            {resolveDict(dict, "ui.exchange_rates_note")}
-          </p>
-          <div className="border border-slate-800 rounded-lg overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="bg-slate-900/60 border-b border-slate-800">
-                  <th className="px-3 py-2 font-medium text-muted-foreground">
-                    {resolveDict(dict, "ui.exchange_give")}
-                  </th>
-                  <th className="px-3 py-2 font-medium text-muted-foreground">
-                    {resolveDict(dict, "ui.exchange_receive")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {props.exchangeRates.map((row) => (
-                  <tr
-                    key={row.resName}
-                    className="border-b border-slate-800/50 last:border-0 align-top"
-                  >
-                    <td className="px-3 py-2 whitespace-nowrap font-medium">
-                      {resolveDict(dict, `resource_${row.resName}`)}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap gap-x-3 gap-y-1">
-                        {row.exchange.map((ex) => (
-                          <span key={ex.name} className="text-muted-foreground">
-                            {ex.inValue} {resolveDict(dict, `resource_${row.resName}`)}
-                            {" → "}
-                            {ex.outValue} {resolveDict(dict, `resource_${ex.name}`)}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {props.exchangeRates && props.exchangeRates.length > 0 && (() => {
+        // Build plain name/icon maps for the client calculator.
+        const resNames: Record<string, string> = {};
+        const resIcons: Record<string, IconSprite> = {};
+        for (const row of props.exchangeRates!) {
+          resNames[row.resName] = resolveDict(dict, `resource_${row.resName}`);
+          const ic = resourceIcons.get(row.resName);
+          if (ic) resIcons[row.resName] = ic;
+          for (const ex of row.exchange) {
+            resNames[ex.name] = resolveDict(dict, `resource_${ex.name}`);
+            const ie = resourceIcons.get(ex.name);
+            if (ie) resIcons[ex.name] = ie;
+          }
+        }
+        return (
+          <div>
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+              {resolveDict(dict, "ui.exchange_rates")}
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              {resolveDict(dict, "ui.exchange_rates_note")}
+            </p>
+            <MarketplaceCalculator
+              rates={props.exchangeRates!}
+              resourceNames={resNames}
+              resourceIcons={resIcons}
+              iconsHash={iconsHash}
+              appName={APP_NAME}
+            />
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {props.levels && props.levels.length > 0 && (
         <div className="border border-slate-800 rounded-lg overflow-hidden">
