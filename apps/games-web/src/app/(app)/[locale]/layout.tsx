@@ -61,7 +61,9 @@ export default async function RootLayout({
         </I18NProvider>
         <PlausibleTracker
           apiHost="https://a.th.gl"
-          domain="app.th.gl"
+          domain="thgl"
+          app="thgl-app"
+          platform="desktop"
           version={version.version}
         />
         <Toaster />

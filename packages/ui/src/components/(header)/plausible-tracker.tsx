@@ -17,12 +17,26 @@ import { useEffect } from "react";
  * ad-block heuristics and machine-wide DNS blockers (Pi-hole/AdGuard) that
  * would catch metrics.th.gl. To rotate if it gets blocked, point a new
  * subdomain at the server and change the host here / at the call sites.
+ *
+ * All THGL surfaces (web tenants, the thgl-app companion, and the Overwolf
+ * apps) report to a single Plausible site (`domain="thgl"`) so visitor
+ * counts dedup correctly across properties and we get one aggregate
+ * dashboard. The individual surface is identified by `defaultProps` —
+ * `app` (game/surface slug, e.g. "palia", "thgl-web") and `platform`
+ * ("web" | "desktop" | "overwolf") — which are merged into EVERY event so
+ * the Plausible "Properties" report can break the aggregate down per game
+ * without a `(none)` bucket. Filter by `app`/`platform` to scope to one
+ * surface; leave unfiltered for the THGL-wide total.
  */
 
 type EventProps = Record<string, string | number | boolean>;
 
-let config: { domain: string; apiHost: string; trackLocalhost: boolean } | null =
-  null;
+let config: {
+  domain: string;
+  apiHost: string;
+  trackLocalhost: boolean;
+  defaultProps?: EventProps;
+} | null = null;
 let lastActionTimestamp = 0;
 const KEEP_ALIVE_TIMEOUT = 4 * 60 * 1000;
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -40,6 +54,13 @@ const sendEvent = (eventName: string, props?: EventProps) => {
     return;
   }
 
+  // Merge the per-surface default props (app/platform) into every event so
+  // the Plausible Properties report has no `(none)` bucket. Per-event props
+  // win on key collisions.
+  const mergedProps = config.defaultProps
+    ? { ...config.defaultProps, ...props }
+    : props;
+
   const payload = {
     n: eventName,
     u: location.href,
@@ -47,7 +68,10 @@ const sendEvent = (eventName: string, props?: EventProps) => {
     r: document.referrer || null,
     w: window.innerWidth,
     h: 0,
-    p: props ? JSON.stringify(props) : undefined,
+    p:
+      mergedProps && Object.keys(mergedProps).length > 0
+        ? JSON.stringify(mergedProps)
+        : undefined,
   };
 
   try {
@@ -75,12 +99,16 @@ const keepAlive = () => {
   }, KEEP_ALIVE_TIMEOUT - diff);
 };
 
-export const initPlausible = (domain: string, apiHost: string) => {
+export const initPlausible = (
+  domain: string,
+  apiHost: string,
+  defaultProps?: EventProps,
+) => {
   if (config) {
     return;
   }
 
-  config = { domain, apiHost, trackLocalhost: true };
+  config = { domain, apiHost, trackLocalhost: true, defaultProps };
 
   // Auto pageviews: fire the initial view, then on every SPA navigation.
   // Next's App Router and the Overwolf SPAs both navigate via
@@ -149,13 +177,26 @@ export function PlausibleTracker({
   domain,
   apiHost,
   version,
+  app,
+  platform,
 }: {
   domain: string;
   apiHost: string;
   version?: string;
+  /** Surface slug (e.g. "palia", "thgl-web", "thgl-app"); sent on every event. */
+  app?: string;
+  /** Surface type ("web" | "desktop" | "overwolf"); sent on every event. */
+  platform?: string;
 }) {
   useEffect(() => {
-    initPlausible(domain, apiHost);
+    const defaultProps: EventProps = {};
+    if (app) {
+      defaultProps.app = app;
+    }
+    if (platform) {
+      defaultProps.platform = platform;
+    }
+    initPlausible(domain, apiHost, defaultProps);
     if (version) {
       trackVersion(version);
     }

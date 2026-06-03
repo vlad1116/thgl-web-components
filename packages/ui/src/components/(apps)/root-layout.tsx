@@ -131,7 +131,9 @@ export function createRootLayout(appConfig: AppConfig) {
 
           <PlausibleTracker
             apiHost="https://a.th.gl"
-            domain={`${appConfig.domain}.th.gl`}
+            domain="thgl"
+            app={appConfig.name}
+            platform="web"
           />
           <Toaster />
         </body>

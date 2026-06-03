@@ -213,7 +213,9 @@ export function App({
       <Toaster />
       <PlausibleTracker
         apiHost="https://a.th.gl"
-        domain={`${appConfig.domain}.th.gl-app`}
+        domain="thgl"
+        app={appConfig.name}
+        platform="overwolf"
       />
     </div>
   );
