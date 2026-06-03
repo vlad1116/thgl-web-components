@@ -230,6 +230,21 @@ export const DEFAULT_PROFILE = {
   settings: DEFAULT_PROFILE_SETTINGS,
 };
 
+// A saved preset. Originally just an array of active filter ids; now each
+// category is captured independently — presence of a field means "this preset
+// controls it". So a preset can be filters-only, alerts-only, or any mix, and
+// applying it restores exactly the captured categories (others are left alone).
+// The icon-size trio (baseIconSize/byGroup/byFilter) is captured as one unit;
+// `iconSizeByGroup !== undefined` is the canonical "sizes captured" signal.
+// The bare-array form is still accepted (legacy presets = filters only).
+export type FilterPreset = {
+  filters?: string[];
+  baseIconSize?: number;
+  iconSizeByGroup?: Record<string, number>;
+  iconSizeByFilter?: Record<string, number>;
+  audioAlertByFilter?: Record<string, boolean>;
+};
+
 export type ProfileSettings = {
   hotkeys: Record<string, string>;
   groupName: string;
@@ -266,7 +281,7 @@ export type ProfileSettings = {
   labelTextSize: number;
   showLabelsHotkey: string;
   displayDiscordActivityStatus: boolean;
-  presets: Record<string, string[]>;
+  presets: Record<string, string[] | FilterPreset>;
   tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null;
   recentPrivateNodeStyles: PrivateNodeStyle[];
   tempPrivateDrawing: (Partial<Drawing> & { name?: string }) | null;
@@ -351,8 +366,19 @@ export interface ProfileActions {
   setDisplayDiscordActivityStatus: (
     displayDiscordActivityStatus: boolean,
   ) => void;
-  addPreset: (presetName: string, filters: string[]) => void;
+  addPreset: (presetName: string, preset: FilterPreset) => void;
   removePreset: (presetName: string) => void;
+  // Replace icon sizes and/or per-filter audio alerts wholesale (used when
+  // applying a preset, so unset entries revert to defaults instead of
+  // lingering). Only the provided categories are touched.
+  applyPresetSettings: (settings: {
+    iconSizes?: {
+      baseIconSize: number;
+      iconSizeByGroup: Record<string, number>;
+      iconSizeByFilter: Record<string, number>;
+    };
+    audioAlertByFilter?: Record<string, boolean>;
+  }) => void;
   setTempPrivateNode: (
     tempPrivateNode: (Partial<PrivateNode> & { filter?: string }) | null,
   ) => void;
@@ -1112,12 +1138,12 @@ export const useSettingsStore = create(
           updateSettings({ displayDiscordActivityStatus });
         },
 
-        addPreset: (presetName: string, filters: string[]) => {
+        addPreset: (presetName: string, preset: FilterPreset) => {
           const state = get();
           updateSettings({
             presets: {
               ...state.presets,
-              [presetName]: filters,
+              [presetName]: preset,
             },
           });
         },
@@ -1127,6 +1153,19 @@ export const useSettingsStore = create(
           const newPresets = { ...state.presets };
           delete newPresets[presetName];
           updateSettings({ presets: newPresets });
+        },
+
+        applyPresetSettings: (settings) => {
+          const update: Partial<ProfileSettings> = {};
+          if (settings.iconSizes) {
+            update.baseIconSize = settings.iconSizes.baseIconSize;
+            update.iconSizeByGroup = settings.iconSizes.iconSizeByGroup;
+            update.iconSizeByFilter = settings.iconSizes.iconSizeByFilter;
+          }
+          if (settings.audioAlertByFilter) {
+            update.audioAlertByFilter = settings.audioAlertByFilter;
+          }
+          updateSettings(update);
         },
 
         setTempPrivateNode: (tempPrivateNode) => {
