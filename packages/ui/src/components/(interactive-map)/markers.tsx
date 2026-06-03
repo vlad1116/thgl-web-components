@@ -2197,6 +2197,10 @@ function MarkersContent({
       for (const spawn of spawns) {
         if (!audioAlertByFilter[spawn.type]) continue;
         if (spawn.source === "static") continue;
+        // Skip nodes the user already marked discovered — they're collected, so
+        // re-pinging when the player passes the old location is unwanted. The
+        // render path hides them the same way (checkNodeDiscovered above).
+        if (checkNodeDiscovered(getNodeId(spawn), discoveryLookup)) continue;
 
         let spawnX = spawn.p[0];
         let spawnY = spawn.p[1];
@@ -2221,6 +2225,12 @@ function MarkersContent({
         for (const actor of liveActorsList) {
           const displayType = typesIdMap[actor.type];
           if (!displayType || !audioAlertByFilter[displayType]) continue;
+          // Same discovered-node skip as static spawns above. Node id matches
+          // the live-marker pipeline's format (type@x:y, 2-decimal coords).
+          const actorNodeId = `${displayType}@${actor.x.toFixed(
+            2,
+          )}:${actor.y.toFixed(2)}`;
+          if (checkNodeDiscovered(actorNodeId, discoveryLookup)) continue;
 
           let actorX = actor.x;
           let actorY = actor.y;
@@ -2283,6 +2293,9 @@ function MarkersContent({
     rotationCache,
     typesIdMap,
     t,
+    // Re-run on discovery changes so a newly-discovered in-range node stops
+    // alerting immediately (and re-checks with a fresh lookup, not a stale ref).
+    discoveryLookup,
   ]);
 
   // Label rendering using canvas-rendered text as WebGL markers on the main marker layer
