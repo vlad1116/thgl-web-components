@@ -40,6 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           domain="thgl"
           app="thgl-web"
           platform="web"
+          locale="en"
         />
       </head>
       <body

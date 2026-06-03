@@ -169,6 +169,7 @@ export function createDbRootLayout(appConfig: AppConfig) {
             domain="thgl"
             app={appConfig.name}
             platform="web"
+            locale={locale}
           />
           <Toaster />
         </body>

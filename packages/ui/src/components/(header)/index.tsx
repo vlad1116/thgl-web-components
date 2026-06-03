@@ -17,7 +17,7 @@ export {
   trackEvent,
   trackOutboundLinkClick,
   trackCustomEvent,
-  trackVersion,
+  trackFileDownload,
 } from "./plausible-tracker";
 export { ReleaseNotesLink } from "./release-notes-link";
 export { DiscordIcon, GitHubIcon, RedditIcon } from "./social-icons";

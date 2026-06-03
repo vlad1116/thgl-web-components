@@ -65,6 +65,7 @@ export default async function RootLayout({
           app="thgl-app"
           platform="desktop"
           version={version.version}
+          locale={locale}
         />
         <Toaster />
       </body>

@@ -134,6 +134,7 @@ export function createRootLayout(appConfig: AppConfig) {
             domain="thgl"
             app={appConfig.name}
             platform="web"
+            locale={locale}
           />
           <Toaster />
         </body>

@@ -41,10 +41,23 @@ let lastActionTimestamp = 0;
 const KEEP_ALIVE_TIMEOUT = 4 * 60 * 1000;
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+// True for any local-development origin so dev traffic never reaches the
+// production "thgl" site: bare `localhost`, the per-tenant dev hosts
+// (`palia.localhost:3100` etc. — note the `.localhost` suffix), loopback IPs,
+// IPv6 loopback, the Overwolf vite debug server (localhost:6000), and file://.
+// Production surfaces are never local: web tenants serve from *.th.gl, the
+// thgl-app companion from app.th.gl, and Overwolf apps from
+// overwolf-extension:// — so none of these match.
 const isLocalhost = () =>
-  /^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^\[::1\]$/.test(
+  /(^|\.)localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^\[::1\]$/.test(
     location.hostname,
   ) || location.protocol === "file:";
+
+// Hrefs we treat as file downloads (mirrors Plausible's File Download
+// extension): binary installers/archives. The `download` attribute is also
+// honoured regardless of extension.
+const DOWNLOAD_FILE =
+  /\.(exe|msi|zip|dmg|pkg|apk|appimage|deb|rar|7z|gz)(\?|#|$)/i;
 
 const sendEvent = (eventName: string, props?: EventProps) => {
   if (!config) {
@@ -108,7 +121,9 @@ export const initPlausible = (
     return;
   }
 
-  config = { domain, apiHost, trackLocalhost: true, defaultProps };
+  // trackLocalhost stays false so local dev never pollutes prod stats; the
+  // isLocalhost() gate in sendEvent drops those events.
+  config = { domain, apiHost, trackLocalhost: false, defaultProps };
 
   // Auto pageviews: fire the initial view, then on every SPA navigation.
   // Next's App Router and the Overwolf SPAs both navigate via
@@ -123,6 +138,20 @@ export const initPlausible = (
     originalPushState(...args);
     trackPageview();
   };
+
+  // Auto file-download tracking: one delegated listener fires a "File
+  // Download" event for clicks on links that carry the `download` attribute
+  // or point at a binary file (the THGL installer + any future download),
+  // so no per-link wiring is needed.
+  document.addEventListener("click", (event) => {
+    const link = (event.target as HTMLElement | null)?.closest?.("a");
+    if (!link) {
+      return;
+    }
+    if (link.hasAttribute("download") || DOWNLOAD_FILE.test(link.href)) {
+      trackFileDownload(link.href);
+    }
+  });
 
   lastActionTimestamp = Date.now();
 
@@ -169,8 +198,8 @@ export const trackCustomEvent = (name: string, url: string) => {
   trackEvent(name, { props: { url: url } });
 };
 
-export const trackVersion = (version: string) => {
-  trackEvent("Version", { props: { version: version } });
+export const trackFileDownload = (url: string) => {
+  trackEvent("File Download", { props: { url: url } });
 };
 
 export function PlausibleTracker({
@@ -179,14 +208,18 @@ export function PlausibleTracker({
   version,
   app,
   platform,
+  locale,
 }: {
   domain: string;
   apiHost: string;
+  /** App version (e.g. thgl-app semver); sent on every event. */
   version?: string;
   /** Surface slug (e.g. "palia", "thgl-web", "thgl-app"); sent on every event. */
   app?: string;
   /** Surface type ("web" | "desktop" | "overwolf"); sent on every event. */
   platform?: string;
+  /** UI locale (e.g. "en", "de"); sent on every event. */
+  locale?: string;
 }) {
   useEffect(() => {
     const defaultProps: EventProps = {};
@@ -196,10 +229,13 @@ export function PlausibleTracker({
     if (platform) {
       defaultProps.platform = platform;
     }
-    initPlausible(domain, apiHost, defaultProps);
-    if (version) {
-      trackVersion(version);
+    if (locale) {
+      defaultProps.locale = locale;
     }
+    if (version) {
+      defaultProps.version = version;
+    }
+    initPlausible(domain, apiHost, defaultProps);
   }, []);
 
   return <link rel="preconnect" href={apiHost} />;
