@@ -24,7 +24,6 @@ export function Ads728x90Desktop({ title }: { title: string }): JSX.Element {
     const owAd = initAd(
       adRef.current,
       { width: 728, height: 90 },
-      "Ads728x90Desktop",
     );
     return () => {
       owAd?.shutdown();

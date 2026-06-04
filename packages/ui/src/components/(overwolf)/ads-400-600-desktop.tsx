@@ -25,7 +25,6 @@ export function Ads400x600Desktop({ title }: { title: string }): JSX.Element {
     const owAd = initAd(
       adRef.current,
       { width: 400, height: 600 },
-      "Ads400x600Desktop",
     );
     return () => {
       owAd?.shutdown();

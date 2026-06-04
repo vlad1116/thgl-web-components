@@ -24,7 +24,6 @@ export function Ads400x300Overlay({ title }: { title: string }): JSX.Element {
     const owAd = initAd(
       adRef.current,
       { width: 400, height: 300 },
-      "Ads400x300Overlay",
     );
     return () => {
       owAd?.shutdown();

@@ -2,7 +2,6 @@ import type { OwAd } from "@overwolf/types/owads";
 import { useAccountStore } from "@repo/lib";
 import type { ReactNode, JSX } from "react";
 import { useEffect, useState } from "react";
-import { trackEvent } from "../(header)";
 
 declare global {
   interface Window {
@@ -39,11 +38,9 @@ export function AdsScript({
         return;
       }
       setState("ready");
-      trackEvent("Ads: Ready");
     };
     const handleError = () => {
       setState("error");
-      trackEvent("Ads: Error");
     };
     script.addEventListener("load", handleLoad);
     script.addEventListener("error", handleError);
