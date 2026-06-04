@@ -13,6 +13,24 @@ export const duetNightAbyss: AppConfig = {
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
+      title: "Bloomfield Station Map",
+      description:
+        "Navigate Duet Night Abyss's Bloomfield Station with our interactive maps.",
+      href: "/maps/Bloomfield%20Station",
+      iconName: "Map",
+      bgImage: preview("Haiboliya_Chezhan_Main"),
+      linkText: "Explore the Bloomfield Station Map",
+    },
+    {
+      title: "Ironworks Map",
+      description:
+        "Navigate Duet Night Abyss's Ironworks with our interactive maps.",
+      href: "/maps/Ironworks",
+      iconName: "Map",
+      bgImage: preview("Haiboliya_Chezhan_CZDX"),
+      linkText: "Explore the Ironworks Map",
+    },
+    {
       title: "Haojing Map",
       description:
         "Navigate Duet Night Abyss's Haojing region with our interactive maps.",
