@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { useAccountStore } from "./account";
+import { normalizeNodeCoords } from "./coordinates";
 import { withStorageDOMEvents } from "./dom";
 import {
   apiDeleteFilter,
@@ -892,8 +893,12 @@ export const useSettingsStore = create(
             discoveredCoordsSet = new Set();
             for (const id of discoveredNodes) {
               if (id.includes("@")) {
-                const atIndex = id.indexOf("@");
-                discoveredCoordsSet.add(id.slice(atIndex + 1));
+                const coords = id.slice(id.indexOf("@") + 1);
+                discoveredCoordsSet.add(coords);
+                // Also index the precision-normalized form so a node
+                // discovered at one precision (live toFixed(2)) matches the
+                // same node addressed at another (static full-precision).
+                discoveredCoordsSet.add(normalizeNodeCoords(coords));
               }
             }
           }
@@ -919,9 +924,12 @@ export const useSettingsStore = create(
             const baseId = nodeId.slice(0, atIndex);
             const coords = nodeId.slice(atIndex + 1);
 
-            // Check base ID match or coordinate match (all O(1))
+            // Check base ID match or coordinate match (all O(1)), including
+            // the precision-normalized coords for cross-mode matching.
             result =
-              discoveredSet!.has(baseId) || discoveredCoordsSet!.has(coords);
+              discoveredSet!.has(baseId) ||
+              discoveredCoordsSet!.has(coords) ||
+              discoveredCoordsSet!.has(normalizeNodeCoords(coords));
           }
 
           // Cache and return
@@ -949,10 +957,16 @@ export const useSettingsStore = create(
                 if (nodeId.includes("@") && nodeId.split("@")[0] === id) {
                   return false;
                 }
-                // Coordinate match (for backward compatibility)
+                // Coordinate match (for backward compatibility), precision-
+                // tolerant so undiscovering matches a node stored at a
+                // different precision (live toFixed(2) vs static full coords).
                 if (nodeCoords && id.includes("@")) {
                   const idCoords = id.slice(id.indexOf("@") + 1);
-                  if (idCoords === nodeCoords) {
+                  if (
+                    idCoords === nodeCoords ||
+                    normalizeNodeCoords(idCoords) ===
+                      normalizeNodeCoords(nodeCoords)
+                  ) {
                     return false;
                   }
                 }
@@ -983,10 +997,16 @@ export const useSettingsStore = create(
                   if (nodeId.includes("@") && nodeId.split("@")[0] === id) {
                     return false;
                   }
-                  // Coordinate match (for backward compatibility)
+                  // Coordinate match (for backward compatibility), precision-
+                  // tolerant so undiscovering matches a node stored at a
+                  // different precision (live toFixed(2) vs static full coords).
                   if (nodeCoords && id.includes("@")) {
                     const idCoords = id.slice(id.indexOf("@") + 1);
-                    if (idCoords === nodeCoords) {
+                    if (
+                      idCoords === nodeCoords ||
+                      normalizeNodeCoords(idCoords) ===
+                        normalizeNodeCoords(nodeCoords)
+                    ) {
                       return false;
                     }
                   }

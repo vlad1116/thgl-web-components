@@ -82,6 +82,11 @@ export function MapHotkeys() {
             if (!filters.includes(displayType)) continue;
             if (actor.mapName && actor.mapName !== player.mapName) continue;
             nodeSpawns.push({
+              // Match the live-marker pipeline's id format (markers.tsx keys
+              // live actors at toFixed(2)). Without an explicit id, getNodeId
+              // emits full-precision coords that never match the rendered
+              // marker, so discovering a live actor wouldn't hide/grey it.
+              id: `${displayType}@${actor.x.toFixed(2)}:${actor.y.toFixed(2)}`,
               type: displayType,
               p:
                 actor.z != null

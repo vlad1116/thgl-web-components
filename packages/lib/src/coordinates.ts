@@ -98,6 +98,24 @@ export const getNodeId = (spawn: Spawn | SimpleSpawn) => {
 };
 
 /**
+ * Round a node-id coordinate string ("x:y", optionally with extra components)
+ * to 2-decimal precision. The same physical node can be addressed at different
+ * precisions depending on mode: the live-actor marker pipeline keys actors at
+ * toFixed(2), while static/predicted ids carry full-precision data coords.
+ * Discovery matching compares the normalized form so discovering a node in one
+ * mode is recognized in the other. Distinct nodes are never within 0.01 world
+ * units, so this widens no real buckets.
+ */
+export const normalizeNodeCoords = (coords: string): string => {
+  const parts = coords.split(":");
+  if (parts.length < 2) return coords;
+  const x = parseFloat(parts[0]);
+  const y = parseFloat(parts[1]);
+  if (isNaN(x) || isNaN(y)) return coords;
+  return `${x.toFixed(2)}:${y.toFixed(2)}`;
+};
+
+/**
  * Build discovery lookup structures from an array of discovered node IDs.
  * Used for O(1) lookups in hot paths like markers rendering.
  *
@@ -116,6 +134,10 @@ export const buildDiscoveryLookup = (discoveredNodes: string[]) => {
       const atIndex = id.indexOf("@");
       const coords = id.slice(atIndex + 1);
       discoveredCoords.add(coords);
+      // Index the precision-normalized form too, so a node discovered at one
+      // precision (e.g. a live actor at toFixed(2)) matches the same node
+      // addressed at another (e.g. its full-precision static/predicted id).
+      discoveredCoords.add(normalizeNodeCoords(coords));
 
       // Backward compatibility: old node IDs used raw float precision in z:x
       // order (from getNodeId fallback), while current extraction uses
@@ -180,6 +202,9 @@ export const checkNodeDiscovered = (
   // Check base ID match (type without coordinates)
   if (discoveredSet.has(baseId)) return true;
 
-  // Check coordinate match (backward compatibility)
-  return discoveredCoords.has(coords);
+  // Check coordinate match (backward compatibility), then the precision-
+  // normalized form so cross-mode (live toFixed(2) vs static full-precision)
+  // ids for the same node match.
+  if (discoveredCoords.has(coords)) return true;
+  return discoveredCoords.has(normalizeNodeCoords(coords));
 };
