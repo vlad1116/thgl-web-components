@@ -93,8 +93,11 @@ function CompassPopover({
             />
             {/* Tick marks and labels, rotated with bearing */}
             <g
-              style={{ transform: `rotate(${-bearing}rad)` }}
-              transform-origin="60 60"
+              style={{
+                transform: `rotate(${-bearing}rad)`,
+                transformOrigin: "60px 60px",
+                transformBox: "view-box",
+              }}
             >
               {/* Cardinal ticks */}
               {[0, 90, 180, 270].map((deg) => (
