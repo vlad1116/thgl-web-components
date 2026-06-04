@@ -1,7 +1,7 @@
 "use client";
 import { useUserStore } from "../(providers)";
 import Peer, { DataConnection } from "peerjs";
-import { peerConfig } from "../(providers)/peer-mesh-utils";
+import { peerServerOptions } from "../(providers)/peer-mesh-utils";
 import {
   Dialog,
   DialogContent,
@@ -122,9 +122,9 @@ export function Whiteboard({
       peerRef.current.destroy();
     }
     if (peerId) {
-      peerRef.current = new Peer(peerId, { config: peerConfig });
+      peerRef.current = new Peer(peerId, peerServerOptions);
     } else {
-      peerRef.current = new Peer({ config: peerConfig });
+      peerRef.current = new Peer(peerServerOptions);
     }
     const peer = peerRef.current;
     peer.on("close", () => {

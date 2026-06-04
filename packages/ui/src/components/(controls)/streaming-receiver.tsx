@@ -10,7 +10,7 @@ import {
 import type { ActorPlayer, Actor } from "@repo/lib/overwolf";
 import Peer, { DataConnection } from "peerjs";
 import { RemotePlayer, usePeersStore } from "../(providers)/peers-store";
-import { PeerMeshUtils, peerConfig, type ControlMsg } from "../(providers)/peer-mesh-utils";
+import { PeerMeshUtils, peerServerOptions, type ControlMsg } from "../(providers)/peer-mesh-utils";
 import { useEffect, useRef, useState } from "react";
 
 // PeerJS's "close" event isn't always fired when a tab is hard-killed,
@@ -505,7 +505,7 @@ export function StreamingReceiver({
     }
     const fn = async () => {
       const PeerJs = (await import("peerjs")).default;
-      peerRef.current = new PeerJs({ config: peerConfig });
+      peerRef.current = new PeerJs(peerServerOptions);
       peerRef.current.on("close", () => {
         console.log("peer close");
         setIsConnected(false);
@@ -675,7 +675,7 @@ export function StreamingReceiver({
     rootId: string,
     joinTimeout?: ReturnType<typeof setTimeout>,
   ) {
-    const memberPeer = new Peer({ config: peerConfig });
+    const memberPeer = new Peer(peerServerOptions);
     controlPeerRef.current = memberPeer;
     memberPeer.on("open", () => {
       joinPhaseRef.current = "joining mesh";
@@ -685,7 +685,7 @@ export function StreamingReceiver({
         () => {
           // If no leader responds in time, become coordinator
           try {
-            const leaderPeer = new Peer(rootId, { config: peerConfig });
+            const leaderPeer = new Peer(rootId, peerServerOptions);
             controlPeerRef.current = leaderPeer;
             const receiverConns = new Map<string, DataConnection>();
             const senderIds = new Set<string>();
@@ -844,7 +844,7 @@ export function StreamingReceiver({
           // No leader exists - become coordinator
           // Keep joiningPeer true while we transition to leader
           try {
-            const leaderPeer = new Peer(rootId, { config: peerConfig });
+            const leaderPeer = new Peer(rootId, peerServerOptions);
             controlPeerRef.current = leaderPeer;
             const receiverConns = new Map<string, DataConnection>();
             const senderIds = new Set<string>();
@@ -996,7 +996,7 @@ export function StreamingReceiver({
         }
         // Leader went away; try to become the coordinator.
         try {
-          const leaderPeer = new Peer(rootId, { config: peerConfig });
+          const leaderPeer = new Peer(rootId, peerServerOptions);
           controlPeerRef.current = leaderPeer;
           const receiverConns = new Map<string, DataConnection>();
           const senderIds = new Set<string>();

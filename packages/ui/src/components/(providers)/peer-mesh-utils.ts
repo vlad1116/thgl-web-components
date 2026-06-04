@@ -52,6 +52,20 @@ const iceServers: RTCIceServer[] = [
 
 export const peerConfig: RTCConfiguration = { iceServers };
 
+// Self-hosted PeerJS signaling broker (peer.th.gl on the coturn box) instead of
+// the free public PeerJS cloud (0.peerjs.com), which is rate-limited and goes
+// down for hours at a time — the cause of intermittent "can't connect to peer
+// mesh" reports. Pass this to every `new Peer(...)` so the handshake uses our
+// broker; media/data still flow over the self-hosted TURN in `config`.
+export const peerServerOptions = {
+  host: "peer.th.gl",
+  port: 443,
+  secure: true,
+  path: "/",
+  key: "thgl",
+  config: peerConfig,
+};
+
 // Utility functions for peer mesh operations
 export class PeerMeshUtils {
   static createRootId(domain: string, peerCode: string): string {
@@ -83,7 +97,7 @@ export class PeerMeshUtils {
     onClose?: () => void,
     onConnection?: (conn: DataConnection) => void,
   ): Peer {
-    const peer = new Peer({ config: peerConfig });
+    const peer = new Peer(peerServerOptions);
 
     if (onOpen) {
       peer.on("open", onOpen);

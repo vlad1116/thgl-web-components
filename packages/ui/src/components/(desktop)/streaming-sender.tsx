@@ -23,7 +23,7 @@ import {
   ScrollArea,
 } from "../(controls)";
 import { RemotePlayer, usePeersStore } from "../(providers)/peers-store";
-import { PeerMeshUtils, peerConfig, type ControlMsg } from "../(providers)/peer-mesh-utils";
+import { PeerMeshUtils, peerServerOptions, type ControlMsg } from "../(providers)/peer-mesh-utils";
 
 const useConnectionStore = create<{
   connections: Record<string, DataConnection>;
@@ -312,7 +312,7 @@ export function StreamingSender({
       onReady?.();
       return;
     }
-    const p = new Peer({ config: peerConfig });
+    const p = new Peer(peerServerOptions);
     peerRef.current = p;
     p.on("close", () => {
       setIsConnected(false);
@@ -454,7 +454,7 @@ export function StreamingSender({
     const start = () => {
       try {
         joinPhaseRef.current = "claiming leader role";
-        const leaderPeer = new Peer(rootId, { config: peerConfig });
+        const leaderPeer = new Peer(rootId, peerServerOptions);
         controlPeerRef.current = leaderPeer;
         // Maintain all control connections and sender IDs
         const controlConns = new Set<DataConnection>();
@@ -608,7 +608,7 @@ export function StreamingSender({
     joinTimeout?: ReturnType<typeof setTimeout>,
   ) {
     joinPhaseRef.current = "connecting to leader";
-    const memberPeer = new Peer({ config: peerConfig });
+    const memberPeer = new Peer(peerServerOptions);
     controlPeerRef.current = memberPeer;
     memberPeer.on("open", () => {
       joinPhaseRef.current = "joining mesh";
@@ -638,7 +638,7 @@ export function StreamingSender({
           return;
         }
         try {
-          const leaderPeer = new Peer(rootId, { config: peerConfig });
+          const leaderPeer = new Peer(rootId, peerServerOptions);
           controlPeerRef.current = leaderPeer;
           const receiverConns = new Set<DataConnection>();
           const senderIds = new Set<string>();
