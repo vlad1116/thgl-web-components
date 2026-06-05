@@ -269,6 +269,22 @@ This ensures the app can connect correctly and detect your position.
     labels: ["Overwolf", "Palia", "Technical"],
   },
   {
+    id: "live-mode-render-distance",
+    headline: "Distant resources don't show in live mode",
+    question:
+      "Can I increase the render distance so resources farther away show up in live mode?",
+    answer: `
+No — and it's worth explaining why. Live mode reads the entities your **game client currently has loaded**.
+
+In online games like Palia, the **server only sends your client the things near you** (Unreal Engine's "network relevance" — roughly 150 m by default) to save bandwidth. Anything farther isn't sent to your client at all, so there's nothing for the app to read.
+
+**This is controlled by the game's server, not by the app — and not by your graphics settings.** Turning up the in-game "view distance" won't help either, since that only affects what's *drawn*, not what's *loaded*.
+
+**To see resources beyond that range:** turn **off live mode** and use the static / predicted view. It shows every known spawn location for the whole map regardless of where you're standing — ideal for planning a route. Switch live mode back on when you want to confirm what's actually spawned near you right now.
+    `.trim(),
+    labels: ["General", "Technical"],
+  },
+  {
     id: "overwolf-on-linux-macos",
     headline: "Linux and MacOS support",
     question: "Can I run the Overwolf apps on Linux or MacOS?",
