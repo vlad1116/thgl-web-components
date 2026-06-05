@@ -18,7 +18,7 @@ export const conanExiles: AppConfig = {
     "zh-Hans",
     "zh-Hant",
   ],
-  appUrl: null,
+  appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
     {
       title: "Exiled Lands Map",

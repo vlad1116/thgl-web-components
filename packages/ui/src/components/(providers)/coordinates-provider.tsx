@@ -14,6 +14,8 @@ import { useI18n } from ".";
 import {
   decodeFromBuffer,
   isLiveReadingActive,
+  isOverwolf,
+  useConnectionStore,
   useEffectiveLiveMode,
   useSettingsStore,
   Region,
@@ -302,6 +304,26 @@ export function CoordinatesProvider({
   }, [publicSearchIsLoading, userStore]);
 
   const liveMode = useEffectiveLiveMode();
+  // Can this session receive live data at all? Use STABLE signals — never the
+  // transient player/actors, which empty out on loading screens and map
+  // transitions and would otherwise make all predicted spawns flash in and out.
+  //   - Companion app (Overwolf or THGLApp WebView at /apps/<id>): the user's
+  //     live-mode selection is authoritative; loading-screen gaps must not flip
+  //     rendering.
+  //   - Peer Link connected: a teammate may stream live positions.
+  // On the plain website with neither, live/combined mode has no source to
+  // confirm predicted-dynamic spawns, so we fall back to showing them all.
+  const isCompanionApp = useMemo(
+    () =>
+      isOverwolf ||
+      (typeof window !== "undefined" &&
+        window.location.pathname.startsWith("/apps/")),
+    [],
+  );
+  const hasPeerConnections = useConnectionStore(
+    (s) => Object.keys(s.connections).length > 0,
+  );
+  const liveCapable = isCompanionApp || hasPeerConnections;
   const myFilters = useSettingsStore((state) => state.myFilters);
   // Actors now flow directly into markers.tsx via useGameState subscription.
 
@@ -436,10 +458,16 @@ export function CoordinatesProvider({
     if (!isHydrated || !staticNodes) return emptyArray as NodesCoordinates;
     if (
       !isLiveReadingActive(liveMode) ||
+      !liveCapable ||
       !typesIdMap ||
       Object.keys(typesIdMap).length === 0
     ) {
-      // Static (predicted) mode: customNodes + ALL static spawns.
+      // Static (predicted) mode — also the fallback when live/combined mode is
+      // selected but this session can't receive live data (plain website, no
+      // companion app and no peer link): show customNodes + ALL static spawns at
+      // full opacity, since there's nothing live to confirm or mute predicted-
+      // dynamic spawns. In the companion app this stays false-y so the selected
+      // live mode is respected even across loading screens.
       return customNodes.concat(staticNodes);
     }
     if (liveMode === "live") {
@@ -453,6 +481,7 @@ export function CoordinatesProvider({
   }, [
     isHydrated,
     liveMode,
+    liveCapable,
     customNodes,
     staticNodes,
     realStaticNodes,
