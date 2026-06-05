@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { faqEntries } from "@/games/thgl-web/lib/faq-entries";
 import { FaqLabelBadge } from "@/games/thgl-web/components/faq-label-badge";
+import { FeatureComparison } from "@/games/thgl-web/components/feature-comparison";
 import { PageShell } from "@/games/thgl-web/components/page-shell";
 import { DiscordMessage } from "@repo/ui/content";
 import { Button } from "@repo/ui/controls";
@@ -110,6 +111,8 @@ export default async function FAQDetailPage({
       <article className="prose prose-invert prose-lg max-w-none">
         <DiscordMessage>{entry.answer}</DiscordMessage>
       </article>
+
+      {entry.embed === "feature-comparison" && <FeatureComparison />}
 
       <hr className="border-border" />
 

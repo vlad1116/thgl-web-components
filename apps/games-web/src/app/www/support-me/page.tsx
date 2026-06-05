@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TierCard } from "@/games/thgl-web/components/tier-card";
+import { FeatureComparison } from "@/games/thgl-web/components/feature-comparison";
 import { tiers } from "@/games/thgl-web/lib/tiers";
 import { Button } from "@repo/ui/controls";
 
@@ -75,6 +76,17 @@ export default function SupportMe() {
           <p className="text-center text-sm text-muted-foreground mt-6 italic">
             💡 Pro Tip: Annual plans include a 10% discount
           </p>
+          <p className="text-center text-sm text-muted-foreground mt-2">
+            Not ready to subscribe?{" "}
+            <Link
+              href="https://www.patreon.com/devleon"
+              target="_blank"
+              className="text-primary underline font-medium"
+            >
+              Join for free
+            </Link>{" "}
+            to create an account and sync your filters across devices.
+          </p>
         </div>
 
         {/* How to Activate */}
@@ -105,46 +117,8 @@ export default function SupportMe() {
           </div>
         </div>
 
-        {/* Perk Details */}
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-6">What You Get</h2>
-          <div className="grid md:grid-cols-2 gap-6 text-sm">
-            <div className="space-y-2">
-              <h3 className="font-semibold">* Ad Removal</h3>
-              <p className="text-muted-foreground">
-                Available in all official TH.GL projects — Companion App,
-                Overwolf apps, and browser-based tools.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">** Premium Features</h3>
-              <p className="text-muted-foreground">
-                Unlock advanced tools and options highlighted directly inside
-                supported apps and websites.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">*** Preview Release Access</h3>
-              <p className="text-muted-foreground">
-                Early access to upcoming features and app updates before public
-                release.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Discord Supporter Role</h3>
-              <p className="text-muted-foreground">
-                Get a special role in our Discord server.{" "}
-                <Link
-                  href="/faq/discord-supporter-role"
-                  className="text-primary underline"
-                >
-                  Learn how to activate it
-                </Link>
-                .
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Feature comparison */}
+        <FeatureComparison />
 
         {/* Already a Subscriber CTA */}
         <div className="bg-linear-to-r from-primary/10 to-primary/5 rounded-lg p-8 text-center max-w-2xl mx-auto">

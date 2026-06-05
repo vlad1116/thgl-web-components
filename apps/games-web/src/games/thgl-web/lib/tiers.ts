@@ -27,15 +27,15 @@ export const perks: Perk[] = [
   },
   {
     id: "ad-free",
-    title: "Ad Removal on my Apps*",
+    title: "Ad Removal on my Apps",
   },
   {
     id: "premium-features",
-    title: "Premium features**",
+    title: "Premium features",
   },
   {
     id: "preview-access",
-    title: "Preview Release Access***",
+    title: "Preview Release Access",
   },
 ];
 

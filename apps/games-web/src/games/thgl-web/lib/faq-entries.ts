@@ -16,9 +16,43 @@ export type FAQEntry = {
   question: string;
   answer: string;
   labels: FAQLabel[];
+  // Optional rich block rendered after the markdown answer (the answer string
+  // is Discord-markdown and can't hold a table/React component).
+  embed?: "feature-comparison";
 };
 
 export const faqEntries: FAQEntry[] = [
+  {
+    id: "what-do-i-get-by-supporting",
+    headline: "What do I get by supporting? (premium features explained)",
+    question:
+      "What are the premium features, and what does each supporter tier unlock?",
+    answer: `
+The map itself is **free** — interactive maps, every filter, live tracking, and **Peer Link** (mirror the map to a phone or second screen) need no account at all.
+
+A **free account** (just sign in) adds **cloud-synced, shareable filters**.
+
+Supporting on [Patreon](https://www.patreon.com/devleon) unlocks the rest. Tiers are **cumulative** — each includes everything below it:
+
+### Enthusiast — $2/mo
+- Comments on map markers
+- Discord supporter role
+
+### Pro — $5/mo
+- Everything in Enthusiast
+- Ad-free across every TH.GL app
+
+### Elite — $10/mo
+- Everything in Pro
+- Early access to preview features (e.g. the combined live + predicted map view)
+
+**A note on "Premium Features":** these are game-specific extras that only a few older apps (like New World) bundle. Newer maps such as **Palia** don't have separate premium features — supporting Palia gets you the perks above (ad removal, comments, preview access).
+
+You can subscribe on the [Support page](/support-me). Here's the full breakdown:
+    `.trim(),
+    labels: ["Subscription", "General"],
+    embed: "feature-comparison",
+  },
   {
     id: "ticley-watch-scam",
     headline: "Unexpected charges from THGL.APP (NOT The Hidden Gaming Lair)",
