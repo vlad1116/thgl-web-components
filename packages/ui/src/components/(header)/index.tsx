@@ -16,7 +16,6 @@ export {
   initPlausible,
   trackEvent,
   trackOutboundLinkClick,
-  trackCustomEvent,
   trackFileDownload,
 } from "./plausible-tracker";
 export { ReleaseNotesLink } from "./release-notes-link";

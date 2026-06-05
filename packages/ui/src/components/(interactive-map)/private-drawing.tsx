@@ -15,7 +15,6 @@ import {
   type DrawingMode,
 } from "@repo/lib/web-map";
 import { Label } from "../ui/label";
-import { trackEvent } from "../(header)";
 import { Separator } from "../ui/separator";
 import { Slider } from "../ui/slider";
 import { FilterSelect } from "../(controls)/filter-select";
@@ -608,7 +607,6 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
       setGlobalMode("none");
     } else {
       setGlobalMode(mode);
-      trackEvent(`drawing_${mode}`);
     }
   };
 
@@ -649,7 +647,6 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
     ]);
     setGlobalMode("none");
     setTempPrivateDrawing(null);
-    trackEvent("drawing_save");
   };
 
   return (

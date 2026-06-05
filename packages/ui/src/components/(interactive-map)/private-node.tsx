@@ -28,7 +28,6 @@ import { Input } from "../ui/input";
 import { ColorPicker } from "../(controls)/color-picker";
 import { Slider } from "../ui/slider";
 import { ChevronDown, Info, MapPin } from "lucide-react";
-import { trackEvent } from "../(header)/plausible-tracker";
 import { IconPicker } from "../(controls)/icon-picker";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Textarea } from "../ui/textarea";
@@ -697,16 +696,6 @@ export function PrivateNode({
       myFilter.nodes?.filter((marker) => marker.id !== tempPrivateNode.id) ??
       [];
     myFilter.nodes.push(marker);
-
-    if (tempPrivateNode.id) {
-      trackEvent("Private Node: Update", {
-        props: { filter: tempPrivateNode.filter },
-      });
-    } else {
-      trackEvent("Private Node: Add", {
-        props: { filter: tempPrivateNode.filter },
-      });
-    }
 
     setMyFilters(newMyFilters);
     setFilters([

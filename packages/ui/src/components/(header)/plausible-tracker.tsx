@@ -194,10 +194,6 @@ export const trackOutboundLinkClick = (url: string) => {
   trackEvent("Outbound Link: Click", { props: { url: url } });
 };
 
-export const trackCustomEvent = (name: string, url: string) => {
-  trackEvent(name, { props: { url: url } });
-};
-
 export const trackFileDownload = (url: string) => {
   trackEvent("File Download", { props: { url: url } });
 };

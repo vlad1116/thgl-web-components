@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { trackCustomEvent } from "@repo/ui/header";
 import { useState } from "react";
 import { Button, Card, CardContent } from "@repo/ui/controls";
 import { Game } from "@repo/lib";
@@ -43,9 +42,6 @@ export function AppSubscriptionCard({
                   href={`${game.overwolf!.protocol}://${
                     game.overwolf!.id
                   }#userId=${userId}`}
-                  onClick={() => {
-                    trackCustomEvent("Supporter: Send Code Click", game.title);
-                  }}
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Unlock App
