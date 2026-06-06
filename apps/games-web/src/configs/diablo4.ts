@@ -1,7 +1,7 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 const preview = (mapId: string) =>
-  `https://cdn.th.gl/diablo4/map-tiles/${mapId}/preview.webp`;
+  `${DATA_FORGE_CDN_URL}/diablo4/map-tiles/${mapId}/preview.webp`;
 
 export const diablo4: AppConfig = {
   name: "diablo4",

@@ -1,9 +1,9 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs (avoid getPreviewImageUrl + cbor-x leak
 // into middleware).
 const preview = (mapId: string) =>
-  `https://cdn.th.gl/duet-night-abyss/map-tiles/${mapId}/preview.webp`;
+  `${DATA_FORGE_CDN_URL}/duet-night-abyss/map-tiles/${mapId}/preview.webp`;
 
 export const duetNightAbyss: AppConfig = {
   name: "duet-night-abyss",

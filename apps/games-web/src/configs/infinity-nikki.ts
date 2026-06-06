@@ -1,8 +1,8 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs. The first one keeps the ?v=2 cache buster.
 const preview = (mapId: string, version?: string) => {
-  const url = `https://cdn.th.gl/infinity-nikki/map-tiles/${mapId}/preview.webp`;
+  const url = `${DATA_FORGE_CDN_URL}/infinity-nikki/map-tiles/${mapId}/preview.webp`;
   return version ? `${url}?v=${version}` : url;
 };
 

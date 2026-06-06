@@ -6,8 +6,23 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
+      "fileName": "games-4682970419739067130.webp",
       "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "title": "Gothic 1 Remake",
+    "url": "https://gothic1remake.th.gl",
+    "tags": [
+      "interactive_map",
+      "database"
+    ],
+    "sprite": {
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 0,
       "width": 32,
       "height": 32
@@ -20,8 +35,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 0,
       "width": 32,
       "height": 32
@@ -38,7 +53,7 @@
         "title": "Blue Protocol Timer",
         "url": "https://bptimer.com",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 0,
           "y": 0,
           "width": 24,
@@ -47,8 +62,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 0,
       "width": 32,
       "height": 32
@@ -61,8 +76,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 128,
       "y": 0,
       "width": 32,
       "height": 32
@@ -79,7 +94,7 @@
         "title": "Database",
         "url": "https://soulmask.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -88,9 +103,9 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 128,
-      "y": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 0,
+      "y": 32,
       "width": 32,
       "height": 32
     }
@@ -102,8 +117,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 32,
       "width": 32,
       "height": 32
@@ -116,8 +131,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 32,
       "width": 32,
       "height": 32
@@ -130,8 +145,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 32,
       "width": 32,
       "height": 32
@@ -148,7 +163,7 @@
         "title": "Database",
         "url": "https://dune.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -159,7 +174,7 @@
         "title": "r/duneawakening",
         "url": "https://www.reddit.com/r/duneawakening",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -168,8 +183,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 128,
       "y": 32,
       "width": 32,
       "height": 32
@@ -182,9 +197,9 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 128,
-      "y": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 0,
+      "y": 64,
       "width": 32,
       "height": 32
     }
@@ -196,8 +211,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 64,
       "width": 32,
       "height": 32
@@ -210,8 +225,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 64,
       "width": 32,
       "height": 32
@@ -224,8 +239,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 64,
       "width": 32,
       "height": 32
@@ -238,8 +253,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 128,
       "y": 64,
       "width": 32,
       "height": 32
@@ -256,7 +271,7 @@
         "title": "Database",
         "url": "https://paxdei.gaming.tools?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -267,7 +282,7 @@
         "title": "r/PaxDei",
         "url": "https://www.reddit.com/r/PaxDei",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -278,7 +293,7 @@
         "title": "Tools",
         "url": "https://pax-dei-tools.com/?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 0,
           "y": 24,
           "width": 24,
@@ -287,9 +302,9 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 128,
-      "y": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 0,
+      "y": 96,
       "width": 32,
       "height": 32
     }
@@ -305,7 +320,7 @@
         "title": "Database",
         "url": "https://nightcrows.gaming.tools?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -314,8 +329,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 96,
       "width": 32,
       "height": 32
@@ -328,8 +343,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 96,
       "width": 32,
       "height": 32
@@ -342,8 +357,8 @@
       "activity_tracker"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 96,
       "width": 32,
       "height": 32
@@ -360,7 +375,7 @@
         "title": "Diablo IV Companion",
         "url": "https://github.com/josdemmers/Diablo4Companion?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 24,
           "width": 24,
@@ -369,8 +384,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 128,
       "y": 96,
       "width": 32,
       "height": 32
@@ -383,9 +398,9 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 128,
-      "y": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 0,
+      "y": 128,
       "width": 32,
       "height": 32
     }
@@ -397,8 +412,8 @@
       "challenges"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 128,
       "width": 32,
       "height": 32
@@ -411,8 +426,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 128,
       "width": 32,
       "height": 32
@@ -430,7 +445,7 @@
         "title": "Paliapedia",
         "url": "https://paliapedia.com?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -441,7 +456,7 @@
         "title": "Palia Tracker",
         "url": "https://paliatracker.com?ref=thgl",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 48,
           "y": 24,
           "width": 24,
@@ -450,8 +465,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 128,
       "width": 32,
       "height": 32
@@ -468,7 +483,7 @@
         "title": "Palworld Soundboard",
         "url": "https://www.voicy.network/official-soundboards/games/palworld",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 0,
           "y": 48,
           "width": 24,
@@ -479,7 +494,7 @@
         "title": "r/Palworld",
         "url": "https://www.reddit.com/r/palworld",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -490,7 +505,7 @@
         "title": "The Palworld Wiki",
         "url": "https://palworld.wiki.gg",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 48,
           "width": 24,
@@ -501,7 +516,7 @@
         "title": "Palworld Server Hosting",
         "url": "https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=60",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 48,
           "y": 48,
           "width": 24,
@@ -510,8 +525,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 96,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 128,
       "y": 128,
       "width": 32,
       "height": 32
@@ -524,9 +539,9 @@
       "database"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 128,
-      "y": 128,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 0,
+      "y": 160,
       "width": 32,
       "height": 32
     }
@@ -538,8 +553,8 @@
       "interactive_map"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 0,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 32,
       "y": 160,
       "width": 32,
       "height": 32
@@ -556,7 +571,7 @@
         "title": "Database",
         "url": "https://crimsondesert.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4089591170453627056.webp",
+          "fileName": "partners-4682970419739067130.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -565,8 +580,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 32,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 64,
       "y": 160,
       "width": 32,
       "height": 32
@@ -579,8 +594,8 @@
       "database"
     ],
     "sprite": {
-      "fileName": "games-4089591170453627056.webp",
-      "x": 64,
+      "fileName": "games-4682970419739067130.webp",
+      "x": 96,
       "y": 160,
       "width": 32,
       "height": 32

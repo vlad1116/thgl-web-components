@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const soulmask: AppConfig = {
   name: "soulmask",
@@ -25,7 +25,7 @@ export const soulmask: AppConfig = {
       href: "/maps/Cloud%20Mist%20Forest",
       iconName: "Map",
       // Inlined getPreviewImageUrl("soulmask", "Level01")
-      bgImage: "https://cdn.th.gl/soulmask/map-tiles/Level01/preview.webp",
+      bgImage: `${DATA_FORGE_CDN_URL}/soulmask/map-tiles/Level01/preview.webp`,
       linkText: "Explore the Cloud Mist Forest Map",
     },
     {
@@ -35,7 +35,7 @@ export const soulmask: AppConfig = {
       href: "/maps/Shifting%20Sands",
       iconName: "Map",
       // Inlined getPreviewImageUrl("soulmask", "DLC_Level01")
-      bgImage: "https://cdn.th.gl/soulmask/map-tiles/DLC_Level01/preview.webp",
+      bgImage: `${DATA_FORGE_CDN_URL}/soulmask/map-tiles/DLC_Level01/preview.webp`,
       linkText: "Explore the Shifting Sands Map",
     },
   ],

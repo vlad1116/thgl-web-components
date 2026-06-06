@@ -1,9 +1,9 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs (getPreviewImageUrl would drag cbor-x
 // into middleware via @repo/lib).
 const preview = () =>
-  "https://cdn.th.gl/once-human/map-tiles/default/preview.webp";
+  `${DATA_FORGE_CDN_URL}/once-human/map-tiles/default/preview.webp`;
 
 export const onceHuman: AppConfig = {
   name: "once-human",

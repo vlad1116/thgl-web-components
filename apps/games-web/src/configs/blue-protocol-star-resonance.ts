@@ -1,9 +1,9 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs; the originals used getPreviewImageUrl()
 // which would drag cbor-x into middleware via @repo/lib.
 const preview = (mapId: string) =>
-  `https://cdn.th.gl/blue-protocol-star-resonance/map-tiles/${mapId}/preview.webp`;
+  `${DATA_FORGE_CDN_URL}/blue-protocol-star-resonance/map-tiles/${mapId}/preview.webp`;
 
 export const blueProtocolStarResonance: AppConfig = {
   name: "blue-protocol-star-resonance",

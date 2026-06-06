@@ -8,6 +8,7 @@ import { diablo4 } from "./diablo4";
 import { drakantos } from "./drakantos";
 import { duetNightAbyss } from "./duet-night-abyss";
 import { duneAwakening } from "./dune-awakening";
+import { gothic1Remake } from "./gothic-1-remake";
 import { grounded2 } from "./grounded2";
 import { hogwartsLegacy } from "./hogwarts-legacy";
 import { hommOldenEra } from "./homm-olden-era";
@@ -40,6 +41,7 @@ const ALL_CONFIGS: AppConfig[] = [
   drakantos,
   duetNightAbyss,
   duneAwakening,
+  gothic1Remake,
   grounded2,
   hogwartsLegacy,
   hommOldenEra,

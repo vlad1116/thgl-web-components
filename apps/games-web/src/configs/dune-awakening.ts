@@ -1,9 +1,9 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs; the originals used getPreviewImageUrl()
 // which would drag cbor-x into middleware via @repo/lib.
 const preview = (mapId: string, version?: string) => {
-  const url = `https://cdn.th.gl/dune-awakening/map-tiles/${mapId}/preview.webp`;
+  const url = `${DATA_FORGE_CDN_URL}/dune-awakening/map-tiles/${mapId}/preview.webp`;
   return version ? `${url}?v=${version}` : url;
 };
 

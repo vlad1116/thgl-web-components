@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const conanExiles: AppConfig = {
   name: "conan-exiles",
@@ -30,7 +30,7 @@ export const conanExiles: AppConfig = {
       // middleware imports configs, so any helper from @repo/lib would
       // drag cbor-x into Edge Runtime (forbidden — uses dynamic eval).
       bgImage:
-        "https://cdn.th.gl/conan-exiles/map-tiles/ExiledLands/preview.webp?v=2",
+        `${DATA_FORGE_CDN_URL}/conan-exiles/map-tiles/ExiledLands/preview.webp?v=2`,
       linkText: "Explore the Exiled Lands",
     },
     {
@@ -40,7 +40,7 @@ export const conanExiles: AppConfig = {
       href: "/maps/Isle%20of%20Siptah",
       iconName: "Map",
       bgImage:
-        "https://cdn.th.gl/conan-exiles/map-tiles/IsleOfSiptah/preview.webp?v=2",
+        `${DATA_FORGE_CDN_URL}/conan-exiles/map-tiles/IsleOfSiptah/preview.webp?v=2`,
       linkText: "Explore the Isle of Siptah",
     },
   ],

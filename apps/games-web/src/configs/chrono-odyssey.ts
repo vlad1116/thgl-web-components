@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const chronoOdyssey: AppConfig = {
   name: "chrono-odyssey",
@@ -15,7 +15,7 @@ export const chronoOdyssey: AppConfig = {
       // Inlined getPreviewImageUrl("chrono-odyssey", "setera"): keeps
       // middleware (which transitively imports this config) free of
       // cbor-x's dynamic eval which Edge Runtime forbids.
-      bgImage: "https://cdn.th.gl/chrono-odyssey/map-tiles/setera/preview.webp",
+      bgImage: `${DATA_FORGE_CDN_URL}/chrono-odyssey/map-tiles/setera/preview.webp`,
       linkText: "Explore the Setera Map",
     },
   ],

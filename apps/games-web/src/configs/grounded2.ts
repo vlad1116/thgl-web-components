@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const grounded2: AppConfig = {
   name: "grounded2",
@@ -15,7 +15,7 @@ export const grounded2: AppConfig = {
       iconName: "Map",
       // Inlined getPreviewImageUrl("grounded2", "brookhollow-park")
       bgImage:
-        "https://cdn.th.gl/grounded2/map-tiles/brookhollow-park/preview.webp",
+        `${DATA_FORGE_CDN_URL}/grounded2/map-tiles/brookhollow-park/preview.webp`,
       linkText: "Explore the Brookhollow Park Map",
     },
   ],

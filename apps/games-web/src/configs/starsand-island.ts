@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const starsandIsland: AppConfig = {
   name: "starsand-island",
@@ -24,7 +24,7 @@ export const starsandIsland: AppConfig = {
       iconName: "Map",
       // Inlined getPreviewImageUrl("starsand-island", "StarSandIsland")
       bgImage:
-        "https://cdn.th.gl/starsand-island/map-tiles/StarSandIsland/preview.webp",
+        `${DATA_FORGE_CDN_URL}/starsand-island/map-tiles/StarSandIsland/preview.webp`,
       linkText: "Explore the Island Map",
     },
     {
@@ -35,7 +35,7 @@ export const starsandIsland: AppConfig = {
       iconName: "Map",
       // Inlined getPreviewImageUrl("starsand-island", "MineCave_MainLand")
       bgImage:
-        "https://cdn.th.gl/starsand-island/map-tiles/MineCave_MainLand/preview.webp",
+        `${DATA_FORGE_CDN_URL}/starsand-island/map-tiles/MineCave_MainLand/preview.webp`,
       linkText: "Explore the Moonlit Forest Map",
     },
   ],

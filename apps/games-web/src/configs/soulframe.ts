@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 export const soulframe: AppConfig = {
   name: "soulframe",
@@ -13,7 +13,7 @@ export const soulframe: AppConfig = {
       href: "/maps/Midrath",
       iconName: "Map",
       // Inlined getPreviewImageUrl("soulframe", "Midrath", "2")
-      bgImage: "https://cdn.th.gl/soulframe/map-tiles/Midrath/preview.webp?v=2",
+      bgImage: `${DATA_FORGE_CDN_URL}/soulframe/map-tiles/Midrath/preview.webp?v=2`,
       linkText: "Explore the Midrath Map",
     },
   ],
