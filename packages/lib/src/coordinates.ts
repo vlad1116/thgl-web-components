@@ -47,6 +47,13 @@ export type Spawn = {
    * Absent on stored data; populated when building the rendered node list.
    */
   source?: SpawnSource;
+  /**
+   * Render this (predicted) spawn faded. Set when its resolved live mode is
+   * `combined` — i.e. predictions shown alongside live confirmations. Distinct
+   * from `source` so audio-alert logic can still skip all `source === "static"`
+   * ghosts regardless of fade. See resolveLiveModeForType.
+   */
+  muted?: boolean;
   icon?: {
     name: string;
     url: string;

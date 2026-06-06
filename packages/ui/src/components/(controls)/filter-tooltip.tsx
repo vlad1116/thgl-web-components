@@ -1,11 +1,12 @@
 import Markdown from "markdown-to-jsx";
 import { useCoordinates, useT } from "../(providers)";
 import { useMemo } from "react";
-import { isOverwolf, useSettingsStore } from "@repo/lib";
+import { useSettingsStore } from "@repo/lib";
+import { Badge } from "../ui/badge";
 
 export function FilterTooltip({ id }: { id: string }) {
   const t = useT();
-  const { nodes, typesIdMap } = useCoordinates();
+  const { nodes, typesIdMap, liveCapable } = useCoordinates();
   const discoveredNodes = useSettingsStore((state) => state.discoveredNodes);
   const isDiscoveredNode = useSettingsStore((state) => state.isDiscoveredNode);
 
@@ -29,40 +30,63 @@ export function FilterTooltip({ id }: { id: string }) {
   const supportsLiveMode =
     hasTypeIDsMap && Object.values(typesIdMap).includes(id);
   return (
-    <>
-      <p className="font-bold text-md">{t(id)}</p>
-      <p className="text-muted-foreground text-sm">
-        {t("filters.tooltip.total")} {filterNode?.spawns.length || 0} –{" "}
-        {t("filters.tooltip.discovered")} {discoveredSpawns.length}
+    <div className="space-y-1.5">
+      <p className="text-sm font-bold leading-tight">{t(id)}</p>
+
+      {/* Spawn counts — muted labels, emphasized tabular figures. */}
+      <p className="text-xs text-muted-foreground">
+        {t("filters.tooltip.total")}{" "}
+        <span className="font-medium text-foreground tabular-nums">
+          {filterNode?.spawns.length || 0}
+        </span>
+        <span className="mx-1.5 text-muted-foreground/50">·</span>
+        {t("filters.tooltip.discovered")}{" "}
+        <span className="font-medium text-foreground tabular-nums">
+          {discoveredSpawns.length}
+        </span>
       </p>
+
+      {/* Live-mode support + spawn behavior as one status row. The two facts
+          overlap (a non-trackable filter is always "Fixed"), so the spawn-type
+          badge only appears alongside "supported". */}
       {hasTypeIDsMap && (
-        <p>
-          {t("filters.tooltip.liveMode")}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <span className="text-muted-foreground">
+            {t("filters.tooltip.liveMode")}
+          </span>
           {supportsLiveMode ? (
-            <span className="text-primary mx-1">
-              {t("filters.tooltip.supported")}
-            </span>
+            <>
+              <span className="inline-flex items-center gap-1 font-medium text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                {t("filters.tooltip.supported")}
+              </span>
+              <Badge
+                variant="secondary"
+                className="px-1.5 py-0 text-[10px] font-medium leading-4"
+              >
+                {filterNode?.static
+                  ? t("filters.tooltip.static")
+                  : t("filters.tooltip.dynamic")}
+              </Badge>
+            </>
           ) : (
-            <span className="text-orange-500 mx-1">
+            <span className="inline-flex items-center gap-1 font-medium text-orange-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
               {t("filters.tooltip.notSupported")}
             </span>
           )}
-          {!isOverwolf && (
-            <span className="text-muted-foreground">
-              {t("filters.tooltip.inGameOnly")}
-            </span>
-          )}
+        </div>
+      )}
+
+      {/* Only when this filter CAN track live but the current session has no
+          live source (plain web, no companion app and no Peer Link). */}
+      {supportsLiveMode && !liveCapable && (
+        <p className="text-[11px] text-muted-foreground/80">
+          {t("filters.tooltip.inGameOnly")}
         </p>
       )}
-      <p>
-        {t("filters.tooltip.spawnType")}
-        {filterNode?.static || !supportsLiveMode ? (
-          <span className="mx-1">{t("filters.tooltip.static")}</span>
-        ) : (
-          <span className="mx-1">{t("filters.tooltip.dynamic")}</span>
-        )}
-      </p>
-      <div className="mt-1">
+
+      <div className="text-sm text-muted-foreground [&_a]:text-primary [&_a]:underline">
         <Markdown>
           {t(id, {
             isDesc: true,
@@ -70,6 +94,6 @@ export function FilterTooltip({ id }: { id: string }) {
           })}
         </Markdown>
       </div>
-    </>
+    </div>
   );
 }

@@ -7,7 +7,14 @@ import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
-import { useSettingsStore, type LabelMode } from "@repo/lib";
+import {
+  PREVIEW_LIVE_MODES,
+  useAccountStore,
+  useSettingsStore,
+  type LabelMode,
+  type LiveMode,
+} from "@repo/lib";
+import { Lock } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useCoordinates } from "../(providers)";
 import { FilterTooltip } from "./filter-tooltip";
@@ -42,7 +49,7 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const { filterLabel, isGroup } = props;
   const [open, setOpen] = useState(false);
 
-  const { filters } = useCoordinates();
+  const { filters, typesIdMap } = useCoordinates();
   const userFilters = useUserStore((s) => s.filters);
   const setUserFilters = useUserStore((s) => s.setFilters);
 
@@ -107,6 +114,64 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
   const setLabelModeByFilters = useSettingsStore(
     (s) => s.setLabelModeByFilters,
   );
+  const liveModeByFilter = useSettingsStore((s) => s.liveModeByFilter);
+  const setLiveModeByFilter = useSettingsStore((s) => s.setLiveModeByFilter);
+  const setLiveModeByFilters = useSettingsStore((s) => s.setLiveModeByFilters);
+  const hasPreviewAccess = useAccountStore(
+    (s) => s.perks.previewReleaseAccess,
+  );
+
+  // The per-filter live-mode override only applies to live-trackable types
+  // (those mapped in typesIdMap). Hide the control for everything else — and
+  // for whole games without live mode (no typesIdMap).
+  const liveTrackable = useMemo(() => {
+    if (!typesIdMap) return false;
+    const trackedTypes = new Set(Object.values(typesIdMap));
+    if (isGroup) return props.filterIds.some((id) => trackedTypes.has(id));
+    return trackedTypes.has(props.filterId);
+  }, [
+    typesIdMap,
+    isGroup,
+    isGroup ? props.filterIds : null,
+    isGroup ? null : props.filterId,
+  ]);
+
+  // Group live-mode state: collapse to a single value only if every trackable
+  // filter agrees, else "mixed". Absent override = "default".
+  const groupLiveMode = useMemo<LiveMode | "default" | "mixed">(() => {
+    if (!isGroup) return "default";
+    const trackedTypes = typesIdMap ? new Set(Object.values(typesIdMap)) : null;
+    const ids = props.filterIds.filter((id) => trackedTypes?.has(id));
+    if (ids.length === 0) return "default";
+    const first = liveModeByFilter[ids[0]] ?? "default";
+    return ids.every((id) => (liveModeByFilter[id] ?? "default") === first)
+      ? first
+      : "mixed";
+  }, [
+    isGroup,
+    isGroup ? props.filterIds : null,
+    liveModeByFilter,
+    typesIdMap,
+  ]);
+
+  const liveModeValue: LiveMode | "default" = isGroup
+    ? groupLiveMode === "mixed"
+      ? "default"
+      : groupLiveMode
+    : (liveModeByFilter[props.filterId] ?? "default");
+
+  const handleLiveModeChange = (value: LiveMode | "default") => {
+    if (isGroup) {
+      setLiveModeByFilters(props.filterIds, value);
+    } else {
+      setLiveModeByFilter(props.filterId, value);
+    }
+  };
+
+  // Mirrors the global LiveModeControl gate: locked only while `combined` is in
+  // PREVIEW_LIVE_MODES (currently empty → public) and the user lacks access.
+  const combinedLocked =
+    !hasPreviewAccess && PREVIEW_LIVE_MODES.has("combined");
   // For groups, calculate if all/some/none have audio enabled
   const groupAudioState = useMemo(() => {
     if (!isGroup) return null;
@@ -297,6 +362,54 @@ export function FilterSettingsPopover(props: FilterSettingsPopoverProps) {
           <p className="text-xs text-muted-foreground">
             Filters have different label settings.
           </p>
+        )}
+
+        {liveTrackable && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Live Mode {isGroup && "(All)"}</Label>
+              <Select
+                value={
+                  isGroup && groupLiveMode === "mixed" ? "" : liveModeValue
+                }
+                onValueChange={(value: LiveMode | "default") =>
+                  handleLiveModeChange(value)
+                }
+              >
+                <SelectTrigger className="w-24 h-7 text-xs">
+                  <SelectValue
+                    placeholder={
+                      isGroup && groupLiveMode === "mixed" ? "Mixed" : undefined
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="static">Predicted</SelectItem>
+                  <SelectItem value="combined" disabled={combinedLocked}>
+                    <span className="flex items-center gap-1">
+                      Combined
+                      {combinedLocked && (
+                        <Lock className="h-2.5 w-2.5" aria-hidden="true" />
+                      )}
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="live">Live</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Override the global live mode for{" "}
+              {isGroup ? "these filters" : "this filter"}. Predicted = spawn
+              guesses only; Live = confirmed spawns only.
+            </p>
+            {isGroup && groupLiveMode === "mixed" && (
+              <p className="text-xs text-muted-foreground">
+                Filters have different live-mode settings.
+              </p>
+            )}
+          </>
         )}
       </PopoverContent>
     </Popover>

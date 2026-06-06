@@ -16,11 +16,14 @@ import {
   buildDiscoveryLookup,
   checkNodeDiscovered,
   getAppUrl,
+  getEffectiveLiveMode,
   getIconsUrl,
   getNodeId,
   isLiveReadingActive,
   MarkerOptions,
+  resolveLiveModeForType,
   Spawn,
+  useAccountStore,
   useConnectionStore,
   useEffectiveLiveMode,
   useGameState,
@@ -1189,8 +1192,10 @@ function MarkersContent({
         zPos,
         isHighlighted,
         isDiscovered,
-        // In combined live mode, fade spawns we predict but haven't confirmed live.
-        isMuted: liveMode === "combined" && spawn.source === "static",
+        // Fade predicted spawns whose resolved live mode is `combined` (live +
+        // predicted shown together). Set per-spawn in coordinates-provider so a
+        // per-filter override fades only the filters it applies to.
+        isMuted: !!spawn.muted,
         isSelected: selectedNodeId === nodeId,
         keepUpright: true,
         tint:
@@ -1828,6 +1833,17 @@ function MarkersContent({
         return;
       }
 
+      // Per-type live-mode resolution: a filter overridden to "Predicted"
+      // (resolved 'static') suppresses its live actors — the static effect
+      // renders its predictions instead. 'combined'/'live' both show actors.
+      const liveModeByFilterNow = settingsState.liveModeByFilter;
+      const hasPreviewNow =
+        useAccountStore.getState().perks.previewReleaseAccess;
+      const globalEffectiveMode = getEffectiveLiveMode(
+        settingsState.liveMode,
+        hasPreviewNow,
+      );
+
       const activeFilters = new Set(userState.filters);
       const currentMapName = userState.mapName;
       const selectedNodeIdNow = userState.selectedNodeId;
@@ -1881,6 +1897,17 @@ function MarkersContent({
         const displayType = typesIdMap[actor.type];
         if (!displayType) continue;
         if (!activeFilters.has(displayType)) continue;
+        // Skip live actors for filters the user pinned to Predicted-only.
+        if (
+          resolveLiveModeForType(
+            displayType,
+            globalEffectiveMode,
+            liveModeByFilterNow,
+            hasPreviewNow,
+          ) === "static"
+        ) {
+          continue;
+        }
         if (actor.mapName && actor.mapName !== currentMapName) continue;
 
         const id = String(actor.address);
@@ -2081,6 +2108,16 @@ function MarkersContent({
       (s) => s.liveMode,
       processActors,
     );
+    // Per-filter live-mode overrides: re-resolve which actors render live.
+    const unsubLiveModeByFilter = useSettingsStore.subscribe(
+      (s) => s.liveModeByFilter,
+      processActors,
+    );
+    // Preview access gates the 'combined' override → re-resolve on change.
+    const unsubPreviewAccess = useAccountStore.subscribe(
+      (s) => s.perks.previewReleaseAccess,
+      processActors,
+    );
     const unsubHideDiscovered = useSettingsStore.subscribe(
       (s) => s.hideDiscoveredNodes,
       processActors,
@@ -2118,6 +2155,8 @@ function MarkersContent({
       unsubMapName();
       unsubSelected();
       unsubLiveMode();
+      unsubLiveModeByFilter();
+      unsubPreviewAccess();
       unsubHideDiscovered();
       unsubDiscovered();
       unsubBaseIconSize();

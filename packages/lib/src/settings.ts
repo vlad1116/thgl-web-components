@@ -20,8 +20,13 @@ export const LIVE_MODE_VALUES: readonly LiveMode[] = [
   "live",
 ] as const;
 
-/** Modes gated behind preview-release perks. */
-export const PREVIEW_LIVE_MODES: ReadonlySet<LiveMode> = new Set(["combined"]);
+/**
+ * Live modes gated behind the preview-release (Elite) perk. Currently empty —
+ * `combined` is public. Re-add a mode here to gate it again; every consumer
+ * (global control, per-filter override, mode resolution) reads this set, so
+ * gating/ungating is a one-line change.
+ */
+export const PREVIEW_LIVE_MODES: ReadonlySet<LiveMode> = new Set<LiveMode>();
 
 export function isLiveReadingActive(liveMode: LiveMode): boolean {
   return liveMode !== "static";
@@ -39,11 +44,44 @@ export function nextLiveMode(current: LiveMode): LiveMode {
  * path off the free tier even if their stored setting is 'combined'
  * (legacy or auto-set by peer sync).
  */
+/**
+ * Pure variant of {@link useEffectiveLiveMode} for non-React call sites
+ * (e.g. the imperative live-actor pipeline). Applies the same preview gate.
+ */
+export function getEffectiveLiveMode(
+  liveMode: LiveMode,
+  hasPreview: boolean,
+): LiveMode {
+  if (!hasPreview && PREVIEW_LIVE_MODES.has(liveMode)) return "live";
+  return liveMode;
+}
+
 export function useEffectiveLiveMode(): LiveMode {
   const liveMode = useSettingsStore((s) => s.liveMode);
   const hasPreview = useAccountStore((s) => s.perks.previewReleaseAccess);
-  if (!hasPreview && PREVIEW_LIVE_MODES.has(liveMode)) return "live";
-  return liveMode;
+  return getEffectiveLiveMode(liveMode, hasPreview);
+}
+
+/**
+ * Resolve the live mode for a single filter type, honoring the per-filter
+ * override (`liveModeByFilter`) on top of the global effective mode.
+ *
+ * - When live reading is globally off (`static`), every type stays predicted —
+ *   the live plugin isn't running, so per-filter overrides can't show live data.
+ * - Otherwise the per-filter override wins, falling back to the global mode.
+ * - A resolved `combined` is preview-gated, downgrading to `live` without access
+ *   (same rule as the global control).
+ */
+export function resolveLiveModeForType(
+  type: string,
+  globalEffectiveMode: LiveMode,
+  liveModeByFilter: Record<string, LiveMode> | undefined,
+  hasPreview: boolean,
+): LiveMode {
+  if (globalEffectiveMode === "static") return "static";
+  const mode = liveModeByFilter?.[type] ?? globalEffectiveMode;
+  if (!hasPreview && PREVIEW_LIVE_MODES.has(mode)) return "live";
+  return mode;
 }
 
 export type PrivateNode = {
@@ -193,6 +231,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
   showAudioAlertRange: false,
   audioAlertByFilter: {},
   labelModeByFilter: {},
+  liveModeByFilter: {},
   labelTextSize: 1,
   showLabelsHotkey: "l",
   displayDiscordActivityStatus: true,
@@ -279,6 +318,12 @@ export type ProfileSettings = {
   showAudioAlertRange: boolean;
   audioAlertByFilter: Record<string, boolean>;
   labelModeByFilter: Record<string, LabelMode>;
+  /**
+   * Per-filter live-mode override. Absent key = inherit the global live mode.
+   * Lets a user keep predictions for some filters (e.g. campsites) while
+   * showing others live-only (e.g. bugs/mining). See {@link resolveLiveModeForType}.
+   */
+  liveModeByFilter: Record<string, LiveMode>;
   labelTextSize: number;
   showLabelsHotkey: string;
   displayDiscordActivityStatus: boolean;
@@ -362,6 +407,12 @@ export interface ProfileActions {
   resetAudioAlerts: () => void;
   setLabelModeByFilter: (filterId: string, mode: LabelMode) => void;
   setLabelModeByFilters: (filterIds: string[], mode: LabelMode) => void;
+  // `"default"` clears the override so the filter inherits the global live mode.
+  setLiveModeByFilter: (filterId: string, mode: LiveMode | "default") => void;
+  setLiveModeByFilters: (
+    filterIds: string[],
+    mode: LiveMode | "default",
+  ) => void;
   setLabelTextSize: (size: number) => void;
   setShowLabelsHotkey: (key: string) => void;
   setDisplayDiscordActivityStatus: (
@@ -875,6 +926,7 @@ export const useSettingsStore = create(
             audioAlertByFilter: {},
             // Labels
             labelModeByFilter: {},
+            liveModeByFilter: {},
             labelTextSize: 1,
             // Map behavior
             fitBoundsOnChange: false,
@@ -1142,6 +1194,30 @@ export const useSettingsStore = create(
           updateSettings({
             labelModeByFilter: { ...state.labelModeByFilter, ...updates },
           });
+        },
+
+        setLiveModeByFilter: (filterId, mode) => {
+          const state = get();
+          const next = { ...state.liveModeByFilter };
+          if (mode === "default") {
+            delete next[filterId];
+          } else {
+            next[filterId] = mode;
+          }
+          updateSettings({ liveModeByFilter: next });
+        },
+
+        setLiveModeByFilters: (filterIds, mode) => {
+          const state = get();
+          const next = { ...state.liveModeByFilter };
+          for (const id of filterIds) {
+            if (mode === "default") {
+              delete next[id];
+            } else {
+              next[id] = mode;
+            }
+          }
+          updateSettings({ liveModeByFilter: next });
         },
 
         setLabelTextSize: (size: number) => {

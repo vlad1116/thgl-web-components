@@ -18,6 +18,15 @@ export const useGameState = create(subscribeWithSelector<{
   setIsUpdatingApp: (isUpdatingApp: boolean) => void;
   showLabelsActive: boolean;
   setShowLabelsActive: (active: boolean) => void;
+  /**
+   * True when a live data source is feeding this session via Peer Link
+   * (mesh joined with a "Me" sender selected). Companion apps feed actors
+   * directly and signal liveness via their own context, so they don't set
+   * this. Consumed by the map to decide whether live/combined mode has a
+   * real source — without it, predicted spawns are shown unconfirmed.
+   */
+  peerLiveConnected: boolean;
+  setPeerLiveConnected: (peerLiveConnected: boolean) => void;
 }>((set) => ({
   windowInfo: null,
   isOverlay: null,
@@ -44,4 +53,6 @@ export const useGameState = create(subscribeWithSelector<{
   setIsUpdatingApp: (isUpdatingApp) => set({ isUpdatingApp }),
   showLabelsActive: false,
   setShowLabelsActive: (active) => set({ showLabelsActive: active }),
+  peerLiveConnected: false,
+  setPeerLiveConnected: (peerLiveConnected) => set({ peerLiveConnected }),
 })));

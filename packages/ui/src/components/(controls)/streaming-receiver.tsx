@@ -121,6 +121,9 @@ export function StreamingReceiver({
   const controlConnectionRef = useRef<DataConnection | null>(null);
   const setPlayer = useGameState((state) => state.setPlayer);
   const setActors = useGameState((state) => state.setActors);
+  const setPeerLiveConnected = useGameState(
+    (state) => state.setPeerLiveConnected,
+  );
   const connectionsRef = useRef<Record<string, DataConnection>>({});
   const lastDataRef = useRef<Record<string, any>>({});
 
@@ -244,12 +247,17 @@ export function StreamingReceiver({
   // free users get 'live' so we never store a mode they can't access.
   useEffect(() => {
     const liveActive = isLiveReadingActive(liveMode);
-    if (withoutLiveMode && liveActive) {
-      setLiveMode("static");
-      return; // Don't control Live Mode if disabled
+    if (withoutLiveMode) {
+      if (liveActive) setLiveMode("static");
+      return; // Live mode unavailable in this context
     }
+    // Only auto-manage the mode when the user opted in. With Auto Live Mode
+    // off, respect the manual LiveModeControl selection instead of forcing it
+    // back to static (previously `autoLiveModeWithMe` was ANDed into
+    // shouldBeLive, so turning it off still dragged the mode to static).
+    if (!autoLiveModeWithMe) return;
 
-    const shouldBeLive = Boolean(inPeer && meSenderId && autoLiveModeWithMe);
+    const shouldBeLive = Boolean(inPeer && meSenderId);
     if (shouldBeLive !== liveActive) {
       const hasPreview =
         useAccountStore.getState().perks.previewReleaseAccess;
@@ -265,6 +273,16 @@ export function StreamingReceiver({
     setLiveMode,
     liveMode,
   ]);
+
+  // Expose "this session has a live source via Peer Link" globally so the map
+  // (coordinates-provider) knows live/combined mode is backed by real data and
+  // shouldn't fall back to showing every predicted spawn. Uses the STABLE
+  // inPeer + "Me" selection — not transient player/actors, which empty out on
+  // loading screens. Reset on unmount so navigating away clears it.
+  useEffect(() => {
+    setPeerLiveConnected(inPeer && !!meSenderId);
+  }, [inPeer, meSenderId, setPeerLiveConnected]);
+  useEffect(() => () => setPeerLiveConnected(false), [setPeerLiveConnected]);
 
   function getConnectionType(
     stats: RTCStatsReport,
@@ -1347,7 +1365,13 @@ export function StreamingReceiver({
                     <Label className="text-xs text-muted-foreground">
                       Live mode
                     </Label>
-                    <LiveModeControl size="sm" />
+                    {/* Live mode needs a source: on the website that's a "Me"
+                        sender. Disable the manual control when none is selected
+                        (it would do nothing) or while Auto manages it. */}
+                    <LiveModeControl
+                      size="sm"
+                      disabled={autoLiveModeWithMe || !meSenderId}
+                    />
                   </div>
                   <Label className="flex items-center gap-1.5 text-xs h-auto cursor-pointer">
                     <Switch
@@ -1357,6 +1381,11 @@ export function StreamingReceiver({
                     />
                     Auto Live Mode
                   </Label>
+                  {!meSenderId && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Select an app as “Me” below to use live mode.
+                    </p>
+                  )}
                 </div>
               )}
               <div className="flex items-center justify-between gap-2">

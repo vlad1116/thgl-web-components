@@ -15,8 +15,10 @@ import {
   decodeFromBuffer,
   isLiveReadingActive,
   isOverwolf,
-  useConnectionStore,
+  resolveLiveModeForType,
+  useAccountStore,
   useEffectiveLiveMode,
+  useGameState,
   useSettingsStore,
   Region,
   DrawingsAndNodes,
@@ -45,6 +47,8 @@ export type NodesCoordinates = {
    * Set at build time; pre-baked once per static-data change.
    */
   predicted?: boolean;
+  /** Render this predicted node's spawns faded (resolved live mode = combined). */
+  muted?: boolean;
   mapName?: string;
   spawns: (Omit<Spawn, "type" | "id"> & { id?: string })[];
   data?: Record<string, string[]>;
@@ -88,6 +92,12 @@ interface ContextValue {
   spawns: Spawns;
   icons: Icons;
   typesIdMap?: Record<string, string>;
+  /**
+   * Whether this session can receive live data at all — true in a companion
+   * app (Overwolf / THGLApp WebView) or when a Peer Link teammate is streaming.
+   * False on the plain web map, where live/combined mode has no source.
+   */
+  liveCapable: boolean;
 }
 
 const Context = createContext<ContextValue | null>(null);
@@ -304,6 +314,12 @@ export function CoordinatesProvider({
   }, [publicSearchIsLoading, userStore]);
 
   const liveMode = useEffectiveLiveMode();
+  // Per-filter live-mode overrides + preview access, used to resolve which
+  // predicted nodes to keep (and fade) on a per-type basis below.
+  const liveModeByFilter = useSettingsStore((state) => state.liveModeByFilter);
+  const hasPreviewAccess = useAccountStore(
+    (state) => state.perks.previewReleaseAccess,
+  );
   // Can this session receive live data at all? Use STABLE signals — never the
   // transient player/actors, which empty out on loading screens and map
   // transitions and would otherwise make all predicted spawns flash in and out.
@@ -320,10 +336,12 @@ export function CoordinatesProvider({
         window.location.pathname.startsWith("/apps/")),
     [],
   );
-  const hasPeerConnections = useConnectionStore(
-    (s) => Object.keys(s.connections).length > 0,
-  );
-  const liveCapable = isCompanionApp || hasPeerConnections;
+  // Peer Link delivers live data through useGameState (NOT useConnectionStore —
+  // that's the whiteboard/drawing-collaboration store, which Peer Link never
+  // populates). peerLiveConnected is the stable "mesh joined with a Me sender"
+  // signal set by StreamingReceiver.
+  const peerLiveConnected = useGameState((s) => s.peerLiveConnected);
+  const liveCapable = isCompanionApp || peerLiveConnected;
   const myFilters = useSettingsStore((state) => state.myFilters);
   // Actors now flow directly into markers.tsx via useGameState subscription.
 
@@ -434,26 +452,17 @@ export function CoordinatesProvider({
     [staticNodes, typesIdMap],
   );
 
-  // Pre-baked once per static-data change: dynamic-static nodes (those that
-  // CAN be confirmed via live tracking) flagged as `predicted`. Spawns are
-  // passed by reference — no per-tick allocation. In combined mode, these
-  // render muted; the renderer reads `node.predicted` via the spawn's parent.
-  const predictedDynamicStaticNodes = useMemo<NodesCoordinates>(() => {
-    if (!typesIdMap || Object.keys(typesIdMap).length === 0) {
-      return emptyArray as NodesCoordinates;
-    }
-    const trackedTypes = new Set(Object.values(typesIdMap));
-    return staticNodes
-      .filter(
-        (node) =>
-          !("static" in node && !!node.static) && trackedTypes.has(node.type),
-      )
-      .map((node) => ({ ...node, predicted: true }));
-  }, [staticNodes, typesIdMap]);
-
-  // Visible static node set. Recomputed only on filter/data changes —
-  // never on actor polls. Live actors flow imperatively into markers.tsx
-  // via useGameState subscriptions, so they're not in here.
+  // Visible static node set. Recomputed only on filter/data/live-mode changes —
+  // never on actor polls. Live actors flow imperatively into markers.tsx via
+  // useGameState subscriptions, so they're not in here.
+  //
+  // Permanent landmarks (realStaticNodes) always show. Trackable dynamic-static
+  // nodes are kept as predictions only when their *resolved* live mode keeps
+  // them: `combined` (faded) or `static` (full opacity). A `live`-resolved type
+  // drops its predictions — the imperative live pipeline renders its actors
+  // instead. Resolution is per-filter (liveModeByFilter) layered on the global
+  // mode, so the user can keep predictions for some filters (e.g. campsites)
+  // while others go live-only (e.g. bugs/mining).
   const nodes = useMemo<NodesCoordinates>(() => {
     if (!isHydrated || !staticNodes) return emptyArray as NodesCoordinates;
     if (
@@ -470,14 +479,27 @@ export function CoordinatesProvider({
       // live mode is respected even across loading screens.
       return customNodes.concat(staticNodes);
     }
-    if (liveMode === "live") {
-      // Live mode: only permanent landmarks (always-on). Dynamic predictions
-      // are hidden; the imperative effect renders live actors on top.
-      return customNodes.concat(realStaticNodes);
+    const trackedTypes = new Set(Object.values(typesIdMap));
+    const predicted: NodesCoordinates = [];
+    for (const node of staticNodes) {
+      const isPermanent =
+        ("static" in node && !!node.static) || !trackedTypes.has(node.type);
+      if (isPermanent) continue; // already covered by realStaticNodes
+      const resolved = resolveLiveModeForType(
+        node.type,
+        liveMode,
+        liveModeByFilter,
+        hasPreviewAccess,
+      );
+      if (resolved === "live") continue; // predictions hidden; live actors show
+      // Spawns passed by reference — no per-tick allocation.
+      predicted.push({
+        ...node,
+        predicted: true,
+        muted: resolved === "combined",
+      });
     }
-    // Combined mode: permanent landmarks + predicted dynamic statics
-    // (rendered muted by markers.tsx via spawn.source === 'static').
-    return customNodes.concat(realStaticNodes, predictedDynamicStaticNodes);
+    return customNodes.concat(realStaticNodes, predicted);
   }, [
     isHydrated,
     liveMode,
@@ -485,8 +507,9 @@ export function CoordinatesProvider({
     customNodes,
     staticNodes,
     realStaticNodes,
-    predictedDynamicStaticNodes,
     typesIdMap,
+    liveModeByFilter,
+    hasPreviewAccess,
   ]);
 
   // Searchable nodes: static + custom (excludes live actors which change constantly)
@@ -649,6 +672,7 @@ export function CoordinatesProvider({
         if (!isFilterActive) return;
 
         const nodePredicted = node.predicted;
+        const nodeMuted = node.muted;
         node.spawns.forEach((s) => {
           const spawn = {
             ...s,
@@ -656,6 +680,7 @@ export function CoordinatesProvider({
             mapName: node.mapName,
             type: node.type,
             source: s.source ?? (nodePredicted ? "static" : undefined),
+            muted: nodeMuted,
           } as Spawn;
           if (spawn.data) {
             for (const filter of globalFilters) {
@@ -782,6 +807,7 @@ export function CoordinatesProvider({
           icons,
           typesIdMap,
           globalFilters,
+          liveCapable,
         }}
       >
         {children}
