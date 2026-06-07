@@ -54,6 +54,47 @@ You can subscribe on the [Support page](/support-me). Here's the full breakdown:
     embed: "feature-comparison",
   },
   {
+    id: "add-nodes-and-drawings",
+    headline: "How to add your own nodes & drawings to the map",
+    question:
+      "How do I add my own markers (nodes) and drawings to the map, and edit them later?",
+    answer: `
+You can add your own markers (**nodes**) and freehand **drawings** to any map. Both save automatically per map, appear in your filters list, and can be shared. (Sign in with a free account to sync them across devices.)
+
+## Add a node (custom marker)
+1. Click **Add Node** in the map toolbar.
+2. Click the spot on the map where you want it.
+3. Give it a **name**, pick an **icon** and **color**, and add an optional description.
+4. **Save** — it appears on the map and as a filter in the sidebar.
+
+## Add a drawing
+1. Click **Add Drawing** to open the drawing toolbar.
+2. Pick a tool — **Draw Line**, **Draw Rectangle**, **Draw Polygon**, **Draw Circle**, or **Add Text** — and set the **color**, **fill**, and **size**.
+3. Draw on the map:
+   - **Line / Polygon:** click each point, then double-click (or click the last point again) to finish.
+   - **Rectangle / Circle:** click and drag.
+   - **Text:** click where you want it and type.
+4. **Save** — your drawing shows on the map and in your filters list.
+
+![Drawing toolbar](/games/thgl-web/faq/drawing-toolbar.png)
+
+## Adjust a drawing (edit tools)
+The drawing toolbar has three editing tools:
+- **Edit Mode** — drag a point to move it, click a **mid-segment dot** to add a new point, and **right-click** a point to delete it. Circles show center and radius handles.
+- **Drag Mode** — grab anywhere on a shape to move the whole thing.
+- **Remove Layer** — click a shape to delete it.
+
+![Edit mode handles](/games/thgl-web/faq/drawing-edit-mode.jpg)
+
+## Fix something after saving
+Made a mistake? You don't have to start over. Open the **filters list** in the sidebar, find your saved node or drawing, and use the **menu (⋯) next to its name** to rename, edit, or delete it.
+
+## Share your drawings
+From that same **menu (⋯)** you can **download** a drawing. Share the file (and a screenshot) so others can import it.
+    `.trim(),
+    labels: ["General"],
+  },
+  {
     id: "ticley-watch-scam",
     headline: "Unexpected charges from THGL.APP (NOT The Hidden Gaming Lair)",
     question:
