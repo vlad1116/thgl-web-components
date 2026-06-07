@@ -236,6 +236,10 @@ export class DrawingLayer implements Layer {
     if (id) {
       this.activeShapeIds.add(id);
     }
+    // Vertex markers are (re)built in render() for active shapes. The frame
+    // loop only renders when the layer is dirty, so flag it — otherwise markers
+    // don't appear until an unrelated redraw (e.g. zoom/pan).
+    this.needsBufferUpdate = true;
   }
 
   setAllShapesActive(): void {
@@ -247,6 +251,8 @@ export class DrawingLayer implements Layer {
     for (const id of this.shapes.keys()) {
       this.activeShapeIds.add(id);
     }
+    // See setActiveShape: flag dirty so edit-mode vertex markers render now.
+    this.needsBufferUpdate = true;
   }
 
   private createVertexMarkers(shapeId: string, positions: LatLng[], color: string, midpoints?: LatLng[]): void {

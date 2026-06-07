@@ -1,5 +1,5 @@
 import type { WebMap } from "../webmap";
-import type { LatLng } from "../types";
+import type { LatLng, RenderState } from "../types";
 import { DrawingLayer, type DrawingShape } from "../layers/drawing";
 
 export type DrawingMode = 'none' | 'line' | 'rectangle' | 'polygon' | 'circle' | 'text' | 'edit' | 'drag' | 'remove';
@@ -40,6 +40,9 @@ export class DrawingManager {
   private cursorTooltip: HTMLElement | null = null;
   private keydownHandler?: (event: KeyboardEvent) => void;
   private vertexClickThreshold = 15; // pixels
+  // Screen-px grab radius for edit/move/remove hit-tests (converted into shape
+  // coordinate space via pixelToleranceAt). Tune here.
+  private grabTolerancePx = 12;
   private textInputContainer: HTMLElement | null = null;
   private textInputElement: HTMLInputElement | null = null;
   private currentTextPosition: LatLng | null = null;
@@ -474,8 +477,7 @@ export class DrawingManager {
     const state = this.map.getRenderState();
     if (!state) return null;
 
-    const pixelToWorld = this.getPixelToWorldScale(state);
-    const tolerance = 15 * pixelToWorld;
+    const tolerance = this.pixelToleranceAt(state, this.grabTolerancePx, latlng);
     const [py, px] = latlng;
 
     const allShapes = this.drawingLayer.getAllShapes();
@@ -567,8 +569,7 @@ export class DrawingManager {
     const state = this.map.getRenderState();
     if (!state) return false;
 
-    const pixelToWorld = this.getPixelToWorldScale(state);
-    const tolerance = 15 * pixelToWorld;
+    const tolerance = this.pixelToleranceAt(state, this.grabTolerancePx, latlng);
     const [py, px] = latlng;
 
     const allShapes = this.drawingLayer.getAllShapes();
@@ -1044,9 +1045,9 @@ export class DrawingManager {
     const state = this.map.getRenderState();
     if (!state) return null;
 
-    // Calculate a tolerance in world coordinates (10 pixels)
-    const pixelToWorld = this.getPixelToWorldScale(state);
-    const tolerance = 10 * pixelToWorld;
+    // Grab radius converted into position space (projection input units) so it
+    // stays a real, fixed screen-px radius regardless of the map's scale.
+    const tolerance = this.pixelToleranceAt(state, this.grabTolerancePx, latlng);
     const toleranceSq = tolerance * tolerance;
 
     for (let i = shapes.length - 1; i >= 0; i--) {
@@ -1142,6 +1143,32 @@ export class DrawingManager {
     return (2 / screenWidth) / scaleX;
   }
 
+  /**
+   * Grab tolerance for `pixels` screen px, expressed in the coordinate space
+   * shape positions use. Positions are projection INPUTS (latLng), but
+   * getPixelToWorldScale returns world units per pixel — so we divide by the
+   * projection's world-per-input scale, sampled at `ref`. Without this the
+   * tolerance collapses to ~1px on maps where world units differ from input
+   * units (which is most of them), making vertices/lines nearly ungrabbable.
+   */
+  private pixelToleranceAt(
+    state: RenderState,
+    pixels: number,
+    ref: LatLng,
+  ): number {
+    const worldTol = this.getPixelToWorldScale(state) * pixels;
+    const proj = state.projection;
+    if (!proj) return worldTol;
+    const o = proj(ref);
+    const a = proj([ref[0] + 1, ref[1]]);
+    const b = proj([ref[0], ref[1] + 1]);
+    const worldPerInput =
+      (Math.hypot(a.x - o.x, a.y - o.y) + Math.hypot(b.x - o.x, b.y - o.y)) / 2;
+    return worldPerInput > 0 && isFinite(worldPerInput)
+      ? worldTol / worldPerInput
+      : worldTol;
+  }
+
   // --- Remove mode ---
 
   private handleRemoveClick(latlng: LatLng): void {
@@ -1158,8 +1185,10 @@ export class DrawingManager {
     const state = this.map.getRenderState();
     if (!state) return;
 
-    const pixelToWorld = this.getPixelToWorldScale(state);
-    const tolerance = 15 * pixelToWorld;
+    // Grab radius in position space (see pixelToleranceAt). The old
+    // `15 * getPixelToWorldScale` was in world units and collapsed to ~1px
+    // against the latLng-space vertex coordinates — hence "impossible to grab".
+    const tolerance = this.pixelToleranceAt(state, this.grabTolerancePx, latlng);
     const [py, px] = latlng;
 
     // Check all shapes for vertex/handle hits
