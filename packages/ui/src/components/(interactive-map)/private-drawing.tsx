@@ -505,7 +505,9 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
       // Add polylines
       drawing.polylines?.forEach((polyline) => {
-        if (polyline.mapName !== mapName) return;
+        // Empty mapName = legacy import (routes from before per-shape map
+        // tagging existed); treat it as "show on any map" so those still render.
+        if (polyline.mapName && polyline.mapName !== mapName) return;
         layer.addShape({
           id: `saved_polyline_${shapeIdx++}`,
           type: "line",
@@ -518,7 +520,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
       // Add rectangles
       drawing.rectangles?.forEach((rect) => {
-        if (rect.mapName !== mapName) return;
+        if (rect.mapName && rect.mapName !== mapName) return;
         layer.addShape({
           id: `saved_rectangle_${shapeIdx++}`,
           type: "rectangle",
@@ -532,7 +534,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
       // Add polygons
       drawing.polygons?.forEach((poly) => {
-        if (poly.mapName !== mapName) return;
+        if (poly.mapName && poly.mapName !== mapName) return;
         layer.addShape({
           id: `saved_polygon_${shapeIdx++}`,
           type: "polygon",
@@ -546,7 +548,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
       // Add circles
       drawing.circles?.forEach((circle) => {
-        if (circle.mapName !== mapName) return;
+        if (circle.mapName && circle.mapName !== mapName) return;
         layer.addShape({
           id: `saved_circle_${shapeIdx++}`,
           type: "circle",
@@ -561,7 +563,7 @@ export function PrivateDrawing({ hidden }: { hidden?: boolean }) {
 
       // Add texts
       drawing.texts?.forEach((text) => {
-        if (text.mapName !== mapName) return;
+        if (text.mapName && text.mapName !== mapName) return;
         layer.addShape({
           id: `saved_text_${shapeIdx++}`,
           type: "text",
