@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchDatabaseIndex, fetchDatabaseType, fetchDict } from "@repo/lib";
-import { requireApp } from "@/lib/get-app-config";
+import { getAppConfig } from "@/lib/get-app-config";
 
 function resolveDict(dict: Record<string, string>, key: string): string {
   const value = dict[key];
@@ -183,7 +183,11 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null 
 }
 
 export async function GET(request: Request) {
-  const appConfig = await requireApp("homm-olden-era");
+  // Resolve the app from the request host so the tooltip API serves any DB
+  // tenant (Gothic, Drakantos, …), not just HoMM. HoMM's bespoke per-type stat
+  // cases still apply when its entry types match; other games fall through to
+  // the generic `default` case that surfaces their captured props.
+  const appConfig = await getAppConfig();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const locale = searchParams.get("locale") || "en";
@@ -508,6 +512,22 @@ export async function GET(request: Request) {
       if (item.groupId) {
         const factionName = resolveDict(dict, `faction_${item.groupId}`);
         if (factionName !== `faction_${item.groupId}`) stats.push(factionName);
+      }
+      break;
+    }
+    default: {
+      // Generic games (e.g. Gothic 1 Remake) describe each item purely through
+      // its captured `props` (Damage, Value, Class, …). Surface those scalar
+      // props as stat badges. `Category` is redundant with the section, so it's
+      // only used as a last-resort label to keep the tooltip non-empty.
+      for (const [k, v] of Object.entries(p)) {
+        if (k === "Category") continue;
+        if (typeof v === "string" || typeof v === "number") {
+          stats.push(`${k}: ${v}`);
+        }
+      }
+      if (stats.length === 0 && !hasDesc && typeof p.Category === "string") {
+        stats.push(p.Category);
       }
       break;
     }

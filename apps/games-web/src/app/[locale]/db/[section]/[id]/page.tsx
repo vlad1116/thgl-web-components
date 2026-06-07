@@ -7,8 +7,10 @@ import {
   DEFAULT_LOCALE,
 } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
+import { JSONLDScript } from "@repo/ui/apps";
 import { getAppConfig } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
+import { entityPageJsonLd } from "@/lib/db/json-ld";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
 import { GenericEntityView } from "@/games/drakantos/generic-view";
 
@@ -85,8 +87,20 @@ export default async function Page({ params }: { params: Params }) {
       ? (item.icon as IconSprite)
       : undefined;
 
+  const hasDesc = desc && desc !== `${id}_desc` && desc !== id;
   return (
     <>
+      <JSONLDScript
+        json={entityPageJsonLd({
+          appConfig,
+          section,
+          sectionLabel,
+          entityId: item.id,
+          entityName: name,
+          description: hasDesc ? desc : undefined,
+          locale,
+        })}
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <Breadcrumb
           crumbs={[

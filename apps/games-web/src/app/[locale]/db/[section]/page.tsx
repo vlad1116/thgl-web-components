@@ -2,8 +2,10 @@ import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchDatabaseIndex, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
+import { JSONLDScript } from "@repo/ui/apps";
 import { getAppConfig } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
+import { collectionPageJsonLd } from "@/lib/db/json-ld";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
 import { EntityGrid } from "@/lib/db/entity-grid";
 
@@ -74,9 +76,22 @@ export default async function Page({ params }: PageProps) {
   const label = getSectionLabel(appConfig, dict, secCfg.type, section);
   const iconsHash = version.more.icons;
   const totalCount = data.reduce((sum, cat) => sum + cat.items.length, 0);
+  const jsonLdItems = data.flatMap((cat) =>
+    cat.items.map((i) => ({ id: i.id, name: resolveDict(dict, i.id) })),
+  );
 
   return (
     <>
+      <JSONLDScript
+        json={collectionPageJsonLd({
+          appConfig,
+          section,
+          sectionLabel: label,
+          description: `Browse all ${label.toLowerCase()} in ${appConfig.title}.`,
+          items: jsonLdItems,
+          locale,
+        })}
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <Breadcrumb crumbs={[{ label }]} locale={locale} dict={dict} />
         <h1 className="text-2xl font-bold mb-2">{label}</h1>
