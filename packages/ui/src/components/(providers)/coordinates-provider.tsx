@@ -332,8 +332,10 @@ export function CoordinatesProvider({
   const isCompanionApp = useMemo(
     () =>
       isOverwolf ||
+      // Match "/apps/<id>" anywhere in the path so a locale prefix
+      // (e.g. "/de/apps/palia/overlay") still counts as the companion app.
       (typeof window !== "undefined" &&
-        window.location.pathname.startsWith("/apps/")),
+        /(^|\/)apps\//.test(window.location.pathname)),
     [],
   );
   // Peer Link delivers live data through useGameState (NOT useConnectionStore —

@@ -201,7 +201,10 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
     show_labels: "Shift+F5",
   },
   groupName: "",
-  liveMode: "combined",
+  // Default to pure live (predicted hidden). Combined (predicted + live) is
+  // opt-in. Before Combined was public it was downgraded to live for non-elite
+  // users anyway, so this keeps the out-of-box experience consistent.
+  liveMode: "live",
   overlayMode: null,
   overlayFullscreen: false,
   lockedWindow: false,
