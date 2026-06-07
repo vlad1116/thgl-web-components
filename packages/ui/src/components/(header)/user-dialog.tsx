@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
@@ -364,6 +365,9 @@ export function UserDialog() {
           <DialogTitle className="text-base">
             {account.userId ? "Account" : "Sign In"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Manage your account and sign-in.
+          </DialogDescription>
         </DialogHeader>
         {account.userId ? <AuthenticatedView /> : <UnauthenticatedView />}
       </DialogContent>

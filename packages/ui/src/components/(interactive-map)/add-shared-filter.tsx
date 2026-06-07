@@ -4,6 +4,7 @@ import { Label } from "../ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -129,6 +130,9 @@ export function AddSharedFilter({
               </Tooltip>
             </TooltipProvider>
           </div>
+          <DialogDescription className="sr-only">
+            Import a shared filter by its share code.
+          </DialogDescription>
         </DialogHeader>
         <section className="space-y-4 overflow-hidden">
           {!isSignedIn && (

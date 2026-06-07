@@ -63,6 +63,7 @@ import { useShallow } from "zustand/react/shallow";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -1285,6 +1286,10 @@ export function StreamingReceiver({
               </Tooltip>
             )}
           </div>
+          <DialogDescription className="sr-only">
+            Connect this browser to the in-game app to share live player
+            positions across devices.
+          </DialogDescription>
           <div className="text-xs text-muted-foreground">
             <Tooltip delayDuration={200} disableHoverableContent>
               <TooltipTrigger asChild>

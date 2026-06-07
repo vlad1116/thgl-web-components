@@ -1,6 +1,12 @@
 import { useUserStore } from "../(providers)";
 import { Button, Label } from "../(controls)";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { type DrawingsAndNodes, useSettingsStore } from "@repo/lib";
@@ -47,6 +53,9 @@ export function RenameFilter({
           <DialogTitle>
             Rename {myFilter?.name.replace(/my_\d+_/, "")}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Rename this filter.
+          </DialogDescription>
         </DialogHeader>
         <section className="space-y-4 overflow-hidden">
           <form className="space-y-2" onSubmit={handleSubmit}>

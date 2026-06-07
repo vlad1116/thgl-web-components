@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -53,6 +54,9 @@ export function AccountDialog() {
                 </TooltipContent>
               </Tooltip>
             </div>
+            <DialogDescription className="sr-only">
+              View your account status and supporter perks.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Link href="https://www.patreon.com/home" target="_blank" passHref>
@@ -100,6 +104,9 @@ export function AccountDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Account Status</DialogTitle>
+          <DialogDescription className="sr-only">
+            View your account status and supporter perks.
+          </DialogDescription>
         </DialogHeader>
         <section className="space-y-4">
           <div>

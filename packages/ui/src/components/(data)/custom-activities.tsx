@@ -1,6 +1,12 @@
 "use client";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -71,6 +77,10 @@ export function CustomActivities() {
         <Button variant="secondary">Add Activity</Button>
       </DialogTrigger>
       <DialogContent className="w-80">
+        <DialogTitle className="sr-only">Add Activity</DialogTitle>
+        <DialogDescription className="sr-only">
+          Add a custom activity to track.
+        </DialogDescription>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
             <h4 className="font-medium leading-none">Add Activity</h4>

@@ -22,6 +22,7 @@ import { Input } from "../ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -92,6 +93,9 @@ export function CommunityFilters({
       <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Community Filters</DialogTitle>
+          <DialogDescription className="sr-only">
+            Browse and import community-shared filters.
+          </DialogDescription>
         </DialogHeader>
         <Browser game={game} onClose={() => setOpen(false)} />
       </DialogContent>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -918,6 +919,9 @@ export function StreamingSender({
               </TooltipContent>
             </Tooltip>
           </div>
+          <DialogDescription className="sr-only">
+            Stream your player position to other devices over a peer link.
+          </DialogDescription>
         </DialogHeader>
         <section className="space-y-2">
           {/* toasts show errors/status */}
