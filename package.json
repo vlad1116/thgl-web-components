@@ -30,9 +30,12 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
+    "verify": "node scripts/verify.mjs",
+    "prepare": "git config core.hooksPath .githooks",
     "update-deps": "bunx npm-check-updates -u -ws --root"
   },
   "devDependencies": {
+    "lint-staged": "^17.0.7",
     "prettier": "3.8.3",
     "rimraf": "6.1.3",
     "turbo": "2.9.16"

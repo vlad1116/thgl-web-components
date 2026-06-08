@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Auto-format staged files with Prettier (keeps diffs clean, no whole-file
+# line-ending/format churn). Type/lint checks run on pre-push, not here, to keep
+# commits fast.
+bunx lint-staged

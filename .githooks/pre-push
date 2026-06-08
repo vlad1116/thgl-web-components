@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# CI-parity gate: block the push if typecheck or lint fails (the errors that
+# otherwise only surface as a red GitHub Actions build). Bypass in a pinch with
+# `git push --no-verify`.
+bun run verify
