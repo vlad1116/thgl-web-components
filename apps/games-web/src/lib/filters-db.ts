@@ -133,9 +133,9 @@ export async function getFilterByShareCode(
 }
 
 /**
- * Filters are keyed by the value `getCurrentGameId()` returns. That now always
- * the canonical `Game.id`, but rows written before that fix — and the inherent
- * web-vs-companion split — could use the web subdomain instead (e.g.
+ * Filters are keyed by the value `getCurrentGameId()` returns. That is now
+ * always the canonical `Game.id`, but rows written before that fix — and the
+ * inherent web-vs-companion split — could use the web subdomain instead (e.g.
  * "starresonance" vs "blue-protocol-star-resonance"). Match both aliases so a
  * game's filters resolve no matter which surface created them. `upsertFilter`
  * never rewrites `game`, so this is needed indefinitely (not just a migration
