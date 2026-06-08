@@ -83,6 +83,7 @@ export function createHomePage(appConfig: AppConfig) {
       getUpdateMessages(appConfig.name),
       fetchVersion(appConfig.name),
     ]);
+
     const t = getT(dict);
 
     const features =
@@ -112,15 +113,18 @@ export function createHomePage(appConfig: AppConfig) {
           .replace(/\/\{z\}.*$/, "")
           .replace(/-[0-9a-f]{16,}$/, "");
         const mapLocCount = version.counts?.byMap?.[map] || 0;
-        const desc = mapLocCount > 0
-          ? `${mapLocCount.toLocaleString()} locations`
-          : `Navigate ${mapName} with our interactive maps.`;
+        const desc =
+          mapLocCount > 0
+            ? `${mapLocCount.toLocaleString()} locations`
+            : `Navigate ${mapName} with our interactive maps.`;
         return {
           title: `${mapName} Map`,
           description: desc,
           href: `/maps/${encodeURIComponent(mapName)}`,
           iconName: "Map" as NavCardProps["iconName"],
-          bgImage: tileBase ? getPreviewImageUrl(appConfig.name, tileBase) : undefined,
+          bgImage: tileBase
+            ? getPreviewImageUrl(appConfig.name, tileBase)
+            : undefined,
           linkText: `Explore the ${mapName}`,
         };
       });
@@ -142,8 +146,7 @@ export function createHomePage(appConfig: AppConfig) {
             link.href.replace("/maps/", ""),
           );
           const tileKey = mapNameToKey.get(mapDisplayName);
-          const locCount =
-            tileKey && version.counts?.byMap?.[tileKey];
+          const locCount = tileKey && version.counts?.byMap?.[tileKey];
           return {
             ...link,
             description: locCount
@@ -155,8 +158,7 @@ export function createHomePage(appConfig: AppConfig) {
     const featureCards =
       appConfig.internalLinks?.filter(
         (link) =>
-          !link.href?.startsWith("/maps/") &&
-          !link.href?.startsWith("/guides"),
+          !link.href?.startsWith("/maps/") && !link.href?.startsWith("/guides"),
       ) ?? [];
 
     const allMapCards = [...internalMapCards, ...mapCards];
@@ -169,9 +171,7 @@ export function createHomePage(appConfig: AppConfig) {
       0,
     );
 
-    const lastUpdated = version.createdAt
-      ? new Date(version.createdAt)
-      : null;
+    const lastUpdated = version.createdAt ? new Date(version.createdAt) : null;
 
     // Build highlighted filter types for the home page.
     // Priority: topFilters config > first N filter values from each group
@@ -262,7 +262,9 @@ export function createHomePage(appConfig: AppConfig) {
             header={
               <section className="space-y-6">
                 <PageTitle
-                  title={t("home.pageTitle", { vars: { title: appConfig.title } })}
+                  title={t("home.pageTitle", {
+                    vars: { title: appConfig.title },
+                  })}
                 />
                 {/* Title + intro */}
                 <div className="space-y-2">
@@ -351,80 +353,85 @@ export function createHomePage(appConfig: AppConfig) {
                 )}
 
                 {/* 2. Map cards */}
-                {allMapCards.length > 0 && (() => {
-                  const visible = allMapCards.slice(0, MAX_HOME_MAP_CARDS);
-                  const withImage = visible.filter((c) => c.bgImage);
-                  const withoutImage = visible.filter((c) => !c.bgImage);
-                  return (
-                    <div className="space-y-2">
-                      {withImage.length > 0 && (
-                        <div className={`grid gap-4 ${
-                          withImage.length === 1
-                            ? "grid-cols-1 max-w-md mx-auto"
-                            : withImage.length === 2
-                              ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                        }`}>
-                          {withImage.map((card) => (
-                            <Link
-                              key={card.href ?? card.title}
-                              href={localizePath(card.href ?? "/", locale)}
-                              className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
-                            >
-                              <div className="aspect-video bg-muted/30 relative">
-                                <Image
-                                  src={card.bgImage!}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                />
-                              </div>
-                              <div className="px-3 py-2 flex items-baseline justify-between gap-2">
-                                <span className="font-medium text-sm truncate">
-                                  {t(card.title)}
-                                </span>
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {card.description && /^\d/.test(card.description) && (
-                                    <>{card.description} · </>
-                                  )}
-                                  <span className="group-hover:text-primary transition-colors">
-                                    Explore →
+                {allMapCards.length > 0 &&
+                  (() => {
+                    const visible = allMapCards.slice(0, MAX_HOME_MAP_CARDS);
+                    const withImage = visible.filter((c) => c.bgImage);
+                    const withoutImage = visible.filter((c) => !c.bgImage);
+                    return (
+                      <div className="space-y-2">
+                        {withImage.length > 0 && (
+                          <div
+                            className={`grid gap-4 ${
+                              withImage.length === 1
+                                ? "grid-cols-1 max-w-md mx-auto"
+                                : withImage.length === 2
+                                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                            }`}
+                          >
+                            {withImage.map((card) => (
+                              <Link
+                                key={card.href ?? card.title}
+                                href={localizePath(card.href ?? "/", locale)}
+                                className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
+                              >
+                                <div className="aspect-video bg-muted/30 relative">
+                                  <Image
+                                    src={card.bgImage!}
+                                    alt=""
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                  />
+                                </div>
+                                <div className="px-3 py-2 flex items-baseline justify-between gap-2">
+                                  <span className="font-medium text-sm truncate">
+                                    {t(card.title)}
                                   </span>
-                                </span>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                      {withoutImage.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {withoutImage.map((card) => (
-                            <Link
-                              key={card.href ?? card.title}
-                              href={localizePath(card.href ?? "/", locale)}
-                              className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
-                            >
-                              <div className="px-3 py-2 flex items-baseline justify-between gap-2">
-                                <span className="font-medium text-sm truncate">
-                                  {t(card.title)}
-                                </span>
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {card.description && /^\d/.test(card.description) && (
-                                    <>{card.description} · </>
-                                  )}
-                                  <span className="group-hover:text-primary transition-colors">
-                                    Explore →
+                                  <span className="text-xs text-muted-foreground shrink-0">
+                                    {card.description &&
+                                      /^\d/.test(card.description) && (
+                                        <>{card.description} · </>
+                                      )}
+                                    <span className="group-hover:text-primary transition-colors">
+                                      Explore →
+                                    </span>
                                   </span>
-                                </span>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        {withoutImage.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {withoutImage.map((card) => (
+                              <Link
+                                key={card.href ?? card.title}
+                                href={localizePath(card.href ?? "/", locale)}
+                                className="group block border rounded-lg overflow-hidden hover:border-primary transition-colors"
+                              >
+                                <div className="px-3 py-2 flex items-baseline justify-between gap-2">
+                                  <span className="font-medium text-sm truncate">
+                                    {t(card.title)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground shrink-0">
+                                    {card.description &&
+                                      /^\d/.test(card.description) && (
+                                        <>{card.description} · </>
+                                      )}
+                                    <span className="group-hover:text-primary transition-colors">
+                                      Explore →
+                                    </span>
+                                  </span>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 {allMapCards.length > MAX_HOME_MAP_CARDS && (
                   <Link
                     href={localizePath("/maps", locale)}
@@ -492,7 +499,6 @@ export function createHomePage(appConfig: AppConfig) {
                     </Link>
                   </div>
                 )}
-
               </section>
             }
             content={<ReleaseNotes updateMessages={updateMessages} />}

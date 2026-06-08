@@ -22,23 +22,6 @@ export type DiscordMessageData = {
   timestamp: number;
 };
 
-export async function getInfoMessages(appId: string) {
-  try {
-    const response = await fetch(
-      `https://discord-bot.th.gl/api/info/${appId}`,
-      {
-        // @ts-ignore
-        next: { revalidate: 60 },
-      },
-    );
-    const data = (await response.json()) as DiscordMessageData[];
-
-    return data.reverse();
-  } catch (e) {
-    return [];
-  }
-}
-
 export async function getUpdateMessages(appId: string) {
   try {
     const response = await fetch(
@@ -48,7 +31,6 @@ export async function getUpdateMessages(appId: string) {
         next: { revalidate: 60 },
       },
     );
-
     let data = (await response.json()) as DiscordMessageData[];
 
     data = data.map((message) => {
