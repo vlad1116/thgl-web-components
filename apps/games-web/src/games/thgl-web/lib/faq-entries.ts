@@ -86,11 +86,14 @@ The drawing toolbar has three editing tools:
 
 ![Edit mode handles](/games/thgl-web/faq/drawing-edit-mode.jpg)
 
-## Fix something after saving
-Made a mistake? You don't have to start over. Open the **filters list** in the sidebar, find your saved node or drawing, and use the **menu (⋯) next to its name** to rename, edit, or delete it.
+## Edit or fix it after saving
+Your saved nodes and drawings live under **My Filters** in the sidebar. Made a mistake? You don't have to start over — open the **⋯ menu** on a filter to **Edit drawing**, **Rename**, **Duplicate**, or **Delete** it.
 
-## Share your drawings
-From that same **menu (⋯)** you can **download** a drawing. Share the file (and a screenshot) so others can import it.
+## Share with others
+Sharing is built in — sign in with a free account so your filter syncs, then open the **⋯ menu** on it:
+- **Publish to community** — makes it public so anyone can find and import it from **Browse Community Filters** (the globe button at the top of My Filters).
+- **Create share code** — generates a code to send a friend; they add it with **Add Shared Filter** by pasting the code.
+- **Download** — export it as a file to share manually (the other person imports it with **Upload**).
     `.trim(),
     labels: ["General"],
   },
