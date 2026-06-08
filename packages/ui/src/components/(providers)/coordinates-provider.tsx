@@ -194,6 +194,21 @@ export function CoordinatesProvider({
   }
   const userStore = userStoreRef.current;
 
+  // Dev-only test seam: expose the stores so the map's auth-gated / live-only
+  // UI can be driven from the browser console (or the Playwright MCP) without
+  // the real game/app — e.g. inject synthetic actors to verify clustering.
+  // See docs/THGL_FRONTEND_GUIDE.md in data-forge.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development" || typeof window === "undefined")
+      return;
+    (window as unknown as { __thgl?: unknown }).__thgl = {
+      useGameState,
+      useSettingsStore,
+      useAccountStore,
+      userStore,
+    };
+  }, [userStore]);
+
   const userStoreHasHydrated = useStore(
     userStore,
     (state) => state._hasHydrated,
