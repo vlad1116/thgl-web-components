@@ -188,6 +188,7 @@ export const games: Array<Game> = [
           xyMaxDistance: 10000,
           zDistance: 400,
         },
+        clusterPrecision: 5,
       },
       games: [
         {

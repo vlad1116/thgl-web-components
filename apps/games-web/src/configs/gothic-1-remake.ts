@@ -5,7 +5,17 @@ export const gothic1Remake: AppConfig = {
   title: "Gothic 1 Remake",
   domain: "gothic1remake",
   supportedLocales: ["en"],
-  appUrl: null,
+  appUrl: "https://www.th.gl/companion-app",
+  markerOptions: {
+    radius: 6,
+    playerIcon: "player.webp",
+    imageSprite: true,
+    zPos: {
+      xyMaxDistance: 10000,
+      zDistance: 400,
+    },
+    clusterPrecision: 5,
+  },
   internalLinks: [
     {
       title: "Khorinis Map",
@@ -13,8 +23,7 @@ export const gothic1Remake: AppConfig = {
         "Explore the Colony on Khorinis with our interactive Gothic 1 Remake map — chests, fishing spots, focus stones, mining, crafting stations and more.",
       href: "/maps/Khorinis",
       iconName: "Map",
-      bgImage:
-        `${DATA_FORGE_CDN_URL}/gothic-1-remake/map-tiles/Khorinis/preview.webp?v=1`,
+      bgImage: `${DATA_FORGE_CDN_URL}/gothic-1-remake/map-tiles/Khorinis/preview.webp?v=1`,
       linkText: "Explore the Khorinis Map",
     },
     {
