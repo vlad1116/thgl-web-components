@@ -254,8 +254,11 @@ export default async function SupportMeAccount() {
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold">Unlock Overwolf Apps</h2>
           <p className="text-sm text-muted-foreground">
-            Click the buttons below to unlock your perks in Overwolf apps. Some
-            apps also support manual unlock via a secret.
+            For each app you support, click <strong>Unlock App</strong>{" "}
+            to open and unlock it directly. If it doesn&apos;t open, click{" "}
+            <strong>Copy Secret</strong>{" "}
+            and paste it into the app&apos;s account window. (The Companion App
+            and website don&apos;t need a secret — just sign in with Patreon.)
           </p>
         </div>
 

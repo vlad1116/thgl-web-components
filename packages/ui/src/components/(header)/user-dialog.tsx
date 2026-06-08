@@ -314,26 +314,37 @@ function UnauthenticatedView() {
         <a href={authUrl}>Already a supporter? Sign In</a>
       </Button>
 
-      {/* Overwolf secret form */}
+      {/* Overwolf secret form — Overwolf can't sign in directly, so users
+          unlock with a one-time secret copied from the web account page.
+          Spell out the steps; "paste your secret" alone confused users. */}
       {isOverwolf && (
         <>
           <Separator />
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Or paste your secret from the{" "}
-              <ExternalAnchor
-                href={`${TH_GL_URL}/support-me/account`}
-                className="text-primary hover:underline"
-              >
-                account page
-              </ExternalAnchor>
-              .
-            </p>
+            <p className="text-xs font-medium">Unlock manually (Overwolf)</p>
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
+              <li>Become a Pro/Elite supporter on Patreon.</li>
+              <li>
+                Open the{" "}
+                <ExternalAnchor
+                  href={`${TH_GL_URL}/support-me/account`}
+                  className="text-primary hover:underline"
+                >
+                  account page
+                </ExternalAnchor>{" "}
+                and authenticate with Patreon.
+              </li>
+              <li>
+                Find this game and click{" "}
+                <span className="font-medium">Copy Secret</span>.
+              </li>
+              <li>Paste it below and Unlock.</li>
+            </ol>
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="Secret"
+                placeholder="Paste your secret here"
                 className="text-xs h-8"
               />
               <Button

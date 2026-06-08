@@ -72,6 +72,14 @@ export function AppSubscriptionCard({
                   )}
                 </Button>
               )}
+              {game.overwolf?.supportsCopySecret && (
+                <p className="text-xs text-muted-foreground">
+                  <strong>Unlock App</strong>{" "}
+                  opens the app directly. If it doesn&apos;t open, use{" "}
+                  <strong>Copy Secret</strong>{" "}
+                  and paste it in the app&apos;s account window.
+                </p>
+              )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">

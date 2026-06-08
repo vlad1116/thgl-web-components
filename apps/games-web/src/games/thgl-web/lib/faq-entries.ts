@@ -226,22 +226,36 @@ Both manual methods will trigger an immediate update check.
   },
   {
     id: "ads-still-visible",
-    headline: "Ads still visible after subscribing",
+    headline: "How to remove ads / unlock supporter perks",
     question:
-      "I've subscribed, but why are ads still visible in the Overwolf apps?",
+      "How do I remove ads and unlock my perks — on the website, the Companion App, and Overwolf?",
     answer: `
-If you've subscribed and still see ads in the Overwolf ads, make sure to:
+First: ad removal needs the **Pro** or **Elite** tier. The **Enthusiast** tier does *not* remove ads.
 
-- Open the [account page](/support-me/account) in the same browser you use for *.th.gl
-- Authenticate and click on "Unlock the app"
-- If that fails, use "Copy Secret" and paste it inside the app (click the heart icon)
+How you unlock depends on where you see the ads:
 
-**Note:** The Enthusiast tier does not remove ads.
+### Website (th.gl in a browser)
+1. Click your **profile icon** (top-right) to open the account window.
+2. Click **"Already a supporter? Sign In"** and authenticate with Patreon.
 
-**Other subscriber benefits:**
-- Discord supporter role (see [how to get it](/faq/discord-supporter-role))
+Use the same browser you browse *.th.gl in. Ads disappear once you're signed in.
+
+### Companion App
+1. Click the **profile icon** in the top-right of the map or the launcher.
+2. **Authenticate with Patreon.** That's it — no code to copy.
+
+### Overwolf apps
+Overwolf apps can't sign in directly, so you unlock them with a one-time **secret**:
+1. Become a **Pro/Elite** supporter on [Patreon](https://www.patreon.com/devleon).
+2. Open the [account page](/support-me/account) and **Authenticate with Patreon**.
+3. Find your game's card and click **Unlock App** (one click). If the app doesn't open, click **Copy Secret** instead.
+4. In the app, open the account window (profile/heart icon), **paste the secret**, and click **Unlock**.
+
+Still stuck? Patreon occasionally has brief connection issues — wait a few minutes and try again.
+
+**Related:** [Discord supporter role](/faq/discord-supporter-role).
     `.trim(),
-    labels: ["Overwolf", "Subscription"],
+    labels: ["General", "Subscription", "Companion App", "Overwolf"],
   },
   {
     id: "discord-supporter-role",
