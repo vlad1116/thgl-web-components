@@ -1883,10 +1883,14 @@ function MarkersContent({
         );
       };
 
-      const seen = new Set<string>();
-      const newSpawns = new Map<string, Spawn>();
-      let dirty = false;
-
+      // Collect actors that should render (after visibility filters), then group
+      // them into render units. With clusterPrecision > 0, same-type actors that
+      // snap to the same grid cell collapse into one stacked marker — mirroring
+      // how predicted spawns cluster in coordinates-provider, which this
+      // imperative live pipeline otherwise skipped.
+      const clusterPrecision = markerOptions.clusterPrecision ?? 0;
+      type LiveActor = (typeof actorsList)[number];
+      const visible: { actor: LiveActor; displayType: string }[] = [];
       for (const actor of actorsList) {
         if (!actor.address) continue;
         // Memory readers may flag actors as hidden (e.g. Palia villagers with
@@ -1909,18 +1913,58 @@ function MarkersContent({
           continue;
         }
         if (actor.mapName && actor.mapName !== currentMapName) continue;
+        visible.push({ actor, displayType });
+      }
 
-        const id = String(actor.address);
+      type LiveUnit = { id: string; displayType: string; members: LiveActor[] };
+      const units: LiveUnit[] = [];
+      if (clusterPrecision > 0) {
+        const byCell = new Map<string, LiveUnit>();
+        for (const { actor, displayType } of visible) {
+          const sx = Math.round(actor.x / clusterPrecision) * clusterPrecision;
+          const sy = Math.round(actor.y / clusterPrecision) * clusterPrecision;
+          const key = `${displayType}@${sx}:${sy}`;
+          let unit = byCell.get(key);
+          if (!unit) {
+            unit = { id: key, displayType, members: [] };
+            byCell.set(key, unit);
+          }
+          unit.members.push(actor);
+        }
+        for (const unit of byCell.values()) {
+          // Stable representative (lowest address) so the marker doesn't hop
+          // between actors in the cell across ticks.
+          unit.members.sort((a, b) => a.address - b.address);
+          units.push(unit);
+        }
+      } else {
+        for (const { actor, displayType } of visible) {
+          units.push({
+            id: String(actor.address),
+            displayType,
+            members: [actor],
+          });
+        }
+      }
 
-        let pos: [number, number] = [actor.x, actor.y];
-        if (rotationCache) pos = rotationCache.getRotated(actor.x, actor.y);
+      const seen = new Set<string>();
+      const newSpawns = new Map<string, Spawn>();
+      let dirty = false;
 
-        const nodeId = `${displayType}@${actor.x.toFixed(2)}:${actor.y.toFixed(
-          2,
-        )}`;
-        const isDiscoveredFlag = checkNodeDiscovered(
-          nodeId,
-          discoveryLookupRef.current,
+      for (const unit of units) {
+        const { id, displayType, members } = unit;
+        const rep = members[0];
+        const isStacked = members.length > 1;
+
+        let pos: [number, number] = [rep.x, rep.y];
+        if (rotationCache) pos = rotationCache.getRotated(rep.x, rep.y);
+
+        const memberNodeId = (a: LiveActor) =>
+          `${displayType}@${a.x.toFixed(2)}:${a.y.toFixed(2)}`;
+        const nodeId = memberNodeId(rep);
+        // A cluster counts as discovered only when every member is.
+        const isDiscoveredFlag = members.every((a) =>
+          checkNodeDiscovered(memberNodeId(a), discoveryLookupRef.current),
         );
         // hideDiscoveredNow + discovered → omit from seen so the remove loop
         // takes the marker off the layer. (If we added to seen first, the
@@ -1928,16 +1972,20 @@ function MarkersContent({
         if (isDiscoveredFlag && hideDiscoveredNow) continue;
         seen.add(id);
 
-        const spawn: Spawn = {
-          id: nodeId,
+        const toSpawn = (a: LiveActor): Spawn => ({
+          id: memberNodeId(a),
           type: displayType,
           p:
-            actor.z != null
-              ? ([actor.x, actor.y, actor.z] as [number, number, number])
-              : ([actor.x, actor.y] as [number, number]),
-          mapName: actor.mapName,
-          address: actor.address,
+            a.z != null
+              ? ([a.x, a.y, a.z] as [number, number, number])
+              : ([a.x, a.y] as [number, number]),
+          mapName: a.mapName,
+          address: a.address,
           source: "live",
+        });
+        const spawn: Spawn = {
+          ...toSpawn(rep),
+          cluster: isStacked ? members.slice(1).map(toSpawn) : undefined,
         };
         newSpawns.set(id, spawn);
         const newIsHighlighted =
@@ -1966,6 +2014,7 @@ function MarkersContent({
             !!existing.isDiscovered !== isDiscoveredFlag ||
             !!existing.isHighlighted !== newIsHighlighted ||
             !!existing.isSelected !== newIsSelected ||
+            !!existing.isStacked !== isStacked ||
             (existing.zPos ?? null) !== zPos ||
             existing.z !== zValue ||
             existing.size !== size;
@@ -1976,6 +2025,7 @@ function MarkersContent({
               isDiscovered: isDiscoveredFlag,
               isHighlighted: newIsHighlighted,
               isSelected: newIsSelected,
+              isStacked,
               z: zValue,
               zPos,
             });
@@ -2021,6 +2071,7 @@ function MarkersContent({
           isDiscovered: isDiscoveredFlag,
           isMuted: false,
           isSelected: newIsSelected,
+          isStacked,
           keepUpright: true,
           z: zValue,
           zPos,
@@ -2054,12 +2105,15 @@ function MarkersContent({
         liveMarkerLayer.registerEventHandler(id, "contextmenu", (m) => {
           const s = spawnMapRef.current.get(m.id);
           if (!s) return;
-          const nId = getNodeId(s);
-          const wasDiscovered = checkNodeDiscovered(
-            nId,
-            discoveryLookupRef.current,
+          // Toggle discovery for the whole cluster (or just the one spawn).
+          const group =
+            s.cluster && s.cluster.length > 0 ? [s, ...s.cluster] : [s];
+          const allDiscovered = group.every((g) =>
+            checkNodeDiscovered(getNodeId(g), discoveryLookupRef.current),
           );
-          setDiscoverNodeFn(nId, !wasDiscovered);
+          for (const g of group) {
+            setDiscoverNodeFn(getNodeId(g), !allDiscovered);
+          }
         });
         dirty = true;
       }
