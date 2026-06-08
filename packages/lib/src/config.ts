@@ -105,6 +105,14 @@ export type DbAppConfig = {
   /** Per-entry-type Tailwind classes (bg + text colour) for the search dropdown badges. */
   typeColors?: Record<string, string>;
   /**
+   * When true, every `homeSections` entry also becomes a header-nav item
+   * (de-duplicated against `internalLinks` by href, overflowing into the
+   * "More" menu). Lets the nav stay data-driven from the section list instead
+   * of hand-curating each section in `internalLinks`. Off by default so other
+   * tenants keep their curated navs.
+   */
+  sectionsInNav?: boolean;
+  /**
    * Number of UI translations to display on the landing page. Defaults to
    * `appConfig.supportedLocales.length` when omitted.
    */
