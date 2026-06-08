@@ -1,27 +1,25 @@
 {
   "$schema": "https://v2-8-1.turborepo.dev/schema.json",
-  "globalDependencies": [
-    "**/.env.*local"
-  ],
+  "globalDependencies": ["**/.env.*local"],
   "globalEnv": [
+    "NODE_ENV",
     "PORT",
     "JWT_SECRET",
     "PATREON_CLIENT_ID",
     "PATREON_CLIENT_SECRET",
+    "PATREON_SPECIAL_USERS",
     "DISCORD_WEBHOOK_COMMENTS",
     "PALIA_API_KEY",
-    "PALIA_REVALIDATE_SECRET"
+    "PALIA_REVALIDATE_SECRET",
+    "COOKIE_DOMAIN",
+    "BUNNY_ACCOUNT_API_KEY",
+    "BUNNY_DATABASE_URL",
+    "BUNNY_DATABASE_AUTH_TOKEN"
   ],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        ".next/**",
-        "dist/**",
-        "build/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", "build/**"],
       "inputs": [
         "src/**",
         "public/**",
@@ -34,25 +32,17 @@
       ]
     },
     "test": {
-      "outputs": [
-        "coverage/**"
-      ],
+      "outputs": ["coverage/**"],
       "dependsOn": []
     },
     "lint": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "typecheck": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "dev": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
@@ -60,9 +50,7 @@
       "cache": false
     },
     "release": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "promote": {

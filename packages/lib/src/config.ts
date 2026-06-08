@@ -189,6 +189,9 @@ export function resolveAppConfig(cfg: AppConfigInput): AppConfig {
     title: cfg.title ?? game?.title ?? cfg.name,
     domain: cfg.domain ?? (game ? getAppDomain(game) : cfg.name),
     markerOptions: cfg.markerOptions ?? (game && getGameMarkerOptions(game)),
+    // Embed the linked Game so consumers can read game-level data (e.g.
+    // additionalTooltip in guide-page) without a second registry lookup.
+    game: cfg.game ?? game,
   };
 }
 
