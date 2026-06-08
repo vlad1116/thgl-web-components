@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Key Commands
 
 ### Development
+
 - **Run games-web** (every public web tenant): `bun run dev --filter=games-web` — open
   `http://palia.localhost:3100/`, `http://www.localhost:3100/`, `http://app.localhost:3100/dashboard`
   etc. in a browser to test as a specific tenant. `*.localhost` resolves to loopback per
@@ -14,13 +15,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **CLI host override**: `curl -H "Host: palia.th.gl" http://localhost:3100/`.
 
 ### Build & Quality
+
+- **⚠️ Before finishing any change, run `bun run verify`** — typecheck + lint
+  across the monorepo (CI-parity; this is what GitHub Actions enforces). It is
+  concurrency-capped + heap-bumped so it does NOT OOM the way a raw
+  `turbo run typecheck lint` does (~12 parallel `tsc` exhausts memory). Treat a
+  clean `bun run verify` as the bar for "done".
 - **Build**: `bun run build` or `turbo run build`
 - **Typecheck**: `bun run typecheck`
 - **Lint**: `bun run lint`
 - **Clean**: `bun run clean`
 - **Update dependencies**: `bun run update-deps`
+- **Git hooks** (auto-installed via `prepare` → `core.hooksPath=.githooks`):
+  `pre-commit` formats staged files with Prettier; `pre-push` runs
+  `bun run verify`. Bypass in a pinch with `--no-verify`.
 
 ### Testing
+
 No test framework is configured - the project relies on TypeScript, linting, and formatting for code quality.
 
 ## Architecture Overview
@@ -30,6 +41,7 @@ multi-tenant Next.js container that serves every public web surface plus
 nine game-specific Overwolf overlay apps.
 
 ### Project Structure
+
 - **`apps/games-web/`** — multi-tenant Next.js container. One Docker
   image, deployed on Bunny Magic Containers, serves every game site
   (`palia.th.gl`, `avowed.th.gl`, `oncehuman.th.gl`, etc.), the THGLApp
@@ -48,6 +60,7 @@ nine game-specific Overwolf overlay apps.
   - Config packages: `config-eslint`, `config-typescript`, `config-tailwind`
 
 ### Key Configuration Files
+
 - `apps/games-web/src/configs/{slug}.ts` — per-tenant `AppConfig`
   (registered in `src/configs/index.ts`). Driven by the request's
   first hostname subdomain.
@@ -55,11 +68,13 @@ nine game-specific Overwolf overlay apps.
 - Game definitions live in `packages/lib/src/games.ts`.
 
 #### Single source of truth for game config
+
 `packages/lib/src/games.ts` (`games: Game[]`) is **canonical**. The per-surface
 configs only carry surface-specific fields plus a `name` that links back to
 `Game.id`; the shared fields — `title`, `domain`, `markerOptions` — are **not
 re-declared** there. They are derived from the linked `Game` by resolvers in
 `@repo/lib`:
+
 - Web config: `export const x = resolveAppConfig({ name: "<game-id>", ... })`
   (omit `title`/`domain`/`markerOptions` — they come from the `Game`).
 - Overwolf config: `export const APP_CONFIG = resolveOverwolfConfig({ name, gameClassId, appId, appUrl, discordApplicationId })`.
@@ -74,6 +89,7 @@ re-declared** there. They are derived from the linked `Game` by resolvers in
   games) must supply their own `title`/`domain` in the config.
 
 ### Technology Stack
+
 - **Runtime**: Bun (package manager and runtime)
 - **Frameworks**: Next.js (games-web container), Vite (Overwolf apps)
 - **UI**: React + TypeScript + Tailwind CSS + Radix UI
@@ -81,6 +97,7 @@ re-declared** there. They are derived from the linked `Game` by resolvers in
 - **Maps**: Custom WebGL2 engine for interactive game maps
 
 ### Development Notes
+
 - All paths must be absolute, not relative
 - Follow existing code patterns and conventions in the codebase
 - `games-web` auto-deploys to Bunny via GitHub Actions (`games-web-deploy.yml`).
@@ -95,11 +112,13 @@ re-declared** there. They are derived from the linked `Game` by resolvers in
 The codebase uses reusable components to maintain consistency and reduce duplication:
 
 #### Page Structure Components
+
 - **PageShell**: Wrapper for page content with consistent spacing and max-width
 - **PageHeader**: Standardized page headers with title and description
 - **ViewMoreLink**: Consistent "view all" links with arrow icons
 
 #### Content Components
+
 - **InfoCard**: General-purpose card for links with optional badges, icons, and descriptions
   - Used by: PartnerCard, PlatformCard
   - Supports: external links, custom badge variants, h2/h3 title sizes
@@ -108,6 +127,7 @@ The codebase uses reusable components to maintain consistency and reduce duplica
   - Used in: partner-program, advertise pages
 
 #### Best Practices
+
 - Check for existing reusable components before creating new ones
 - Look for repeated patterns (3+ occurrences) that could be extracted into components
 - Prefer composition over duplication
@@ -118,6 +138,7 @@ The codebase uses reusable components to maintain consistency and reduce duplica
 The `@repo/ui` package is organized into component folders by usage context to optimize tree-shaking and prevent circular dependencies:
 
 #### Component Folder Organization
+
 - **(overwolf)**: Overwolf-exclusive components (ads, app shell, hotkeys, resize borders)
   - Only used by `{game-name}-overwolf` apps
   - Import via `@repo/ui/overwolf`
@@ -148,6 +169,7 @@ The `@repo/ui` package is organized into component folders by usage context to o
   - Import via `@repo/ui/ads`
 
 #### Tree-Shaking Best Practices
+
 - **Barrel files use named exports only** - No wildcard `export *` to enable proper tree-shaking
 - **Avoid circular dependencies** - Within `packages/ui`, use direct relative imports (e.g., `../ui/button`) instead of `@repo/ui/*` imports
 - **Break dependency chains** - Components should not import from unrelated feature folders
@@ -170,6 +192,7 @@ When asked to analyze Overwolf log files, refer to `.claude/overwolf-logs-analys
 | DxDiag | DxDiag.txt | System hardware, drivers, DirectX info |
 
 **Analysis Priority**:
+
 1. Start with **Trace logs** - search for `ERROR` and `WARN` entries
 2. Check **Game HTML logs** - for overlay/rendering issues
 3. Review **OverwolfPerf** - for performance complaints
@@ -182,6 +205,7 @@ Hotkeys for desktop apps (Overwolf and THGL Companion App) require updates in mu
 ### Adding a New Hotkey
 
 1. **Overwolf Apps** - Update ALL `manifest.json` files in `apps/*-overwolf/`:
+
    ```json
    "hotkeys": {
      "hotkey_name": {
@@ -193,6 +217,7 @@ Hotkeys for desktop apps (Overwolf and THGL Companion App) require updates in mu
    ```
 
 2. **THGL App & Settings Store** - Update `packages/lib/src/settings.ts`:
+
    ```typescript
    // In DEFAULT_PROFILE_SETTINGS.hotkeys:
    hotkeys: {
@@ -210,7 +235,9 @@ Hotkeys for desktop apps (Overwolf and THGL Companion App) require updates in mu
 3. **Hotkey Handler** - Implement in `packages/ui/src/components/(overwolf)/map-hotkeys.tsx` or equivalent
 
 ### Overwolf Manifest Files
+
 All 9 Overwolf apps need identical hotkey configurations:
+
 - `apps/avowed-overwolf/manifest.json`
 - `apps/diablo4-overwolf/manifest.json`
 - `apps/hogwarts-legacy-overwolf/manifest.json`
@@ -240,10 +267,13 @@ if (hasPreviewAccess) {
 ```
 
 ### Current Preview Features
+
 - Marker Labels (label mode per filter, text size, hotkey toggle)
 
 ### Graduating Features to Public
+
 When a preview feature is ready for all users:
+
 1. Remove `hasPreviewAccess` checks from the code
 2. Update release notes to announce public availability
 3. Add new preview feature to maintain supporter value
@@ -253,6 +283,7 @@ When a preview feature is ready for all users:
 The filter settings popover (`packages/ui/src/components/(controls)/filter-settings-popover.tsx`) provides per-filter configuration.
 
 ### Current Per-Filter Settings
+
 - **Icon Size**: `iconSizeByFilter` in settings store
 - **Audio Alert**: `audioAlertByFilter` in settings store
 - **Label Mode**: `labelModeByFilter` in settings store (preview access)
@@ -260,6 +291,7 @@ The filter settings popover (`packages/ui/src/components/(controls)/filter-setti
 ### Adding a New Per-Filter Setting
 
 1. **Settings Store** (`packages/lib/src/settings.ts`):
+
    ```typescript
    // Add to ProfileSettings type:
    newSettingByFilter: Record<string, ValueType>;
@@ -276,7 +308,9 @@ The filter settings popover (`packages/ui/src/components/(controls)/filter-setti
 3. **Markers Component** - Read setting and apply to markers
 
 ### Group Settings
+
 Some settings support group-level control (all filters in a group):
+
 - Use `setNewSettingByFilters(filterIds[], value)` for batch updates
 - Check for "mixed" state when group has different values per filter
 
@@ -285,6 +319,7 @@ Some settings support group-level control (all filters in a group):
 For maps with thousands of markers and real-time updates:
 
 ### Spatial Grid for Proximity Queries
+
 Located in `packages/ui/src/components/(interactive-map)/spatial-grid.ts`
 
 ```typescript
@@ -297,6 +332,7 @@ spatialGrid.getNearby(playerX, playerY, maxDistance);
 Use when: Checking proximity for many markers (audio alerts, z-position, labels)
 
 ### Canvas Caching
+
 Located in `packages/ui/src/components/(interactive-map)/canvas-marker.ts`
 
 - Cache rendered marker canvases by unique key
@@ -304,7 +340,9 @@ Located in `packages/ui/src/components/(interactive-map)/canvas-marker.ts`
 - Include all visual properties in cache key (icon, size, color, colorBlind settings)
 
 ### Consolidated Loops
+
 Instead of multiple O(n) passes over markers:
+
 ```typescript
 // BAD: 3 separate loops
 markers.forEach(checkZPosition);
@@ -320,6 +358,7 @@ for (const marker of markers) {
 ```
 
 ### Memoization
+
 ```typescript
 // Memoize expensive calculations
 const rotatedPlayer = useMemo(() => {
@@ -330,10 +369,12 @@ const rotatedPlayer = useMemo(() => {
 ```
 
 ### Batched Pixel Operations
+
 When manipulating canvas pixels:
+
 ```typescript
 // BAD: Multiple getImageData/putImageData cycles
-applyFillColor(context);  // getImageData + putImageData
+applyFillColor(context); // getImageData + putImageData
 applyColorBlind(context); // getImageData + putImageData
 
 // GOOD: Single cycle for all transforms
@@ -346,12 +387,14 @@ context.putImageData(imageData, 0, 0);
 ## Release Workflow
 
 ### Code Changes
+
 1. Implement feature/fix
 2. Run `bun run typecheck` to verify
 3. Commit with descriptive message
 4. Create PR for review (no direct pushes to main)
 
 ### Announcements
+
 After merging:
 
 1. **Discord** (`#app-updates` channel):
@@ -367,6 +410,7 @@ After merging:
    - Highlight supporter-exclusive features
 
 ### Announcement Template (Discord)
+
 ```
 _To get pinged for future updates, claim the @{Game} role in <id:customize>_
 
