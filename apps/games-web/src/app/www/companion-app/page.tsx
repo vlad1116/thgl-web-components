@@ -51,10 +51,10 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/games/thgl-web/images/overlay-palworld.webp",
+        url: "/games/thgl-web/images/companion-app-og.jpg",
         width: 1200,
         height: 630,
-        alt: "TH.GL Companion App Overlay",
+        alt: "TH.GL Companion App — in-game overlays & live maps for 25+ games",
       },
     ],
   },
