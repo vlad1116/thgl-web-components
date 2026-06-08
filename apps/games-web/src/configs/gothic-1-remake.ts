@@ -54,6 +54,13 @@ export const gothic1Remake: AppConfig = {
       iconName: "BookOpen",
       description: "Plants and herbs of the Colony.",
     },
+    {
+      href: "/db/trader",
+      title: "Traders",
+      linkText: "Browse Traders",
+      iconName: "Handshake",
+      description: "Every merchant and what they sell — weapons, runes, potions and more.",
+    },
   ],
   promoLinks: [],
   externalLinks: [],
@@ -71,6 +78,10 @@ export const gothic1Remake: AppConfig = {
   db: {
     heroSubtitle: "Item Database",
     searchPlaceholder: "Search weapons, armor, potions, herbs...",
+    // Every section below also becomes a header-nav item (de-duped against
+    // internalLinks, overflowing into "More") — so materials/misc/runes/etc.
+    // are reachable from the nav without hand-listing each in internalLinks.
+    sectionsInNav: true,
     homeSections: [
       { href: "/db/weapon", type: "weapon", icon: "⚔" },
       { href: "/db/armor", type: "armor", icon: "🛡" },
@@ -86,6 +97,7 @@ export const gothic1Remake: AppConfig = {
       { href: "/db/key", type: "key", icon: "🗝" },
       { href: "/db/writing", type: "writing", icon: "📖" },
       { href: "/db/misc", type: "misc", icon: "🎒" },
+      { href: "/db/trader", type: "trader", icon: "🪙" },
     ],
     homeExtraLinks: [],
     typeLabels: {
@@ -104,6 +116,7 @@ export const gothic1Remake: AppConfig = {
       writing: "Book / Document",
       misc: "Miscellaneous",
       fishing: "Fishing",
+      trader: "Trader",
     },
     typeColors: {
       weapon: "bg-red-900/40 text-red-400",
@@ -121,6 +134,7 @@ export const gothic1Remake: AppConfig = {
       writing: "bg-sky-900/40 text-sky-400",
       misc: "bg-neutral-700/40 text-neutral-300",
       fishing: "bg-blue-900/40 text-blue-400",
+      trader: "bg-amber-900/40 text-amber-400",
     },
     languageCount: 1,
   },

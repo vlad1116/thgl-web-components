@@ -12,7 +12,7 @@ import { getAppConfig } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { entityPageJsonLd } from "@/lib/db/json-ld";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
-import { GenericEntityView } from "@/games/drakantos/generic-view";
+import { GenericEntityView } from "@/lib/db/generic-view";
 
 /**
  * Generic DB entry (detail) page — tenant-resolved counterpart of the
@@ -58,6 +58,17 @@ export default async function Page({ params }: { params: Params }) {
     fetchVersion(appConfig.name),
   ]);
   const iconsHash = version.more.icons;
+
+  // id → sprite icon for every DB entry, so cross-links (sold-by / sells) can
+  // show the target's icon.
+  const icons: Record<string, IconSprite> = {};
+  for (const cat of index) {
+    for (const it of cat.items) {
+      if (it.icon && typeof it.icon === "object") {
+        icons[it.id] = it.icon as IconSprite;
+      }
+    }
+  }
 
   const matchingType = index.find((cat) =>
     cat.items.some((i) => i.id === id),
@@ -121,6 +132,8 @@ export default async function Page({ params }: { params: Params }) {
           props={item.props as Record<string, unknown> | undefined}
           iconsHash={iconsHash}
           appName={appConfig.name}
+          locale={locale}
+          icons={icons}
         />
       </div>
     </>

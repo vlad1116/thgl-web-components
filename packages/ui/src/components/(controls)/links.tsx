@@ -90,7 +90,7 @@ export function Links({
 
     const allLinks = [...before, ...appLinks, ...after];
 
-    return allLinks.map((l): MeasuredItem => {
+    const items = allLinks.map((l): MeasuredItem => {
       const href = localizePath(l.href, locale);
       return {
         key: href,
@@ -100,7 +100,31 @@ export function Links({
         isHome: l.href === "/",
       };
     });
-  }, [appConfig.internalLinks, hasMap, hasGuides, locale, t]);
+
+    // Data-driven sections: opt-in, append every DB section not already linked
+    // above (de-duped by href). Keeps the nav in sync with `db.homeSections`
+    // without hand-curating each one in `internalLinks`.
+    if (appConfig.db?.sectionsInNav) {
+      const seen = new Set(allLinks.map((l) => l.href));
+      for (const section of appConfig.db.homeSections) {
+        if (seen.has(section.href)) continue;
+        seen.add(section.href);
+        const label =
+          appConfig.db.typeLabels?.[section.type] ??
+          (section.titleKey ? t(section.titleKey) : undefined) ??
+          section.titleFallback ??
+          section.type;
+        items.push({
+          key: localizePath(section.href, locale),
+          href: localizePath(section.href, locale),
+          label,
+          isActive: false,
+        });
+      }
+    }
+
+    return items;
+  }, [appConfig.internalLinks, appConfig.db, hasMap, hasGuides, locale, t]);
 
   // Build external items: In-Game App first (most important), then partner links, then locale last
   const externalItems = useMemo(() => {

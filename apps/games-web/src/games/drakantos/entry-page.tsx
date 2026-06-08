@@ -9,7 +9,7 @@ import {
 } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
 import { generateEntryMetadata } from "./metadata";
-import { GenericEntityView } from "./generic-view";
+import { GenericEntityView } from "@/lib/db/generic-view";
 import { requireApp } from "@/lib/get-app-config";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
