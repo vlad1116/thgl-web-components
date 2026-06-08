@@ -1,3 +1,4 @@
+import { games, getAppDomain } from "@repo/lib";
 import { libsql, arg } from "@/lib/libsql";
 
 /**
@@ -131,16 +132,35 @@ export async function getFilterByShareCode(
   return row ? rowToFilter(row) : null;
 }
 
+/**
+ * Filters are keyed by the value `getCurrentGameId()` returns. That now always
+ * the canonical `Game.id`, but rows written before that fix — and the inherent
+ * web-vs-companion split — could use the web subdomain instead (e.g.
+ * "starresonance" vs "blue-protocol-star-resonance"). Match both aliases so a
+ * game's filters resolve no matter which surface created them. `upsertFilter`
+ * never rewrites `game`, so this is needed indefinitely (not just a migration
+ * window). Returns 1 entry when id and subdomain coincide.
+ */
+function gameAliases(game: string): string[] {
+  const g =
+    games.find((x) => x.id === game) ??
+    games.find((x) => getAppDomain(x) === game);
+  if (!g) return [game];
+  return [...new Set([g.id, getAppDomain(g)])];
+}
+
 export async function listMyFilters(
   userId: string,
   game: string,
 ): Promise<UserFilter[]> {
   // For "my filters" we send full payloads — clients need to render them.
   // Could move to meta-only + per-id fetch on demand if size becomes an issue.
+  const aliases = gameAliases(game);
+  const placeholders = aliases.map(() => "?").join(", ");
   const [result] = await libsql([
     {
-      sql: `SELECT ${FILTER_COLS} FROM user_filters WHERE user_id = ? AND game = ? ORDER BY updated_at DESC`,
-      args: [arg.text(userId), arg.text(game)],
+      sql: `SELECT ${FILTER_COLS} FROM user_filters WHERE user_id = ? AND game IN (${placeholders}) ORDER BY updated_at DESC`,
+      args: [arg.text(userId), ...aliases.map((a) => arg.text(a))],
     },
   ]);
   return result.rows.map(rowToFilter);
@@ -177,8 +197,12 @@ export async function listPublicFilters(
     default:
       orderCol = "vote_count";
   }
-  const conds: string[] = ["visibility = 'public'", "game = ?"];
-  const args = [arg.text(query.game)];
+  const aliases = gameAliases(query.game);
+  const conds: string[] = [
+    "visibility = 'public'",
+    `game IN (${aliases.map(() => "?").join(", ")})`,
+  ];
+  const args = aliases.map((a) => arg.text(a));
   if (query.q) {
     conds.push("name LIKE ?");
     args.push(arg.text(`%${query.q}%`));
@@ -193,10 +217,10 @@ export async function listPublicFilters(
   const items = result.rows.map(rowToMeta);
   const hasMore = items.length > limit;
   if (hasMore) items.pop();
-  const colIdx = orderCol === "vote_count" ? 6 : orderCol === "created_at" ? 8 : 9;
+  const colIdx =
+    orderCol === "vote_count" ? 6 : orderCol === "created_at" ? 8 : 9;
   const lastRow = result.rows[items.length - 1];
-  const nextCursor =
-    hasMore && lastRow ? Number(lastRow[colIdx].value) : null;
+  const nextCursor = hasMore && lastRow ? Number(lastRow[colIdx].value) : null;
   return { items, nextCursor };
 }
 
@@ -243,7 +267,10 @@ export async function upsertFilter(
   return filter;
 }
 
-export async function deleteFilter(id: string, userId: string): Promise<number> {
+export async function deleteFilter(
+  id: string,
+  userId: string,
+): Promise<number> {
   const [result] = await libsql([
     {
       sql: "DELETE FROM user_filters WHERE id = ? AND user_id = ?",

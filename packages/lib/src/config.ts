@@ -1,7 +1,7 @@
 import type { MarkerOptions } from "./types";
 import type { Region } from "./coordinates";
 import type { Drawing, PrivateNode } from "./settings";
-import { Game, games } from "./games";
+import { Game, games, getAppDomain } from "./games";
 
 export type IconName =
   | "House"
@@ -158,11 +158,6 @@ export type THGLAppConfig = {
 /** A game's marker render options, regardless of where they live on `Game`. */
 export function getGameMarkerOptions(game: Game): MarkerOptions | undefined {
   return game.markerOptions ?? game.companion?.markerOptions;
-}
-
-/** The web subdomain for a game (e.g. "starresonance"), derived from `web`. */
-export function getAppDomain(game: Game): string {
-  return game.web ? new URL(game.web).host.split(".")[0] : game.id;
 }
 
 /** Web config as authored: `title`/`domain` optional (derived from `Game`). */

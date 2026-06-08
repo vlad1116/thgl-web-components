@@ -898,22 +898,29 @@ export type Game = {
   partnerApps?: PartnerApp[];
 };
 
+/** The web subdomain for a game (e.g. "starresonance"), derived from `web`. */
+export function getAppDomain(game: Game): string {
+  return game.web ? new URL(game.web).host.split(".")[0] : game.id;
+}
+
 /**
- * Resolve the current game's canonical id from the runtime context.
- * Works across all three places we render:
+ * Resolve the current game's canonical `Game.id` from the runtime context.
+ * Works across all three places we render, and ALWAYS returns the canonical
+ * id (not a surface-specific alias) so per-game data keyed by it — community
+ * and personal filters, settings — agrees across surfaces:
  *
- *   - Game tenant on the web (paxdei.th.gl, *.localhost): the first
- *     subdomain matches `Game.id`. Skips infrastructural subdomains
- *     like www/app where the answer is "no specific game".
- *   - THGLApp WebView (app.th.gl/apps/<id>): the path segment after
- *     `/apps/` matches `Game.id`.
- *   - Overwolf extension (overwolf-extension://<extId>): hostname is
- *     the extension id; look it up in the games registry to recover
- *     the canonical id.
+ *   - Game tenant on the web (paxdei.th.gl, *.localhost): the first subdomain
+ *     is the `AppConfig` domain, which differs from `Game.id` for ~17 games
+ *     (e.g. `starresonance` → `blue-protocol-star-resonance`). Mapped back to
+ *     the canonical id via the registry. Skips infra subdomains (www/app).
+ *   - THGLApp WebView (app.th.gl/apps/<id>): the path segment after `/apps/`
+ *     is already the `Game.id`.
+ *   - Overwolf extension (overwolf-extension://<extId>): hostname is the
+ *     extension id; look it up in the registry to recover the canonical id.
  *
- * Returns null when running SSR, on www/app roots, or when no game
- * matches — callers should treat null as "don't render game-scoped
- * UI" rather than guessing.
+ * Returns null when running SSR, on www/app roots, or when no game matches —
+ * callers should treat null as "don't render game-scoped UI" rather than
+ * guessing.
  */
 export function getCurrentGameId(): string | null {
   if (typeof window === "undefined") return null;
@@ -926,5 +933,7 @@ export function getCurrentGameId(): string | null {
   const sub = window.location.hostname.split(".")[0];
   if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub))
     return null;
-  return sub;
+  // Map the tenant subdomain back to the canonical id; fall back to the raw
+  // subdomain for web-only games with no registry entry (e.g. drakantos).
+  return games.find((g) => getAppDomain(g) === sub)?.id ?? sub;
 }
