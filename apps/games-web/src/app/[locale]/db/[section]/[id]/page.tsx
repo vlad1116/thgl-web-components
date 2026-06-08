@@ -1,11 +1,12 @@
 import { type Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   fetchDatabaseIndex,
   fetchDatabaseType,
   fetchVersion,
   fetchTiles,
   getMetadataAlternates,
+  localizePath,
   type TilesConfig,
   DEFAULT_LOCALE,
 } from "@repo/lib";
@@ -23,7 +24,13 @@ import { GenericEntityView } from "@/lib/db/generic-view";
  * section's database types, then renders the shared GenericEntityView.
  */
 type Params = Promise<{ id: string; locale?: string; section: string }>;
-type IconSprite = { url: string; x: number; y: number; width: number; height: number };
+type IconSprite = {
+  url: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 // Map tiles for the embedded location map, fetched once per app and cached at
 // the module level (the tile config doesn't change at runtime).
@@ -37,13 +44,21 @@ function getTiles(appName: string): Promise<TilesConfig> {
   return p;
 }
 
-async function resolveSection(section: string) {
+async function resolveSection(section: string, locale: string, id: string) {
   const appConfig = await getAppConfig();
   if (!appConfig.db) notFound();
   const secCfg = appConfig.db.homeSections.find(
     (s) => s.href === `/db/${section}` || s.type === section,
   );
-  if (!secCfg) notFound();
+  if (!secCfg) {
+    // Old per-category slug folded into a parent section via extraTypes
+    // (e.g. /db/weapon/<id> → /db/items/<id>). 308-redirect.
+    const parent = appConfig.db.homeSections.find((s) =>
+      (s.extraTypes ?? []).includes(section),
+    );
+    if (parent) permanentRedirect(localizePath(`${parent.href}/${id}`, locale));
+    notFound();
+  }
   const types = [secCfg.type, ...(secCfg.extraTypes ?? [])];
   return { appConfig, secCfg, types };
 }
@@ -60,16 +75,27 @@ function buildEntityDescription(
   const stats: string[] = [];
   if (p.Damage) stats.push(`${p.Damage} damage`);
   if (p.Value) stats.push(String(p.Value));
-  if (p["Magic Circle"] != null) stats.push(`Circle of Magic ${p["Magic Circle"]}`);
+  if (p["Magic Circle"] != null)
+    stats.push(`Circle of Magic ${p["Magic Circle"]}`);
   const names = (a: any) =>
-    Array.isArray(a) ? a.slice(0, 3).map((r: any) => r.name).filter(Boolean) : [];
+    Array.isArray(a)
+      ? a
+          .slice(0, 3)
+          .map((r: any) => r.name)
+          .filter(Boolean)
+      : [];
   const prov: string[] = [];
   if (p.locations?.total)
-    prov.push(`found in ${p.locations.total} chest${p.locations.total > 1 ? "s" : ""}`);
-  if (names(p.soldBy).length) prov.push(`sold by ${names(p.soldBy).join(", ")}`);
+    prov.push(
+      `found in ${p.locations.total} chest${p.locations.total > 1 ? "s" : ""}`,
+    );
+  if (names(p.soldBy).length)
+    prov.push(`sold by ${names(p.soldBy).join(", ")}`);
   if (p.craftable?.station) prov.push(`craftable at a ${p.craftable.station}`);
-  if (names(p.droppedBy).length) prov.push(`dropped by ${names(p.droppedBy).join(", ")}`);
-  if (p.drops?.total) prov.push(`drops ${p.drops.total} item${p.drops.total > 1 ? "s" : ""}`);
+  if (names(p.droppedBy).length)
+    prov.push(`dropped by ${names(p.droppedBy).join(", ")}`);
+  if (p.drops?.total)
+    prov.push(`drops ${p.drops.total} item${p.drops.total > 1 ? "s" : ""}`);
   if (p.sells?.total) prov.push(`sells ${p.sells.total} items`);
 
   let desc = `${name} — ${sectionLabel.toLowerCase()} in ${appTitle}`;
@@ -88,7 +114,7 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { id, locale = DEFAULT_LOCALE, section } = await params;
-  const { appConfig, secCfg } = await resolveSection(section);
+  const { appConfig, secCfg } = await resolveSection(section, locale, id);
   const dict = await getFullDictionary(appConfig.name, locale);
   const name = resolveDict(dict, id) || id;
   const sectionLabel =
@@ -141,7 +167,11 @@ export async function generateMetadata({
 
 export default async function Page({ params }: { params: Params }) {
   const { id, locale = DEFAULT_LOCALE, section } = await params;
-  const { appConfig, secCfg, types } = await resolveSection(section);
+  const { appConfig, secCfg, types } = await resolveSection(
+    section,
+    locale,
+    id,
+  );
 
   const [index, dict, version] = await Promise.all([
     fetchDatabaseIndex(appConfig.name),
