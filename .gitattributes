@@ -1,0 +1,27 @@
+# Normalize all text files to LF in the repository AND the working tree.
+# This keeps Git, Prettier (endOfLine: "lf"), and editors in agreement across
+# Windows/macOS/Linux, so format-on-save no longer rewrites every line ending.
+* text=auto eol=lf
+
+# Windows batch scripts must stay CRLF to run reliably.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Common binary assets — never normalized or diffed as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.mp4   binary
+*.webm  binary
+*.zip   binary
+*.wasm  binary
+*.raw   binary
