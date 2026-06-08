@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { localizePath } from "@repo/lib";
+import { localizePath, type TilesConfig } from "@repo/lib";
 import { SpriteIcon } from "@/lib/db/sprite-icon";
+import { DbLocationMap } from "@/lib/db/db-location-map";
 
 type IconSprite = {
   url: string;
@@ -76,6 +77,16 @@ function isRarity(v: unknown): v is Rarity {
   );
 }
 
+/** "Craftable at <station>" provenance (no ingredients in the source data). */
+type Craftable = { station: string; map?: string; mapType?: string };
+function isCraftable(v: unknown): v is Craftable {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as Craftable).station === "string"
+  );
+}
+
 /**
  * Universal detail view for a generic database entry — used by the tenant-
  * resolved `/db/[section]/[id]` route (Gothic, etc.) and Drakantos.
@@ -95,6 +106,7 @@ export function GenericEntityView({
   appName,
   locale = "en",
   icons,
+  tiles,
 }: {
   id: string;
   name: string;
@@ -107,6 +119,8 @@ export function GenericEntityView({
   locale?: string;
   /** id → sprite icon for cross-linked entities (built from the DB index). */
   icons?: Record<string, IconSprite>;
+  /** Map tile config — when present, `locations` render as an embedded map. */
+  tiles?: TilesConfig;
 }) {
   const hasDesc = desc && desc !== `${id}_desc` && desc !== id;
   // "Found where on the map" — rendered as its own clickable section, not in
@@ -117,8 +131,12 @@ export function GenericEntityView({
   // Cross-links to other DB entries, rendered as their own link sections.
   const soldBy = asDbRefList(props?.soldBy);
   const sells = asDbRefList(props?.sells);
+  const drops = asDbRefList(props?.drops); // creature → item drops
+  const droppedBy = asDbRefList(props?.droppedBy); // item → creatures
   // Rarity/value-tier pill, rendered next to the name.
   const rarity = isRarity(props?.rarity) ? props.rarity : undefined;
+  // "Craftable at <station>" provenance line.
+  const craftable = isCraftable(props?.craftable) ? props.craftable : undefined;
   // Remaining props, minus everything rendered in a dedicated section above.
   const remaining = Object.entries(props ?? {}).filter(
     ([k]) =>
@@ -129,7 +147,10 @@ export function GenericEntityView({
       k !== "locations" &&
       k !== "soldBy" &&
       k !== "sells" &&
-      k !== "rarity",
+      k !== "rarity" &&
+      k !== "craftable" &&
+      k !== "drops" &&
+      k !== "droppedBy",
   );
   // Split into prominent stat cards vs. the raw details table.
   const statProps = remaining.filter(([, v]) => isStatValue(v));
@@ -239,34 +260,45 @@ export function GenericEntityView({
             Found in {locations.total}{" "}
             {locations.total === 1 ? "chest" : "chests"}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {locations.list.map((loc) => (
-              <Link
-                key={loc.node}
-                href={localizePath(
-                  `/maps/${loc.map}/${loc.type}/${encodeURIComponent(
-                    loc.node,
-                  )}?id=${encodeURIComponent(loc.node)}`,
-                  locale,
-                )}
-                prefetch={false}
-                className="inline-flex items-center gap-1.5 rounded border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-xs hover:border-amber-700/70 hover:bg-slate-900 transition-colors"
-              >
-                <span
-                  className={
-                    loc.type === "chest_rune"
-                      ? "text-fuchsia-300"
-                      : "text-amber-300"
-                  }
+          {tiles ? (
+            // Embedded interactive map pinning every location.
+            <DbLocationMap
+              locations={locations.list}
+              mapName={locations.list[0].map}
+              tiles={tiles}
+              appName={appName}
+            />
+          ) : (
+            // Fallback (no tiles): a flat list of coordinate links.
+            <div className="flex flex-wrap gap-2">
+              {locations.list.map((loc) => (
+                <Link
+                  key={loc.node}
+                  href={localizePath(
+                    `/maps/${loc.map}/${loc.type}/${encodeURIComponent(
+                      loc.node,
+                    )}?id=${encodeURIComponent(loc.node)}`,
+                    locale,
+                  )}
+                  prefetch={false}
+                  className="inline-flex items-center gap-1.5 rounded border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-xs hover:border-amber-700/70 hover:bg-slate-900 transition-colors"
                 >
-                  {loc.label}
-                </span>
-                <span className="font-mono text-muted-foreground">
-                  [{loc.x}, {loc.y}]
-                </span>
-              </Link>
-            ))}
-          </div>
+                  <span
+                    className={
+                      loc.type === "chest_rune"
+                        ? "text-fuchsia-300"
+                        : "text-amber-300"
+                    }
+                  >
+                    {loc.label}
+                  </span>
+                  <span className="font-mono text-muted-foreground">
+                    [{loc.x}, {loc.y}]
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
           {locations.total > locations.list.length && (
             <div className="mt-2 text-xs text-muted-foreground">
               + {locations.total - locations.list.length} more
@@ -290,6 +322,35 @@ export function GenericEntityView({
             Sells {sells.length} {sells.length === 1 ? "item" : "items"}
           </div>
           {refLinks(sells)}
+        </div>
+      )}
+
+      {craftable && (
+        <div className="mb-6 max-w-3xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Craftable at
+          </div>
+          <span className="inline-flex items-center rounded border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-xs text-amber-300">
+            {craftable.station}
+          </span>
+        </div>
+      )}
+
+      {drops && drops.length > 0 && (
+        <div className="mb-6 max-w-3xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Drops
+          </div>
+          {refLinks(drops)}
+        </div>
+      )}
+
+      {droppedBy && droppedBy.length > 0 && (
+        <div className="mb-6 max-w-3xl">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Dropped by
+          </div>
+          {refLinks(droppedBy)}
         </div>
       )}
 

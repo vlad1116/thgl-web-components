@@ -61,6 +61,13 @@ export const gothic1Remake: AppConfig = {
       iconName: "Handshake",
       description: "Every merchant and what they sell — weapons, runes, potions and more.",
     },
+    {
+      href: "/db/creature",
+      title: "Bestiary",
+      linkText: "Browse the Bestiary",
+      iconName: "Bug",
+      description: "Every creature of the Colony — attack damage and variants.",
+    },
   ],
   promoLinks: [],
   externalLinks: [],
@@ -98,6 +105,7 @@ export const gothic1Remake: AppConfig = {
       { href: "/db/writing", type: "writing", icon: "📖" },
       { href: "/db/misc", type: "misc", icon: "🎒" },
       { href: "/db/trader", type: "trader", icon: "🪙" },
+      { href: "/db/creature", type: "creature", icon: "🐾" },
     ],
     homeExtraLinks: [],
     typeLabels: {
@@ -117,6 +125,7 @@ export const gothic1Remake: AppConfig = {
       misc: "Miscellaneous",
       fishing: "Fishing",
       trader: "Trader",
+      creature: "Bestiary",
     },
     typeColors: {
       weapon: "bg-red-900/40 text-red-400",
@@ -135,6 +144,7 @@ export const gothic1Remake: AppConfig = {
       misc: "bg-neutral-700/40 text-neutral-300",
       fishing: "bg-blue-900/40 text-blue-400",
       trader: "bg-amber-900/40 text-amber-400",
+      creature: "bg-rose-900/40 text-rose-400",
     },
     languageCount: 1,
   },

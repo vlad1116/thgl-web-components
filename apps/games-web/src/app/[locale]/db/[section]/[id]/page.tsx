@@ -4,6 +4,8 @@ import {
   fetchDatabaseIndex,
   fetchDatabaseType,
   fetchVersion,
+  fetchTiles,
+  type TilesConfig,
   DEFAULT_LOCALE,
 } from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
@@ -21,6 +23,18 @@ import { GenericEntityView } from "@/lib/db/generic-view";
  */
 type Params = Promise<{ id: string; locale?: string; section: string }>;
 type IconSprite = { url: string; x: number; y: number; width: number; height: number };
+
+// Map tiles for the embedded location map, fetched once per app and cached at
+// the module level (the tile config doesn't change at runtime).
+const tilesCache = new Map<string, Promise<TilesConfig>>();
+function getTiles(appName: string): Promise<TilesConfig> {
+  let p = tilesCache.get(appName);
+  if (!p) {
+    p = fetchTiles(appName);
+    tilesCache.set(appName, p);
+  }
+  return p;
+}
 
 async function resolveSection(section: string) {
   const appConfig = await getAppConfig();
@@ -85,6 +99,13 @@ export default async function Page({ params }: { params: Params }) {
   const item = fullType.items.find((i) => i.id === id);
   if (!item) notFound();
 
+  // Only fetch map tiles when this entry actually has locations to plot.
+  const hasLocations = Boolean(
+    (item.props as { locations?: { list?: unknown[] } } | undefined)?.locations
+      ?.list?.length,
+  );
+  const tiles = hasLocations ? await getTiles(appConfig.name) : undefined;
+
   const name = resolveDict(dict, id) || id;
   const desc = resolveDict(dict, `${id}_desc`);
   const sectionLabel =
@@ -134,6 +155,7 @@ export default async function Page({ params }: { params: Params }) {
           appName={appConfig.name}
           locale={locale}
           icons={icons}
+          tiles={tiles}
         />
       </div>
     </>
