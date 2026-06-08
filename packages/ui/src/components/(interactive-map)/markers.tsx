@@ -1916,20 +1916,59 @@ function MarkersContent({
         visible.push({ actor, displayType });
       }
 
-      type LiveUnit = { id: string; displayType: string; members: LiveActor[] };
+      type LiveUnit = {
+        id: string;
+        displayType: string;
+        members: LiveActor[];
+        // Snapped cell center (raw, pre-rotation). Used as the marker origin
+        // when a cell holds multiple types so they spider out from one point.
+        cx: number;
+        cy: number;
+        useCenter: boolean;
+        spiderOffsetX: number;
+        spiderOffsetY: number;
+      };
       const units: LiveUnit[] = [];
       if (clusterPrecision > 0) {
         const byCell = new Map<string, LiveUnit>();
+        const cellUnits = new Map<string, LiveUnit[]>();
         for (const { actor, displayType } of visible) {
           const sx = Math.round(actor.x / clusterPrecision) * clusterPrecision;
           const sy = Math.round(actor.y / clusterPrecision) * clusterPrecision;
-          const key = `${displayType}@${sx}:${sy}`;
+          const cellKey = `${sx}:${sy}`;
+          const key = `${displayType}@${cellKey}`;
           let unit = byCell.get(key);
           if (!unit) {
-            unit = { id: key, displayType, members: [] };
+            unit = {
+              id: key,
+              displayType,
+              members: [],
+              cx: sx,
+              cy: sy,
+              useCenter: false,
+              spiderOffsetX: 0,
+              spiderOffsetY: 0,
+            };
             byCell.set(key, unit);
+            const arr = cellUnits.get(cellKey) ?? [];
+            arr.push(unit);
+            cellUnits.set(cellKey, arr);
           }
           unit.members.push(actor);
+        }
+        // Spider cells that hold more than one type so their icons don't stack
+        // on top of each other (same arrangement as the static cluster path).
+        const iconSize = (markerOptions.radius * 4 - 1) * baseIconSizeNow * dpr;
+        const spiderRadius = iconSize * 0.75;
+        for (const group of cellUnits.values()) {
+          if (group.length <= 1) continue;
+          const n = group.length;
+          group.forEach((unit, i) => {
+            const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+            unit.useCenter = true;
+            unit.spiderOffsetX = Math.cos(angle) * spiderRadius;
+            unit.spiderOffsetY = Math.sin(angle) * spiderRadius;
+          });
         }
         for (const unit of byCell.values()) {
           // Stable representative (lowest address) so the marker doesn't hop
@@ -1943,6 +1982,11 @@ function MarkersContent({
             id: String(actor.address),
             displayType,
             members: [actor],
+            cx: actor.x,
+            cy: actor.y,
+            useCenter: false,
+            spiderOffsetX: 0,
+            spiderOffsetY: 0,
           });
         }
       }
@@ -1956,8 +2000,12 @@ function MarkersContent({
         const rep = members[0];
         const isStacked = members.length > 1;
 
-        let pos: [number, number] = [rep.x, rep.y];
-        if (rotationCache) pos = rotationCache.getRotated(rep.x, rep.y);
+        // Spidered units share the cell center as origin; otherwise sit on the
+        // representative actor.
+        const baseX = unit.useCenter ? unit.cx : rep.x;
+        const baseY = unit.useCenter ? unit.cy : rep.y;
+        let pos: [number, number] = [baseX, baseY];
+        if (rotationCache) pos = rotationCache.getRotated(baseX, baseY);
 
         const memberNodeId = (a: LiveActor) =>
           `${displayType}@${a.x.toFixed(2)}:${a.y.toFixed(2)}`;
@@ -2015,6 +2063,8 @@ function MarkersContent({
             !!existing.isHighlighted !== newIsHighlighted ||
             !!existing.isSelected !== newIsSelected ||
             !!existing.isStacked !== isStacked ||
+            (existing.spiderOffsetX ?? 0) !== unit.spiderOffsetX ||
+            (existing.spiderOffsetY ?? 0) !== unit.spiderOffsetY ||
             (existing.zPos ?? null) !== zPos ||
             existing.z !== zValue ||
             existing.size !== size;
@@ -2026,6 +2076,8 @@ function MarkersContent({
               isHighlighted: newIsHighlighted,
               isSelected: newIsSelected,
               isStacked,
+              spiderOffsetX: unit.spiderOffsetX,
+              spiderOffsetY: unit.spiderOffsetY,
               z: zValue,
               zPos,
             });
@@ -2072,6 +2124,8 @@ function MarkersContent({
           isMuted: false,
           isSelected: newIsSelected,
           isStacked,
+          spiderOffsetX: unit.spiderOffsetX,
+          spiderOffsetY: unit.spiderOffsetY,
           keepUpright: true,
           z: zValue,
           zPos,
