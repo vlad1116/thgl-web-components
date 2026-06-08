@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const conanExiles: AppConfig = {
+export const conanExiles = resolveAppConfig({
   name: "conan-exiles",
-  title: "Conan Exiles Enhanced",
-  domain: "conanexiles",
   supportedLocales: [
     "en",
     "de",
@@ -84,4 +82,4 @@ export const conanExiles: AppConfig = {
     "res_iron_ore",
     "res_crystal",
   ],
-};
+});

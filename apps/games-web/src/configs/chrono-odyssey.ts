@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const chronoOdyssey: AppConfig = {
+export const chronoOdyssey = resolveAppConfig({
   name: "chrono-odyssey",
-  title: "Chrono Odyssey",
-  domain: "chronoodyssey",
   supportedLocales: ["en"],
   appUrl: null,
   internalLinks: [
@@ -21,4 +19,4 @@ export const chronoOdyssey: AppConfig = {
   ],
   externalLinks: [],
   keywords: ["Bound Stones", "Resources"],
-};
+});

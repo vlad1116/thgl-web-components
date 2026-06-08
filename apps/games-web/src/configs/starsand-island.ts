@@ -1,20 +1,9 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const starsandIsland: AppConfig = {
+export const starsandIsland = resolveAppConfig({
   name: "starsand-island",
-  title: "Starsand Island",
-  domain: "starsandisland",
   supportedLocales: ["en", "ja", "zh-CN", "zh-TW"],
   appUrl: "https://www.th.gl/companion-app",
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 100,
-      zDistance: 5,
-    },
-  },
   internalLinks: [
     {
       title: "Starsand Island Map",
@@ -51,4 +40,4 @@ export const starsandIsland: AppConfig = {
     "Moonlit Forest",
   ],
   topFilters: ["chest_island", "campsite", "elf_stone"],
-};
+});

@@ -53,8 +53,25 @@ nine game-specific Overwolf overlay apps.
   first hostname subdomain.
 - `apps/{game}-overwolf/src/config.ts` — per-Overwolf-app config.
 - Game definitions live in `packages/lib/src/games.ts`.
-- App configs extend `AppConfig` or `OverwolfAppConfig` types from
-  `@repo/lib`.
+
+#### Single source of truth for game config
+`packages/lib/src/games.ts` (`games: Game[]`) is **canonical**. The per-surface
+configs only carry surface-specific fields plus a `name` that links back to
+`Game.id`; the shared fields — `title`, `domain`, `markerOptions` — are **not
+re-declared** there. They are derived from the linked `Game` by resolvers in
+`@repo/lib`:
+- Web config: `export const x = resolveAppConfig({ name: "<game-id>", ... })`
+  (omit `title`/`domain`/`markerOptions` — they come from the `Game`).
+- Overwolf config: `export const APP_CONFIG = resolveOverwolfConfig({ name, gameClassId, appId, appUrl, discordApplicationId })`.
+  Overwolf store identifiers (`appId`/`appUrl`) stay in the overwolf config and
+  are **never** hoisted to the public `Game` registry (some are private apps).
+- `domain` is derived from the `Game.web` subdomain via `getAppDomain`;
+  `markerOptions` via `getGameMarkerOptions` (top-level `Game.markerOptions`,
+  falling back to `companion.markerOptions`). Helpers + resolvers + the strict
+  output types (`AppConfig`/`OverwolfAppConfig`) and authoring input types
+  (`AppConfigInput`/`OverwolfAppConfigInput`) all live in `packages/lib/src/config.ts`.
+- Configs with **no** `Game` entry (e.g. `thgl-web`, `thgl-app`, in-development
+  games) must supply their own `title`/`domain` in the config.
 
 ### Technology Stack
 - **Runtime**: Bun (package manager and runtime)

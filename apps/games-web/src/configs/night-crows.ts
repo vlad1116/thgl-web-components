@@ -1,9 +1,7 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
-export const nightCrows: AppConfig = {
+export const nightCrows = resolveAppConfig({
   name: "night-crows",
-  title: "Night Crows",
-  domain: "nightcrows",
   supportedLocales: ["en"],
   appUrl: null,
   withoutLiveMode: true,
@@ -25,4 +23,4 @@ export const nightCrows: AppConfig = {
   ],
   externalLinks: [],
   keywords: ["Wandering Tyrant", "World Bosses", "Activities Tracker"],
-};
+});

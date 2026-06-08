@@ -1,12 +1,10 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
-export const avowed: AppConfig = {
+export const avowed = resolveAppConfig({
   name: "avowed",
-  title: "Avowed",
-  domain: "avowed",
   supportedLocales: ["en"],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [],
   externalLinks: [],
   keywords: ["God Totems", "Unique Weapons"],
-};
+});

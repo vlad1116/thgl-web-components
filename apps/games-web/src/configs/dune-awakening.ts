@@ -1,4 +1,4 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs; the originals used getPreviewImageUrl()
 // which would drag cbor-x into middleware via @repo/lib.
@@ -7,10 +7,8 @@ const preview = (mapId: string, version?: string) => {
   return version ? `${url}?v=${version}` : url;
 };
 
-export const duneAwakening: AppConfig = {
+export const duneAwakening = resolveAppConfig({
   name: "dune-awakening",
-  title: "Dune: Awakening",
-  domain: "duneawakening",
   supportedLocales: [
     "en",
     "de",
@@ -92,19 +90,10 @@ export const duneAwakening: AppConfig = {
       title: "config.external.database.title",
     },
   ],
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 10000,
-      zDistance: 400,
-    },
-  },
   keywords: [
     "config.keywords.trials",
     "config.keywords.resources",
     "config.keywords.trainers",
   ],
   topFilters: ["house_representativeswydras"],
-};
+});

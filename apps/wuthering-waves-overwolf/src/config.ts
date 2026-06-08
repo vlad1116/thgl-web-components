@@ -1,20 +1,11 @@
-import type { OverwolfAppConfig } from "@repo/lib";
+import { resolveOverwolfConfig } from "@repo/lib";
 
-export const APP_CONFIG: OverwolfAppConfig = {
+// title, domain and markerOptions are derived from the canonical games
+// registry; only overwolf platform/store identifiers live here.
+export const APP_CONFIG = resolveOverwolfConfig({
   name: "wuthering-waves",
-  title: "Wuthering Waves",
-  domain: "wuthering",
   appUrl: "https://www.overwolf.com/app/Leon_Machens-Wuthering_Waves_Map",
   gameClassId: 24300,
   appId: "gjohaodckfkkodlmmmmeifkdkifddegkleppngad",
   discordApplicationId: "1249803392822546512",
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 15000,
-      zDistance: 400,
-    },
-  },
-};
+});

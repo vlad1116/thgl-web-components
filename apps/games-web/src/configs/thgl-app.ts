@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
 /**
  * Minimal AppConfig for the THGLApp companion's webview surface
@@ -13,7 +13,7 @@ import { type AppConfig } from "@repo/lib";
  * The `internalLinks` / `keywords` etc. are kept empty since the home
  * card layout is never rendered here.
  */
-export const thglApp: AppConfig = {
+export const thglApp = resolveAppConfig({
   name: "thgl-app",
   title: "THGL App",
   domain: "app",
@@ -33,4 +33,4 @@ export const thglApp: AppConfig = {
   internalLinks: [],
   externalLinks: [],
   keywords: [],
-};
+});

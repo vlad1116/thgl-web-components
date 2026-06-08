@@ -1,21 +1,11 @@
-import type { OverwolfAppConfig } from "@repo/lib";
+import { resolveOverwolfConfig } from "@repo/lib";
 
-export const APP_CONFIG: OverwolfAppConfig = {
+// title, domain and markerOptions are derived from the canonical games
+// registry; only overwolf platform/store identifiers live here.
+export const APP_CONFIG = resolveOverwolfConfig({
   name: "palia",
-  title: "Palia",
-  domain: "palia",
   appUrl: "https://www.overwolf.com/app/Leon_Machens-Palia_Map",
   gameClassId: 23186,
   appId: "fgbodfoepckgplklpccjedophlahnjemfdknhfce",
   discordApplicationId: "1181323945866178560",
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 15000,
-      zDistance: 400,
-    },
-    clusterPrecision: 5,
-  },
-};
+});

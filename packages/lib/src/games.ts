@@ -1,5 +1,6 @@
 import { isOverwolf } from "./env";
 import { HOTKEYS } from "./thgl-app/hotkeys";
+import type { MarkerOptions } from "./types";
 
 export const DEFAULT_PATREON_TIER_IDS = [
   "21470801",
@@ -28,6 +29,7 @@ export const games: Array<Game> = [
           xyMaxDistance: 100,
           zDistance: 5,
         },
+        clusterPrecision: 10,
       },
       games: [
         {
@@ -304,7 +306,7 @@ export const games: Array<Game> = [
   {
     id: "dune-awakening",
     discordId: "dune-awakening",
-    title: "Dune Awakening",
+    title: "Dune: Awakening",
     logo: "https://www.th.gl/global_icons/dune.webp",
     lockedWindowComponents: ["DuneDeepDesertGrid", "DuneHeatmaps"],
     additionalFilters: ["DuneDeepDesertGrid", "DuneHeatmaps"],
@@ -658,6 +660,7 @@ export const games: Array<Game> = [
           xyMaxDistance: 15000,
           zDistance: 400,
         },
+        clusterPrecision: 50,
       },
       games: [
         {
@@ -691,6 +694,15 @@ export const games: Array<Game> = [
     title: "Diablo IV",
     logo: "https://www.th.gl/global_icons/diablo4.webp",
     web: "https://diablo4.th.gl",
+    markerOptions: {
+      radius: 6,
+      playerIcon: "player.webp",
+      imageSprite: true,
+      zPos: {
+        xyMaxDistance: 10,
+        zDistance: 2,
+      },
+    },
     overwolf: {
       id: "olbbpfjombddiijdbjeeegeclifleaifdeonllfd",
       title: "Diablo 4 Map",
@@ -757,6 +769,11 @@ export const games: Array<Game> = [
     title: "Pax Dei",
     logo: "https://www.th.gl/global_icons/pax-dei.webp",
     web: "https://paxdei.th.gl",
+    markerOptions: {
+      radius: 6,
+      playerIcon: "player.webp",
+      imageSprite: true,
+    },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
@@ -765,6 +782,15 @@ export const games: Array<Game> = [
     title: "Hogwarts Legacy",
     logo: "https://www.th.gl/global_icons/hogwarts-legacy.webp",
     web: "https://hogwarts.th.gl",
+    markerOptions: {
+      radius: 6,
+      playerIcon: "player.webp",
+      imageSprite: true,
+      zPos: {
+        xyMaxDistance: 15000,
+        zDistance: 350,
+      },
+    },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
@@ -829,6 +855,14 @@ export type Game = {
   additionalComponents?: Array<AdditionalContent>;
   additionalFilters?: Array<AdditionalContent>;
   additionalTooltip?: Array<AdditionalTooltip>;
+  /**
+   * Canonical marker render options for this game. For companion games these
+   * historically live under `companion.markerOptions`; this top-level field is
+   * for games that need marker options without a companion block (e.g. diablo4,
+   * pax-dei, hogwarts-legacy). Read via `getGameMarkerOptions(game)`, which
+   * prefers this field and falls back to `companion.markerOptions`.
+   */
+  markerOptions?: MarkerOptions;
   companion?: {
     baseURL: string;
     controllerURL: string;

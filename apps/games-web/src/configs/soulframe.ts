@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const soulframe: AppConfig = {
+export const soulframe = resolveAppConfig({
   name: "soulframe",
-  title: "Soulframe",
-  domain: "soulframe",
   supportedLocales: ["en"],
   appUrl: null,
   internalLinks: [
@@ -21,4 +19,4 @@ export const soulframe: AppConfig = {
   externalLinks: [],
   keywords: ["World Trees", "Shrines", "Dungeons", "Items"],
   topFilters: ["shrine", "dungeon", "world_tree"],
-};
+});

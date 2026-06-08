@@ -1,12 +1,10 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 const preview = (mapId: string) =>
   `${DATA_FORGE_CDN_URL}/diablo4/map-tiles/${mapId}/preview.webp`;
 
-export const diablo4: AppConfig = {
+export const diablo4 = resolveAppConfig({
   name: "diablo4",
-  title: "Diablo IV",
-  domain: "diablo4",
   supportedLocales: ["en"],
   appUrl: "https://www.overwolf.com/app/Leon_Machens-Diablo_4_Map",
   withoutLiveMode: true,
@@ -22,15 +20,6 @@ export const diablo4: AppConfig = {
     },
   ],
   externalLinks: [],
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 10,
-      zDistance: 2,
-    },
-  },
   keywords: ["Dungeons", "World Events", "Strongholds", "Nightmare Dungeons"],
   topFilters: [
     "altarsOfLilith",
@@ -42,4 +31,4 @@ export const diablo4: AppConfig = {
     "cellars",
     "sideQuests",
   ],
-};
+});

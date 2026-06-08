@@ -1,16 +1,11 @@
-import type { OverwolfAppConfig } from "@repo/lib";
+import { resolveOverwolfConfig } from "@repo/lib";
 
-export const APP_CONFIG: OverwolfAppConfig = {
+// title, domain and markerOptions are derived from the canonical games
+// registry; only overwolf platform/store identifiers live here.
+export const APP_CONFIG = resolveOverwolfConfig({
   name: "pax-dei",
-  title: "Pax Dei",
-  domain: "paxdei",
-  gameClassId: 23626,
   appUrl: "https://www.overwolf.com/app/Leon_Machens-Pax_Dei_Map",
+  gameClassId: 23626,
   appId: "kgfnjdoonhclpamjbhiohlkbolgdmepfaimbdfjo",
   discordApplicationId: "1308777591305539675",
-  markerOptions: {
-    imageSprite: true,
-    radius: 6,
-    playerIcon: "player.webp",
-  },
-};
+});

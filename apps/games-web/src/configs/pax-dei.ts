@@ -1,9 +1,7 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
-export const paxDei: AppConfig = {
+export const paxDei = resolveAppConfig({
   name: "pax-dei",
-  title: "Pax Dei",
-  domain: "paxdei",
   supportedLocales: ["en"],
   // Pax Dei companion app was denied by the publisher (see memory) — website
   // only, no overlay / live mode.
@@ -12,10 +10,5 @@ export const paxDei: AppConfig = {
   externalLinks: [
     { href: "https://paxdei.gaming.tools?ref=thgl", title: "Database" },
   ],
-  markerOptions: {
-    imageSprite: true,
-    radius: 6,
-    playerIcon: "player.webp",
-  },
   keywords: ["Gateways", "Resources"],
-};
+});

@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const gothic1Remake: AppConfig = {
+export const gothic1Remake = resolveAppConfig({
   name: "gothic-1-remake",
-  title: "Gothic 1 Remake",
-  domain: "gothic1remake",
   supportedLocales: [
     "en",
     "de",
@@ -17,16 +15,6 @@ export const gothic1Remake: AppConfig = {
     "zh-CN",
   ],
   appUrl: "https://www.th.gl/companion-app",
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 10000,
-      zDistance: 400,
-    },
-    clusterPrecision: 5,
-  },
   internalLinks: [
     {
       title: "Khorinis Map",
@@ -156,4 +144,4 @@ export const gothic1Remake: AppConfig = {
     },
     languageCount: 10,
   },
-};
+});

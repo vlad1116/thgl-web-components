@@ -1,7 +1,7 @@
 import type { MarkerOptions } from "./types";
 import type { Region } from "./coordinates";
 import type { Drawing, PrivateNode } from "./settings";
-import { Game } from "./games";
+import { Game, games } from "./games";
 
 export type IconName =
   | "House"
@@ -139,6 +139,82 @@ export type THGLAppConfig = {
   markerOptions: MarkerOptions;
   defaultHotkeys: Record<string, string>;
 };
+
+/**
+ * Single source of truth for game config (see CLAUDE.md "Single source of
+ * truth for game config").
+ *
+ * `games` (the `Game[]` registry in games.ts) is canonical. The per-surface
+ * configs — web `AppConfig` (configs/*.ts) and `OverwolfAppConfig`
+ * (*-overwolf/src/config.ts) — only carry surface-specific fields plus a
+ * `name` that links back to `Game.id`. Shared fields (`title`, `domain`,
+ * `markerOptions`) are NOT re-declared there; they are derived from the linked
+ * `Game` by the resolvers below. The strict output types (`AppConfig`,
+ * `OverwolfAppConfig`) keep those fields required so component consumers are
+ * unchanged; the `*Input` types make the derivable fields optional so a config
+ * file can omit them (or override when no `Game` exists, e.g. thgl-web).
+ */
+
+/** A game's marker render options, regardless of where they live on `Game`. */
+export function getGameMarkerOptions(game: Game): MarkerOptions | undefined {
+  return game.markerOptions ?? game.companion?.markerOptions;
+}
+
+/** The web subdomain for a game (e.g. "starresonance"), derived from `web`. */
+export function getAppDomain(game: Game): string {
+  return game.web ? new URL(game.web).host.split(".")[0] : game.id;
+}
+
+/** Web config as authored: `title`/`domain` optional (derived from `Game`). */
+export type AppConfigInput = Omit<AppConfig, "title" | "domain"> &
+  Partial<Pick<AppConfig, "title" | "domain">>;
+
+/** Overwolf config as authored: derivable fields optional. */
+export type OverwolfAppConfigInput = Omit<
+  OverwolfAppConfig,
+  "title" | "domain" | "markerOptions"
+> &
+  Partial<Pick<OverwolfAppConfig, "title" | "domain" | "markerOptions">>;
+
+/**
+ * Fill a web `AppConfig`'s shared fields from its linked `Game`. Authored
+ * values win (override); when absent they fall back to the registry. Configs
+ * with no matching `Game` (thgl-web, thgl-app, drakantos) must supply their
+ * own `title`/`domain`.
+ */
+export function resolveAppConfig(cfg: AppConfigInput): AppConfig {
+  const game = games.find((g) => g.id === cfg.name);
+  return {
+    ...cfg,
+    title: cfg.title ?? game?.title ?? cfg.name,
+    domain: cfg.domain ?? (game ? getAppDomain(game) : cfg.name),
+    markerOptions: cfg.markerOptions ?? (game && getGameMarkerOptions(game)),
+  };
+}
+
+/**
+ * Fill an `OverwolfAppConfig`'s shared fields from its linked `Game`. The
+ * store identifiers (`appId`/`appUrl`) stay in the overwolf config and are
+ * never hoisted to the public registry.
+ */
+export function resolveOverwolfConfig(
+  cfg: OverwolfAppConfigInput,
+): OverwolfAppConfig {
+  const game = games.find((g) => g.id === cfg.name);
+  const markerOptions =
+    cfg.markerOptions ?? (game && getGameMarkerOptions(game));
+  if (!markerOptions) {
+    throw new Error(
+      `resolveOverwolfConfig: no markerOptions for "${cfg.name}" (set them on the Game or in the overwolf config)`,
+    );
+  }
+  return {
+    ...cfg,
+    title: cfg.title ?? game?.title ?? cfg.name,
+    domain: cfg.domain ?? (game ? getAppDomain(game) : cfg.name),
+    markerOptions,
+  };
+}
 
 export type Version = {
   id: string;

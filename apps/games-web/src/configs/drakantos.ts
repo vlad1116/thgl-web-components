@@ -1,6 +1,6 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
-export const drakantos: AppConfig = {
+export const drakantos = resolveAppConfig({
   name: "drakantos",
   title: "Drakantos",
   domain: "drakantos",
@@ -96,4 +96,4 @@ export const drakantos: AppConfig = {
     },
     languageCount: 1,
   },
-};
+});

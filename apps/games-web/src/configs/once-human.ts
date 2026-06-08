@@ -1,14 +1,12 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs (getPreviewImageUrl would drag cbor-x
 // into middleware via @repo/lib).
 const preview = () =>
   `${DATA_FORGE_CDN_URL}/once-human/map-tiles/default/preview.webp`;
 
-export const onceHuman: AppConfig = {
+export const onceHuman = resolveAppConfig({
   name: "once-human",
-  title: "Once Human",
-  domain: "oncehuman",
   supportedLocales: ["en"],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
@@ -90,16 +88,6 @@ export const onceHuman: AppConfig = {
       linkText: "View Weapons",
     },
   ],
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 200,
-      zDistance: 3,
-    },
-    coordinateCopyFormat: "({x},{y})",
-  },
   keywords: ["Ores", "Resources", "Riddles", "Deviants"],
   topFilters: ["mystical_crate", "landscape_viewpoint_camera", "hoard_loot_crate"],
   db: {
@@ -164,4 +152,4 @@ export const onceHuman: AppConfig = {
     },
     languageCount: 1,
   },
-};
+});

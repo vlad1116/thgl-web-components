@@ -1,14 +1,12 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs (avoid getPreviewImageUrl + cbor-x leak
 // into middleware).
 const preview = (mapId: string) =>
   `${DATA_FORGE_CDN_URL}/duet-night-abyss/map-tiles/${mapId}/preview.webp`;
 
-export const duetNightAbyss: AppConfig = {
+export const duetNightAbyss = resolveAppConfig({
   name: "duet-night-abyss",
-  title: "Duet Night Abyss",
-  domain: "duetnightabyss",
   supportedLocales: ["en"],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
@@ -162,4 +160,4 @@ export const duetNightAbyss: AppConfig = {
     },
     languageCount: 1,
   },
-};
+});

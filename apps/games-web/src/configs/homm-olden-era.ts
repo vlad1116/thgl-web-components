@@ -1,9 +1,7 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
-export const hommOldenEra: AppConfig = {
+export const hommOldenEra = resolveAppConfig({
   name: "homm-olden-era",
-  title: "Heroes of Might & Magic: Olden Era",
-  domain: "oldenera",
   supportedLocales: [
     "en",
     "fr",
@@ -166,4 +164,4 @@ export const hommOldenEra: AppConfig = {
     },
     languageCount: 14,
   },
-};
+});

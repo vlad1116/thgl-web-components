@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const soulmask: AppConfig = {
+export const soulmask = resolveAppConfig({
   name: "soulmask",
-  title: "Soulmask",
-  domain: "soulmask",
   supportedLocales: [
     "de",
     "en",
@@ -55,4 +53,4 @@ export const soulmask: AppConfig = {
     "NPCs",
   ],
   topFilters: ["teleporter", "dungeon", "chest_mysterious", "boss_altar"],
-};
+});

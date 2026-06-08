@@ -1,4 +1,11 @@
-import { fetchDict, fetchVersion, games, Dict, DEFAULT_LOCALE } from "@repo/lib";
+import {
+  fetchDict,
+  fetchVersion,
+  games,
+  getAppDomain,
+  Dict,
+  DEFAULT_LOCALE,
+} from "@repo/lib";
 import { AdditionalContent } from "@repo/ui/content";
 import { getGlobalDictionary } from "@repo/ui/dicts";
 import { App } from "@repo/ui/thgl-app";
@@ -26,7 +33,7 @@ export function createAppPage(isOverlay: boolean) {
       getGlobalDictionary(locale),
     ]);
     const dict = { ...globalDict, ...dynamicDict } as Dict;
-    const domain = game.web ? new URL(game.web).host.split(".")[0] : "";
+    const domain = getAppDomain(game);
     return (
       <App
         appConfig={{

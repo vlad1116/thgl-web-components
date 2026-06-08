@@ -1,9 +1,7 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
-export const grounded2: AppConfig = {
+export const grounded2 = resolveAppConfig({
   name: "grounded2",
-  title: "Grounded 2",
-  domain: "grounded2",
   supportedLocales: ["en", "de", "es", "es-MX", "fr", "it", "zh-CN"],
   appUrl: null,
   internalLinks: [
@@ -22,4 +20,4 @@ export const grounded2: AppConfig = {
   promoLinks: [],
   externalLinks: [],
   keywords: ["Wonders", "Ominent Facilities", "Resources"],
-};
+});

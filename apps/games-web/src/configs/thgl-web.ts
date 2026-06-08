@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { resolveAppConfig } from "@repo/lib";
 
 /**
  * Marketing site at https://www.th.gl. Multi-tenant container routes
@@ -12,7 +12,7 @@ import { type AppConfig } from "@repo/lib";
  * container only needs `name` + `domain` so getAppConfigByHost can
  * resolve www.th.gl and middleware can branch.
  */
-export const thglWeb: AppConfig = {
+export const thglWeb = resolveAppConfig({
   name: "thgl-web",
   title: "The Hidden Gaming Lair",
   domain: "www",
@@ -21,4 +21,4 @@ export const thglWeb: AppConfig = {
   internalLinks: [],
   externalLinks: [],
   keywords: [],
-};
+});

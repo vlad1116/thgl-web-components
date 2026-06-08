@@ -1,14 +1,12 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs; the originals used getPreviewImageUrl()
 // which would drag cbor-x into middleware via @repo/lib.
 const preview = (mapId: string) =>
   `${DATA_FORGE_CDN_URL}/blue-protocol-star-resonance/map-tiles/${mapId}/preview.webp`;
 
-export const blueProtocolStarResonance: AppConfig = {
+export const blueProtocolStarResonance = resolveAppConfig({
   name: "blue-protocol-star-resonance",
-  title: "Blue Protocol: Star Resonance",
-  domain: "starresonance",
   supportedLocales: ["en", "ja", "zh-CN", "zh-TW", "th"],
   appUrl: "https://www.th.gl/companion-app",
   internalLinks: [
@@ -179,4 +177,4 @@ export const blueProtocolStarResonance: AppConfig = {
     },
     languageCount: 5,
   },
-};
+});

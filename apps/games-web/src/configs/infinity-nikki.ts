@@ -1,4 +1,4 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 // Inlined per-map preview URLs. The first one keeps the ?v=2 cache buster.
 const preview = (mapId: string, version?: string) => {
@@ -6,10 +6,8 @@ const preview = (mapId: string, version?: string) => {
   return version ? `${url}?v=${version}` : url;
 };
 
-export const infinityNikki: AppConfig = {
+export const infinityNikki = resolveAppConfig({
   name: "infinity-nikki",
-  title: "Infinity Nikki",
-  domain: "infinitynikki",
   supportedLocales: ["en"],
   appUrl: null,
   withoutLiveMode: true,
@@ -78,4 +76,4 @@ export const infinityNikki: AppConfig = {
     "Dew of Inspiration & Dew of Firework routes",
     "Wanxiang Bell & Whim Lantern locations",
   ],
-};
+});

@@ -1,12 +1,10 @@
-import { type AppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
+import { resolveAppConfig, DATA_FORGE_CDN_URL } from "@repo/lib";
 
 const preview = (mapId: string) =>
   `${DATA_FORGE_CDN_URL}/palia/map-tiles/${mapId}/preview.webp`;
 
-export const palia: AppConfig = {
+export const palia = resolveAppConfig({
   name: "palia",
-  title: "Palia",
-  domain: "palia",
   supportedLocales: [
     "en",
     "de",
@@ -86,15 +84,5 @@ export const palia: AppConfig = {
       bgImage: "/games/palia/weekly-wants.webp",
     },
   ],
-  markerOptions: {
-    radius: 6,
-    playerIcon: "player.webp",
-    imageSprite: true,
-    zPos: {
-      xyMaxDistance: 15000,
-      zDistance: 400,
-    },
-    clusterPrecision: 5,
-  },
   keywords: ["Rummage Pile", "Plushies", "Elderwood"],
-};
+});
