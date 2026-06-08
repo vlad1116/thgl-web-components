@@ -4,7 +4,18 @@ export const gothic1Remake: AppConfig = {
   name: "gothic-1-remake",
   title: "Gothic 1 Remake",
   domain: "gothic1remake",
-  supportedLocales: ["en"],
+  supportedLocales: [
+    "en",
+    "de",
+    "fr",
+    "es",
+    "it",
+    "pt-BR",
+    "ru",
+    "pl",
+    "ja",
+    "zh-CN",
+  ],
   appUrl: "https://www.th.gl/companion-app",
   markerOptions: {
     radius: 6,
@@ -143,6 +154,6 @@ export const gothic1Remake: AppConfig = {
       trader: "bg-amber-900/40 text-amber-400",
       creature: "bg-rose-900/40 text-rose-400",
     },
-    languageCount: 1,
+    languageCount: 10,
   },
 };
