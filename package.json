@@ -31,7 +31,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "verify": "node scripts/verify.mjs",
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "git config core.hooksPath .githooks || true",
     "update-deps": "bunx npm-check-updates -u -ws --root"
   },
   "devDependencies": {
