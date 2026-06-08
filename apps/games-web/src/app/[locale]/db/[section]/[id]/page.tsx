@@ -5,6 +5,7 @@ import {
   fetchDatabaseType,
   fetchVersion,
   fetchTiles,
+  getMetadataAlternates,
   type TilesConfig,
   DEFAULT_LOCALE,
 } from "@repo/lib";
@@ -47,18 +48,94 @@ async function resolveSection(section: string) {
   return { appConfig, secCfg, types };
 }
 
+// Build a data-rich meta description from an entry's props (stats + where it's
+// found / sold / crafted / dropped). Generic over any tenant's prop shape.
+function buildEntityDescription(
+  name: string,
+  sectionLabel: string,
+  props: Record<string, any> | undefined,
+  appTitle: string,
+): string {
+  const p = props ?? {};
+  const stats: string[] = [];
+  if (p.Damage) stats.push(`${p.Damage} damage`);
+  if (p.Value) stats.push(String(p.Value));
+  if (p["Magic Circle"] != null) stats.push(`Circle of Magic ${p["Magic Circle"]}`);
+  const names = (a: any) =>
+    Array.isArray(a) ? a.slice(0, 3).map((r: any) => r.name).filter(Boolean) : [];
+  const prov: string[] = [];
+  if (p.locations?.total)
+    prov.push(`found in ${p.locations.total} chest${p.locations.total > 1 ? "s" : ""}`);
+  if (names(p.soldBy).length) prov.push(`sold by ${names(p.soldBy).join(", ")}`);
+  if (p.craftable?.station) prov.push(`craftable at a ${p.craftable.station}`);
+  if (names(p.droppedBy).length) prov.push(`dropped by ${names(p.droppedBy).join(", ")}`);
+  if (p.drops?.total) prov.push(`drops ${p.drops.total} item${p.drops.total > 1 ? "s" : ""}`);
+  if (p.sells?.total) prov.push(`sells ${p.sells.total} items`);
+
+  let desc = `${name} — ${sectionLabel.toLowerCase()} in ${appTitle}`;
+  if (stats.length) desc += ` (${stats.join(", ")})`;
+  desc += ".";
+  if (prov.length) {
+    const joined = prov.join("; ");
+    desc += " " + joined.charAt(0).toUpperCase() + joined.slice(1) + ".";
+  }
+  return desc.length > 300 ? desc.slice(0, 297) + "…" : desc;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Params;
 }): Promise<Metadata> {
   const { id, locale = DEFAULT_LOCALE, section } = await params;
-  const { appConfig } = await resolveSection(section);
+  const { appConfig, secCfg } = await resolveSection(section);
   const dict = await getFullDictionary(appConfig.name, locale);
   const name = resolveDict(dict, id) || id;
+  const sectionLabel =
+    appConfig.db?.typeLabels?.[secCfg.type] ||
+    resolveDict(dict, secCfg.type) ||
+    section;
+
+  // Pull the entry's props (cached fetch shared with the page) for a rich,
+  // data-driven description. Best-effort — fall back to a simple line.
+  let props: Record<string, any> | undefined;
+  try {
+    const index = await fetchDatabaseIndex(appConfig.name);
+    const matchingType = index.find((cat) =>
+      cat.items.some((i) => i.id === id),
+    )?.type;
+    if (matchingType) {
+      const full = await fetchDatabaseType(appConfig.name, matchingType);
+      props = full.items.find((i) => i.id === id)?.props as
+        | Record<string, any>
+        | undefined;
+    }
+  } catch {
+    /* fall back to the simple description */
+  }
+
+  const title = `${name} - ${appConfig.title}`;
+  const description = buildEntityDescription(
+    name,
+    sectionLabel,
+    props,
+    appConfig.title,
+  );
+  const { canonical, languageAlternates } = getMetadataAlternates(
+    `/db/${section}/${id}`,
+    locale,
+    appConfig.supportedLocales,
+  );
   return {
-    title: `${name} - ${appConfig.title}`,
-    description: `${name} in ${appConfig.title}.`,
+    title,
+    description,
+    alternates: { canonical, languages: languageAlternates },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      images: ["/opengraph-image.jpg"],
+    },
   };
 }
 

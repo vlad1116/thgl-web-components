@@ -1,6 +1,11 @@
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
-import { fetchDatabaseIndex, fetchVersion, DEFAULT_LOCALE } from "@repo/lib";
+import {
+  fetchDatabaseIndex,
+  fetchVersion,
+  getMetadataAlternates,
+  DEFAULT_LOCALE,
+} from "@repo/lib";
 import { getFullDictionary } from "@repo/ui/dicts";
 import { JSONLDScript } from "@repo/ui/apps";
 import { getAppConfig } from "@/lib/get-app-config";
@@ -49,9 +54,23 @@ export async function generateMetadata({
   const { appConfig, secCfg } = await resolveSection(section);
   const dict = await getFullDictionary(appConfig.name, locale);
   const label = getSectionLabel(appConfig, dict, secCfg.type, section);
+  const title = `${label} - ${appConfig.title}`;
+  const description = `Browse all ${label.toLowerCase()} in ${appConfig.title}.`;
+  const { canonical, languageAlternates } = getMetadataAlternates(
+    `/db/${section}`,
+    locale,
+    appConfig.supportedLocales,
+  );
   return {
-    title: `${label} - ${appConfig.title}`,
-    description: `Browse all ${label.toLowerCase()} in ${appConfig.title}.`,
+    title,
+    description,
+    alternates: { canonical, languages: languageAlternates },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      images: ["/opengraph-image.jpg"],
+    },
   };
 }
 
