@@ -14,7 +14,6 @@ header in middleware and resolving the right `AppConfig`.
 | Tenant | Host | Source on disk |
 |---|---|---|
 | games-web (per-game) | `{slug}.th.gl` (palia, avowed, once-human, BPSR, homm-olden-era, diablo4, DNA, conan-exiles, crimson-desert, dune-awakening, grounded2, hogwarts-legacy, infinity-nikki, night-crows, palworld, pax-dei, rsdragonwilds, satisfactory, soulframe, soulmask, starsand-island, wuthering-waves, chrono-odyssey) | `app/(en)/…`, `app/[locale]/…` |
-| Diablo IV Mobalytics embed | `diablo4.th.gl/mobalytics` | `app/(mobalytics)/…` |
 | THGLApp WebView2 surface | `app.th.gl` | `app/(app)/(en)/…`, `app/(app)/[locale]/…` |
 | Marketing site | `www.th.gl` (apex `th.gl` 308-redirects here) | `app/www/…` |
 
@@ -41,7 +40,6 @@ classes isolated:
 app/
   (en)/              ← games-web tenants, en routes (root layout)
   [locale]/          ← games-web tenants, localized routes (root layout)
-  (mobalytics)/      ← diablo4 mobalytics embed (bare root layout)
   (app)/(en)/        ← thgl-app dashboard, en (root layout)
   (app)/[locale]/    ← thgl-app dashboard, localized (root layout)
   www/               ← thgl-web marketing site (root layout)
@@ -96,7 +94,6 @@ bun run dev
 # → http://avowed.localhost:3100/maps
 # → http://app.localhost:3100/dashboard
 # → http://www.localhost:3100/blog
-# → http://diablo4.localhost:3100/mobalytics
 ```
 
 The subdomain in the URL determines which tenant's config the
