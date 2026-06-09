@@ -9,10 +9,23 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Checkbox } from "../ui/checkbox";
-import { ChevronRight, RotateCw, Trash2, Check, X } from "lucide-react";
+import {
+  ChevronRight,
+  RotateCw,
+  Trash2,
+  Check,
+  X,
+  Share2,
+  Upload,
+} from "lucide-react";
 import { Input } from "../ui/input";
-import { useSettingsStore, type FilterPreset } from "@repo/lib";
+import {
+  useSettingsStore,
+  openFileOrFiles,
+  type FilterPreset,
+} from "@repo/lib";
 import { useMemo, useState, type JSX } from "react";
+import { toast } from "sonner";
 
 // Legacy presets are a bare string[] (filters only); new ones are FilterPreset.
 const normalize = (preset: string[] | FilterPreset): FilterPreset =>
@@ -159,7 +172,12 @@ export function Presets(): JSX.Element {
     if (normalized.iconSizeByGroup !== undefined) {
       captured = true;
       if ((normalized.baseIconSize ?? 1) !== baseIconSize) return false;
-      if (!sizeMapEq(sizeMap(normalized.iconSizeByGroup), sizeMap(iconSizeByGroup)))
+      if (
+        !sizeMapEq(
+          sizeMap(normalized.iconSizeByGroup),
+          sizeMap(iconSizeByGroup),
+        )
+      )
         return false;
       if (
         !sizeMapEq(
@@ -172,17 +190,19 @@ export function Presets(): JSX.Element {
     }
     if (normalized.audioAlertByFilter !== undefined) {
       captured = true;
-      if (!setEq(enabledKeys(normalized.audioAlertByFilter), enabledKeys(audioAlertByFilter)))
+      if (
+        !setEq(
+          enabledKeys(normalized.audioAlertByFilter),
+          enabledKeys(audioAlertByFilter),
+        )
+      )
         return false;
     }
     return captured;
   };
 
   const trimmedName = presetName.trim();
-  const nameExists = Object.prototype.hasOwnProperty.call(
-    presets,
-    trimmedName,
-  );
+  const nameExists = Object.prototype.hasOwnProperty.call(presets, trimmedName);
   const nothingCaptured = !captureFilters && !captureSizes && !captureAlerts;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -221,6 +241,76 @@ export function Presets(): JSX.Element {
     if (normalized.iconSizeByGroup !== undefined) parts.push("Sizes");
     if (normalized.audioAlertByFilter !== undefined) parts.push("Alerts");
     return parts.join(" · ");
+  };
+
+  // Download a single preset as a small JSON file the user can share. Presets
+  // are local (not server-synced), so this is a plain client-side download.
+  const exportPreset = (name: string, preset: string[] | FilterPreset) => {
+    const data = { name, preset: normalize(preset) };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `preset_${name.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import a shared preset file into the current profile (added alongside
+  // existing presets — never replaces the whole profile).
+  const importPreset = async () => {
+    const file = await openFileOrFiles();
+    if (!file || Array.isArray(file)) return;
+    const reader = new FileReader();
+    reader.addEventListener("load", (event) => {
+      try {
+        const text = event.target?.result;
+        if (typeof text !== "string") return;
+        const data = JSON.parse(text);
+        const raw =
+          data && typeof data === "object" && "preset" in data
+            ? data.preset
+            : data;
+        const isPresetShape =
+          Array.isArray(raw) ||
+          (raw &&
+            typeof raw === "object" &&
+            [
+              "filters",
+              "baseIconSize",
+              "iconSizeByGroup",
+              "iconSizeByFilter",
+              "audioAlertByFilter",
+            ].some((key) => key in raw));
+        if (!isPresetShape) {
+          toast.error("That file isn't a preset");
+          return;
+        }
+        const preset: FilterPreset = Array.isArray(raw)
+          ? { filters: raw }
+          : raw;
+        let name = String(data?.name ?? "Imported preset").trim();
+        if (!name) name = "Imported preset";
+        // Don't clobber an existing preset of the same name — suffix instead.
+        if (Object.prototype.hasOwnProperty.call(presets, name)) {
+          let suffix = 2;
+          while (
+            Object.prototype.hasOwnProperty.call(presets, `${name} (${suffix})`)
+          ) {
+            suffix++;
+          }
+          name = `${name} (${suffix})`;
+        }
+        addPreset(name, preset);
+        toast(`Imported preset: ${name}`);
+      } catch (error) {
+        console.error(error);
+        toast.error("Invalid preset file");
+      }
+    });
+    reader.readAsText(file);
   };
 
   return (
@@ -347,6 +437,16 @@ export function Presets(): JSX.Element {
                       className="shrink-0 text-muted-foreground hover:text-primary"
                       variant="ghost"
                       size="icon"
+                      title="Export preset to file (share)"
+                      onClick={() => exportPreset(name, preset)}
+                      type="button"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      className="shrink-0 text-muted-foreground hover:text-primary"
+                      variant="ghost"
+                      size="icon"
                       title="Update preset to current setup"
                       onClick={() => updatePreset(name, preset)}
                       type="button"
@@ -427,6 +527,19 @@ export function Presets(): JSX.Element {
               {nameExists ? "Update Preset" : "Save Preset"}
             </Button>
           </form>
+          <DropdownMenuSeparator />
+          <div className="p-1">
+            <Button
+              className="w-full"
+              size="sm"
+              variant="secondary"
+              type="button"
+              onClick={importPreset}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import preset from file
+            </Button>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
