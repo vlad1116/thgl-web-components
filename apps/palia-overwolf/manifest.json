@@ -4,7 +4,7 @@
   "meta": {
     "name": "Palia Map-DEV",
     "author": "Leon Machens",
-    "version": "4.17.4",
+    "version": "4.18.0",
     "minimum-overwolf-version": "0.241.0",
     "minimum-gep-version": "242.0",
     "description": "Palia Interactive Map – The Hidden Gaming Lair",
@@ -86,17 +86,13 @@
     },
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [
-        23186
-      ]
+      "game_ids": [23186]
     },
     "launch_events": [
       {
         "event": "GameLaunch",
         "event_data": {
-          "game_ids": [
-            23186
-          ]
+          "game_ids": [23186]
         },
         "start_minimized": false
       }
@@ -149,10 +145,7 @@
     },
     "force_browser": "user",
     "externally_connectable": {
-      "matches": [
-        "https://*.th.gl",
-        "http://localhost:6000"
-      ]
+      "matches": ["https://*.th.gl", "http://localhost:6000"]
     },
     "url_protocol": {
       "scheme": "thgl-palia-map"

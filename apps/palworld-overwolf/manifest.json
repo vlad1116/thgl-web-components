@@ -4,7 +4,7 @@
   "meta": {
     "name": "Palworld-DEV",
     "author": "Leon Machens",
-    "version": "2.20.4",
+    "version": "2.21.0",
     "minimum-overwolf-version": "0.241.0",
     "minimum-gep-version": "242.0",
     "description": "Palworld Interactive Map – The Hidden Gaming Lair",
@@ -86,17 +86,13 @@
     },
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [
-        23944
-      ]
+      "game_ids": [23944]
     },
     "launch_events": [
       {
         "event": "GameLaunch",
         "event_data": {
-          "game_ids": [
-            23944
-          ]
+          "game_ids": [23944]
         },
         "start_minimized": false
       }

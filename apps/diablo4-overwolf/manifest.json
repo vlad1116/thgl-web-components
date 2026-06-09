@@ -4,7 +4,7 @@
   "meta": {
     "name": "Diablo 4 Map-DEV",
     "author": "Leon Machens",
-    "version": "6.15.4",
+    "version": "6.16.0",
     "minimum-overwolf-version": "0.241.0",
     "minimum-gep-version": "242.0",
     "description": "Diablo IV Interactive Map – The Hidden Gaming Lair",
@@ -86,20 +86,14 @@
     },
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [
-        22700
-      ]
+      "game_ids": [22700]
     },
-    "game_events": [
-      22700
-    ],
+    "game_events": [22700],
     "launch_events": [
       {
         "event": "GameLaunch",
         "event_data": {
-          "game_ids": [
-            22700
-          ]
+          "game_ids": [22700]
         },
         "start_minimized": false
       }
@@ -152,10 +146,7 @@
     },
     "force_browser": "user",
     "externally_connectable": {
-      "matches": [
-        "https://*.th.gl",
-        "http://localhost:6000"
-      ]
+      "matches": ["https://*.th.gl", "http://localhost:6000"]
     },
     "url_protocol": {
       "scheme": "thgl-diablo4-map"

@@ -4,7 +4,7 @@
   "meta": {
     "name": "Pax Dei Map-DEV",
     "author": "Leon Machens",
-    "version": "1.12.4",
+    "version": "1.13.0",
     "minimum-overwolf-version": "0.241.0",
     "minimum-gep-version": "242.0",
     "description": "Pax Dei Interactive Map – The Hidden Gaming Lair",
@@ -86,17 +86,13 @@
     },
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [
-        23626
-      ]
+      "game_ids": [23626]
     },
     "launch_events": [
       {
         "event": "GameLaunch",
         "event_data": {
-          "game_ids": [
-            23626
-          ]
+          "game_ids": [23626]
         },
         "start_minimized": false
       }
@@ -149,10 +145,7 @@
     },
     "force_browser": "user",
     "externally_connectable": {
-      "matches": [
-        "https://*.th.gl",
-        "http://localhost:6000"
-      ]
+      "matches": ["https://*.th.gl", "http://localhost:6000"]
     },
     "url_protocol": {
       "scheme": "thgl-pax-dei"
