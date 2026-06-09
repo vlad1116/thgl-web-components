@@ -2,6 +2,16 @@
 const nextConfig = {
   // Standalone output for Docker container deployment
   output: "standalone",
+  env: {
+    // Dev-only forge proxy: forge URLs become same-origin paths that
+    // src/proxy.ts forwards per request — *-dev.localhost tenants (e.g.
+    // palia-dev.localhost:3100) hit the local data-forge dev server,
+    // every other host the prod endpoints. See FORGE_DEV_PROXY in
+    // packages/lib/src/config.ts. Empty string in prod keeps the
+    // absolute prod URLs.
+    NEXT_PUBLIC_FORGE_DEV_PROXY:
+      process.env.NODE_ENV === "development" ? "1" : "",
+  },
   experimental: {
     // Persist Turbopack compiler artifacts to disk between dev runs for
     // faster cold starts after a restart (Next 16 beta).

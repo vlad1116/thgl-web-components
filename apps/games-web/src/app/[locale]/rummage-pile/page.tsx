@@ -15,6 +15,7 @@ import {
   getMetadataAlternates,
   localizePath,
   encodeAndObfuscate,
+  resolveForgeUrl,
 } from "@repo/lib";
 import { PaliaGrid } from "@repo/ui/data";
 import { type Spawns } from "@repo/ui/providers";
@@ -81,7 +82,7 @@ export default async function RummagePile({ params }: PageProps) {
   );
   const data = (await timedLootPilesResponse.json()) as TimedLootPiles;
 
-  const url = getApiUrl("palia", "q=stable");
+  const url = await resolveForgeUrl(getApiUrl("palia", "q=stable"));
   const response = await fetch(url, { next: { revalidate: 300 } });
   const buffer = await response.arrayBuffer();
   const stableNodes = decodeFromBuffer<Spawns>(new Uint8Array(buffer));

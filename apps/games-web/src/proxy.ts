@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  FORGE_API_PROXY_PATH,
+  FORGE_CDN_PROXY_PATH,
+  getForgeProxyTarget,
+} from "@repo/lib";
 import { getAppConfigByHost } from "./configs";
 
 /**
@@ -30,6 +35,27 @@ export function proxy(req: NextRequest) {
     url.protocol = "https:";
     url.port = "";
     return NextResponse.redirect(url, 308);
+  }
+
+  // Dev-only forge proxy. In `next dev` the forge URL constants are
+  // same-origin paths (see FORGE_DEV_PROXY in @repo/lib). Forward them
+  // per request: *-dev.localhost tenants (palia-dev.localhost:3100) to
+  // the local data-forge dev server, everything else to the prod
+  // endpoints. Keeping the rendered markup host-independent is what
+  // makes per-tab switching work without hydration mismatches or CORS.
+  if (process.env.NODE_ENV === "development") {
+    const target = getForgeProxyTarget(host, req.nextUrl.pathname);
+    if (target) {
+      const prefix = req.nextUrl.pathname.startsWith(`${FORGE_CDN_PROXY_PATH}/`)
+        ? FORGE_CDN_PROXY_PATH
+        : FORGE_API_PROXY_PATH;
+      return NextResponse.rewrite(
+        new URL(
+          req.nextUrl.pathname.slice(prefix.length) + req.nextUrl.search,
+          target,
+        ),
+      );
+    }
   }
 
   const config = getAppConfigByHost(host);

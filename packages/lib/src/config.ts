@@ -240,18 +240,123 @@ export type Version = {
   };
 };
 
-export const TH_GL_URL = "https://www.th.gl";
-// export const TH_GL_URL = "http://localhost:3006";
-export const API_FORGE_URL = "https://api-forge.th.gl";
-// export const API_FORGE_URL = "http://localhost:3007";
+/**
+ * All env reads in this file must stay literal `process.env.NEXT_PUBLIC_*`
+ * member expressions so Next.js can inline them into client bundles. Vite
+ * apps (Overwolf) don't shim `process` in the browser — every
+ * vite.config.ts must register thglEnvDefine() from @repo/lib/vite-define
+ * or this module throws "process is not defined" at startup.
+ */
+export const TH_GL_URL =
+  process.env.NEXT_PUBLIC_TH_GL_URL ?? "https://www.th.gl";
+export const API_FORGE_URL =
+  process.env.NEXT_PUBLIC_API_FORGE_URL ?? "https://api-forge.th.gl";
+
+/**
+ * Dev-only forge proxy (games-web). When NEXT_PUBLIC_FORGE_DEV_PROXY is on
+ * (set by apps/games-web/next.config.js in `next dev`), DATA_FORGE_URL and
+ * DATA_FORGE_CDN_URL become same-origin paths. games-web's proxy.ts
+ * forwards them per request: tenants whose first host label ends in "-dev"
+ * (e.g. palia-dev.localhost:3100) hit the local data-forge dev server,
+ * every other host the prod endpoints. Because the rendered markup only
+ * ever contains the host-independent relative URL, SSR and client output
+ * match on both hosts (no hydration mismatch) and forge requests are
+ * same-origin (no CORS).
+ *
+ * Server-side fetch() can't take relative URLs — resolveForgeUrl() maps
+ * them back to the absolute target using the per-request Host.
+ */
+export const FORGE_DEV_PROXY = process.env.NEXT_PUBLIC_FORGE_DEV_PROXY === "1";
+export const FORGE_API_PROXY_PATH = "/__forge-api";
+export const FORGE_CDN_PROXY_PATH = "/__forge-cdn";
+/** The local data-forge dev server serves both API and CDN content. */
+export const FORGE_LOCAL_TARGET = "http://localhost:33033";
+
+const DATA_FORGE_PROD_URL =
+  process.env.NEXT_PUBLIC_DATA_FORGE_URL ?? "https://api.th.gl";
+const DATA_FORGE_CDN_PROD_URL =
+  process.env.NEXT_PUBLIC_DATA_FORGE_CDN_URL ?? "https://cdn.th.gl";
 
 // API endpoints (search)
-export const DATA_FORGE_URL = "https://api.th.gl";
-// export const DATA_FORGE_URL = "http://localhost:33033";
+export const DATA_FORGE_URL = FORGE_DEV_PROXY
+  ? FORGE_API_PROXY_PATH
+  : DATA_FORGE_PROD_URL;
 
 // Static files (version.json, icons, tiles, config, dicts)
-export const DATA_FORGE_CDN_URL = "https://cdn.th.gl";
-// export const DATA_FORGE_CDN_URL = "http://localhost:33033";
+export const DATA_FORGE_CDN_URL = FORGE_DEV_PROXY
+  ? FORGE_CDN_PROXY_PATH
+  : DATA_FORGE_CDN_PROD_URL;
+
+/**
+ * True when the request host opts into the local data-forge: the first
+ * label of a *.localhost host ends in "-dev" (palia-dev.localhost:3100).
+ */
+export function isDevForgeHost(host: string): boolean {
+  const hostname = host.split(":")[0].replace(/\.$/, "");
+  return (
+    hostname.endsWith(".localhost") && hostname.split(".")[0].endsWith("-dev")
+  );
+}
+
+/**
+ * Resolve the origin a forge proxy path should be forwarded to for the
+ * given request host, or null if the path is not a forge proxy path.
+ * Used by games-web's proxy.ts.
+ */
+export function getForgeProxyTarget(
+  host: string,
+  pathname: string,
+): string | null {
+  const local = isDevForgeHost(host);
+  if (pathname.startsWith(`${FORGE_CDN_PROXY_PATH}/`)) {
+    return local ? FORGE_LOCAL_TARGET : DATA_FORGE_CDN_PROD_URL;
+  }
+  if (pathname.startsWith(`${FORGE_API_PROXY_PATH}/`)) {
+    return local ? FORGE_LOCAL_TARGET : DATA_FORGE_PROD_URL;
+  }
+  return null;
+}
+
+type RequestHostResolver = () => Promise<string | null>;
+/**
+ * Stored on globalThis (not module state) because games-web registers the
+ * resolver from instrumentation.ts, which may not share module instances
+ * with the RSC server graph.
+ */
+const REQUEST_HOST_RESOLVER_KEY = "__thglRequestHostResolver";
+
+/**
+ * Registered once at server start by games-web (instrumentation.ts) with a
+ * next/headers-based callback, so this package can read the per-request
+ * Host without importing next/headers (which Vite apps can't resolve).
+ */
+export function setRequestHostResolver(resolver: RequestHostResolver): void {
+  (globalThis as Record<string, unknown>)[REQUEST_HOST_RESOLVER_KEY] = resolver;
+}
+
+/**
+ * Map a proxy-relative forge URL (see FORGE_DEV_PROXY) back to its real
+ * absolute target. No-op for absolute URLs and in the browser — there the
+ * relative URL is correct, the request carries the Host that proxy.ts
+ * switches on. On the server it resolves directly against the current
+ * request's host, skipping the proxy hop.
+ */
+export async function resolveForgeUrl(url: string): Promise<string> {
+  if (typeof window !== "undefined" || !url.startsWith("/")) return url;
+  const prefix = url.startsWith(`${FORGE_CDN_PROXY_PATH}/`)
+    ? FORGE_CDN_PROXY_PATH
+    : url.startsWith(`${FORGE_API_PROXY_PATH}/`)
+      ? FORGE_API_PROXY_PATH
+      : null;
+  if (!prefix) return url;
+  const resolver = (globalThis as Record<string, unknown>)[
+    REQUEST_HOST_RESOLVER_KEY
+  ] as RequestHostResolver | undefined;
+  // No resolver or no request scope (e.g. build-time render) → prod.
+  const host = (await resolver?.().catch(() => null)) ?? "";
+  const target = getForgeProxyTarget(host, url);
+  return target ? target + url.slice(prefix.length) : url;
+}
 
 export function getImageURL(url: string) {
   if (url.startsWith("/global_icons/game-icons")) {
@@ -304,6 +409,9 @@ export async function fetchJsonWithMemoryCache<T>(
   url: string,
   options?: { onNotFound?: () => T | undefined; ttlMs?: number },
 ): Promise<T> {
+  // Resolve before the cache lookup so the cache is keyed by the real
+  // target (local vs prod forge differ per request in dev proxy mode).
+  url = await resolveForgeUrl(url);
   const now = Date.now();
   const cached = memoryFetchCache.get(url);
   if (cached && cached.expiresAt > now) {
@@ -525,7 +633,9 @@ export async function fetchDict(
 
 export async function fetchDatabase(appName: string): Promise<DatabaseConfig> {
   const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
+    await resolveForgeUrl(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.json`,
+    ),
     { next: { revalidate: 60 } },
   );
   return res.json();
@@ -542,7 +652,9 @@ export async function fetchDatabaseIndex(
   appName: string,
 ): Promise<DatabaseConfig> {
   const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/config/database.index.json`,
+    await resolveForgeUrl(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.index.json`,
+    ),
     { next: { revalidate: 60 } },
   );
   return res.json();
@@ -557,7 +669,9 @@ export async function fetchDatabaseType(
   type: string,
 ): Promise<DatabaseConfig[number]> {
   const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/config/database.${type}.json`,
+    await resolveForgeUrl(
+      `${DATA_FORGE_CDN_URL}/${appName}/config/database.${type}.json`,
+    ),
     { next: { revalidate: 60 } },
   );
   return res.json();
@@ -565,7 +679,7 @@ export async function fetchDatabaseType(
 
 export async function fetchTiles(appName: string): Promise<TilesConfig> {
   const res = await fetch(
-    `${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`,
+    await resolveForgeUrl(`${DATA_FORGE_CDN_URL}/${appName}/config/tiles.json`),
     { next: { revalidate: 60 } },
   );
   return res.json();

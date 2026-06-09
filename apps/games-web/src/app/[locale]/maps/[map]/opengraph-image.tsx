@@ -3,6 +3,7 @@ import {
   fetchVersion,
   getMapNameFromVersion,
   getOpenGraphImageUrl,
+  resolveForgeUrl,
 } from "@repo/lib";
 import { ImageResponse } from "next/og";
 import { getAppConfig } from "@/lib/get-app-config";
@@ -26,6 +27,11 @@ export default async function Image({
     fetchDict(config.name),
   ]);
   const mapName = getMapNameFromVersion(version, map, dict);
+  // satori fetches the <img> itself server-side — needs an absolute URL
+  // in dev proxy mode (forge URLs are relative there).
+  const imageUrl = await resolveForgeUrl(
+    getOpenGraphImageUrl(config.name, mapName!),
+  );
 
   return new ImageResponse(
     <div
@@ -35,11 +41,7 @@ export default async function Image({
         justifyContent: "center",
       }}
     >
-      <img
-        src={getOpenGraphImageUrl(config.name, mapName!)}
-        height="630"
-        width="1200"
-      />
+      <img src={imageUrl} height="630" width="1200" />
     </div>,
   );
 }

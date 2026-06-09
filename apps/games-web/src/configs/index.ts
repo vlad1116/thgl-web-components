@@ -1,4 +1,4 @@
-import { type AppConfig } from "@repo/lib";
+import { type AppConfig, isDevForgeHost } from "@repo/lib";
 import { avowed } from "./avowed";
 import { blueProtocolStarResonance } from "./blue-protocol-star-resonance";
 import { chronoOdyssey } from "./chrono-odyssey";
@@ -84,7 +84,12 @@ const BY_NAME: Record<string, AppConfig> = Object.fromEntries(
  */
 export function getAppConfigByHost(host: string): AppConfig | null {
   const cleanHost = host.split(":")[0].replace(/\.$/, "");
-  const subdomain = cleanHost.split(".")[0];
+  let subdomain = cleanHost.split(".")[0];
+  // palia-dev.localhost serves the palia tenant against the local
+  // data-forge (see the forge dev proxy in @repo/lib config + proxy.ts).
+  if (isDevForgeHost(host)) {
+    subdomain = subdomain.slice(0, -"-dev".length);
+  }
   return BY_DOMAIN[subdomain] ?? null;
 }
 

@@ -12,6 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   RFC 6761; no `/etc/hosts` entry needed.
 - **Run an Overwolf app**: `bun run dev:overwolf` or `bun run dev:{game}` (e.g.
   `dev:palworld` targets `palworld-overwolf`).
+- **Local data-forge**: open `http://palia-dev.localhost:3100/` (any tenant +
+  `-dev` suffix) to serve that tenant against a local data-forge dev server
+  on `localhost:33033` instead of prod — per tab, no restart; plain
+  `palia.localhost:3100` keeps using prod data. Works via a dev-only
+  same-origin proxy (see `FORGE_DEV_PROXY` in `packages/lib/src/config.ts`
+  and `apps/games-web/src/proxy.ts`). For Overwolf apps (no host to vary),
+  override `NEXT_PUBLIC_DATA_FORGE_URL` / `NEXT_PUBLIC_DATA_FORGE_CDN_URL` /
+  `NEXT_PUBLIC_TH_GL_URL` / `NEXT_PUBLIC_API_FORGE_URL` in the environment
+  instead (wired into Vite via `@repo/lib/vite-define`).
 - **CLI host override**: `curl -H "Host: palia.th.gl" http://localhost:3100/`.
 
 ### Build & Quality

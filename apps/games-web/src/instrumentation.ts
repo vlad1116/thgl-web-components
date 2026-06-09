@@ -1,6 +1,21 @@
 import type { Instrumentation } from "next";
 
 /**
+ * Give @repo/lib's resolveForgeUrl() access to the per-request Host so
+ * server-side forge fetches can pick local vs prod data-forge in dev
+ * proxy mode (see FORGE_DEV_PROXY in packages/lib/src/config.ts). The
+ * resolver closure calls headers() lazily, inside the request scope of
+ * whichever fetch invokes it. Outside a request scope (build-time
+ * renders) headers() throws and resolveForgeUrl falls back to prod.
+ */
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  const { setRequestHostResolver } = await import("@repo/lib");
+  const { headers } = await import("next/headers");
+  setRequestHostResolver(async () => (await headers()).get("host"));
+}
+
+/**
  * Next.js error-tracing hook. Runs server-side on every error thrown
  * during a request (server component render, route handler, server
  * action). Logs the full error including stack and digest — production

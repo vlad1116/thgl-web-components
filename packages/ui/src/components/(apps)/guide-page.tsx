@@ -12,6 +12,7 @@ import {
   getT,
   getTypeFromVersion,
   localizePath,
+  resolveForgeUrl,
   SimpleSpawn,
   getNodeId,
 } from "@repo/lib";
@@ -117,7 +118,9 @@ export function createGuidePage(appConfig: AppConfig) {
       // Fetch spawns for ALL matching types
       const allSpawnArrays = await Promise.all(
         allTypeIds.map(async (typeId) => {
-          const url = getApiUrl(appConfig.name, `type=${typeId}`);
+          const url = await resolveForgeUrl(
+            getApiUrl(appConfig.name, `type=${typeId}`),
+          );
           const response = await fetch(url);
           const buffer = await response.arrayBuffer();
           return decodeFromBuffer<Spawns>(new Uint8Array(buffer));
@@ -131,7 +134,9 @@ export function createGuidePage(appConfig: AppConfig) {
       }
       guideId = groupId;
       icon = null;
-      const url = getApiUrl(appConfig.name, `group=${guideId}`);
+      const url = await resolveForgeUrl(
+        getApiUrl(appConfig.name, `group=${guideId}`),
+      );
       const response = await fetch(url);
       const buffer = await response.arrayBuffer();
       spawns = decodeFromBuffer<Spawns>(new Uint8Array(buffer));
