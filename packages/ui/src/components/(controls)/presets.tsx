@@ -17,6 +17,7 @@ import {
   X,
   Share2,
   Upload,
+  GripVertical,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import {
@@ -63,6 +64,7 @@ export function Presets(): JSX.Element {
   const presets = useSettingsStore((state) => state.presets);
   const addPreset = useSettingsStore((state) => state.addPreset);
   const removePreset = useSettingsStore((state) => state.removePreset);
+  const reorderPresets = useSettingsStore((state) => state.reorderPresets);
   const applyPresetSettings = useSettingsStore(
     (state) => state.applyPresetSettings,
   );
@@ -81,6 +83,9 @@ export function Presets(): JSX.Element {
   const [captureAlerts, setCaptureAlerts] = useState(true);
   // Two-step delete confirmation: holds the name awaiting confirmation.
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  // Drag-to-reorder state: the preset being dragged and the row hovered over.
+  const [dragName, setDragName] = useState<string | null>(null);
+  const [dragOverName, setDragOverName] = useState<string | null>(null);
 
   const allGlobalFilters = useMemo(
     () =>
@@ -313,6 +318,31 @@ export function Presets(): JSX.Element {
     reader.readAsText(file);
   };
 
+  const clearDrag = () => {
+    setDragName(null);
+    setDragOverName(null);
+  };
+
+  // Move the dragged preset to just before the drop target and persist the
+  // new order (presets render in insertion order).
+  const handleDropOn = (targetName: string) => {
+    if (!dragName || dragName === targetName) {
+      clearDrag();
+      return;
+    }
+    const names = Object.keys(presets);
+    const from = names.indexOf(dragName);
+    if (from < 0) {
+      clearDrag();
+      return;
+    }
+    names.splice(from, 1);
+    const insertAt = names.indexOf(targetName);
+    names.splice(insertAt < 0 ? names.length : insertAt, 0, dragName);
+    reorderPresets(names);
+    clearDrag();
+  };
+
   return (
     <div className="flex items-center px-1.5 py-0.5 gap-0.5">
       <button
@@ -380,10 +410,37 @@ export function Presets(): JSX.Element {
             return (
               <div
                 key={name}
+                onDragOver={(event) => {
+                  if (!dragName || dragName === name) return;
+                  event.preventDefault();
+                  setDragOverName(name);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  handleDropOn(name);
+                }}
                 className={`flex items-center w-full rounded-sm transition-colors ${
                   active ? "bg-primary/10" : ""
-                }`}
+                } ${
+                  dragOverName === name && dragName !== name
+                    ? "border-t-2 border-primary"
+                    : ""
+                } ${dragName === name ? "opacity-50" : ""}`}
               >
+                <span
+                  draggable
+                  onDragStart={(event) => {
+                    setDragName(name);
+                    event.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={clearDrag}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  className="shrink-0 cursor-grab px-0.5 text-muted-foreground hover:text-foreground"
+                  title="Drag to reorder"
+                  aria-label="Drag to reorder"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
                 <DropdownMenuItem
                   onClick={() => applyPreset(preset)}
                   className="grow gap-2 min-w-0"
