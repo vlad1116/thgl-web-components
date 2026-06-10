@@ -25,7 +25,11 @@ export function SpawnsList({
   // Build sections of spawn entries, grouped by type and optionally by group label.
   // Groups by type ID (not display name) so different filter types with the same
   // translated name stay separate (e.g. common "sifudog" vs predator "predator_sifudog").
-  type Entry = { name: string; spawns: SimpleSpawn[]; groupLabel: string | null };
+  type Entry = {
+    name: string;
+    spawns: SimpleSpawn[];
+    groupLabel: string | null;
+  };
   type Section = { label: string | null; entries: Entry[] };
 
   // Resolve a spawn's display name. The server already populated
@@ -70,19 +74,27 @@ export function SpawnsList({
     }
 
     // No group labels — flat list
-    return [{
-      label: null,
-      entries: Object.entries(grouped).map(([, s]) => ({
-        name: resolveName(s[0]),
-        spawns: s,
-        groupLabel: null,
-      })),
-    }];
+    return [
+      {
+        label: null,
+        entries: Object.entries(grouped).map(([, s]) => ({
+          name: resolveName(s[0]),
+          spawns: s,
+          groupLabel: null,
+        })),
+      },
+    ];
   })();
 
-  const markDiscoveredLabel = t("guide.spawns.markDiscovered", { fallback: "Mark as Discovered" });
-  const resetProgressLabel = t("guide.spawns.resetProgress", { fallback: "Reset Progress" });
-  const highlightLabel = t("guide.spawns.highlightOnMap", { fallback: "Highlight on Map" });
+  const markDiscoveredLabel = t("guide.spawns.markDiscovered", {
+    fallback: "Mark as Discovered",
+  });
+  const resetProgressLabel = t("guide.spawns.resetProgress", {
+    fallback: "Reset Progress",
+  });
+  const highlightLabel = t("guide.spawns.highlightOnMap", {
+    fallback: "Highlight on Map",
+  });
 
   return (
     <div className="flex flex-col gap-1 max-w-2xl w-full">
@@ -123,7 +135,12 @@ export function SpawnsList({
                 <Button
                   size="icon"
                   onClick={() => {
-                    groupSpawns.forEach((s) => setDiscoverNode(s.id, true));
+                    // getNodeId, not raw s.id: for id-less spawns the raw id is
+                    // the bare type, and checkNodeDiscovered's base-id match
+                    // would mark the ENTIRE type discovered on every map.
+                    groupSpawns.forEach((s) =>
+                      setDiscoverNode(getNodeId(s), true),
+                    );
                   }}
                   disabled={isMax}
                   className="shrink-0"
@@ -136,8 +153,14 @@ export function SpawnsList({
                 <Button
                   size="icon"
                   onClick={() => {
-                    if (progress > 0 && !confirm(`Reset all ${progress} discovered ${name}?`)) return;
-                    groupSpawns.forEach((s) => setDiscoverNode(s.id, false));
+                    if (
+                      progress > 0 &&
+                      !confirm(`Reset all ${progress} discovered ${name}?`)
+                    )
+                      return;
+                    groupSpawns.forEach((s) =>
+                      setDiscoverNode(getNodeId(s), false),
+                    );
                   }}
                   disabled={progress === 0}
                   className="shrink-0"
@@ -149,7 +172,9 @@ export function SpawnsList({
                 </Button>
                 <Button
                   size="icon"
-                  onClick={() => onShowClick(isHighlighted ? [] : groupSpawnIds)}
+                  onClick={() =>
+                    onShowClick(isHighlighted ? [] : groupSpawnIds)
+                  }
                   className="shrink-0"
                   variant={isHighlighted ? "secondary" : "ghost"}
                   aria-label={highlightLabel}
