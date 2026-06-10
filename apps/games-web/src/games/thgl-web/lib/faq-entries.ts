@@ -44,7 +44,7 @@ Supporting on [Patreon](https://www.patreon.com/devleon) unlocks the rest. Tiers
 
 ### Elite — $10/mo
 - Everything in Pro
-- Early access to preview features (e.g. the combined live + predicted map view)
+- Early access to preview features (new features land here first before public release)
 
 **A note on "Premium Features":** these are game-specific extras that only a few older apps (like New World) bundle. Newer maps such as **Palia** don't have separate premium features — supporting Palia gets you the perks above (ad removal, comments, preview access).
 

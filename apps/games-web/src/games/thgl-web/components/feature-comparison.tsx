@@ -47,7 +47,7 @@ const ROWS: { feature: string; from: RowTier; note?: string }[] = [
   {
     feature: "Early access to preview features",
     from: "elite",
-    note: "e.g. the combined live + predicted view",
+    note: "New features land here first",
   },
 ];
 
