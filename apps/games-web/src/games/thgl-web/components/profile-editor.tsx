@@ -49,7 +49,15 @@ export function ProfileEditor() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarSuccess, setAvatarSuccess] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  // Falls back to the generated avatar if the stored URL fails to load
+  // (e.g. the CDN file was removed but the DB still references it).
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Retry the image whenever the avatar URL changes (new upload / removal).
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [currentAvatarUrl]);
 
   if (!userId || !decryptedUserId) return null;
 
@@ -163,11 +171,12 @@ export function ProfileEditor() {
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm font-semibold">Avatar</p>
-          {currentAvatarUrl ? (
+          {currentAvatarUrl && !avatarLoadFailed ? (
             <img
               src={currentAvatarUrl}
               alt="Your avatar"
               className="w-20 h-20 rounded-full object-cover"
+              onError={() => setAvatarLoadFailed(true)}
             />
           ) : (
             <div

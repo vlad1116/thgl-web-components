@@ -4,7 +4,7 @@ import { ThumbsDown, ThumbsUp, Trash2, Pencil, X, Check } from "lucide-react";
 import { Button } from "../(controls)";
 import { API_FORGE_URL, useAccountStore } from "@repo/lib";
 import { toSvg } from "jdenticon";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
@@ -165,10 +165,16 @@ export function SingleComment({
     }
   };
 
+  // Always compute the fallback so it's available if the avatar URL fails to
+  // load (e.g. the CDN file was removed but the comment still references it).
   const avatarSVG = useMemo(
-    () => (comment.avatar_url ? null : toSvg(comment.user_id, 32)),
-    [comment.user_id, comment.avatar_url],
+    () => toSvg(comment.user_id, 32),
+    [comment.user_id],
   );
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [comment.avatar_url]);
 
   const isEdited =
     comment.updated_at !== comment.created_at &&
@@ -188,16 +194,17 @@ export function SingleComment({
     <div className="flex gap-2.5 text-sm">
       {/* Avatar */}
       <div className="shrink-0 mt-0.5">
-        {comment.avatar_url ? (
+        {comment.avatar_url && !avatarLoadFailed ? (
           <img
             src={comment.avatar_url}
             alt={comment.username}
             className="w-8 h-8 rounded-full object-cover"
+            onError={() => setAvatarLoadFailed(true)}
           />
         ) : (
           <div
             className="w-8 h-8 rounded-full overflow-hidden"
-            dangerouslySetInnerHTML={{ __html: avatarSVG! }}
+            dangerouslySetInnerHTML={{ __html: avatarSVG }}
           />
         )}
       </div>
