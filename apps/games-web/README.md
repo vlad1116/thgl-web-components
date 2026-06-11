@@ -11,11 +11,11 @@ header in middleware and resolving the right `AppConfig`.
 
 ## Tenants
 
-| Tenant | Host | Source on disk |
-|---|---|---|
-| games-web (per-game) | `{slug}.th.gl` (palia, avowed, once-human, BPSR, homm-olden-era, diablo4, DNA, conan-exiles, crimson-desert, dune-awakening, grounded2, hogwarts-legacy, infinity-nikki, night-crows, palworld, pax-dei, rsdragonwilds, satisfactory, soulframe, soulmask, starsand-island, wuthering-waves, chrono-odyssey) | `app/(en)/…`, `app/[locale]/…` |
-| THGLApp WebView2 surface | `app.th.gl` | `app/(app)/(en)/…`, `app/(app)/[locale]/…` |
-| Marketing site | `www.th.gl` (apex `th.gl` 308-redirects here) | `app/www/…` |
+| Tenant                   | Host                                                                                                                                                                                                                                                                                                         | Source on disk                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| games-web (per-game)     | `{slug}.th.gl` (palia, avowed, once-human, BPSR, homm-olden-era, diablo4, DNA, conan-exiles, crimson-desert, dune-awakening, grounded2, hogwarts-legacy, infinity-nikki, night-crows, palworld, pax-dei, rsdragonwilds, satisfactory, soulframe, soulmask, starsand-island, wuthering-waves, chrono-odyssey) | `app/(en)/…`, `app/[locale]/…`             |
+| THGLApp WebView2 surface | `app.th.gl`                                                                                                                                                                                                                                                                                                  | `app/(app)/(en)/…`, `app/(app)/[locale]/…` |
+| Marketing site           | `www.th.gl` (apex `th.gl` 308-redirects here)                                                                                                                                                                                                                                                                | `app/www/…`                                |
 
 Per-tenant configs live in `src/configs/{slug}.ts` and are registered
 in `src/configs/index.ts`. `getAppConfigByHost(host)` keys on the
@@ -68,7 +68,7 @@ path):
   `/games/thgl-web/` (per-tenant static assets read by next/image
   filesystem reader, which bypasses middleware).
 - Apex `th.gl` 308-redirects to `https://www.th.gl/…` (preserves path
-  + query).
+  - query).
 
 ### Per-tenant static assets
 
@@ -121,13 +121,19 @@ container env vars are set in the Bunny Magic Container settings.
 
 ### Caching
 
-`next.config.js` sets `Cache-Control: public, max-age=0, s-maxage=60,
-stale-while-revalidate=300` by default for non-RSC HTML, with an RSC
-carve-out that returns `private, no-store`.
+`next.config.js` sets `Cache-Control: public, max-age=0, s-maxage=900,
+stale-while-revalidate=3600` by default for pages — including RSC
+responses (client navigations/prefetches). Two mechanisms keep HTML and
+RSC cache entries distinct at the edge despite Bunny ignoring `Vary`:
+Next appends a unique `?_rsc=<hash>` param to client navigations, and
+the pull zone sets `CacheKeyHeaders=rsc` so the request header is part
+of the Bunny cache key.
 
-`app.th.gl` overrides to `private, no-store` across the board
-(dashboard is per-user; sharing the edge cache would leak account
-info between users).
+Short-TTL exceptions (60s): `/dashboard/*` (per-user, additionally
+varied at the edge by the `userId` cookie via the pull zone's cookie
+vary) and the palia-api-driven pages (`/leaderboard`, `/rummage-pile`,
+`/weekly-wants`) whose localized variants rely on expiry rather than
+the `/api/revalidate` purge.
 
 ## Adding a new tenant
 
@@ -186,7 +192,7 @@ Container is PATCHed to use the new tag.
   Filters known cached-client noise (`Failed to find Server Action`,
   `Unexpected end of form`) so real bugs aren't drowned.
 - The `[onRequestError]` line format is `digest=… routePath=…
-  routeType=… method=… path=… host=…` — search Bunny container logs
+routeType=… method=… path=… host=…` — search Bunny container logs
   for `[onRequestError]` to find anything we should care about.
 - `/api/patreon/redirect` and the `getAccount` helper log tagged
   `[patreon/redirect]` and `[getAccount]` lines on each failure mode

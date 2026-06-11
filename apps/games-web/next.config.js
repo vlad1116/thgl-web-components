@@ -45,52 +45,62 @@ const nextConfig = {
   // routes — Bunny respects `private` and refuses to cache. Override:
   //
   //   max-age=0:                browser always revalidates with edge
-  //   s-maxage=60:              shared caches (Bunny) keep response 60s
-  //   stale-while-revalidate:   serve stale up to 5min while refreshing
+  //   s-maxage=900:             shared caches (Bunny) keep response 15min
+  //   stale-while-revalidate:   serve stale up to 1h while refreshing
   //
   // We avoid `must-revalidate` — it forces Bunny to recheck origin on every
   // request, defeating s-maxage. CDN-Cache-Control duplicates s-maxage so
   // Bunny prefers it explicitly.
   //
-  // RSC carve-out: Next.js returns different content (text/html vs
-  // text/x-component) for the same URL based on the `RSC` request header.
-  // The origin signals this with `Vary: rsc, ...` but Bunny doesn't honor
-  // the HTTP Vary header — it relies on its own pull zone settings. Until
-  // we enable Bunny's "Vary by Header" for RSC, tell Bunny not to cache
-  // RSC responses at all (client-side navigation fetches always hit
-  // origin). Plain HTML requests still benefit from edge cache.
+  // Page content derives from game data that only changes on data-forge
+  // deploys, and the deploy workflow purges the pull zone — so a long
+  // s-maxage is safe. Exceptions below: dashboard (user-specific) and the
+  // palia-api-driven pages (purged on update via /api/revalidate).
+  //
+  // RSC responses ARE edge-cached: Next.js returns different content
+  // (text/html vs text/x-component) for the same path based on the `RSC`
+  // request header, and Bunny ignores the HTTP Vary header — but two
+  // mechanisms keep the cache keys distinct: (1) client navigations append
+  // a unique `?_rsc=<hash>` param derived from the RSC request headers
+  // (Next's CDN cache-busting param, part of the URL cache key), and
+  // (2) the pull zone sets CacheKeyHeaders="rsc" so the header itself is
+  // part of the Bunny cache key. Caching RSC matters: prefetches fire one
+  // request per visible link, which used to be 100% origin traffic.
   headers: async () => {
-    const rules = [
+    const pageCache = [
       {
-        source: "/:path*",
-        has: [{ type: "header", key: "rsc" }],
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "private, no-store",
-          },
-          {
-            key: "CDN-Cache-Control",
-            value: "no-store",
-          },
-        ],
+        key: "Cache-Control",
+        value: "public, max-age=0, s-maxage=900, stale-while-revalidate=3600",
       },
       {
-        source: "/:path*",
-        // Skip this rule for RSC requests — the rule above sets no-store
-        // for them. Without this `missing` guard, both rules match and the
-        // later one overrides, breaking the carve-out.
-        missing: [{ type: "header", key: "rsc" }],
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
-          },
-          {
-            key: "CDN-Cache-Control",
-            value: "public, s-maxage=60, stale-while-revalidate=300",
-          },
-        ],
+        key: "CDN-Cache-Control",
+        value: "public, s-maxage=900, stale-while-revalidate=3600",
+      },
+    ];
+    // User-specific (dashboard, cookie-varied) and palia-api-driven pages
+    // (leaderboard etc. — purged per-tag, but localized variants rely on
+    // expiry) keep the short TTL so updates show within a minute.
+    const shortCache = [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+      },
+      {
+        key: "CDN-Cache-Control",
+        value: "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    ];
+    const rules = [
+      { source: "/:path*", headers: pageCache },
+      { source: "/dashboard/:path*", headers: shortCache },
+      { source: "/:locale/dashboard/:path*", headers: shortCache },
+      {
+        source: "/:page(leaderboard|rummage-pile|weekly-wants)",
+        headers: shortCache,
+      },
+      {
+        source: "/:locale/:page(leaderboard|rummage-pile|weekly-wants)",
+        headers: shortCache,
       },
     ];
 
