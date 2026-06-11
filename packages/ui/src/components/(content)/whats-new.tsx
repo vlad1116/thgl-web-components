@@ -175,6 +175,7 @@ export function WhatsNew({
                 {showGameLinks && (
                   <Link
                     href={`${gameBasePath}/${update.game.id}#${new Date(update.message.timestamp).toDateString().toLowerCase().replace(/\s+/g, "-")}`}
+                    prefetch={false}
                     className="text-xs text-primary hover:underline inline-block"
                   >
                     Read more about {update.game.title}

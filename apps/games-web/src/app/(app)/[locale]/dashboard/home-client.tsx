@@ -96,7 +96,11 @@ export function HomePageClient({
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {runningGamesList.map((game) => (
-                  <Link key={game.id} href={localizePath(`/dashboard/games/${game.id}`, locale)}>
+                  <Link
+                    key={game.id}
+                    href={localizePath(`/dashboard/games/${game.id}`, locale)}
+                    prefetch={false}
+                  >
                     <Badge
                       variant="secondary"
                       className="gap-2 py-1.5 px-3 hover:bg-primary/10 cursor-pointer"
@@ -133,7 +137,9 @@ export function HomePageClient({
           <div id="suggestions" className="space-y-3 scroll-mt-6">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">{t("home.communitySuggestions")}</h2>
+              <h2 className="text-lg font-semibold">
+                {t("home.communitySuggestions")}
+              </h2>
             </div>
 
             <div className="space-y-3">

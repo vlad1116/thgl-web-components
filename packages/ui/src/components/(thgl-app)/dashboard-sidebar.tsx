@@ -67,7 +67,10 @@ export function DashboardSidebar() {
           onClick={() => setIsExpanded(!isExpanded)}
           size={isExpanded ? "sm" : "icon"}
           variant="outline"
-          className={cn("w-full", isExpanded ? "justify-start" : "justify-center")}
+          className={cn(
+            "w-full",
+            isExpanded ? "justify-start" : "justify-center",
+          )}
           aria-label={isExpanded ? t("sidebar.collapse") : "Expand sidebar"}
         >
           <ChevronLeft
@@ -75,7 +78,9 @@ export function DashboardSidebar() {
               "rotate-180": !isExpanded,
             })}
           />
-          {isExpanded && <span className="ml-2 text-xs">{t("sidebar.collapse")}</span>}
+          {isExpanded && (
+            <span className="ml-2 text-xs">{t("sidebar.collapse")}</span>
+          )}
         </Button>
       </div>
 
@@ -132,7 +137,10 @@ export function DashboardSidebar() {
             </span>
           )}
           {companionGames.map((game) => {
-            const gameHref = localizePath(`/dashboard/games/${game.id}`, locale);
+            const gameHref = localizePath(
+              `/dashboard/games/${game.id}`,
+              locale,
+            );
             const isActive = pathname === gameHref;
             const isRunning = isGameRunning(game.id);
 
@@ -170,7 +178,10 @@ export function DashboardSidebar() {
                 </span>
               )}
               {webOnlyGames.map((game) => {
-                const gameHref = localizePath(`/dashboard/games/${game.id}`, locale);
+                const gameHref = localizePath(
+                  `/dashboard/games/${game.id}`,
+                  locale,
+                );
                 const isActive = pathname === gameHref;
 
                 return (
@@ -216,9 +227,13 @@ export function DashboardSidebar() {
             className="w-full justify-start"
             onClick={() => account.setShowUserDialog(true)}
           >
-            <CircleUser className={cn("h-4 w-4 mr-2", account.userId && "text-primary")} />
+            <CircleUser
+              className={cn("h-4 w-4 mr-2", account.userId && "text-primary")}
+            />
             <span className="truncate text-xs">
-              {account?.decryptedUserId ? account.decryptedUserId : t("sidebar.signIn")}
+              {account?.decryptedUserId
+                ? account.decryptedUserId
+                : t("sidebar.signIn")}
             </span>
           </Button>
         ) : (
@@ -230,12 +245,16 @@ export function DashboardSidebar() {
                 className="w-full justify-center"
                 onClick={() => account.setShowUserDialog(true)}
               >
-                <CircleUser className={cn("h-4 w-4", account.userId && "text-primary")} />
+                <CircleUser
+                  className={cn("h-4 w-4", account.userId && "text-primary")}
+                />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
               <p>
-                {account?.decryptedUserId ? account.decryptedUserId : t("sidebar.signIn")}
+                {account?.decryptedUserId
+                  ? account.decryptedUserId
+                  : t("sidebar.signIn")}
               </p>
             </TooltipContent>
           </Tooltip>
@@ -285,11 +304,15 @@ function NavItem({
       )}
       asChild
     >
-      <Link href={href}>
+      {/* prefetch disabled: the sidebar renders 20+ always-visible game
+          links inside a long-lived WebView2 and re-renders on every
+          running-games poll. Default prefetching re-fetched every link's
+          RSC payload per staleness window — and retried failed prefetches
+          on every re-render without backoff, which kept one rate-limited
+          client hammering the origin at ~26 req/s indefinitely. */}
+      <Link href={href} prefetch={false}>
         <span className={cn(isExpanded && "mr-2")}>{icon}</span>
-        {isExpanded && (
-          <span className="text-sm truncate">{label}</span>
-        )}
+        {isExpanded && <span className="text-sm truncate">{label}</span>}
       </Link>
     </Button>
   );
