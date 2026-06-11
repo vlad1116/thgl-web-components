@@ -16,7 +16,11 @@ COPY . .
 # Install dependencies (workspace-aware via bun)
 RUN bun install --frozen-lockfile
 
-# Build games-web and all upstream packages (turbo orders dependencies)
+# Build games-web and all upstream packages (turbo orders dependencies).
+# NODE_ENV pinned: nothing in this stage sets it, and next.config.js values
+# resolved at build time (env inlining, prod-only header rules) must never
+# see a development-ish environment in an image build.
+ENV NODE_ENV=production
 RUN bunx turbo run build --filter=games-web
 
 # ------------------------------------------------------------------

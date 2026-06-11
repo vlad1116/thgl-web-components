@@ -1,5 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+
+/** @type {(phase: string) => import('next').NextConfig} */
+const nextConfig = (phase) => ({
   // Standalone output for Docker container deployment
   output: "standalone",
   env: {
@@ -9,8 +11,14 @@ const nextConfig = {
     // every other host the prod endpoints. See FORGE_DEV_PROXY in
     // packages/lib/src/config.ts. Empty string in prod keeps the
     // absolute prod URLs.
-    NEXT_PUBLIC_FORGE_DEV_PROXY:
-      process.env.NODE_ENV === "development" ? "1" : "",
+    //
+    // Keyed off the build PHASE, not NODE_ENV: a `next build` ran with the
+    // 2026-06-11 deploy where this evaluated truthy and shipped the dev
+    // proxy to production (every forge asset routed through the container
+    // and Next rejected /__forge-cdn image URLs carrying ?v= because they
+    // weren't in images.localPatterns). PHASE_DEVELOPMENT_SERVER is only
+    // ever set by `next dev`, regardless of environment variables.
+    NEXT_PUBLIC_FORGE_DEV_PROXY: phase === PHASE_DEVELOPMENT_SERVER ? "1" : "",
   },
   experimental: {
     // Persist Turbopack compiler artifacts to disk between dev runs for
@@ -24,6 +32,13 @@ const nextConfig = {
     // DATA_FORGE_*), so allow it there. Production assets come from
     // cdn.th.gl, so keep the secure default in prod.
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
+    // Local-src images with a query string are rejected unless allowed
+    // here. Forge-proxied assets (dev) carry ?v= cache-busters; bundled
+    // public/ assets never have queries.
+    localPatterns: [
+      { pathname: "/__forge-cdn/**" },
+      { pathname: "/**", search: "" },
+    ],
     remotePatterns: [
       {
         protocol: "https",
@@ -108,8 +123,9 @@ const nextConfig = {
     // In `next dev` they break HMR — immutable caching serves stale
     // chunks — and Next.js warns about custom Cache-Control on these
     // routes. They aren't needed in dev (no CDN, no deploys) and only
-    // earn their keep behind Bunny in prod.
-    if (process.env.NODE_ENV === "production") {
+    // earn their keep behind Bunny in prod. Phase check, not NODE_ENV —
+    // same reasoning as NEXT_PUBLIC_FORGE_DEV_PROXY above.
+    if (phase !== PHASE_DEVELOPMENT_SERVER) {
       rules.push(
         // Hashed build assets are content-addressed (the hash is in the
         // filename), so a given URL's bytes never change. Cache them
@@ -153,6 +169,6 @@ const nextConfig = {
 
     return rules;
   },
-};
+});
 
 export default nextConfig;
