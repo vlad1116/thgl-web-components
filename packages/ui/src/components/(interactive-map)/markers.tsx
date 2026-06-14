@@ -37,7 +37,6 @@ import {
 } from "@repo/lib/web-map";
 import { SpatialGrid } from "./spatial-grid";
 import { MarkerTooltip, TooltipItems } from "./marker-tooltip";
-import { useThrottle } from "@uidotdev/usehooks";
 import { toast } from "sonner";
 import { AdditionalTooltipType } from "../(content)";
 import { playAlertSound } from "../(controls)/audio-alert";
@@ -468,8 +467,13 @@ function MarkersContent({
   const selectedNodeId = useUserStore((state) => state.selectedNodeId);
   const userStoreApi = useUserStoreApi();
   const highlightSpawnIDs = useGameState((state) => state.highlightSpawnIDs);
-  const player = useGameState((state) => state.player);
-  const throttledPlayer = useThrottle(player, 1000);
+  // Subscribe to the ~1Hz throttledPlayer, NOT the raw player. The raw player
+  // updates ~16×/s while moving in-game; subscribing this large component to it
+  // re-rendered the entire marker subtree at that rate — the dominant
+  // main-thread cost during movement. Everything below only needs a ~1s-fresh
+  // player (the audio-alert / zPos effects and the rotated-player memo); live
+  // actors render imperatively and don't depend on it.
+  const throttledPlayer = useGameState((state) => state.throttledPlayer);
   // Stable ref for hot-path reads inside the static-markers effect — keeps
   // throttledPlayer OUT of that effect's deps so player movement (every 1s)
   // does NOT trigger a full rebuild of every static marker. Z-position

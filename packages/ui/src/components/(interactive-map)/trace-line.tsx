@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useMap } from "./store";
 import { rotateCoordinate } from "./rotation";
 import { useSettingsStore, useGameState } from "@repo/lib";
+import type { ActorPlayer } from "@repo/lib/overwolf";
 import { DrawingLayer, IconMarkerLayer } from "@repo/lib/web-map";
 
 /** Create a solid-color circle canvas (no border) for trace dots */
@@ -27,7 +28,6 @@ export function TraceLine() {
   const traceLineRate = useSettingsStore((state) => state.traceLineRate);
   const traceLineColor = useSettingsStore((state) => state.traceLineColor);
   const traceLineStyle = useSettingsStore((state) => state.traceLineStyle);
-  const player = useGameState((state) => state.player);
 
   // DrawingLayer for line mode
   const lineLayerRef = useRef<DrawingLayer | null>(null);
@@ -48,94 +48,112 @@ export function TraceLine() {
     }
   }, [map?.mapName, showTraceLine]);
 
-  // Main effect: record positions and render
+  // Main effect: subscribe to the player IMPERATIVELY and render the trace on
+  // each update. Using a store subscription (not a render-hook) means this
+  // component never re-renders on the ~16Hz player stream — only when the trace
+  // settings or map change. Behaviour is otherwise identical to before.
   useEffect(() => {
-    if (!map || !showTraceLine || !player) return;
+    if (!map || !showTraceLine) return;
 
-    const isOnMap = !player.mapName || player.mapName === map.mapName;
-    if (!isOnMap) return;
+    const record = (player: ActorPlayer | null) => {
+      if (!player) return;
 
-    // Only count actual player position changes for rate limiting
-    const posKey = `${player.x},${player.y}`;
-    if (posKey === lastPlayerPosRef.current) return;
-    lastPlayerPosRef.current = posKey;
+      const isOnMap = !player.mapName || player.mapName === map.mapName;
+      if (!isOnMap) return;
 
-    updateCountRef.current += 1;
-    if (updateCountRef.current < traceLineRate) return;
-    updateCountRef.current = 0;
+      // Only count actual player position changes for rate limiting
+      const posKey = `${player.x},${player.y}`;
+      if (posKey === lastPlayerPosRef.current) return;
+      lastPlayerPosRef.current = posKey;
 
-    // Apply rotation to player position if configured
-    let playerPosition: [number, number] = [player.x, player.y];
-    const rotationDegrees = map._rotationDegrees;
-    const rotationCenter = map._rotationCenter;
-    if (rotationDegrees && rotationCenter) {
-      playerPosition = rotateCoordinate(
-        [player.x, player.y],
-        rotationDegrees,
-        rotationCenter,
-      );
-    }
+      updateCountRef.current += 1;
+      if (updateCountRef.current < traceLineRate) return;
+      updateCountRef.current = 0;
 
-    // Add new position
-    const positions = positionsRef.current;
-    positions.push(playerPosition);
-
-    // Cap at max length
-    while (positions.length > traceLineLength) {
-      positions.shift();
-    }
-
-    if (traceLineStyle === "line") {
-      // Line mode: use DrawingLayer
-      if (!lineLayerRef.current) {
-        lineLayerRef.current = new DrawingLayer({ interactive: false });
-        map.addLayer(lineLayerRef.current, { zIndex: 30 });
-      }
-      // Remove dot layer if switching
-      if (dotLayerRef.current) {
-        dotLayerRef.current.clear();
-        map.removeLayer(dotLayerRef.current);
-        dotLayerRef.current = null;
+      // Apply rotation to player position if configured
+      let playerPosition: [number, number] = [player.x, player.y];
+      const rotationDegrees = map._rotationDegrees;
+      const rotationCenter = map._rotationCenter;
+      if (rotationDegrees && rotationCenter) {
+        playerPosition = rotateCoordinate(
+          [player.x, player.y],
+          rotationDegrees,
+          rotationCenter,
+        );
       }
 
-      lineLayerRef.current.clearShapes();
-      if (positions.length >= 2) {
-        lineLayerRef.current.addShape({
-          id: "trace-line",
-          type: "line",
-          positions: [...positions],
-          color: traceLineColor,
-          size: 3,
-          mapName: map.mapName,
-        });
+      // Add new position
+      const positions = positionsRef.current;
+      positions.push(playerPosition);
+
+      // Cap at max length
+      while (positions.length > traceLineLength) {
+        positions.shift();
       }
-    } else {
-      // Dots mode: use IconMarkerLayer with circle sheet
-      if (!dotLayerRef.current) {
-        dotLayerRef.current = new IconMarkerLayer();
-        map.addLayer(dotLayerRef.current, { zIndex: 30 });
-      }
-      // Remove line layer if switching
-      if (lineLayerRef.current) {
+
+      if (traceLineStyle === "line") {
+        // Line mode: use DrawingLayer
+        if (!lineLayerRef.current) {
+          lineLayerRef.current = new DrawingLayer({ interactive: false });
+          map.addLayer(lineLayerRef.current, { zIndex: 30 });
+        }
+        // Remove dot layer if switching
+        if (dotLayerRef.current) {
+          dotLayerRef.current.clear();
+          map.removeLayer(dotLayerRef.current);
+          dotLayerRef.current = null;
+        }
+
         lineLayerRef.current.clearShapes();
-        map.removeLayer(lineLayerRef.current);
-        lineLayerRef.current = null;
-      }
+        if (positions.length >= 2) {
+          lineLayerRef.current.addShape({
+            id: "trace-line",
+            type: "line",
+            positions: [...positions],
+            color: traceLineColor,
+            size: 3,
+            mapName: map.mapName,
+          });
+        }
+      } else {
+        // Dots mode: use IconMarkerLayer with circle sheet
+        if (!dotLayerRef.current) {
+          dotLayerRef.current = new IconMarkerLayer();
+          map.addLayer(dotLayerRef.current, { zIndex: 30 });
+        }
+        // Remove line layer if switching
+        if (lineLayerRef.current) {
+          lineLayerRef.current.clearShapes();
+          map.removeLayer(lineLayerRef.current);
+          lineLayerRef.current = null;
+        }
 
-      dotLayerRef.current.clear();
-      const dotCanvas = createDotCanvas(traceLineColor);
-      dotLayerRef.current.setSheet("__trace_dot__", dotCanvas);
-      for (let i = 0; i < positions.length; i++) {
-        dotLayerRef.current.add({
-          id: `trace-dot-${i}`,
-          latLng: positions[i],
-          size: 6,
-          sheet: "__trace_dot__",
-          rect: { x: 0, y: 0, width: 32, height: 32 },
-        });
+        dotLayerRef.current.clear();
+        const dotCanvas = createDotCanvas(traceLineColor);
+        dotLayerRef.current.setSheet("__trace_dot__", dotCanvas);
+        for (let i = 0; i < positions.length; i++) {
+          dotLayerRef.current.add({
+            id: `trace-dot-${i}`,
+            latLng: positions[i],
+            size: 6,
+            sheet: "__trace_dot__",
+            rect: { x: 0, y: 0, width: 32, height: 32 },
+          });
+        }
       }
-    }
-  }, [map, player, showTraceLine, traceLineLength, traceLineRate, traceLineColor, traceLineStyle]);
+    };
+
+    record(useGameState.getState().player);
+    const unsub = useGameState.subscribe((s) => s.player, record);
+    return () => unsub();
+  }, [
+    map,
+    showTraceLine,
+    traceLineLength,
+    traceLineRate,
+    traceLineColor,
+    traceLineStyle,
+  ]);
 
   // Cleanup on unmount
   useEffect(() => {

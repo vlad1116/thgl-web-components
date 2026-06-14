@@ -6,11 +6,7 @@ import { cn, useGameState, useSettingsStore } from "@repo/lib";
 import type { WebMap } from "@repo/lib/web-map";
 import { useMap } from "../(interactive-map)/store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 
 /** Large interactive compass with draggable bearing ring and tilt slider */
@@ -204,7 +200,12 @@ function CompassPopover({
       {/* Heading display + reset */}
       <div className="flex items-center gap-2 w-full">
         <span className="text-xs text-muted-foreground tabular-nums flex-1 text-center">
-          {Math.round((((-bearing % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) / Math.PI * 180)}°
+          {Math.round(
+            ((((-bearing % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) /
+              Math.PI) *
+              180,
+          )}
+          °
         </span>
         <button
           onClick={onResetNorth}
@@ -218,11 +219,15 @@ function CompassPopover({
       {/* Keyboard shortcut hints */}
       <div className="border-t border-border/40 pt-2 mt-1 space-y-0.5">
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Middle drag</kbd>
+          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">
+            Middle drag
+          </kbd>
           <span>Tilt &amp; rotate</span>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Ctrl + drag</kbd>
+          <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">
+            Ctrl + drag
+          </kbd>
           <span>Tilt &amp; rotate</span>
         </div>
       </div>
@@ -312,15 +317,20 @@ export function MapControls({
   const handleZoomIn = useCallback(() => map?.zoomIn(), [map]);
   const handleZoomOut = useCallback(() => map?.zoomOut(), [map]);
   const handleResetView = useCallback(() => map?.resetView(), [map]);
-  const player = useGameState((state) => state.player);
+  // Only needs whether a player exists (for the follow button), not the
+  // position — selecting the boolean re-renders this on null↔present changes
+  // instead of on every ~16Hz position update while moving.
+  const hasPlayer = useGameState((state) => state.player !== null);
   const followPlayer = useSettingsStore((state) => state.followPlayer);
-  const toggleFollowPlayer = useSettingsStore((state) => state.toggleFollowPlayer);
+  const toggleFollowPlayer = useSettingsStore(
+    (state) => state.toggleFollowPlayer,
+  );
 
   if (!map || hidden) return null;
 
   const is3D = pitch > 0.05;
   const showCompassActive = Math.abs(bearing) > 0.01 || is3D;
-  const showFollowPlayer = alwaysShowFollowPlayer || Boolean(player);
+  const showFollowPlayer = alwaysShowFollowPlayer || hasPlayer;
 
   return (
     <div className="flex items-center rounded-md border border-input bg-background shadow-sm divide-x divide-input overflow-hidden">
@@ -361,7 +371,9 @@ export function MapControls({
                 "hover:bg-accent transition-colors",
                 followPlayer && "text-primary",
               )}
-              aria-label={followPlayer ? "Stop following player" : "Follow player"}
+              aria-label={
+                followPlayer ? "Stop following player" : "Follow player"
+              }
             >
               <Locate className="h-3.5 w-3.5" />
             </button>
@@ -395,7 +407,11 @@ export function MapControls({
       {/* Zoom in */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <button onClick={handleZoomIn} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Zoom in">
+          <button
+            onClick={handleZoomIn}
+            className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors"
+            aria-label="Zoom in"
+          >
             <Plus className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
@@ -405,7 +421,11 @@ export function MapControls({
       {/* Zoom out */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <button onClick={handleZoomOut} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Zoom out">
+          <button
+            onClick={handleZoomOut}
+            className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors"
+            aria-label="Zoom out"
+          >
             <Minus className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
@@ -415,7 +435,11 @@ export function MapControls({
       {/* Reset view */}
       <Tooltip delayDuration={200} disableHoverableContent>
         <TooltipTrigger asChild>
-          <button onClick={handleResetView} className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors" aria-label="Reset view">
+          <button
+            onClick={handleResetView}
+            className="h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors"
+            aria-label="Reset view"
+          >
             <Home className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>

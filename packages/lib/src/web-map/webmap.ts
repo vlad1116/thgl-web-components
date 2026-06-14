@@ -10,12 +10,36 @@ import type {
 
 // Event system for WebMap
 export interface WebMapEventMap {
-  click: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
-  dblclick: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
-  contextmenu: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
-  mousemove: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
-  mousedown: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
-  mouseup: { latlng: LatLng; layerPoint: { x: number; y: number }; originalEvent: MouseEvent };
+  click: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
+  dblclick: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
+  contextmenu: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
+  mousemove: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
+  mousedown: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
+  mouseup: {
+    latlng: LatLng;
+    layerPoint: { x: number; y: number };
+    originalEvent: MouseEvent;
+  };
   moveend: void;
   zoomend: void;
 }
@@ -156,19 +180,27 @@ export class WebMap {
     this.projectionBound = this.projection.bind(this);
     this.setupGL();
     // Handle WebGL context loss and recovery
-    this.canvas.addEventListener("webglcontextlost", (e) => {
-      e.preventDefault();
-      this.contextLost = true;
-    }, { signal: this.eventAbort.signal });
-    this.canvas.addEventListener("webglcontextrestored", () => {
-      this.contextLost = false;
-      this.setupGL();
-      // Re-add all layers to reinitialize GL resources (shaders, textures lost on context loss)
-      for (const { layer } of this.layers) {
-        layer.onRemove();
-        layer.onAdd(this.gl);
-      }
-    }, { signal: this.eventAbort.signal });
+    this.canvas.addEventListener(
+      "webglcontextlost",
+      (e) => {
+        e.preventDefault();
+        this.contextLost = true;
+      },
+      { signal: this.eventAbort.signal },
+    );
+    this.canvas.addEventListener(
+      "webglcontextrestored",
+      () => {
+        this.contextLost = false;
+        this.setupGL();
+        // Re-add all layers to reinitialize GL resources (shaders, textures lost on context loss)
+        for (const { layer } of this.layers) {
+          layer.onRemove();
+          layer.onAdd(this.gl);
+        }
+      },
+      { signal: this.eventAbort.signal },
+    );
     // Default cursor when hovering the map
     this.canvas.style.cursor = "grab";
     // Prevent browser from intercepting touch events for scrolling/zooming
@@ -234,398 +266,450 @@ export class WebMap {
     );
 
     // prevent context menu on RMB drag
-    this.canvas.addEventListener("contextmenu", (e: MouseEvent) => {
-      e.preventDefault();
+    this.canvas.addEventListener(
+      "contextmenu",
+      (e: MouseEvent) => {
+        e.preventDefault();
 
-      // Forward to IconMarkerLayer for contextmenu detection
-      const rect = this.canvas.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
-      const state = this.getRenderState();
-      if (!state) return;
-      const dpr = state.devicePixelRatio;
-      const screen = { x: localX * dpr, y: localY * dpr };
-      let handledByMarker = false;
-      for (const { layer } of this.layers) {
-        if ((layer as any).handleContextMenu) {
-          if ((layer as any).handleContextMenu(state, screen)) {
-            handledByMarker = true;
+        // Forward to IconMarkerLayer for contextmenu detection
+        const rect = this.canvas.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
+        const state = this.getRenderState();
+        if (!state) return;
+        const dpr = state.devicePixelRatio;
+        const screen = { x: localX * dpr, y: localY * dpr };
+        let handledByMarker = false;
+        for (const { layer } of this.layers) {
+          if ((layer as any).handleContextMenu) {
+            if ((layer as any).handleContextMenu(state, screen)) {
+              handledByMarker = true;
+            }
           }
         }
-      }
 
-      // Only fire map-level contextmenu if no marker handled it
-      if (!handledByMarker) {
+        // Only fire map-level contextmenu if no marker handled it
+        if (!handledByMarker) {
+          const latlng = this.screenToLatLng(localX, localY);
+          this.fire("contextmenu", {
+            latlng,
+            layerPoint: { x: localX, y: localY },
+            originalEvent: e,
+          });
+        }
+      },
+      { signal },
+    );
+
+    // Handle double-click
+    this.canvas.addEventListener(
+      "dblclick",
+      (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
         const latlng = this.screenToLatLng(localX, localY);
-        this.fire("contextmenu", {
+        this.fire("dblclick", {
           latlng,
           layerPoint: { x: localX, y: localY },
           originalEvent: e,
         });
-      }
-    }, { signal });
+      },
+      { signal },
+    );
 
-    // Handle double-click
-    this.canvas.addEventListener("dblclick", (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
-      const latlng = this.screenToLatLng(localX, localY);
-      this.fire("dblclick", {
-        latlng,
-        layerPoint: { x: localX, y: localY },
-        originalEvent: e,
-      });
-    }, { signal });
+    this.canvas.addEventListener(
+      "pointerdown",
+      (e) => {
+        // Prevent middle-click auto-scroll
+        if (e.button === 1) e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
 
-    this.canvas.addEventListener("pointerdown", (e) => {
-      // Prevent middle-click auto-scroll
-      if (e.button === 1) e.preventDefault();
-      const rect = this.canvas.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
+        // Track this pointer for multi-touch
+        this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      // Track this pointer for multi-touch
-      this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // Check for pinch gesture start (2 fingers)
+        if (this.activePointers.size === 2) {
+          const pointers = Array.from(this.activePointers.values());
+          const dx = pointers[1].x - pointers[0].x;
+          const dy = pointers[1].y - pointers[0].y;
+          this.pinchStartDist = Math.sqrt(dx * dx + dy * dy);
+          this.pinchStartZoom = this.zoom;
+          this.pinchStartAngle = Math.atan2(dy, dx);
+          this.pinchStartBearing = this.bearing;
+          this.pinchMidpoint = {
+            x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
+            y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
+          };
+          // Cancel single-finger drag and click detection when pinch starts
+          this.dragging = false;
+          this.downPointer = undefined;
+          return; // Don't process further for second finger
+        }
 
-      // Check for pinch gesture start (2 fingers)
-      if (this.activePointers.size === 2) {
-        const pointers = Array.from(this.activePointers.values());
-        const dx = pointers[1].x - pointers[0].x;
-        const dy = pointers[1].y - pointers[0].y;
-        this.pinchStartDist = Math.sqrt(dx * dx + dy * dy);
-        this.pinchStartZoom = this.zoom;
-        this.pinchStartAngle = Math.atan2(dy, dx);
-        this.pinchStartBearing = this.bearing;
-        this.pinchMidpoint = {
-          x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
-          y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
-        };
-        // Cancel single-finger drag and click detection when pinch starts
-        this.dragging = false;
-        this.downPointer = undefined;
-        return; // Don't process further for second finger
-      }
+        this.lastPointer = { x: e.clientX, y: e.clientY };
 
-      this.lastPointer = { x: e.clientX, y: e.clientY };
+        // Fire map mousedown event
+        const latlng = this.screenToLatLng(localX, localY);
+        this.fire("mousedown", {
+          latlng,
+          layerPoint: { x: localX, y: localY },
+          originalEvent: e,
+        });
 
-      // Fire map mousedown event
-      const latlng = this.screenToLatLng(localX, localY);
-      this.fire("mousedown", { latlng, layerPoint: { x: localX, y: localY }, originalEvent: e });
-
-      const state = this.getRenderState();
-      if (state) {
-        const dpr = state.devicePixelRatio;
-        const screen = { x: localX * dpr, y: localY * dpr };
-        // Forward to IconMarkerLayer for mousedown detection
-        for (const { layer } of this.layers) {
-          if ((layer as any).handleMouseDown) {
-            (layer as any).handleMouseDown(state, screen);
+        const state = this.getRenderState();
+        if (state) {
+          const dpr = state.devicePixelRatio;
+          const screen = { x: localX * dpr, y: localY * dpr };
+          // Forward to IconMarkerLayer for mousedown detection
+          for (const { layer } of this.layers) {
+            if ((layer as any).handleMouseDown) {
+              (layer as any).handleMouseDown(state, screen);
+            }
           }
         }
-      }
 
-      // Always set downPointer for click detection, even when interactions are disabled
-      this.lastPointerTs = performance.now();
-      this.downPointer = { x: e.clientX, y: e.clientY, t: performance.now() };
-      this.canvas.setPointerCapture(e.pointerId);
+        // Always set downPointer for click detection, even when interactions are disabled
+        this.lastPointerTs = performance.now();
+        this.downPointer = { x: e.clientX, y: e.clientY, t: performance.now() };
+        this.canvas.setPointerCapture(e.pointerId);
 
-      // Only start dragging/rotating if interactions are enabled
-      if (!this.interactionsDisabled) {
-        if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
-          // middle button or ctrl+left: rotate/tilt
-          this.rotating = true;
+        // Only start dragging/rotating if interactions are enabled
+        if (!this.interactionsDisabled) {
+          if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+            // middle button or ctrl+left: rotate/tilt
+            this.rotating = true;
 
-          // Use proper perspective-aware screen->world
-          const worldPos = this.screenToWorld(localX, localY);
-          const latLng = this.unprojectAt(worldPos, this.zoom);
+            // Use proper perspective-aware screen->world
+            const worldPos = this.screenToWorld(localX, localY);
+            const latLng = this.unprojectAt(worldPos, this.zoom);
 
-          this.rotationPivot = {
-            screen: { x: localX, y: localY },
-            latLng,
-          };
-        } else if (e.button === 0) {
-          // left button only: pan
-          this.dragging = true;
+            this.rotationPivot = {
+              screen: { x: localX, y: localY },
+              latLng,
+            };
+          } else if (e.button === 0) {
+            // left button only: pan
+            this.dragging = true;
+          }
         }
-      }
-      // Capture starting screen position and center (for stable pan while zoom animates)
-      this.dragStartScreen = { x: e.clientX, y: e.clientY };
-      this.dragStartCenterPx = this.projectAt(this.center, this.zoom);
-      // If a zoom animation is active, cancel it when user starts dragging
-      // This prevents the zoom animation from fighting with the drag position
-      if (this.zoomAnim) {
-        // Finalize zoom to current state before drag starts
-        this.zoomAnim = undefined;
-      }
-      // Cancel any existing inertia and pan animation when user starts dragging
-      this.panAnim = undefined;
-      this.targetCenter = null;
-      // Update cursor to grabbing while dragging
-      if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
-    }, { signal });
-    this.canvas.addEventListener("pointermove", (e) => {
-      // Update tracked pointer position
-      if (this.activePointers.has(e.pointerId)) {
-        this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      }
+        // Capture starting screen position and center (for stable pan while zoom animates)
+        this.dragStartScreen = { x: e.clientX, y: e.clientY };
+        this.dragStartCenterPx = this.projectAt(this.center, this.zoom);
+        // If a zoom animation is active, cancel it when user starts dragging
+        // This prevents the zoom animation from fighting with the drag position
+        if (this.zoomAnim) {
+          // Finalize zoom to current state before drag starts
+          this.zoomAnim = undefined;
+        }
+        // Cancel any existing inertia and pan animation when user starts dragging
+        this.panAnim = undefined;
+        this.targetCenter = null;
+        // Update cursor to grabbing while dragging
+        if (!this._cursorLocked) this.canvas.style.cursor = "grabbing";
+      },
+      { signal },
+    );
+    this.canvas.addEventListener(
+      "pointermove",
+      (e) => {
+        // Update tracked pointer position
+        if (this.activePointers.has(e.pointerId)) {
+          this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
 
-      // Handle pinch-to-zoom with 2 fingers
-      if (
-        this.activePointers.size === 2 &&
-        this.pinchStartDist !== undefined &&
-        this.pinchStartZoom !== undefined &&
-        this.pinchMidpoint !== undefined &&
-        !this.interactionsDisabled
-      ) {
-        const pointers = Array.from(this.activePointers.values());
-        const dx = pointers[1].x - pointers[0].x;
-        const dy = pointers[1].y - pointers[0].y;
-        const currentDist = Math.sqrt(dx * dx + dy * dy);
+        // Handle pinch-to-zoom with 2 fingers
+        if (
+          this.activePointers.size === 2 &&
+          this.pinchStartDist !== undefined &&
+          this.pinchStartZoom !== undefined &&
+          this.pinchMidpoint !== undefined &&
+          !this.interactionsDisabled
+        ) {
+          const pointers = Array.from(this.activePointers.values());
+          const dx = pointers[1].x - pointers[0].x;
+          const dy = pointers[1].y - pointers[0].y;
+          const currentDist = Math.sqrt(dx * dx + dy * dy);
 
-        // Calculate zoom delta based on pinch scale
-        const scale = currentDist / this.pinchStartDist;
-        const zoomDelta = Math.log2(scale);
-        const newZoom = clamp(
-          this.pinchStartZoom + zoomDelta,
-          this.minZoom,
-          this.maxZoom,
-        );
+          // Calculate zoom delta based on pinch scale
+          const scale = currentDist / this.pinchStartDist;
+          const zoomDelta = Math.log2(scale);
+          const newZoom = clamp(
+            this.pinchStartZoom + zoomDelta,
+            this.minZoom,
+            this.maxZoom,
+          );
 
-        // Update midpoint for panning while zooming
-        const rect = this.canvas.getBoundingClientRect();
-        const newMidpoint = {
-          x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
-          y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
-        };
+          // Update midpoint for panning while zooming
+          const rect = this.canvas.getBoundingClientRect();
+          const newMidpoint = {
+            x: (pointers[0].x + pointers[1].x) / 2 - rect.left,
+            y: (pointers[0].y + pointers[1].y) / 2 - rect.top,
+          };
 
-        // Apply zoom centered on the midpoint
-        this.zoom = newZoom;
-        this.targetZoom = newZoom;
+          // Apply zoom centered on the midpoint
+          this.zoom = newZoom;
+          this.targetZoom = newZoom;
 
-        // Two-finger rotation: change bearing based on angle between fingers
-        if (this.pinchStartAngle !== undefined && this.pinchStartBearing !== undefined) {
-          const currentAngle = Math.atan2(dy, dx);
-          const angleDelta = currentAngle - this.pinchStartAngle;
-          this.bearing = this.pinchStartBearing - angleDelta;
+          // Two-finger rotation: change bearing based on angle between fingers
+          if (
+            this.pinchStartAngle !== undefined &&
+            this.pinchStartBearing !== undefined
+          ) {
+            const currentAngle = Math.atan2(dy, dx);
+            const angleDelta = currentAngle - this.pinchStartAngle;
+            this.bearing = this.pinchStartBearing - angleDelta;
+            this.cachedBearing = this.bearing;
+            this.cachedCos = Math.cos(this.bearing);
+            this.cachedSin = Math.sin(this.bearing);
+          }
+
+          // Compute deltas from previous midpoint before updating
+          const midpointDx = newMidpoint.x - this.pinchMidpoint.x;
+          const midpointDy = newMidpoint.y - this.pinchMidpoint.y;
+
+          // Pan to keep the midpoint stationary
+          if (Math.abs(midpointDx) > 1 || Math.abs(midpointDy) > 1) {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            const centerPx = this.projectAt(this.center, this.zoom);
+            const cos = this.cachedCos;
+            const sin = this.cachedSin;
+            const cosP = this.cachedCosP;
+            const wx = cos * midpointDx * dpr - (sin / cosP) * midpointDy * dpr;
+            const wy = sin * midpointDx * dpr + (cos / cosP) * midpointDy * dpr;
+            const newCenterPx = { x: centerPx.x - wx, y: centerPx.y - wy };
+            this.center = this.unprojectAt(newCenterPx, this.zoom);
+          }
+
+          // Two-finger tilt: vertical midpoint movement changes pitch
+          if (Math.abs(midpointDy) > 2) {
+            const newPitch = clamp(this.pitch - midpointDy * 0.004, 0, 1.4);
+            this.pitch = newPitch;
+            this.cachedPitch = newPitch;
+            this.cachedCosP = Math.cos(newPitch);
+          }
+
+          this.pinchMidpoint = newMidpoint;
+
+          return;
+        }
+
+        if (
+          this.rotating &&
+          this.lastPointer &&
+          this.rotationPivot &&
+          !this.interactionsDisabled
+        ) {
+          const dx = e.clientX - this.lastPointer.x;
+          const dy = e.clientY - this.lastPointer.y;
+          this.lastPointer = { x: e.clientX, y: e.clientY };
+          // Update orientation
+          const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
+          this.pitch = newPitch;
+          this.bearing += dx * 0.005;
+
+          // Update cached trig values immediately for recenterOnPivot
           this.cachedBearing = this.bearing;
+          this.cachedPitch = this.pitch;
           this.cachedCos = Math.cos(this.bearing);
           this.cachedSin = Math.sin(this.bearing);
+          this.cachedCosP = Math.max(1e-4, Math.cos(this.pitch));
+
+          // Recompute center so that the saved pivot still projects to the same screen pixel
+          this.recenterOnPivot();
+          return;
         }
 
-        // Compute deltas from previous midpoint before updating
-        const midpointDx = newMidpoint.x - this.pinchMidpoint.x;
-        const midpointDy = newMidpoint.y - this.pinchMidpoint.y;
-
-        // Pan to keep the midpoint stationary
-        if (Math.abs(midpointDx) > 1 || Math.abs(midpointDy) > 1) {
-          const dpr = Math.max(1, window.devicePixelRatio || 1);
-          const centerPx = this.projectAt(this.center, this.zoom);
-          const cos = this.cachedCos;
-          const sin = this.cachedSin;
-          const cosP = this.cachedCosP;
-          const wx = cos * midpointDx * dpr - (sin / cosP) * midpointDy * dpr;
-          const wy = sin * midpointDx * dpr + (cos / cosP) * midpointDy * dpr;
-          const newCenterPx = { x: centerPx.x - wx, y: centerPx.y - wy };
-          this.center = this.unprojectAt(newCenterPx, this.zoom);
-        }
-
-        // Two-finger tilt: vertical midpoint movement changes pitch
-        if (Math.abs(midpointDy) > 2) {
-          const newPitch = clamp(this.pitch - midpointDy * 0.004, 0, 1.4);
-          this.pitch = newPitch;
-          this.cachedPitch = newPitch;
-          this.cachedCosP = Math.cos(newPitch);
-        }
-
-        this.pinchMidpoint = newMidpoint;
-
-        return;
-      }
-
-      if (
-        this.rotating &&
-        this.lastPointer &&
-        this.rotationPivot &&
-        !this.interactionsDisabled
-      ) {
-        const dx = e.clientX - this.lastPointer.x;
-        const dy = e.clientY - this.lastPointer.y;
+        if (!this.dragging || !this.lastPointer || this.interactionsDisabled)
+          return;
+        const dxCSS = e.clientX - this.lastPointer.x;
+        const dyCSS = e.clientY - this.lastPointer.y;
         this.lastPointer = { x: e.clientX, y: e.clientY };
-        // Update orientation
-        const newPitch = clamp(this.pitch - dy * 0.003, 0, 1.4);
-        this.pitch = newPitch;
-        this.bearing += dx * 0.005;
+        const now = performance.now();
+        const dtMs = this.lastPointerTs
+          ? Math.max(1, now - this.lastPointerTs)
+          : 16;
+        this.lastPointerTs = now;
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const dx = dxCSS * dpr;
+        const dy = dyCSS * dpr;
+        const centerPx = this.projectAt(this.center, this.zoom);
 
-        // Update cached trig values immediately for recenterOnPivot
-        this.cachedBearing = this.bearing;
-        this.cachedPitch = this.pitch;
-        this.cachedCos = Math.cos(this.bearing);
-        this.cachedSin = Math.sin(this.bearing);
-        this.cachedCosP = Math.max(1e-4, Math.cos(this.pitch));
+        // Use cached trig values for better performance
+        const cos = this.cachedCos;
+        const sin = this.cachedSin;
+        const cosP = this.cachedCosP;
 
-        // Recompute center so that the saved pivot still projects to the same screen pixel
-        this.recenterOnPivot();
-        return;
-      }
+        // Apply inverse transformation accounting for pitch
+        // When pitch is applied, Y movements need to be adjusted by 1/cosP
+        const wx = cos * dx - (sin / cosP) * dy;
+        const wy = sin * dx + (cos / cosP) * dy;
 
-      if (!this.dragging || !this.lastPointer || this.interactionsDisabled)
-        return;
-      const dxCSS = e.clientX - this.lastPointer.x;
-      const dyCSS = e.clientY - this.lastPointer.y;
-      this.lastPointer = { x: e.clientX, y: e.clientY };
-      const now = performance.now();
-      const dtMs = this.lastPointerTs
-        ? Math.max(1, now - this.lastPointerTs)
-        : 16;
-      this.lastPointerTs = now;
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const dx = dxCSS * dpr;
-      const dy = dyCSS * dpr;
-      const centerPx = this.projectAt(this.center, this.zoom);
+        // Use total delta from drag start to avoid conflicts with zoom animation adjusting center
+        const tdxCSS = e.clientX - (this.dragStartScreen?.x ?? e.clientX);
+        const tdyCSS = e.clientY - (this.dragStartScreen?.y ?? e.clientY);
+        const tdx = tdxCSS * dpr;
+        const tdy = tdyCSS * dpr;
+        const twx = cos * tdx - (sin / cosP) * tdy;
+        const twy = sin * tdx + (cos / cosP) * tdy;
+        const baseCenter = this.dragStartCenterPx ?? centerPx;
+        const newCenterPx = { x: baseCenter.x - twx, y: baseCenter.y - twy };
+        this.center = this.unprojectAt(newCenterPx, this.zoom);
+        // update inertia velocity in world px/s for center
+        const vx = -wx * (1000 / dtMs);
+        const vy = -wy * (1000 / dtMs);
+        this.panAnim = { vx, vy };
+      },
+      { signal },
+    );
+    this.canvas.addEventListener(
+      "pointerup",
+      (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
 
-      // Use cached trig values for better performance
-      const cos = this.cachedCos;
-      const sin = this.cachedSin;
-      const cosP = this.cachedCosP;
+        // Remove this pointer from tracking
+        this.activePointers.delete(e.pointerId);
 
-      // Apply inverse transformation accounting for pitch
-      // When pitch is applied, Y movements need to be adjusted by 1/cosP
-      const wx = cos * dx - (sin / cosP) * dy;
-      const wy = sin * dx + (cos / cosP) * dy;
+        // Clear pinch state when fingers are lifted
+        if (this.activePointers.size < 2) {
+          this.pinchStartDist = undefined;
+          this.pinchStartZoom = undefined;
+          this.pinchMidpoint = undefined;
+          this.pinchStartAngle = undefined;
+          this.pinchStartBearing = undefined;
+        }
 
-      // Use total delta from drag start to avoid conflicts with zoom animation adjusting center
-      const tdxCSS = e.clientX - (this.dragStartScreen?.x ?? e.clientX);
-      const tdyCSS = e.clientY - (this.dragStartScreen?.y ?? e.clientY);
-      const tdx = tdxCSS * dpr;
-      const tdy = tdyCSS * dpr;
-      const twx = cos * tdx - (sin / cosP) * tdy;
-      const twy = sin * tdx + (cos / cosP) * tdy;
-      const baseCenter = this.dragStartCenterPx ?? centerPx;
-      const newCenterPx = { x: baseCenter.x - twx, y: baseCenter.y - twy };
-      this.center = this.unprojectAt(newCenterPx, this.zoom);
-      // update inertia velocity in world px/s for center
-      const vx = -wx * (1000 / dtMs);
-      const vy = -wy * (1000 / dtMs);
-      this.panAnim = { vx, vy };
-    }, { signal });
-    this.canvas.addEventListener("pointerup", (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
+        // Fire map mouseup event
+        const latlng = this.screenToLatLng(localX, localY);
+        this.fire("mouseup", {
+          latlng,
+          layerPoint: { x: localX, y: localY },
+          originalEvent: e,
+        });
 
-      // Remove this pointer from tracking
-      this.activePointers.delete(e.pointerId);
-
-      // Clear pinch state when fingers are lifted
-      if (this.activePointers.size < 2) {
-        this.pinchStartDist = undefined;
-        this.pinchStartZoom = undefined;
-        this.pinchMidpoint = undefined;
-        this.pinchStartAngle = undefined;
-        this.pinchStartBearing = undefined;
-      }
-
-      // Fire map mouseup event
-      const latlng = this.screenToLatLng(localX, localY);
-      this.fire("mouseup", { latlng, layerPoint: { x: localX, y: localY }, originalEvent: e });
-
-      this.dragging = false;
-      this.rotating = false;
-      this.lastPointer = undefined;
-      this.rotationPivot = undefined; // Clear pivot point
-      this.canvas.releasePointerCapture(e.pointerId);
-      const up = { x: e.clientX, y: e.clientY, t: performance.now() };
-      const dn = this.downPointer;
-      this.downPointer = undefined;
-      this.lastPointerTs = undefined;
-      this.dragStartScreen = undefined;
-      this.dragStartCenterPx = undefined;
-      if (!dn) return;
-      const dx = up.x - dn.x,
-        dy = up.y - dn.y;
-      const dist2 = dx * dx + dy * dy;
-      const dt = up.t - dn.t;
-      // Use larger thresholds for touch (less precise than mouse)
-      const isTouch = e.pointerType === "touch";
-      const maxDist2 = isTouch ? 100 : 25; // 10px for touch, 5px for mouse
-      const maxDt = isTouch ? 500 : 300; // 500ms for touch, 300ms for mouse
-      if (dist2 <= maxDist2 && dt <= maxDt && e.button === 0) {
-        // Check for double-tap on touch devices
-        if (isTouch && this.lastTap) {
-          const tapDx = up.x - this.lastTap.x;
-          const tapDy = up.y - this.lastTap.y;
-          const tapDist2 = tapDx * tapDx + tapDy * tapDy;
-          const tapDt = up.t - this.lastTap.t;
-          // Double-tap: within 30px and 300ms of last tap
-          if (tapDist2 <= 900 && tapDt <= 300) {
-            // Double-tap detected - zoom in centered on tap location
-            this.lastTap = undefined;
-            const rect = this.canvas.getBoundingClientRect();
-            const localX = up.x - rect.left;
-            const localY = up.y - rect.top;
-            const tapLatLng = this.screenToLatLng(localX, localY);
-            // Zoom in by 1 level, centered on tap location
-            const newZoom = Math.min(this.maxZoom, this.targetZoom + 1);
-            this.setView(tapLatLng, newZoom);
-            return;
+        this.dragging = false;
+        this.rotating = false;
+        this.lastPointer = undefined;
+        this.rotationPivot = undefined; // Clear pivot point
+        this.canvas.releasePointerCapture(e.pointerId);
+        const up = { x: e.clientX, y: e.clientY, t: performance.now() };
+        const dn = this.downPointer;
+        this.downPointer = undefined;
+        this.lastPointerTs = undefined;
+        this.dragStartScreen = undefined;
+        this.dragStartCenterPx = undefined;
+        if (!dn) return;
+        const dx = up.x - dn.x,
+          dy = up.y - dn.y;
+        const dist2 = dx * dx + dy * dy;
+        const dt = up.t - dn.t;
+        // Use larger thresholds for touch (less precise than mouse)
+        const isTouch = e.pointerType === "touch";
+        const maxDist2 = isTouch ? 100 : 25; // 10px for touch, 5px for mouse
+        const maxDt = isTouch ? 500 : 300; // 500ms for touch, 300ms for mouse
+        if (dist2 <= maxDist2 && dt <= maxDt && e.button === 0) {
+          // Check for double-tap on touch devices
+          if (isTouch && this.lastTap) {
+            const tapDx = up.x - this.lastTap.x;
+            const tapDy = up.y - this.lastTap.y;
+            const tapDist2 = tapDx * tapDx + tapDy * tapDy;
+            const tapDt = up.t - this.lastTap.t;
+            // Double-tap: within 30px and 300ms of last tap
+            if (tapDist2 <= 900 && tapDt <= 300) {
+              // Double-tap detected - zoom in centered on tap location
+              this.lastTap = undefined;
+              const rect = this.canvas.getBoundingClientRect();
+              const localX = up.x - rect.left;
+              const localY = up.y - rect.top;
+              const tapLatLng = this.screenToLatLng(localX, localY);
+              // Zoom in by 1 level, centered on tap location
+              const newZoom = Math.min(this.maxZoom, this.targetZoom + 1);
+              this.setView(tapLatLng, newZoom);
+              return;
+            }
           }
+          // Store this tap for potential double-tap
+          if (isTouch) {
+            this.lastTap = { x: up.x, y: up.y, t: up.t };
+          }
+          this.handleClick(up.x, up.y, e);
         }
-        // Store this tap for potential double-tap
-        if (isTouch) {
-          this.lastTap = { x: up.x, y: up.y, t: up.t };
-        }
-        this.handleClick(up.x, up.y, e);
-      }
-      // After releasing, update cursor according to hover state
-      this.updateCursor(up.x, up.y);
-    }, { signal });
+        // After releasing, update cursor according to hover state
+        this.updateCursor(up.x, up.y);
+      },
+      { signal },
+    );
 
     // Hover cursors: pointer over interactive layers, grab over map, grabbing while dragging
-    this.canvas.addEventListener("pointermove", (e) => {
-      if (this.dragging || this.rotating) return; // handled in pointerdown/up
-      this.updateCursor(e.clientX, e.clientY);
+    this.canvas.addEventListener(
+      "pointermove",
+      (e) => {
+        if (this.dragging || this.rotating) return; // handled in pointerdown/up
+        this.updateCursor(e.clientX, e.clientY);
 
-      // Fire map mousemove event
-      const rect = this.canvas.getBoundingClientRect();
-      const localX = e.clientX - rect.left;
-      const localY = e.clientY - rect.top;
-      const latlng = this.screenToLatLng(localX, localY);
-      this.fire("mousemove", { latlng, layerPoint: { x: localX, y: localY }, originalEvent: e });
+        // Fire map mousemove event
+        const rect = this.canvas.getBoundingClientRect();
+        const localX = e.clientX - rect.left;
+        const localY = e.clientY - rect.top;
+        const latlng = this.screenToLatLng(localX, localY);
+        this.fire("mousemove", {
+          latlng,
+          layerPoint: { x: localX, y: localY },
+          originalEvent: e,
+        });
 
-      const state = this.getRenderState();
-      if (state) {
-        const dpr = state.devicePixelRatio;
-        const screen = { x: localX * dpr, y: localY * dpr };
-        // Forward to IconMarkerLayer for hover detection
-        for (const { layer } of this.layers) {
-          if ((layer as any).handleMouseMove) {
-            (layer as any).handleMouseMove(state, screen);
+        const state = this.getRenderState();
+        if (state) {
+          const dpr = state.devicePixelRatio;
+          const screen = { x: localX * dpr, y: localY * dpr };
+          // Forward to IconMarkerLayer for hover detection
+          for (const { layer } of this.layers) {
+            if ((layer as any).handleMouseMove) {
+              (layer as any).handleMouseMove(state, screen);
+            }
           }
         }
-      }
-    }, { signal });
-    this.canvas.addEventListener("pointerenter", () => {
-      if (!this.dragging && !this._cursorLocked) this.canvas.style.cursor = "grab";
-    }, { signal });
-    this.canvas.addEventListener("pointerleave", () => {
-      this.canvas.style.cursor = "default";
-    }, { signal });
+      },
+      { signal },
+    );
+    this.canvas.addEventListener(
+      "pointerenter",
+      () => {
+        if (!this.dragging && !this._cursorLocked)
+          this.canvas.style.cursor = "grab";
+      },
+      { signal },
+    );
+    this.canvas.addEventListener(
+      "pointerleave",
+      () => {
+        this.canvas.style.cursor = "default";
+      },
+      { signal },
+    );
     // Handle pointer cancel (e.g., incoming call, system gesture)
-    this.canvas.addEventListener("pointercancel", (e) => {
-      this.activePointers.delete(e.pointerId);
-      if (this.activePointers.size < 2) {
-        this.pinchStartDist = undefined;
-        this.pinchStartZoom = undefined;
-        this.pinchMidpoint = undefined;
-        this.pinchStartAngle = undefined;
-        this.pinchStartBearing = undefined;
-      }
-      this.dragging = false;
-      this.rotating = false;
-      this.lastPointer = undefined;
-      this.rotationPivot = undefined;
-    }, { signal });
+    this.canvas.addEventListener(
+      "pointercancel",
+      (e) => {
+        this.activePointers.delete(e.pointerId);
+        if (this.activePointers.size < 2) {
+          this.pinchStartDist = undefined;
+          this.pinchStartZoom = undefined;
+          this.pinchMidpoint = undefined;
+          this.pinchStartAngle = undefined;
+          this.pinchStartBearing = undefined;
+        }
+        this.dragging = false;
+        this.rotating = false;
+        this.lastPointer = undefined;
+        this.rotationPivot = undefined;
+      },
+      { signal },
+    );
   }
 
   private start() {
@@ -741,8 +825,10 @@ export class WebMap {
     b: { min: LatLng; max: LatLng },
   ): boolean {
     return !(
-      a.min[0] > b.max[0] || a.max[0] < b.min[0] ||
-      a.min[1] > b.max[1] || a.max[1] < b.min[1]
+      a.min[0] > b.max[0] ||
+      a.max[0] < b.min[0] ||
+      a.min[1] > b.max[1] ||
+      a.max[1] < b.min[1]
     );
   }
 
@@ -750,8 +836,14 @@ export class WebMap {
   panInsideBounds(bounds: Bounds) {
     const view = this.getViewBounds();
     const mapBounds = {
-      min: [Math.min(bounds[0][0], bounds[1][0]), Math.min(bounds[0][1], bounds[1][1])] as LatLng,
-      max: [Math.max(bounds[0][0], bounds[1][0]), Math.max(bounds[0][1], bounds[1][1])] as LatLng,
+      min: [
+        Math.min(bounds[0][0], bounds[1][0]),
+        Math.min(bounds[0][1], bounds[1][1]),
+      ] as LatLng,
+      max: [
+        Math.max(bounds[0][0], bounds[1][0]),
+        Math.max(bounds[0][1], bounds[1][1]),
+      ] as LatLng,
     };
     if (this.boundsIntersect(view, mapBounds)) return;
 
@@ -824,15 +916,22 @@ export class WebMap {
     return this.maxZoom;
   }
 
-
   /**
    * Fit the map to a bounding box of coordinates
    * @param bounds Array of [lat, lng] points to fit
    * @param options Optional settings for padding and max zoom
    */
   fitBounds(
-    bounds: (readonly [number, number] | [number, number] | [number, number, number])[],
-    options?: { maxZoom?: number; padding?: [number, number]; duration?: number },
+    bounds: (
+      | readonly [number, number]
+      | [number, number]
+      | [number, number, number]
+    )[],
+    options?: {
+      maxZoom?: number;
+      padding?: [number, number];
+      duration?: number;
+    },
   ) {
     if (bounds.length === 0) return;
 
@@ -1073,7 +1172,10 @@ export class WebMap {
     const c = this.projection(this.center);
 
     // Cache trig computations if bearing or pitch changed
-    if (this.cachedBearing !== this.bearing || this.cachedPitch !== this.pitch) {
+    if (
+      this.cachedBearing !== this.bearing ||
+      this.cachedPitch !== this.pitch
+    ) {
       this.cachedBearing = this.bearing;
       this.cachedPitch = this.pitch;
       this.cachedCos = Math.cos(this.bearing);
@@ -1216,8 +1318,10 @@ export class WebMap {
     if (this.contextLost) return;
     const gl = this.gl;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const w = Math.floor(this.canvas.clientWidth * dpr) || this.canvas.width || 300;
-    const h = Math.floor(this.canvas.clientHeight * dpr) || this.canvas.height || 150;
+    const w =
+      Math.floor(this.canvas.clientWidth * dpr) || this.canvas.width || 300;
+    const h =
+      Math.floor(this.canvas.clientHeight * dpr) || this.canvas.height || 150;
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
       this.canvas.height = h;
@@ -1237,7 +1341,18 @@ export class WebMap {
       const panAlpha = 1 - Math.exp(-dt / 150); // ~150ms smoothing
       const dlat = this.targetCenter[0] - this.center[0];
       const dlng = this.targetCenter[1] - this.center[1];
-      if (Math.abs(dlat) < 1e-8 && Math.abs(dlng) < 1e-8) {
+      // Settle when the remaining movement is sub-pixel on screen. The ease is
+      // asymptotic, so an absolute lat/lng threshold (1e-8) is effectively never
+      // reached while the follow target keeps micro-updating with the player —
+      // the view then changes by an imperceptible amount every frame, which
+      // keeps viewHash changing and forces a full marker re-render every frame
+      // forever (idle CPU stays high even when nothing visibly moves). A pixel
+      // threshold stops the animation as soon as it's visually at the target and
+      // lets tiny player jitters settle within a frame.
+      const tp = this.projectAt(this.targetCenter, this.zoom);
+      const cp = this.projectAt(this.center, this.zoom);
+      const remainingPx = Math.hypot(tp.x - cp.x, tp.y - cp.y);
+      if (remainingPx < 0.5) {
         this.center = this.targetCenter;
         this.targetCenter = null;
       } else {
@@ -1311,7 +1426,6 @@ export class WebMap {
       }
     }
 
-
     // Use CSS pixels for view matrix to ensure consistent zoom behavior across DPR
     const cssW = this.canvas.clientWidth || w;
     const cssH = this.canvas.clientHeight || h;
@@ -1335,8 +1449,8 @@ export class WebMap {
     // no active animations. Compare view matrix values directly (cheap).
     const viewHash = `${view[0]},${view[1]},${view[3]},${view[4]},${view[6]},${view[7]},${w},${h}`;
     // Check if any layer needs a rebuild (e.g. markers added/removed)
-    const layersDirty = this.layers.some(({ layer }) =>
-      "isDirty" in layer && (layer as any).isDirty(),
+    const layersDirty = this.layers.some(
+      ({ layer }) => "isDirty" in layer && (layer as any).isDirty(),
     );
     if (viewHash === this._lastViewHash && !this._needsRedraw && !layersDirty) {
       return;
@@ -1382,7 +1496,6 @@ export class WebMap {
     clientY: number,
     originalEvent: MouseEvent,
   ) {
-    
     const rect = this.canvas.getBoundingClientRect();
     const localX = clientX - rect.left;
     const localY = clientY - rect.top;
@@ -1416,7 +1529,11 @@ export class WebMap {
     }
 
     // Fire map click event (whether or not a layer was hit)
-    this.fire("click", { latlng, layerPoint: { x: localX, y: localY }, originalEvent });
+    this.fire("click", {
+      latlng,
+      layerPoint: { x: localX, y: localY },
+      originalEvent,
+    });
   }
 
   private updateCursor(clientX: number, clientY: number) {

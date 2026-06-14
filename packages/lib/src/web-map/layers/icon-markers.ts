@@ -2,7 +2,6 @@ import type { Layer, LatLng, RenderState } from "../types";
 import { createProgram } from "../utils/gl";
 import { ColorBlindMode } from "../utils/color-blind";
 
-
 // Simple icon marker layer that draws textured quads from one or more sprite sheets.
 // Batches draw calls per sheet texture and uses instancing within each batch.
 
@@ -20,12 +19,16 @@ const ATLAS_PAGE_SIZE = 2048;
 const ATLAS_PAD = 2;
 
 interface AtlasEntry {
-  page: string;                // Atlas page name (e.g. "__atlas_0__")
-  rect: IconRect;              // Rect within the atlas canvas (pixel coords)
+  page: string; // Atlas page name (e.g. "__atlas_0__")
+  rect: IconRect; // Rect within the atlas canvas (pixel coords)
 }
 
 class TextureAtlas {
-  private pages: { name: string; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D }[] = [];
+  private pages: {
+    name: string;
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+  }[] = [];
   /** Current shelf Y position on the active page */
   private shelfY = 0;
   /** Current X position on the current shelf */
@@ -55,7 +58,12 @@ class TextureAtlas {
     if (existing) {
       const page = this.pages.find((p) => p.name === existing.page);
       if (page) {
-        page.ctx.clearRect(existing.rect.x, existing.rect.y, existing.rect.width, existing.rect.height);
+        page.ctx.clearRect(
+          existing.rect.x,
+          existing.rect.y,
+          existing.rect.width,
+          existing.rect.height,
+        );
         page.ctx.drawImage(img, existing.rect.x, existing.rect.y, w, h);
         this.dirtyPages.add(existing.page);
         // Update rect dimensions in case size changed
@@ -73,13 +81,19 @@ class TextureAtlas {
       const lastPage = this.pages[this.pages.length - 1];
 
       // Does it fit on the current shelf?
-      if (this.shelfX + pw <= ATLAS_PAGE_SIZE && this.shelfY + Math.max(this.shelfH, ph) <= ATLAS_PAGE_SIZE) {
+      if (
+        this.shelfX + pw <= ATLAS_PAGE_SIZE &&
+        this.shelfY + Math.max(this.shelfH, ph) <= ATLAS_PAGE_SIZE
+      ) {
         const entry = this.placeOnShelf(name, img, w, h, pw, ph, lastPage);
         return entry;
       }
 
       // Start a new shelf on the same page
-      if (pw <= ATLAS_PAGE_SIZE && this.shelfY + this.shelfH + ph <= ATLAS_PAGE_SIZE) {
+      if (
+        pw <= ATLAS_PAGE_SIZE &&
+        this.shelfY + this.shelfH + ph <= ATLAS_PAGE_SIZE
+      ) {
         this.shelfY += this.shelfH;
         this.shelfX = 0;
         this.shelfH = 0;
@@ -101,9 +115,18 @@ class TextureAtlas {
     h: number,
     pw: number,
     ph: number,
-    page: { name: string; canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D },
+    page: {
+      name: string;
+      canvas: HTMLCanvasElement;
+      ctx: CanvasRenderingContext2D;
+    },
   ): AtlasEntry {
-    const rect: IconRect = { x: this.shelfX, y: this.shelfY, width: w, height: h };
+    const rect: IconRect = {
+      x: this.shelfX,
+      y: this.shelfY,
+      width: w,
+      height: h,
+    };
     page.ctx.drawImage(img, rect.x, rect.y, w, h);
     this.shelfX += pw;
     if (ph > this.shelfH) this.shelfH = ph;
@@ -571,7 +594,8 @@ export class IconMarkerLayer implements Layer {
   private vao: WebGLVertexArrayObject | null = null;
   private quad: WebGLBuffer | null = null;
   private sheets: Map<string, SheetTex> = new Map();
-  private sheetImages: Map<string, HTMLImageElement | HTMLCanvasElement> = new Map();
+  private sheetImages: Map<string, HTMLImageElement | HTMLCanvasElement> =
+    new Map();
   private atlas = new TextureAtlas();
   private instances: IconMarkerInstance[] = [];
   private instancesById: Map<string, number> = new Map(); // Track index by ID to prevent duplicates
@@ -658,8 +682,14 @@ export class IconMarkerLayer implements Layer {
   private u_hc_color_loc: WebGLUniformLocation | null = null;
   private u_hc_thickness_loc: WebGLUniformLocation | null = null;
 
-  addSheet(name: string, source: string | HTMLImageElement | HTMLCanvasElement) {
-    if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) {
+  addSheet(
+    name: string,
+    source: string | HTMLImageElement | HTMLCanvasElement,
+  ) {
+    if (
+      source instanceof HTMLImageElement ||
+      source instanceof HTMLCanvasElement
+    ) {
       this.sheetImages.set(name, source);
       this.tryAtlasPack(name, source);
     } else {
@@ -685,7 +715,10 @@ export class IconMarkerLayer implements Layer {
   }
 
   /** Attempt to pack a sheet image into the dynamic texture atlas */
-  private tryAtlasPack(name: string, source: HTMLImageElement | HTMLCanvasElement) {
+  private tryAtlasPack(
+    name: string,
+    source: HTMLImageElement | HTMLCanvasElement,
+  ) {
     // Don't atlas the default circle sheet — it's handled specially
     if (name === DEFAULT_CIRCLE_SHEET) return;
     // Canvas elements are always ready
@@ -1028,7 +1061,10 @@ export class IconMarkerLayer implements Layer {
 
     // Spider offset attribute (vec2, screen-space device px)
     this.spiderOffsets = gl.createBuffer()!;
-    const a_spiderOffset = gl.getAttribLocation(this.program!, "a_spiderOffset");
+    const a_spiderOffset = gl.getAttribLocation(
+      this.program!,
+      "a_spiderOffset",
+    );
     gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderOffsets);
     gl.enableVertexAttribArray(a_spiderOffset);
     gl.vertexAttribPointer(a_spiderOffset, 2, gl.FLOAT, false, 0, 0);
@@ -1044,12 +1080,18 @@ export class IconMarkerLayer implements Layer {
     this.u_zoom_loc = gl.getUniformLocation(this.program!, "u_zoom");
     this.u_minZoom_loc = gl.getUniformLocation(this.program!, "u_minZoom");
     this.u_maxZoom_loc = gl.getUniformLocation(this.program!, "u_maxZoom");
-    this.u_dynamicSizeFactor_loc = gl.getUniformLocation(this.program!, "u_dynamicSizeFactor");
+    this.u_dynamicSizeFactor_loc = gl.getUniformLocation(
+      this.program!,
+      "u_dynamicSizeFactor",
+    );
     this.u_cb_mode_loc = gl.getUniformLocation(this.program!, "u_cb_mode");
     this.u_cb_sev_loc = gl.getUniformLocation(this.program!, "u_cb_sev");
     this.u_hc_mode_loc = gl.getUniformLocation(this.program!, "u_hc_mode");
     this.u_hc_color_loc = gl.getUniformLocation(this.program!, "u_hc_color");
-    this.u_hc_thickness_loc = gl.getUniformLocation(this.program!, "u_hc_thickness");
+    this.u_hc_thickness_loc = gl.getUniformLocation(
+      this.program!,
+      "u_hc_thickness",
+    );
   }
 
   onRemove(): void {
@@ -1140,7 +1182,10 @@ export class IconMarkerLayer implements Layer {
     }
   }
 
-  private ensureSheet(gl: WebGL2RenderingContext, name: string): SheetTex | null {
+  private ensureSheet(
+    gl: WebGL2RenderingContext,
+    name: string,
+  ): SheetTex | null {
     // Handle atlas pages: re-upload if dirty, otherwise return cached
     const atlasCanvas = this.atlas.getPageCanvas(name);
     if (atlasCanvas) {
@@ -1152,7 +1197,13 @@ export class IconMarkerLayer implements Layer {
         this.sheets.delete(name);
       }
       if (this.sheets.has(name)) return this.sheets.get(name)!;
-      return this.uploadTexture(gl, name, atlasCanvas, atlasCanvas.width, atlasCanvas.height);
+      return this.uploadTexture(
+        gl,
+        name,
+        atlasCanvas,
+        atlasCanvas.width,
+        atlasCanvas.height,
+      );
     }
 
     if (this.sheets.has(name)) return this.sheets.get(name)!;
@@ -1169,7 +1220,10 @@ export class IconMarkerLayer implements Layer {
 
     // Check if this sheet failed to load — use circle fallback
     if (this.failedSheets.has(name)) {
-      return this.sheets.get(DEFAULT_CIRCLE_SHEET) ?? this.createDefaultCircleSheet(gl);
+      return (
+        this.sheets.get(DEFAULT_CIRCLE_SHEET) ??
+        this.createDefaultCircleSheet(gl)
+      );
     }
 
     // Canvas elements are always ready; HTMLImageElements need to be loaded
@@ -1178,7 +1232,10 @@ export class IconMarkerLayer implements Layer {
       if (img.complete && img.naturalWidth === 0) {
         // Image finished loading but has no data — mark as failed
         this.failedSheets.add(name);
-        return this.sheets.get(DEFAULT_CIRCLE_SHEET) ?? this.createDefaultCircleSheet(gl);
+        return (
+          this.sheets.get(DEFAULT_CIRCLE_SHEET) ??
+          this.createDefaultCircleSheet(gl)
+        );
       }
       if (!img.complete) {
         return null; // Still loading
@@ -1214,7 +1271,11 @@ export class IconMarkerLayer implements Layer {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR,
+    );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     const entry = { name, tex, w, h };
     this.sheets.set(name, entry);
@@ -1279,8 +1340,10 @@ export class IconMarkerLayer implements Layer {
     // when rendering semi-transparent pixels on opaque map tiles.
     // Without this, premultipliedAlpha:true canvas compositing causes page background bleed-through.
     gl.blendFuncSeparate(
-      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,  // RGB: standard alpha blend
-      gl.ONE, gl.ONE_MINUS_SRC_ALPHA          // Alpha: preserves opaque background
+      gl.SRC_ALPHA,
+      gl.ONE_MINUS_SRC_ALPHA, // RGB: standard alpha blend
+      gl.ONE,
+      gl.ONE_MINUS_SRC_ALPHA, // Alpha: preserves opaque background
     );
 
     // Enable depth testing when tilted so foreground icons overlap background
@@ -1335,25 +1398,33 @@ export class IconMarkerLayer implements Layer {
     // We invert the view matrix (2D affine part) to map clip-space corners
     // back to world-pixel coordinates, then cull markers outside.
     const vm = state.viewMatrix!;
-    const va = vm[0], vb = vm[1], vc = vm[3], vd = vm[4], vtx = vm[6], vty = vm[7];
+    const va = vm[0],
+      vb = vm[1],
+      vc = vm[3],
+      vd = vm[4],
+      vtx = vm[6],
+      vty = vm[7];
     const det = va * vd - vb * vc;
-    let vpMinX = -Infinity, vpMaxX = Infinity, vpMinY = -Infinity, vpMaxY = Infinity;
+    let vpMinX = -Infinity,
+      vpMaxX = Infinity,
+      vpMinY = -Infinity,
+      vpMaxY = Infinity;
     if (Math.abs(det) > 1e-10) {
       const invDet = 1 / det;
-      const ia =  vd * invDet;
+      const ia = vd * invDet;
       const ib = -vb * invDet;
       const ic = -vc * invDet;
-      const id =  va * invDet;
+      const id = va * invDet;
       const itx = -(ia * vtx + ic * vty);
       const ity = -(ib * vtx + id * vty);
       const cx0 = ia * -1 + ic * -1 + itx;
       const cy0 = ib * -1 + id * -1 + ity;
-      const cx1 = ia *  1 + ic * -1 + itx;
-      const cy1 = ib *  1 + id * -1 + ity;
-      const cx2 = ia * -1 + ic *  1 + itx;
-      const cy2 = ib * -1 + id *  1 + ity;
-      const cx3 = ia *  1 + ic *  1 + itx;
-      const cy3 = ib *  1 + id *  1 + ity;
+      const cx1 = ia * 1 + ic * -1 + itx;
+      const cy1 = ib * 1 + id * -1 + ity;
+      const cx2 = ia * -1 + ic * 1 + itx;
+      const cy2 = ib * -1 + id * 1 + ity;
+      const cx3 = ia * 1 + ic * 1 + itx;
+      const cy3 = ib * 1 + id * 1 + ity;
       vpMinX = Math.min(cx0, cx1, cx2, cx3);
       vpMaxX = Math.max(cx0, cx1, cx2, cx3);
       vpMinY = Math.min(cy0, cy1, cy2, cy3);
@@ -1366,7 +1437,8 @@ export class IconMarkerLayer implements Layer {
     // rebuildGroups and compare it against the viewport.
     const pad = 200; // must match cullPad below
     const boundsValid = this.markerBoundsMaxX > this.markerBoundsMinX;
-    const skipCulling = boundsValid &&
+    const skipCulling =
+      boundsValid &&
       this.markerBoundsMinX >= vpMinX - pad &&
       this.markerBoundsMaxX <= vpMaxX + pad &&
       this.markerBoundsMinY >= vpMinY - pad &&
@@ -1438,17 +1510,26 @@ export class IconMarkerLayer implements Layer {
         // When the viewport contains all markers, skip the per-marker check entirely.
         if (
           !skipCulling &&
-          !m.alwaysOnTop && !m.isSelected &&
-          (px < vpMinX - cullPad || px > vpMaxX + cullPad ||
-           py < vpMinY - cullPad || py > vpMaxY + cullPad)
+          !m.alwaysOnTop &&
+          !m.isSelected &&
+          (px < vpMinX - cullPad ||
+            px > vpMaxX + cullPad ||
+            py < vpMinY - cullPad ||
+            py > vpMaxY + cullPad)
         ) {
           continue;
         }
 
         let size = m.size;
         let sizeW = m.sizeW ?? size;
-        if (m.isHighlighted) { size *= 1.15; sizeW *= 1.15; }
-        if (m.isSelected) { size *= 1.3; sizeW *= 1.3; }
+        if (m.isHighlighted) {
+          size *= 1.15;
+          sizeW *= 1.15;
+        }
+        if (m.isSelected) {
+          size *= 1.3;
+          sizeW *= 1.3;
+        }
         offsets[visCount * 2 + 0] = px - sizeW / 2;
         offsets[visCount * 2 + 1] = py - size / 2 + (m.screenOffsetY ?? 0);
         sizes[visCount * 2 + 0] = sizeW;
@@ -1496,7 +1577,9 @@ export class IconMarkerLayer implements Layer {
         keepUprights[visCount] = m.keepUpright !== false ? 1.0 : 0.0;
         // Parse tint color (hex string to RGBA), cached on the instance
         if (m.tint) {
-          let rgba = (m as any)._tintRGBA as [number, number, number, number] | undefined;
+          let rgba = (m as any)._tintRGBA as
+            | [number, number, number, number]
+            | undefined;
           if (!rgba || (m as any)._tintSrc !== m.tint) {
             const hex = m.tint.replace("#", "");
             rgba = [
@@ -1553,21 +1636,49 @@ export class IconMarkerLayer implements Layer {
       // Upload all per-instance attributes. These buffers are shared across
       // all sheet groups, so they must be re-uploaded for each drawList call.
       gl.bindBuffer(gl.ARRAY_BUFFER, this.uvs);
-      gl.bufferData(gl.ARRAY_BUFFER, uvs.subarray(0, count * 4), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        uvs.subarray(0, count * 4),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.discs);
       gl.bufferData(gl.ARRAY_BUFFER, discs.subarray(0, count), gl.DYNAMIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.flags);
-      gl.bufferData(gl.ARRAY_BUFFER, flags.subarray(0, count * 2), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        flags.subarray(0, count * 2),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.counts);
-      gl.bufferData(gl.ARRAY_BUFFER, counts.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        counts.subarray(0, count),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.angles);
-      gl.bufferData(gl.ARRAY_BUFFER, angles.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        angles.subarray(0, count),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.keepUprights);
-      gl.bufferData(gl.ARRAY_BUFFER, keepUprights.subarray(0, count), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        keepUprights.subarray(0, count),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.tints);
-      gl.bufferData(gl.ARRAY_BUFFER, tints.subarray(0, count * 4), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        tints.subarray(0, count * 4),
+        gl.DYNAMIC_DRAW,
+      );
       gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderOffsets);
-      gl.bufferData(gl.ARRAY_BUFFER, this.preallocatedBuffers.spiderOffsets!.subarray(0, count * 2), gl.DYNAMIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        this.preallocatedBuffers.spiderOffsets!.subarray(0, count * 2),
+        gl.DYNAMIC_DRAW,
+      );
 
       // First pass: Draw height stems (render mode = 1)
       const stemModes = this.preallocatedBuffers.stemModes!;
@@ -1597,10 +1708,16 @@ export class IconMarkerLayer implements Layer {
 
     // Reusable arrays to avoid per-frame allocations
     const normalList: IconMarkerInstance[] = [];
-    const onTopEntries: { s: { w: number; h: number; tex: WebGLTexture }; items: IconMarkerInstance[] }[] = [];
+    const onTopEntries: {
+      s: { w: number; h: number; tex: WebGLTexture };
+      items: IconMarkerInstance[];
+    }[] = [];
 
-    // Draw spider lines first (behind all icons)
-    this.drawSpiderLines(gl, state);
+    // Draw spider lines first (behind all icons). Geometry is rebuilt only when
+    // the instance set or zoom changed (rebuildBuffers); otherwise the cached
+    // GPU buffer is re-drawn, so a redraw triggered by an unrelated layer (the
+    // live player marker) costs only the draw call, not a full re-projection.
+    this.drawSpiderLines(gl, state, rebuildBuffers);
 
     // Draw DEFAULT_CIRCLE_SHEET first (center dots behind spiderfied icons),
     // then all other groups.
@@ -1659,8 +1776,10 @@ export class IconMarkerLayer implements Layer {
 
     // Restore global blend state
     gl.blendFuncSeparate(
-      gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA,
-      gl.ONE, gl.ONE_MINUS_SRC_ALPHA
+      gl.SRC_ALPHA,
+      gl.ONE_MINUS_SRC_ALPHA,
+      gl.ONE,
+      gl.ONE_MINUS_SRC_ALPHA,
     );
   }
 
@@ -1668,6 +1787,14 @@ export class IconMarkerLayer implements Layer {
   private spiderLineVao: WebGLVertexArrayObject | null = null;
   private spiderLineBuf: WebGLBuffer | null = null;
   private spiderLineData: Float32Array = new Float32Array(0);
+  /**
+   * Number of spider lines currently uploaded to spiderLineBuf. The geometry
+   * (world positions) only depends on the instance set + zoom, so it is rebuilt
+   * only when `rebuildBuffers` is true and otherwise re-drawn from the cached
+   * GPU buffer — see drawSpiderLines. This keeps an unrelated redraw (e.g. the
+   * live player marker moving 16x/s) from re-projecting every clustered marker.
+   */
+  private spiderLineCount = 0;
   private spiderLineUniforms: {
     view: WebGLUniformLocation | null;
     screen: WebGLUniformLocation | null;
@@ -1720,14 +1847,17 @@ export class IconMarkerLayer implements Layer {
       out vec4 o;
       void main() { o = vec4(0.55, 0.55, 0.55, 0.6); }`;
     const v = gl.createShader(gl.VERTEX_SHADER)!;
-    gl.shaderSource(v, vs); gl.compileShader(v);
+    gl.shaderSource(v, vs);
+    gl.compileShader(v);
     const f = gl.createShader(gl.FRAGMENT_SHADER)!;
-    gl.shaderSource(f, fs); gl.compileShader(f);
+    gl.shaderSource(f, fs);
+    gl.compileShader(f);
     this.spiderLineProg = gl.createProgram()!;
     gl.attachShader(this.spiderLineProg, v);
     gl.attachShader(this.spiderLineProg, f);
     gl.linkProgram(this.spiderLineProg);
-    gl.deleteShader(v); gl.deleteShader(f);
+    gl.deleteShader(v);
+    gl.deleteShader(f);
     this.spiderLineUniforms = {
       view: gl.getUniformLocation(this.spiderLineProg, "u_view"),
       screen: gl.getUniformLocation(this.spiderLineProg, "u_screen"),
@@ -1753,65 +1883,106 @@ export class IconMarkerLayer implements Layer {
     gl.bindVertexArray(null);
   }
 
-  private drawSpiderLines(gl: WebGL2RenderingContext, state: RenderState) {
-    // Count spider markers to size the buffer
-    let count = 0;
-    for (const inst of this.instances) {
-      if (inst && (inst.spiderOffsetX || inst.spiderOffsetY)) count++;
-    }
-    if (count === 0) return;
-
-    // 6 floats per vertex (worldX, worldY, spiderOffsetX, spiderOffsetY, heightIntensity, direction)
-    // 2 vertices per line
-    const needed = count * 12;
-    if (this.spiderLineData.length < needed) {
-      this.spiderLineData = new Float32Array(Math.max(needed, Math.ceil(needed * 1.5)));
-    }
-    let idx = 0;
-    for (const inst of this.instances) {
-      if (!inst || (!inst.spiderOffsetX && !inst.spiderOffsetY)) continue;
-      const p = state.projection(inst.latLng);
-      // Compute height info (same logic as uploadInstances)
-      const rawZ = typeof inst.z === "number" ? inst.z : 0;
-      let normalizedHeight =
-        inst.zMag !== undefined ? Math.min(1, Math.max(0, inst.zMag)) : undefined;
-      if (normalizedHeight === undefined) {
-        normalizedHeight =
-          rawZ === 0
-            ? 0
-            : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+  private drawSpiderLines(
+    gl: WebGL2RenderingContext,
+    state: RenderState,
+    rebuildBuffers: boolean,
+  ) {
+    // Rebuild the spider-line geometry only when the instance set or zoom
+    // changed. World positions come from state.projection (zoom-dependent);
+    // pan/rotation live in the view matrix uniform set below, so they don't
+    // require a geometry rebuild. When `rebuildBuffers` is false the cached
+    // spiderLineBuf is reused as-is — this is what makes a player-marker-driven
+    // redraw cheap (no per-instance re-projection of every clustered marker).
+    if (rebuildBuffers) {
+      // Count spider markers to size the buffer
+      let count = 0;
+      for (const inst of this.instances) {
+        if (inst && (inst.spiderOffsetX || inst.spiderOffsetY)) count++;
       }
-      let direction = 0;
-      if (inst.zPos === "top") direction = 1;
-      else if (inst.zPos === "bottom") direction = -1;
-      else if (inst.zPos === "needle") direction = 2;
-      else if (inst.zPos === "needle-down") direction = -2;
+      this.spiderLineCount = count;
+      if (count > 0) {
+        // 6 floats per vertex (worldX, worldY, spiderOffsetX, spiderOffsetY, heightIntensity, direction)
+        // 2 vertices per line
+        const needed = count * 12;
+        if (this.spiderLineData.length < needed) {
+          this.spiderLineData = new Float32Array(
+            Math.max(needed, Math.ceil(needed * 1.5)),
+          );
+        }
+        let idx = 0;
+        for (const inst of this.instances) {
+          if (!inst || (!inst.spiderOffsetX && !inst.spiderOffsetY)) continue;
+          const p = state.projection(inst.latLng);
+          // Compute height info (same logic as uploadInstances)
+          const rawZ = typeof inst.z === "number" ? inst.z : 0;
+          let normalizedHeight =
+            inst.zMag !== undefined
+              ? Math.min(1, Math.max(0, inst.zMag))
+              : undefined;
+          if (normalizedHeight === undefined) {
+            normalizedHeight =
+              rawZ === 0
+                ? 0
+                : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+          }
+          let direction = 0;
+          if (inst.zPos === "top") direction = 1;
+          else if (inst.zPos === "bottom") direction = -1;
+          else if (inst.zPos === "needle") direction = 2;
+          else if (inst.zPos === "needle-down") direction = -2;
 
-      // Center endpoint (no spider offset, same height)
-      this.spiderLineData[idx++] = p.x;
-      this.spiderLineData[idx++] = p.y;
-      this.spiderLineData[idx++] = 0;
-      this.spiderLineData[idx++] = 0;
-      this.spiderLineData[idx++] = normalizedHeight;
-      this.spiderLineData[idx++] = direction;
-      // Offset endpoint (with spider offset, same height)
-      this.spiderLineData[idx++] = p.x;
-      this.spiderLineData[idx++] = p.y;
-      this.spiderLineData[idx++] = inst.spiderOffsetX ?? 0;
-      this.spiderLineData[idx++] = inst.spiderOffsetY ?? 0;
-      this.spiderLineData[idx++] = normalizedHeight;
-      this.spiderLineData[idx++] = direction;
+          // Center endpoint (no spider offset, same height)
+          this.spiderLineData[idx++] = p.x;
+          this.spiderLineData[idx++] = p.y;
+          this.spiderLineData[idx++] = 0;
+          this.spiderLineData[idx++] = 0;
+          this.spiderLineData[idx++] = normalizedHeight;
+          this.spiderLineData[idx++] = direction;
+          // Offset endpoint (with spider offset, same height)
+          this.spiderLineData[idx++] = p.x;
+          this.spiderLineData[idx++] = p.y;
+          this.spiderLineData[idx++] = inst.spiderOffsetX ?? 0;
+          this.spiderLineData[idx++] = inst.spiderOffsetY ?? 0;
+          this.spiderLineData[idx++] = normalizedHeight;
+          this.spiderLineData[idx++] = direction;
+        }
+
+        this.ensureSpiderLineProg(gl);
+        if (this.spiderLineProg && this.spiderLineVao && this.spiderLineBuf) {
+          gl.bindVertexArray(this.spiderLineVao);
+          gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderLineBuf);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            this.spiderLineData.subarray(0, idx),
+            gl.DYNAMIC_DRAW,
+          );
+          gl.bindVertexArray(null);
+        }
+      }
     }
+
+    if (this.spiderLineCount === 0) return;
+    const count = this.spiderLineCount;
 
     this.ensureSpiderLineProg(gl);
-    if (!this.spiderLineProg || !this.spiderLineVao || !this.spiderLineBuf || !this.spiderLineUniforms) return;
+    if (
+      !this.spiderLineProg ||
+      !this.spiderLineVao ||
+      !this.spiderLineBuf ||
+      !this.spiderLineUniforms
+    )
+      return;
 
     gl.useProgram(this.spiderLineProg);
     gl.bindVertexArray(this.spiderLineVao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.spiderLineBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, this.spiderLineData.subarray(0, idx), gl.DYNAMIC_DRAW);
     if (this.spiderLineUniforms.view && state.viewMatrix)
-      gl.uniformMatrix3fv(this.spiderLineUniforms.view, false, state.viewMatrix);
+      gl.uniformMatrix3fv(
+        this.spiderLineUniforms.view,
+        false,
+        state.viewMatrix,
+      );
     if (this.spiderLineUniforms.screen)
       gl.uniform2f(this.spiderLineUniforms.screen, state.width, state.height);
     if (this.spiderLineUniforms.zoom)
@@ -1866,7 +2037,13 @@ export class IconMarkerLayer implements Layer {
 
     // Draw a white circle with slight transparency
     ctx.beginPath();
-    ctx.arc(logicalSize / 2, logicalSize / 2, logicalSize / 2 - 2, 0, Math.PI * 2);
+    ctx.arc(
+      logicalSize / 2,
+      logicalSize / 2,
+      logicalSize / 2 - 2,
+      0,
+      Math.PI * 2,
+    );
     ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
     ctx.fill();
 
@@ -1882,7 +2059,11 @@ export class IconMarkerLayer implements Layer {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
     gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR,
+    );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
     const entry = { name: DEFAULT_CIRCLE_SHEET, tex, w: size, h: size };
@@ -1895,15 +2076,23 @@ export class IconMarkerLayer implements Layer {
     if (this.dynamicSizeFactor <= 0.001) return 1;
     const midZoom = (state.minZoom + state.maxZoom) * 0.5;
     const scaleRatio = Math.pow(2, state.zoom - midZoom);
-    return Math.max(0.25, Math.min(2.5, Math.pow(scaleRatio, this.dynamicSizeFactor)));
+    return Math.max(
+      0.25,
+      Math.min(2.5, Math.pow(scaleRatio, this.dynamicSizeFactor)),
+    );
   }
 
   // Compute the screen-space Y offset for a marker's height stem (matching vertex shader)
-  private getHeightScreenOffset(m: IconMarkerInstance, state: RenderState): number {
+  private getHeightScreenOffset(
+    m: IconMarkerInstance,
+    state: RenderState,
+  ): number {
     const rawZ = typeof m.z === "number" ? m.z : 0;
-    let heightIntensity = m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
+    let heightIntensity =
+      m.zMag !== undefined ? Math.min(1, Math.max(0, m.zMag)) : undefined;
     if (heightIntensity === undefined) {
-      heightIntensity = rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
+      heightIntensity =
+        rawZ === 0 ? 0 : Math.min(1, Math.abs(rawZ) / DEFAULT_Z_NORMALIZATION);
     }
     let direction = 0;
     if (m.zPos === "top" || m.zPos === "needle") direction = 1;
@@ -1911,13 +2100,18 @@ export class IconMarkerLayer implements Layer {
     if (direction === 0 || heightIntensity < 0.01) return 0;
 
     // Match vertex shader: heightWorld = mix(0, 20, heightIntensity) * abs(sin(pitch)) * 2^zoom * 500
-    const heightWorld = 20 * heightIntensity * Math.abs(Math.sin(state.pitch)) * Math.pow(2, state.zoom) * 500;
+    const heightWorld =
+      20 *
+      heightIntensity *
+      Math.abs(Math.sin(state.pitch)) *
+      Math.pow(2, state.zoom) *
+      500;
     // heightClip = heightWorld * viewScale * (2 / screenHeight)
     const view = state.viewMatrix!;
     const viewScale = Math.sqrt(view[0] * view[0] + view[1] * view[1]);
     const heightClip = heightWorld * viewScale * (2 / state.height);
     // Convert clip offset to screen pixels (Y is inverted in screen coords)
-    return -heightClip * direction * state.height / 2;
+    return (-heightClip * direction * state.height) / 2;
   }
 
   // Hit test: approximate icon as a circle using half of effective size
@@ -1953,8 +2147,14 @@ export class IconMarkerLayer implements Layer {
       s.y += this.getHeightScreenOffset(m, state);
       let effH = m.size * zoomScale;
       let effW = (m.sizeW ?? m.size) * zoomScale;
-      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
-      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
+      if (m.isHighlighted) {
+        effH *= 1.15;
+        effW *= 1.15;
+      }
+      if (m.isSelected) {
+        effH *= 1.3;
+        effW *= 1.3;
+      }
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
       if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2) {
@@ -2005,13 +2205,23 @@ export class IconMarkerLayer implements Layer {
       s.y += this.getHeightScreenOffset(m, state);
       let effH = m.size * zoomScale;
       let effW = (m.sizeW ?? m.size) * zoomScale;
-      if (m.isHighlighted) { effH *= 1.15; effW *= 1.15; }
-      if (m.isSelected) { effH *= 1.3; effW *= 1.3; }
+      if (m.isHighlighted) {
+        effH *= 1.15;
+        effW *= 1.15;
+      }
+      if (m.isSelected) {
+        effH *= 1.3;
+        effW *= 1.3;
+      }
       const r = Math.max(effW, effH) / 2;
       const dx = screen.x - s.x;
       const dy = screen.y - s.y;
       const d2 = dx * dx + dy * dy;
-      if (Math.abs(dx) <= effW / 2 && Math.abs(dy) <= effH / 2 && d2 < bestDist2) {
+      if (
+        Math.abs(dx) <= effW / 2 &&
+        Math.abs(dy) <= effH / 2 &&
+        d2 < bestDist2
+      ) {
         bestDist2 = d2;
         bestIdx = i;
         bestR = r;

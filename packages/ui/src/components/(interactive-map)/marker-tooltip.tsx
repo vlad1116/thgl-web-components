@@ -518,7 +518,9 @@ export function MarkerTooltip({
   additionalTooltip?: AdditionalTooltipType;
   coordinateCopyFormat?: string;
 }) {
-  const player = useGameState((state) => state.player);
+  // Throttled player: the distance readout only needs ~1Hz, and an open tooltip
+  // subscribing to the raw player re-rendered 16×/s while moving.
+  const player = useGameState((state) => state.throttledPlayer);
   const distance = useMemo(
     () =>
       player
