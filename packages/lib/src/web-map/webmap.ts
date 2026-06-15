@@ -1,4 +1,4 @@
-import { createGL } from "./utils/gl";
+import { createGL, isContextSoftware } from "./utils/gl";
 import type {
   Layer,
   LatLng,
@@ -122,6 +122,11 @@ export class WebMap {
   private zoomTimeMs = 60; // time constant for zoom smoothing - faster response
   private panAnim?: { vx: number; vy: number }; // center velocity in world px/s
   private panDecayMs = 250; // time constant for inertia - faster decay
+  // When WebGL is software-rasterized (HW accel off), every rendered frame is
+  // CPU work, so view-change easing (zoom/pan smoothing, inertia) just multiplies
+  // full-map redraws. Snap straight to the target instead. GPU users are unaffected.
+  // Set from the real GL context in the constructor (false = hardware, the default).
+  private softwareRender = false;
   private lastPointerTs?: number;
   // Wheel shaping/accumulation
   private wheelAccum = 0;
@@ -173,6 +178,8 @@ export class WebMap {
     if (opts.pitch !== undefined)
       this.pitch = Math.max(0, Math.min(1.4, opts.pitch));
     this.gl = createGL(this.canvas);
+    // Detect software rasterization from the REAL on-screen context (logs once).
+    this.softwareRender = isContextSoftware(this.gl);
     if (opts.minZoom !== undefined) this.minZoom = opts.minZoom;
     if (opts.maxZoom !== undefined) this.maxZoom = opts.maxZoom;
     this.proj = opts.projection ?? defaultWebMercatorProjection;
@@ -1334,11 +1341,11 @@ export class WebMap {
     const dt = Math.min(1000, now - this.lastFrameTs);
     this.lastFrameTs = now;
     // exponential smoothing toward target zoom (controlled by zoomTimeMs)
-    const alpha = 1 - Math.exp(-dt / this.zoomTimeMs);
+    const alpha = this.softwareRender ? 1 : 1 - Math.exp(-dt / this.zoomTimeMs);
 
     // Smooth pan to target center
     if (this.targetCenter && !this.dragging) {
-      const panAlpha = 1 - Math.exp(-dt / 150); // ~150ms smoothing
+      const panAlpha = this.softwareRender ? 1 : 1 - Math.exp(-dt / 150); // ~150ms smoothing (instant in software mode)
       const dlat = this.targetCenter[0] - this.center[0];
       const dlng = this.targetCenter[1] - this.center[1];
       // Settle when the remaining movement is sub-pixel on screen. The ease is
@@ -1406,7 +1413,9 @@ export class WebMap {
       this.zoomAnim = undefined;
     }
 
-    // Pan inertia
+    // Pan inertia (skipped in software mode — coasting would just burn CPU
+    // re-rasterizing every frame; the drag's end position is kept)
+    if (this.softwareRender) this.panAnim = undefined;
     if (this.panAnim && !this.dragging) {
       const decay = Math.exp(-dt / this.panDecayMs);
       const vx = this.panAnim.vx;
