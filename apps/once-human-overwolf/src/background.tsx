@@ -1,6 +1,7 @@
 import {
   type Actor,
   ActorPlayer,
+  createDwellTracker,
   type GameEventsPlugin,
   initBackground,
   initGameEventsPlugin,
@@ -116,8 +117,16 @@ function refreshServerName(): Promise<void> {
 }
 
 let isSending = false;
-let lastBusMonsterPositions: Map<number, { x: number; y: number; z: number }> = new Map();
+let lastBusMonsterPositions: Map<number, { x: number; y: number; z: number }> =
+  new Map();
+// Only report static actors that have stayed visible for >= 5s, to drop
+// transient memory-read / loading-state blinks that would otherwise become
+// false spawns. Bus monsters are exempt — they are live, moving entities
+// tracked by position rather than dwell.
+const dwellTracker = createDwellTracker();
 async function sendActorsToAPI(actors: Actor[]): Promise<void> {
+  // Observe every frame, before the early returns, so dwell accrues continuously.
+  dwellTracker.observe(actors);
   if (isSending || !prevServerName || Date.now() - lastSend < 12000) {
     return;
   }
@@ -138,7 +147,11 @@ async function sendActorsToAPI(actors: Actor[]): Promise<void> {
       return true; // New bus monster, send it
     }
     // Check if position changed
-    return lastPos.x !== busMonster.x || lastPos.y !== busMonster.y || lastPos.z !== busMonster.z;
+    return (
+      lastPos.x !== busMonster.x ||
+      lastPos.y !== busMonster.y ||
+      lastPos.z !== busMonster.z
+    );
   });
 
   // Update bus monster position tracking
@@ -159,12 +172,16 @@ async function sendActorsToAPI(actors: Actor[]): Promise<void> {
     }
 
     // Skip address-based filtering for bus monsters (they're tracked separately)
-    const isBusMonster = actor.type === "bus_monster.gim" || actor.type === "bus_monster_arm.gim";
+    const isBusMonster =
+      actor.type === "bus_monster.gim" || actor.type === "bus_monster_arm.gim";
     if (isBusMonster) {
       return false; // Already handled in movedBusMonsters
     }
 
     if (lastActorAddresses.includes(actor.address)) {
+      return false;
+    }
+    if (!dwellTracker.isStable(actor.address)) {
       return false;
     }
     if (id === "gear_crate") {

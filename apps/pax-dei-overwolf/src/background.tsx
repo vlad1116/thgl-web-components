@@ -1,6 +1,7 @@
 import {
   Actor,
   closeMainWindow,
+  createDwellTracker,
   initBackground,
   initGameEventsPlugin,
   sendActorsToAPI as sendActorsToAPIHelper,
@@ -57,13 +58,20 @@ const LARGE = {
 
 let lastSend = 0;
 let lastActorAddresses: number[] = [];
+// Only report actors that have stayed visible for >= 5s, to drop transient
+// memory-read / loading-state blinks that would otherwise become false spawns.
+const dwellTracker = createDwellTracker();
 async function sendActorsToAPI(actors: Actor[]) {
+  // Observe every frame, before the send throttle, so dwell accrues continuously.
+  dwellTracker.observe(actors);
   if (Date.now() - lastSend < 10000) {
     return;
   }
   lastSend = Date.now();
   const newActors = actors.filter(
-    (actor) => !lastActorAddresses.includes(actor.address),
+    (actor) =>
+      !lastActorAddresses.includes(actor.address) &&
+      dwellTracker.isStable(actor.address),
   );
   lastActorAddresses = actors.map((actor) => actor.address);
   if (newActors.length === 0) {
@@ -74,13 +82,18 @@ async function sendActorsToAPI(actors: Actor[]) {
 
 let lastSendGT = 0;
 let lastActorAddressesGT: number[] = [];
+const dwellTrackerGT = createDwellTracker();
 async function senActorsToGamingTools(actors: Actor[]) {
+  // Observe every frame, before the send throttle, so dwell accrues continuously.
+  dwellTrackerGT.observe(actors);
   if (Date.now() - lastSendGT < 10000) {
     return;
   }
   lastSendGT = Date.now();
   const newActors = actors.filter(
-    (actor) => !lastActorAddressesGT.includes(actor.address),
+    (actor) =>
+      !lastActorAddressesGT.includes(actor.address) &&
+      dwellTrackerGT.isStable(actor.address),
   );
   lastActorAddressesGT = actors.map((actor) => actor.address);
   if (newActors.length === 0) {

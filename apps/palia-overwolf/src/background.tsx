@@ -1,5 +1,6 @@
 import {
   type Actor,
+  createDwellTracker,
   type GameEventsPlugin,
   initBackground,
   initGameEventsPlugin,
@@ -68,6 +69,9 @@ const appVersion = manifest.meta.version;
 
 let lastSend = 0;
 let lastActorAddresses: number[] = [];
+// Only report actors that have stayed visible for >= 5s, to drop transient
+// memory-read / loading-state blinks that would otherwise become false spawns.
+const dwellTracker = createDwellTracker();
 
 const gameEventsPlugin = await initGameEventsPlugin<PaliaEventsPlugin>(
   {
@@ -113,6 +117,8 @@ const gameEventsPlugin = await initGameEventsPlugin<PaliaEventsPlugin>(
 );
 
 function sendActorsToAPI(actors: Actor[]): void {
+  // Observe every frame, before the send throttle, so dwell accrues continuously.
+  dwellTracker.observe(actors);
   if (Date.now() - lastSend < 10000) {
     return;
   }
@@ -125,6 +131,9 @@ function sendActorsToAPI(actors: Actor[]): void {
       return false;
     }
     if (lastActorAddresses.includes(actor.address)) {
+      return false;
+    }
+    if (!dwellTracker.isStable(actor.address)) {
       return false;
     }
     return true;

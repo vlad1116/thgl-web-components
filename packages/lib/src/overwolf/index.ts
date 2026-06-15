@@ -1,5 +1,6 @@
 export * from "./actors-api";
 export * from "./background";
+export * from "./dwell-tracker";
 export * from "./brotli";
 export * from "./discord";
 export * from "./event-bus";

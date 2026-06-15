@@ -1,5 +1,6 @@
 import {
   Actor,
+  createDwellTracker,
   initBackground,
   initGameEventsPlugin,
   sendActorsToAPI as sendActorsToAPIHelper,
@@ -18,7 +19,12 @@ initGameEventsPlugin(
 
 let lastSend = 0;
 let lastActorAddresses: number[] = [];
+// Only report actors that have stayed visible for >= 5s, to drop transient
+// memory-read / loading-state blinks that would otherwise become false spawns.
+const dwellTracker = createDwellTracker();
 async function sendActorsToAPI(actors: Actor[]) {
+  // Observe every frame, before the send throttle, so dwell accrues continuously.
+  dwellTracker.observe(actors);
   if (Date.now() - lastSend < 15000) {
     return;
   }
@@ -26,7 +32,8 @@ async function sendActorsToAPI(actors: Actor[]) {
   const newActors = actors.filter(
     (actor) =>
       !lastActorAddresses.includes(actor.address) &&
-      actor.type.startsWith("BP_MapObject_"),
+      actor.type.startsWith("BP_MapObject_") &&
+      dwellTracker.isStable(actor.address),
   );
   lastActorAddresses = actors.map((actor) => actor.address);
   if (newActors.length === 0) {
