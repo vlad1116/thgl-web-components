@@ -2,11 +2,9 @@
   {
     "title": "Grounded 2",
     "url": "https://grounded2.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 0,
       "y": 0,
       "width": 32,
@@ -16,12 +14,9 @@
   {
     "title": "Gothic 1 Remake",
     "url": "https://gothic1remake.th.gl",
-    "tags": [
-      "interactive_map",
-      "database"
-    ],
+    "tags": ["interactive_map", "database"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 32,
       "y": 0,
       "width": 32,
@@ -31,11 +26,9 @@
   {
     "title": "Duet Night Abyss",
     "url": "https://duetnightabyss.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 64,
       "y": 0,
       "width": 32,
@@ -45,15 +38,13 @@
   {
     "title": "Blue Protocol: Star Resonance",
     "url": "https://starresonance.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Blue Protocol Timer",
         "url": "https://bptimer.com",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 0,
           "y": 0,
           "width": 24,
@@ -62,7 +53,7 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 96,
       "y": 0,
       "width": 32,
@@ -72,11 +63,9 @@
   {
     "title": "Starsand Island",
     "url": "https://starsandisland.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 128,
       "y": 0,
       "width": 32,
@@ -86,15 +75,13 @@
   {
     "title": "Soulmask",
     "url": "https://soulmask.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Database",
         "url": "https://soulmask.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -103,7 +90,7 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 0,
       "y": 32,
       "width": 32,
@@ -113,12 +100,22 @@
   {
     "title": "Soulframe",
     "url": "https://soulframe.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
+      "fileName": "games-7904063841950230077.webp",
       "x": 32,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "title": "Subnautica 2",
+    "url": "https://subnautica2.th.gl",
+    "tags": ["interactive_map"],
+    "sprite": {
+      "fileName": "games-7904063841950230077.webp",
+      "x": 64,
       "y": 32,
       "width": 32,
       "height": 32
@@ -127,12 +124,10 @@
   {
     "title": "Conan Exiles Enhanced",
     "url": "https://conanexiles.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 96,
       "y": 32,
       "width": 32,
       "height": 32
@@ -141,12 +136,10 @@
   {
     "title": "Chrono Odyssey",
     "url": "https://chronoodyssey.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 128,
       "y": 32,
       "width": 32,
       "height": 32
@@ -155,15 +148,13 @@
   {
     "title": "Dune: Awakening",
     "url": "https://duneawakening.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Database",
         "url": "https://dune.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -174,7 +165,7 @@
         "title": "r/duneawakening",
         "url": "https://www.reddit.com/r/duneawakening",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -183,9 +174,9 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 128,
-      "y": 32,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 0,
+      "y": 64,
       "width": 32,
       "height": 32
     }
@@ -193,12 +184,10 @@
   {
     "title": "RuneScape: Dragonwilds",
     "url": "https://dragonwilds.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 0,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 32,
       "y": 64,
       "width": 32,
       "height": 32
@@ -207,12 +196,10 @@
   {
     "title": "Avowed",
     "url": "https://avowed.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 32,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 64,
       "y": 64,
       "width": 32,
       "height": 32
@@ -221,12 +208,10 @@
   {
     "title": "Infinity Nikki",
     "url": "https://infinitynikki.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 96,
       "y": 64,
       "width": 32,
       "height": 32
@@ -235,12 +220,10 @@
   {
     "title": "Satisfactory",
     "url": "https://satisfactory.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 128,
       "y": 64,
       "width": 32,
       "height": 32
@@ -249,13 +232,11 @@
   {
     "title": "Wuthering Waves",
     "url": "https://wuthering.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 128,
-      "y": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 0,
+      "y": 96,
       "width": 32,
       "height": 32
     }
@@ -263,15 +244,13 @@
   {
     "title": "Pax Dei",
     "url": "https://paxdei.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Database",
         "url": "https://paxdei.gaming.tools?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -282,7 +261,7 @@
         "title": "r/PaxDei",
         "url": "https://www.reddit.com/r/PaxDei",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -293,7 +272,7 @@
         "title": "Tools",
         "url": "https://pax-dei-tools.com/?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 0,
           "y": 24,
           "width": 24,
@@ -302,8 +281,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 0,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 32,
       "y": 96,
       "width": 32,
       "height": 32
@@ -312,15 +291,13 @@
   {
     "title": "Night Crows",
     "url": "https://nightcrows.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Database",
         "url": "https://nightcrows.gaming.tools?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -329,8 +306,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 32,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 64,
       "y": 96,
       "width": 32,
       "height": 32
@@ -339,12 +316,10 @@
   {
     "title": "New World Map",
     "url": "https://aeternum-map.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 96,
       "y": 96,
       "width": 32,
       "height": 32
@@ -353,12 +328,10 @@
   {
     "title": "New World Tracker",
     "url": "https://aeternum-tracker.th.gl",
-    "tags": [
-      "activity_tracker"
-    ],
+    "tags": ["activity_tracker"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 128,
       "y": 96,
       "width": 32,
       "height": 32
@@ -367,15 +340,13 @@
   {
     "title": "Diablo IV",
     "url": "https://diablo4.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Diablo IV Companion",
         "url": "https://github.com/josdemmers/Diablo4Companion?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 24,
           "width": 24,
@@ -384,9 +355,9 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 128,
-      "y": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 0,
+      "y": 128,
       "width": 32,
       "height": 32
     }
@@ -394,12 +365,10 @@
   {
     "title": "Hogwarts Legacy",
     "url": "https://hogwarts.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 0,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 32,
       "y": 128,
       "width": 32,
       "height": 32
@@ -408,12 +377,10 @@
   {
     "title": "League of Legends",
     "url": "https://lol.th.gl",
-    "tags": [
-      "challenges"
-    ],
+    "tags": ["challenges"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 32,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 64,
       "y": 128,
       "width": 32,
       "height": 32
@@ -422,12 +389,10 @@
   {
     "title": "Once Human",
     "url": "https://oncehuman.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 96,
       "y": 128,
       "width": 32,
       "height": 32
@@ -436,16 +401,13 @@
   {
     "title": "Palia",
     "url": "https://palia.th.gl",
-    "tags": [
-      "interactive_map",
-      "leaderboard"
-    ],
+    "tags": ["interactive_map", "leaderboard"],
     "partners": [
       {
         "title": "Paliapedia",
         "url": "https://paliapedia.com?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -456,17 +418,28 @@
         "title": "Palia Tracker",
         "url": "https://paliatracker.com?ref=thgl",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 48,
           "y": 24,
+          "width": 24,
+          "height": 24
+        }
+      },
+      {
+        "title": "Palia Party",
+        "url": "https://paliaparty.app?ref=thgl",
+        "sprite": {
+          "fileName": "partners-7904063841950230077.webp",
+          "x": 0,
+          "y": 48,
           "width": 24,
           "height": 24
         }
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 128,
       "y": 128,
       "width": 32,
       "height": 32
@@ -475,16 +448,14 @@
   {
     "title": "Palworld",
     "url": "https://palworld.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Palworld Soundboard",
         "url": "https://www.voicy.network/official-soundboards/games/palworld",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
-          "x": 0,
+          "fileName": "partners-7904063841950230077.webp",
+          "x": 24,
           "y": 48,
           "width": 24,
           "height": 24
@@ -494,7 +465,7 @@
         "title": "r/Palworld",
         "url": "https://www.reddit.com/r/palworld",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 48,
           "y": 0,
           "width": 24,
@@ -505,8 +476,8 @@
         "title": "The Palworld Wiki",
         "url": "https://palworld.wiki.gg",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
-          "x": 24,
+          "fileName": "partners-7904063841950230077.webp",
+          "x": 48,
           "y": 48,
           "width": 24,
           "height": 24
@@ -516,18 +487,18 @@
         "title": "Palworld Server Hosting",
         "url": "https://www.nitrado-aff.com/4B2XBP3/D42TT/?uid=60",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
-          "x": 48,
-          "y": 48,
+          "fileName": "partners-7904063841950230077.webp",
+          "x": 0,
+          "y": 72,
           "width": 24,
           "height": 24
         }
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 128,
-      "y": 128,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 0,
+      "y": 160,
       "width": 32,
       "height": 32
     }
@@ -535,12 +506,10 @@
   {
     "title": "Songs of Conquest",
     "url": "https://soc.th.gl",
-    "tags": [
-      "database"
-    ],
+    "tags": ["database"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 0,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 32,
       "y": 160,
       "width": 32,
       "height": 32
@@ -549,12 +518,10 @@
   {
     "title": "Sons of the Forest",
     "url": "https://sotf.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 32,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 64,
       "y": 160,
       "width": 32,
       "height": 32
@@ -563,15 +530,13 @@
   {
     "title": "Crimson Desert",
     "url": "https://crimsondesert.th.gl",
-    "tags": [
-      "interactive_map"
-    ],
+    "tags": ["interactive_map"],
     "partners": [
       {
         "title": "Database",
         "url": "https://crimsondesert.gaming.tools/",
         "sprite": {
-          "fileName": "partners-4682970419739067130.webp",
+          "fileName": "partners-7904063841950230077.webp",
           "x": 24,
           "y": 0,
           "width": 24,
@@ -580,8 +545,8 @@
       }
     ],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 64,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 96,
       "y": 160,
       "width": 32,
       "height": 32
@@ -590,12 +555,10 @@
   {
     "title": "Heroes of Might & Magic: Olden Era",
     "url": "https://oldenera.th.gl",
-    "tags": [
-      "database"
-    ],
+    "tags": ["database"],
     "sprite": {
-      "fileName": "games-4682970419739067130.webp",
-      "x": 96,
+      "fileName": "games-7904063841950230077.webp",
+      "x": 128,
       "y": 160,
       "width": 32,
       "height": 32
