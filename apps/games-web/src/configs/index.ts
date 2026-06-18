@@ -24,6 +24,7 @@ import { songsOfConquest } from "./songs-of-conquest";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
 import { starsandIsland } from "./starsand-island";
+import { subnautica2 } from "./subnautica-2";
 import { thglApp } from "./thgl-app";
 import { thglWeb } from "./thgl-web";
 import { wutheringWaves } from "./wuthering-waves";
@@ -58,6 +59,7 @@ const ALL_CONFIGS: AppConfig[] = [
   soulframe,
   soulmask,
   starsandIsland,
+  subnautica2,
   thglApp,
   thglWeb,
   wutheringWaves,

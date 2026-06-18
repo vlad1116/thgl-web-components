@@ -135,6 +135,14 @@ export const games: Array<Game> = [
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
+    id: "subnautica-2",
+    discordId: "subnautica-2",
+    title: "Subnautica 2",
+    logo: "https://www.th.gl/global_icons/subnautica-2.webp",
+    web: "https://subnautica2.th.gl",
+    patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
+  },
+  {
     id: "conan-exiles",
     discordId: "conan-exiles",
     title: "Conan Exiles Enhanced",
