@@ -1,3 +1,4 @@
+import { type ComponentType } from "react";
 import { type Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import {
@@ -17,6 +18,14 @@ import { resolveDict } from "@/lib/db/resolve-dict";
 import { entityPageJsonLd } from "@/lib/db/json-ld";
 import { Breadcrumb } from "@/lib/db/breadcrumb";
 import { GenericEntityView } from "@/lib/db/generic-view";
+import { SocEntityView } from "@/games/songs-of-conquest/entity-view";
+
+// Per-game detail-view overrides. Tenants not listed fall back to the generic
+// view. SoC adds structured sections (skill pools, faction indexes) on top and
+// resolves cross-link / variant names per-locale from the passed `dict`.
+const DETAIL_VIEWS: Record<string, ComponentType<any>> = {
+  "songs-of-conquest": SocEntityView,
+};
 
 /**
  * Generic DB entry (detail) page — tenant-resolved counterpart of the
@@ -127,9 +136,12 @@ export async function generateMetadata({
   let props: Record<string, any> | undefined;
   try {
     const index = await fetchDatabaseIndex(appConfig.name);
-    const matchingType = index.find((cat) =>
-      cat.items.some((i) => i.id === id),
-    )?.type;
+    const secTypes = [secCfg.type, ...(secCfg.extraTypes ?? [])];
+    const matchingType =
+      index.find(
+        (cat) =>
+          secTypes.includes(cat.type) && cat.items.some((i) => i.id === id),
+      )?.type ?? index.find((cat) => cat.items.some((i) => i.id === id))?.type;
     if (matchingType) {
       const full = await fetchDatabaseType(appConfig.name, matchingType);
       props = full.items.find((i) => i.id === id)?.props as
@@ -191,9 +203,12 @@ export default async function Page({ params }: { params: Params }) {
     }
   }
 
-  const matchingType = index.find((cat) =>
-    cat.items.some((i) => i.id === id),
-  )?.type;
+  // Prefer a category within THIS section's types (ids can repeat across types
+  // — e.g. SoC's faction "arleon" and town "arleon"), then fall back to any.
+  const matchingType =
+    index.find(
+      (cat) => types.includes(cat.type) && cat.items.some((i) => i.id === id),
+    )?.type ?? index.find((cat) => cat.items.some((i) => i.id === id))?.type;
   if (
     !matchingType ||
     (!types.includes(matchingType) &&
@@ -251,19 +266,25 @@ export default async function Page({ params }: { params: Params }) {
         />
       </div>
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <GenericEntityView
-          id={item.id}
-          name={name}
-          desc={desc}
-          groupLabel={groupLabel}
-          icon={icon}
-          props={item.props as Record<string, unknown> | undefined}
-          iconsHash={iconsHash}
-          appName={appConfig.name}
-          locale={locale}
-          icons={icons}
-          tiles={tiles}
-        />
+        {(() => {
+          const DetailView = DETAIL_VIEWS[appConfig.name] ?? GenericEntityView;
+          return (
+            <DetailView
+              id={item.id}
+              name={name}
+              desc={desc}
+              groupLabel={groupLabel}
+              icon={icon}
+              props={item.props as Record<string, unknown> | undefined}
+              iconsHash={iconsHash}
+              appName={appConfig.name}
+              locale={locale}
+              icons={icons}
+              tiles={tiles}
+              dict={dict}
+            />
+          );
+        })()}
       </div>
     </>
   );

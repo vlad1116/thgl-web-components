@@ -20,6 +20,7 @@ import { palworld } from "./palworld";
 import { paxDei } from "./pax-dei";
 import { rsdragonwilds } from "./rsdragonwilds";
 import { satisfactory } from "./satisfactory";
+import { songsOfConquest } from "./songs-of-conquest";
 import { soulframe } from "./soulframe";
 import { soulmask } from "./soulmask";
 import { starsandIsland } from "./starsand-island";
@@ -53,6 +54,7 @@ const ALL_CONFIGS: AppConfig[] = [
   paxDei,
   rsdragonwilds,
   satisfactory,
+  songsOfConquest,
   soulframe,
   soulmask,
   starsandIsland,

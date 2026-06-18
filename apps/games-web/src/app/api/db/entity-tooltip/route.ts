@@ -10,9 +10,12 @@ function resolveDict(dict: Record<string, string>, key: string): string {
 }
 
 function resolveBuffName(dict: Record<string, string>, key: string): string {
-  if (dict[key]) return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
+  if (dict[key])
+    return dict[key].startsWith("@") ? resolveDict(dict, key) : dict[key];
 
-  let m = key.match(/^skill_.+?_sub_skill_[a-z0-9_]+?_(warrior|mage|campaign|arena)_bonus$/);
+  let m = key.match(
+    /^skill_.+?_sub_skill_[a-z0-9_]+?_(warrior|mage|campaign|arena)_bonus$/,
+  );
   if (m) return resolveDict(dict, `ui.variant_${m[1]}`);
 
   m = key.match(/^(sub_skill_[a-z0-9_]+?)_bonus$/);
@@ -36,7 +39,10 @@ function resolveBuffName(dict: Record<string, string>, key: string): string {
     if (dict[candidate]) return resolveDict(dict, candidate);
   }
 
-  const tail = key.replace(/^skill_[^_]+(?:_[^_]+)*?_(?=(?:warrior|mage|campaign|arena|bonus|offence|defence))/i, "");
+  const tail = key.replace(
+    /^skill_[^_]+(?:_[^_]+)*?_(?=(?:warrior|mage|campaign|arena|bonus|offence|defence))/i,
+    "",
+  );
   return humanizeStat(tail !== key ? tail : key);
 }
 
@@ -68,7 +74,10 @@ function formatValue(value: string | number): string {
 
 type Bonus = { type: string; params: (string | number)[] };
 
-function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null {
+function formatBonus(
+  bonus: Bonus,
+  dict: Record<string, string>,
+): string | null {
   const { type, params } = bonus;
   switch (type) {
     case "heroStatBattle":
@@ -80,9 +89,12 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null 
         const tier = Number(params[2]);
         const spellLevel = Number(params[3] ?? 0);
         const parts: string[] = [];
-        if (tier > 0) parts.push(`Learn ${schoolName} spells (up to tier ${tier})`);
-        if (spellLevel > 0) parts.push(`${schoolName} spells +${spellLevel} level`);
-        if (spellLevel < 0) parts.push(`${schoolName} spells ${spellLevel} level`);
+        if (tier > 0)
+          parts.push(`Learn ${schoolName} spells (up to tier ${tier})`);
+        if (spellLevel > 0)
+          parts.push(`${schoolName} spells +${spellLevel} level`);
+        if (spellLevel < 0)
+          parts.push(`${schoolName} spells ${spellLevel} level`);
         return parts.length > 0 ? parts.join(", ") : `${schoolName} spells`;
       }
       if (statKey === "magicCostSchoolSet") {
@@ -145,7 +157,8 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null 
       const school = params[0] as string;
       const tier = params[1];
       const count = params[2];
-      const schoolLabel = school === "any" ? "" : ` ${resolveDict(dict, `ui.school_${school}`)}`;
+      const schoolLabel =
+        school === "any" ? "" : ` ${resolveDict(dict, `ui.school_${school}`)}`;
       const tierLabel = tier === "any" ? "" : ` tier ${tier}`;
       return `Grants ${count}${schoolLabel}${tierLabel} spell(s)`;
     }
@@ -178,7 +191,7 @@ function formatBonus(bonus: Bonus, dict: Record<string, string>): string | null 
     case "heroUnfrozenBattleBonus":
       return `${humanizeStat(params[0] as string)}: ${formatValue(params[1])}`;
     default:
-      return `${humanizeStat(type)}: ${params.map((p) => typeof p === "string" ? humanizeStat(p) : formatValue(p)).join(", ")}`;
+      return `${humanizeStat(type)}: ${params.map((p) => (typeof p === "string" ? humanizeStat(p) : formatValue(p))).join(", ")}`;
   }
 }
 
@@ -272,7 +285,12 @@ export async function GET(request: Request) {
       for (const b of bonusSource) {
         for (const p of b.params ?? []) {
           const n = parseFloat(String(p));
-          if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+          if (
+            !isNaN(n) &&
+            n !== 0 &&
+            String(p) !== "true" &&
+            String(p) !== "false"
+          ) {
             const abs = Math.abs(n);
             numericValues.push(
               abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
@@ -311,7 +329,11 @@ export async function GET(request: Request) {
         const fullCat = await fetchDatabaseType(appConfig.name, "units");
         base = fullCat.items.find((i: any) => i.id === p.baseId)?.props ?? null;
       }
-      const fmtStat = (label: string, value: number, baseValue?: number): string => {
+      const fmtStat = (
+        label: string,
+        value: number,
+        baseValue?: number,
+      ): string => {
         if (typeof baseValue === "number" && baseValue !== value) {
           const delta = value - baseValue;
           const sign = delta > 0 ? "+" : "";
@@ -321,11 +343,16 @@ export async function GET(request: Request) {
       };
       if (p.tier) stats.push(`Tier ${p.tier}`);
       if (p.hp != null) stats.push(fmtStat("HP", p.hp, base?.hp));
-      if (p.offence != null) stats.push(fmtStat("ATK", p.offence, base?.offence));
-      if (p.defence != null) stats.push(fmtStat("DEF", p.defence, base?.defence));
+      if (p.offence != null)
+        stats.push(fmtStat("ATK", p.offence, base?.offence));
+      if (p.defence != null)
+        stats.push(fmtStat("DEF", p.defence, base?.defence));
       if (p.damageMin != null && p.damageMax != null) {
         const dmg = `${p.damageMin}–${p.damageMax}`;
-        if (base && (base.damageMin !== p.damageMin || base.damageMax !== p.damageMax)) {
+        if (
+          base &&
+          (base.damageMin !== p.damageMin || base.damageMax !== p.damageMax)
+        ) {
           const dMin = p.damageMin - base.damageMin;
           const dMax = p.damageMax - base.damageMax;
           const sMin = dMin > 0 ? "+" : "";
@@ -335,12 +362,38 @@ export async function GET(request: Request) {
           stats.push(`DMG: ${dmg}`);
         }
       }
-      if (p.initiative != null) stats.push(fmtStat("INI", p.initiative, base?.initiative));
+      if (p.initiative != null)
+        stats.push(fmtStat("INI", p.initiative, base?.initiative));
       if (p.speed != null) stats.push(fmtStat("SPD", p.speed, base?.speed));
+      // Variant-shaped units (Songs of Conquest): stats live in
+      // `_unit.variants[0].stats` as label→value pairs, not top-level props.
+      // Surface a curated subset of the base variant's combat stats.
+      const variant = (p as any)._unit?.variants?.[0];
+      if (stats.length === 0 && Array.isArray(variant?.stats)) {
+        const want = [
+          "Tier",
+          "Damage",
+          "Health",
+          "Melee Offence",
+          "Ranged Offence",
+          "Defence",
+          "Movement",
+        ];
+        const byLabel = new Map<string, string>(
+          variant.stats.map((s: any) => [s.label, String(s.value)]),
+        );
+        for (const label of want) {
+          const v = byLabel.get(label);
+          if (v != null)
+            stats.push(label === "Tier" ? `Tier ${v}` : `${label}: ${v}`);
+        }
+      }
       break;
     }
     case "heroes": {
-      const faction = p.faction ? resolveDict(dict, `faction_${p.faction}`) : null;
+      const faction = p.faction
+        ? resolveDict(dict, `faction_${p.faction}`)
+        : null;
       if (faction && faction !== `faction_${p.faction}`) stats.push(faction);
       if (p.classType) stats.push(p.classType === "might" ? "Might" : "Magic");
       if (p.offence) stats.push(`ATK: ${p.offence}`);
@@ -355,7 +408,10 @@ export async function GET(request: Request) {
       // params, mirroring the inline display on the hero detail page).
       if (p.specialization) {
         const specName = resolveDict(dict, p.specialization as string);
-        const baseId = (p.specialization as string).replace("_specialization", "");
+        const baseId = (p.specialization as string).replace(
+          "_specialization",
+          "",
+        );
         // Prefer `<sid>_specialization_desc` over the short `_spec_desc`.
         // The two can disagree (e.g. Merry Elias's `_spec_desc` says
         // "Spellbook one more time per battle round" but the actual
@@ -374,7 +430,10 @@ export async function GET(request: Request) {
           rawSpecDesc !== shortDescKey &&
           rawSpecDesc !== specializationDescKey;
         if (specName !== p.specialization && hasSpecDesc) {
-          const specsCat = await fetchDatabaseType(appConfig.name, "specializations");
+          const specsCat = await fetchDatabaseType(
+            appConfig.name,
+            "specializations",
+          );
           const specEntry = specsCat.items.find(
             (i: any) => i.id === p.specialization,
           );
@@ -424,10 +483,13 @@ export async function GET(request: Request) {
         const names = (p.startSkills as string[])
           .map((s) => resolveDict(dict, s))
           .filter((n, i) => n !== (p.startSkills as string[])[i]);
-        if (names.length > 0) extras.push({ label: "Starting Skills", value: names.join(", ") });
+        if (names.length > 0)
+          extras.push({ label: "Starting Skills", value: names.join(", ") });
       }
       if (Array.isArray(p.startingArmy) && p.startingArmy.length > 0) {
-        const army = (p.startingArmy as { unit: string; min: number; max: number }[])
+        const army = (
+          p.startingArmy as { unit: string; min: number; max: number }[]
+        )
           .map((a) => `${a.min}–${a.max} ${resolveDict(dict, a.unit)}`)
           .join(", ");
         extras.push({ label: "Starting Army", value: army });
@@ -437,7 +499,11 @@ export async function GET(request: Request) {
     case "spells": {
       if (p.school) {
         const schoolName = resolveDict(dict, `ui.school_${p.school}`);
-        stats.push(schoolName !== `ui.school_${p.school}` ? schoolName : humanizeStat(p.school as string));
+        stats.push(
+          schoolName !== `ui.school_${p.school}`
+            ? schoolName
+            : humanizeStat(p.school as string),
+        );
       }
       if (p.tier) stats.push(`Tier ${p.tier}`);
       if (p.manaCost) stats.push(`${p.manaCost} Mana`);
@@ -447,7 +513,14 @@ export async function GET(request: Request) {
       if (p.slot) {
         const slotKey = `ui.slot_${p.slot}`;
         const resolved = resolveDict(dict, slotKey);
-        stats.push(resolved !== slotKey ? resolved : (p.slot as string).replace(/_slot$/, "").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
+        stats.push(
+          resolved !== slotKey
+            ? resolved
+            : (p.slot as string)
+                .replace(/_slot$/, "")
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+        );
       }
       if (p.rarity) stats.push(humanizeStat(p.rarity as string));
       break;
@@ -530,6 +603,21 @@ export async function GET(request: Request) {
         stats.push(p.Category);
       }
       break;
+    }
+  }
+
+  // Fallback for tenants whose props are already display-ready label→value
+  // pairs (e.g. Songs of Conquest) and whose entry type collided with a
+  // bespoke HoMM case above that produced nothing. Surface scalar props as
+  // stat badges (short) / bonus lines (long, e.g. trait effects) so every
+  // entry gets a useful tooltip. Skipped when a bespoke case already filled in.
+  if (stats.length === 0 && bonuses.length === 0 && extras.length === 0) {
+    for (const [k, v] of Object.entries(p)) {
+      if (k.startsWith("_") || k === "Category") continue;
+      if (typeof v === "string" || typeof v === "number") {
+        if (typeof v === "string" && v.length > 24) bonuses.push(`${k}: ${v}`);
+        else stats.push(`${k}: ${v}`);
+      }
     }
   }
 

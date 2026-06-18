@@ -228,10 +228,80 @@ export function proxy(req: NextRequest) {
     }
   }
 
+  // Songs of Conquest: legacy standalone-site URLs (/units/Arleon/Ranger,
+  // /wielders/X, /buildings/F/N, …) → new /db/<singular>/<slug> codex paths.
+  // Unlike once-human these need slug transformation (lowercase + join with _),
+  // so they can't be plain next.config redirects.
+  if (config.name === "songs-of-conquest") {
+    const dest = socLegacyRedirect(path, config.supportedLocales);
+    if (dest && dest !== path) {
+      url.pathname = dest;
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
   const headers = new Headers(req.headers);
   headers.set("x-thgl-app", config.name);
 
   return NextResponse.next({ request: { headers } });
+}
+
+/**
+ * Map a legacy soc.th.gl path to its games-web `/db/*` equivalent (or null if
+ * it isn't a legacy codex path). Mirrors the data-mining `slug()` exactly so
+ * old deep links + Search Console history resolve to the migrated entry.
+ *
+ *   /units/Arleon/Ranger        → /db/unit/arleon_ranger
+ *   /buildings/Arleon/Farm      → /db/building/arleon_farm
+ *   /random-events/Generic/Foo  → /db/random-event/generic_foo
+ *   /wielders                   → /db/wielder        (section index)
+ *   /towns/Arleon               → /db/faction/arleon (town builds live on the
+ *                                 faction page until the planner is ported)
+ *   /de/units/Arleon/Ranger     → /de/db/unit/arleon_ranger (locale preserved)
+ */
+const SOC_SECTION_MAP: Record<string, string> = {
+  units: "unit",
+  wielders: "wielder",
+  skills: "skill",
+  spells: "spell",
+  artifacts: "artifact",
+  buildings: "building",
+  factions: "faction",
+  "random-events": "random-event",
+};
+
+function socSlug(s: string): string {
+  return s
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "")
+    .toLowerCase();
+}
+
+function socLegacyRedirect(
+  path: string,
+  supportedLocales: string[],
+): string | null {
+  const segs = path.split("/").filter(Boolean);
+  if (!segs.length) return null;
+  // Preserve a leading locale segment (e.g. /de/units/...).
+  let localePrefix = "";
+  if (supportedLocales.includes(segs[0])) {
+    localePrefix = `/${segs[0]}`;
+    segs.shift();
+  }
+  if (!segs.length) return null;
+
+  if (segs[0] === "towns") {
+    return segs[1]
+      ? `${localePrefix}/db/town/${socSlug(segs[1])}`
+      : `${localePrefix}/db/town`;
+  }
+  if (segs[0] === "savegames") return `${localePrefix}/db/savegame`;
+  const newSection = SOC_SECTION_MAP[segs[0]];
+  if (!newSection) return null;
+  if (segs.length === 1) return `${localePrefix}/db/${newSection}`;
+  return `${localePrefix}/db/${newSection}/${socSlug(segs.slice(1).join("_"))}`;
 }
 
 /**

@@ -107,6 +107,8 @@ export function GenericEntityView({
   locale = "en",
   icons,
   tiles,
+  statIcons,
+  monoDetails = true,
 }: {
   id: string;
   name: string;
@@ -121,6 +123,12 @@ export function GenericEntityView({
   icons?: Record<string, IconSprite>;
   /** Map tile config — when present, `locations` render as an embedded map. */
   tiles?: TilesConfig;
+  /** Optional stat-label → icon-id map; renders the icon on matching stat cards
+   *  (the view stays generic — the caller supplies the game-specific mapping). */
+  statIcons?: Record<string, string>;
+  /** Render the "Details" table in monospace (default). Set false for games
+   *  whose extra props are prose (Songs of Conquest) rather than technical keys. */
+  monoDetails?: boolean;
 }) {
   const hasDesc = desc && desc !== `${id}_desc` && desc !== id;
   // "Found where on the map" — rendered as its own clickable section, not in
@@ -140,6 +148,9 @@ export function GenericEntityView({
   // Remaining props, minus everything rendered in a dedicated section above.
   const remaining = Object.entries(props ?? {}).filter(
     ([k]) =>
+      // `_`-prefixed props are structured data consumed by per-game custom
+      // views (e.g. SoC's skill pools / faction indexes); hide from generic UI.
+      !k.startsWith("_") &&
       k !== "region" &&
       k !== "regionId" &&
       k !== "category" &&
@@ -180,7 +191,9 @@ export function GenericEntityView({
             )}
             <span className="text-slate-200">{r.name}</span>
             {typeof r.count === "number" && r.count > 1 && (
-              <span className="font-mono text-muted-foreground">×{r.count}</span>
+              <span className="font-mono text-muted-foreground">
+                ×{r.count}
+              </span>
             )}
           </Link>
         );
@@ -225,7 +238,6 @@ export function GenericEntityView({
                 {groupLabel}
               </span>
             )}
-            <span className="text-muted-foreground font-mono">{id}</span>
           </div>
         </div>
       </div>
@@ -238,19 +250,30 @@ export function GenericEntityView({
 
       {statProps.length > 0 && (
         <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-3xl">
-          {statProps.map(([k, v]) => (
-            <div
-              key={k}
-              className="rounded border border-slate-800 bg-slate-900/40 px-3 py-2"
-            >
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {k}
+          {statProps.map(([k, v]) => {
+            const statIc = statIcons?.[k] ? icons?.[statIcons[k]] : undefined;
+            return (
+              <div
+                key={k}
+                className="rounded border border-slate-800 bg-slate-900/40 px-3 py-2"
+              >
+                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {statIc && (
+                    <SpriteIcon
+                      icon={statIc}
+                      appName={appName}
+                      size={14}
+                      iconsHash={iconsHash}
+                    />
+                  )}
+                  {k}
+                </div>
+                <div className="text-sm font-medium text-slate-100">
+                  {String(v)}
+                </div>
               </div>
-              <div className="text-sm font-medium text-slate-100">
-                {String(v)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -366,10 +389,14 @@ export function GenericEntityView({
                   key={k}
                   className="border-t border-slate-800/50 first:border-t-0"
                 >
-                  <td className="px-3 py-1.5 text-muted-foreground font-mono text-xs w-1/3 align-top">
+                  <td
+                    className={`px-3 py-1.5 text-muted-foreground text-xs w-1/3 align-top ${monoDetails ? "font-mono" : ""}`}
+                  >
                     {k}
                   </td>
-                  <td className="px-3 py-1.5 font-mono text-xs break-all">
+                  <td
+                    className={`px-3 py-1.5 text-xs ${monoDetails ? "font-mono break-all" : ""}`}
+                  >
                     {formatValue(v)}
                   </td>
                 </tr>

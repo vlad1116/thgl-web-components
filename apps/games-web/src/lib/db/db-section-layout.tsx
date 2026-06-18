@@ -89,10 +89,22 @@ export async function buildSidebarGroups({
       )
     : [...groups.entries()];
 
+  // A section whose items have no groupId collapses to a single "other"
+  // bucket — show it as a flat list (no useless "Other" header) rather than
+  // labelling it.
+  const soleOther =
+    sortedEntries.length === 1 && sortedEntries[0][0] === "other";
+
   return sortedEntries.map(([groupId, items]) => ({
-    label: groupLabelPrefix
-      ? resolveDictWithFallback(dict, `${groupLabelPrefix}${groupId}`, groupId)
-      : resolveDictWithFallback(dict, groupId, groupId),
+    label: soleOther
+      ? ""
+      : groupLabelPrefix
+        ? resolveDictWithFallback(
+            dict,
+            `${groupLabelPrefix}${groupId}`,
+            groupId,
+          )
+        : resolveDictWithFallback(dict, groupId, groupId),
     items,
   }));
 }
