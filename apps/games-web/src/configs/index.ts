@@ -94,6 +94,15 @@ export function getAppConfigByHost(host: string): AppConfig | null {
   if (isDevForgeHost(host)) {
     subdomain = subdomain.slice(0, -"-dev".length);
   }
+  // Staging host: <game>-staging.th.gl serves the same tenant as <game>.th.gl,
+  // so a migrated site can be validated on a throwaway subdomain before its
+  // real domain is repointed (the Bunny *.th.gl wildcard routes any such
+  // subdomain to this app). E.g. Songs of Conquest on soc-staging.th.gl before
+  // soc.th.gl is cut over. Composable with the -dev strip above, so it can also
+  // be exercised locally via <game>-staging-dev.localhost.
+  if (subdomain.endsWith("-staging")) {
+    subdomain = subdomain.slice(0, -"-staging".length);
+  }
   return BY_DOMAIN[subdomain] ?? null;
 }
 
