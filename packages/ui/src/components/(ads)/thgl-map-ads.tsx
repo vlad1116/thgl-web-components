@@ -274,10 +274,18 @@ function NitroPayAd({
       }
     >
       <div
-        className="bg-background/50"
+        // Clamp the NitroPay-injected creative (and its iframe) to the box —
+        // NitroPay occasionally serves a creative larger than the requested
+        // sizes; without this it overflows instead of fitting the container.
+        className="bg-background/50 [&>*]:max-w-full [&>*]:max-h-full [&_iframe]:max-w-full [&_iframe]:max-h-full"
         style={{
           width: adFormat.width,
           height: adFormat.height,
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
         id={id}
       />
@@ -308,10 +316,18 @@ function NitroPayAdLoading({
       }
     >
       <div
-        className="bg-background/50"
+        // Clamp the NitroPay-injected creative (and its iframe) to the box —
+        // NitroPay occasionally serves a creative larger than the requested
+        // sizes; without this it overflows instead of fitting the container.
+        className="bg-background/50 [&>*]:max-w-full [&>*]:max-h-full [&_iframe]:max-w-full [&_iframe]:max-h-full"
         style={{
           width: adFormat.width,
           height: adFormat.height,
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
         id={id}
       />
