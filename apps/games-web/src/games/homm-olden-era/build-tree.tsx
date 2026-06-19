@@ -172,7 +172,7 @@ export function BuildTree({
         </span>
       </div>
 
-      <div className="overflow-x-auto pb-2 themed-scroll">
+      <div className="overflow-x-auto pb-2 sidebar-scroll">
         <div
           className="relative"
           style={{
@@ -254,7 +254,12 @@ export function BuildTree({
                 }}
               >
                 {node.icon && typeof node.icon === "object" && (
-                  <SpriteIcon icon={node.icon as IconSprite} appName={APP_NAME} size={36} iconsHash={iconsHash} />
+                  <SpriteIcon
+                    icon={node.icon as IconSprite}
+                    appName={APP_NAME}
+                    size={36}
+                    iconsHash={iconsHash}
+                  />
                 )}
                 <div className="text-[11px] leading-tight text-center w-full line-clamp-2">
                   {node.name}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SpriteIcon } from "@/lib/db/sprite-icon";
 
 type IconSprite = {
@@ -102,8 +103,14 @@ export function TownPlanner({
     return { nodes: list, byKey: map };
   }, [buildings]);
 
-  // Tier = longest prerequisite chain depth (cycle-safe).
-  const tiers = useMemo(() => {
+  // Layout like the in-game / legacy soc.th.gl build tree: each building's
+  // levels stack vertically into one COLUMN (Farm Lv 1 above Lv 2 above Lv 3);
+  // columns are grouped into connected dependency COMPONENTS, ordered left→right
+  // to minimise edge crossings; a node's ROW = its longest prerequisite-chain
+  // depth. Components are packed into bands (wrapping past the column budget) so
+  // independent chains sit side by side instead of one very wide row.
+  const bands = useMemo(() => {
+    // Row = longest require-chain depth (cycle-safe).
     const depth = new Map<string, number>();
     const visiting = new Set<string>();
     const calc = (key: string): number => {
@@ -117,49 +124,132 @@ export function TownPlanner({
       return d;
     };
     nodes.forEach((n) => calc(n.key));
-    const max = Math.max(0, ...[...depth.values()]);
-    const rows: Node[][] = Array.from({ length: max + 1 }, () => []);
-    nodes.forEach((n) => rows[depth.get(n.key) ?? 0].push(n));
-    const tierRows = rows.filter((r) => r.length);
 
-    // Crossing-minimization (barycenter heuristic): order each tier by the mean
-    // position of its neighbours (prerequisites above + dependents below), swept
-    // top-down then bottom-up until it settles — so the dependency edges read as
-    // a clean tree instead of crossing spaghetti.
-    const deps = new Map<string, string[]>();
+    // One stack (column) per building, levels ascending.
+    const byBuilding = new Map<string, Node[]>();
+    for (const n of nodes)
+      (byBuilding.get(n.id) ?? byBuilding.set(n.id, []).get(n.id)!).push(n);
+    for (const arr of byBuilding.values())
+      arr.sort((a, b) => a.level - b.level);
+    type Stack = { id: string; nodes: Node[] };
+    const stacks: Stack[] = [...byBuilding.entries()].map(([id, ns]) => ({
+      id,
+      nodes: ns,
+    }));
+    const stackIdx = new Map(stacks.map((s, i) => [s.id, i]));
+
+    // Connected components: union stacks linked by a cross-building requirement.
+    const par = stacks.map((_, i) => i);
+    const find = (x: number): number =>
+      par[x] === x ? x : (par[x] = find(par[x]));
     for (const n of nodes)
       for (const r of n.requires) {
-        if (!deps.has(r)) deps.set(r, []);
-        deps.get(r)!.push(n.key);
+        const rb = byKey.get(r);
+        if (!rb || rb.id === n.id) continue;
+        par[find(stackIdx.get(n.id)!)] = find(stackIdx.get(rb.id)!);
       }
-    const pos = new Map<string, number>();
-    tierRows.forEach((t) => t.forEach((n, i) => pos.set(n.key, i)));
-    const neigh = (n: Node) => [...n.requires, ...(deps.get(n.key) ?? [])];
-    for (let pass = 0; pass < 6; pass++) {
-      const order = tierRows.map((_, i) => i);
-      if (pass % 2) order.reverse();
-      for (const ti of order) {
-        const tier = tierRows[ti];
-        const bary = new Map<string, number>();
-        for (const n of tier) {
-          const ns = neigh(n).filter((k) => pos.has(k));
-          bary.set(
-            n.key,
-            ns.length
-              ? ns.reduce((s, k) => s + pos.get(k)!, 0) / ns.length
-              : pos.get(n.key)!,
-          );
+    const compMap = new Map<number, Stack[]>();
+    stacks.forEach((s, i) => {
+      const root = find(i);
+      (compMap.get(root) ?? compMap.set(root, []).get(root)!).push(s);
+    });
+
+    // childBuildings: building id → set of OTHER buildings that depend on it.
+    const childBuildings = new Map<string, Set<string>>();
+    for (const s of stacks) childBuildings.set(s.id, new Set());
+    for (const n of nodes)
+      for (const r of n.requires) {
+        const rb = byKey.get(r);
+        if (rb && rb.id !== n.id) childBuildings.get(rb.id)!.add(n.id);
+      }
+
+    // Order a component's stacks: parents first, then permute to minimise the
+    // total horizontal edge span (legacy minimizeCrossings; capped for cost).
+    const cost = (order: Stack[]): number => {
+      const pos = new Map(order.map((s, i) => [s.id, i]));
+      let span = 0;
+      const neigh = new Map<string, number[]>(order.map((s) => [s.id, []]));
+      for (const s of order)
+        for (const cid of childBuildings.get(s.id) ?? []) {
+          const a = pos.get(s.id)!;
+          const b = pos.get(cid);
+          if (b !== undefined && b !== a) {
+            span += Math.abs(b - a);
+            neigh.get(s.id)!.push(b);
+            neigh.get(cid)!.push(a);
+          }
         }
-        tier.sort(
-          (a, b) =>
-            bary.get(a.key)! - bary.get(b.key)! ||
-            a.name.localeCompare(b.name) ||
-            a.level - b.level,
-        );
-        tier.forEach((n, i) => pos.set(n.key, i));
+      let bary = 0;
+      for (const s of order) {
+        const ps = neigh.get(s.id)!;
+        if (!ps.length) continue;
+        const avg = ps.reduce((x, y) => x + y, 0) / ps.length;
+        bary += Math.abs(pos.get(s.id)! - avg);
       }
+      return span + bary;
+    };
+    const orderStacks = (local: Stack[]): Stack[] => {
+      const sorted = [...local].sort((a, b) => {
+        const aToB = childBuildings.get(a.id)?.has(b.id);
+        const bToA = childBuildings.get(b.id)?.has(a.id);
+        if (aToB) return -1;
+        if (bToA) return 1;
+        return 0;
+      });
+      if (sorted.length < 3 || sorted.length > 7) return sorted;
+      let best = sorted;
+      let bestCost = cost(sorted);
+      const permute = (a: Stack[], start: number) => {
+        if (start === a.length) {
+          const c = cost(a);
+          if (c < bestCost - 1e-3) {
+            bestCost = c;
+            best = [...a];
+          }
+          return;
+        }
+        for (let i = start; i < a.length; i++) {
+          [a[start], a[i]] = [a[i], a[start]];
+          permute(a, start + 1);
+          [a[start], a[i]] = [a[i], a[start]];
+        }
+      };
+      permute([...sorted], 0);
+      return best;
+    };
+
+    const comps = [...compMap.values()]
+      .map(orderStacks)
+      .sort(
+        (a, b) =>
+          b.reduce((s, st) => s + st.nodes.length, 0) -
+          a.reduce((s, st) => s + st.nodes.length, 0),
+      );
+
+    // Pack components (biggest first) into bands of ~10 columns — the legacy
+    // soc.th.gl desktop budget. Independent chains sit side by side and the band
+    // scrolls horizontally; overflow buildings (Rally Point, Academy, …) wrap to
+    // a new band instead of stretching one endless row.
+    const budget = Math.max(10, ...comps.map((c) => c.length));
+    type Cell = { node: Node; col: number; row: number };
+    const out: { cols: number; cells: Cell[] }[] = [];
+    let cur: { cols: number; cells: Cell[] } = { cols: 0, cells: [] };
+    let bandX = 0;
+    for (const comp of comps) {
+      if (bandX > 0 && bandX + comp.length > budget) {
+        out.push(cur);
+        cur = { cols: 0, cells: [] };
+        bandX = 0;
+      }
+      comp.forEach((st, ci) => {
+        for (const n of st.nodes)
+          cur.cells.push({ node: n, col: bandX + ci, row: depth.get(n.key)! });
+      });
+      bandX += comp.length;
+      cur.cols = Math.max(cur.cols, bandX);
     }
-    return tierRows;
+    if (cur.cells.length) out.push(cur);
+    return out;
   }, [nodes, byKey]);
 
   // Reverse adjacency: node key → node keys that require it.
@@ -225,6 +315,9 @@ export function TownPlanner({
   );
   const [hoverNode, setHoverNode] = useState<string | null>(null);
   const [hoverTroop, setHoverTroop] = useState<string | null>(null);
+  // Card hover tooltip (cost + recruits), portalled so the scroll container
+  // can't clip it. `rect` = the hovered card's viewport box at hover time.
+  const [tip, setTip] = useState<{ key: string; rect: DOMRect } | null>(null);
   const hasSelection = selected.size > 0;
 
   // Toggle a building-level node: select it + every prerequisite, or (if already
@@ -493,7 +586,7 @@ export function TownPlanner({
       });
     });
     setRects(next);
-    setSize({ w: base.width, h: c.scrollHeight });
+    setSize({ w: Math.max(base.width, c.scrollWidth), h: c.scrollHeight });
   }, []);
 
   useEffect(() => {
@@ -505,7 +598,7 @@ export function TownPlanner({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [measure, tiers]);
+  }, [measure, bands]);
 
   const path = (from: string, to: string) => {
     const a = rects.get(from);
@@ -572,57 +665,60 @@ export function TownPlanner({
           Build Tree — click a building level to add it &amp; its prerequisites;
           hover to trace
         </div>
-        <div ref={containerRef} className="relative">
-          <svg
-            className="pointer-events-none absolute inset-0"
-            width={size.w}
-            height={size.h}
-            style={{ overflow: "visible" }}
-          >
-            {mounted &&
-              edges.map((e, i) => {
-                const d = path(e.from, e.to);
-                if (!d) return null;
-                const faded = dimmed && !e.active;
-                // Default: faint slate so the whole tree is visible. Active (the
-                // selected/hovered chain): bright — sky for an upgrade edge,
-                // amber (the functional accent) for a prerequisite edge.
-                const stroke = e.upgrade
-                  ? e.active
-                    ? "rgba(125,211,252,0.9)"
-                    : "rgba(125,211,252,0.4)"
-                  : e.active
-                    ? "rgba(251,191,36,0.9)"
-                    : "rgba(148,163,184,0.45)";
-                return (
-                  <path
-                    key={i}
-                    d={d}
-                    fill="none"
-                    stroke={stroke}
-                    strokeWidth={e.active ? 2.5 : 1.5}
-                    strokeDasharray={e.upgrade ? "5 4" : undefined}
-                    style={{
-                      opacity: faded ? 0.1 : 1,
-                      ...(e.active
-                        ? {
-                            filter: `drop-shadow(0 0 5px ${e.upgrade ? "rgba(125,211,252,0.5)" : "rgba(251,191,36,0.6)"})`,
-                          }
-                        : {}),
-                    }}
-                  />
-                );
-              })}
-          </svg>
+        <div className="overflow-x-auto pb-1 sidebar-scroll">
+          <div ref={containerRef} className="relative inline-block min-w-full">
+            <svg
+              className="pointer-events-none absolute inset-0"
+              width={size.w}
+              height={size.h}
+              style={{ overflow: "visible" }}
+            >
+              {mounted &&
+                edges.map((e, i) => {
+                  const d = path(e.from, e.to);
+                  if (!d) return null;
+                  const faded = dimmed && !e.active;
+                  // Default: faint slate so the whole tree is visible. Active
+                  // (the selected/hovered chain): bright — sky for an upgrade
+                  // edge, amber (the functional accent) for a prerequisite edge.
+                  const stroke = e.upgrade
+                    ? e.active
+                      ? "rgba(125,211,252,0.9)"
+                      : "rgba(125,211,252,0.4)"
+                    : e.active
+                      ? "rgba(251,191,36,0.9)"
+                      : "rgba(148,163,184,0.45)";
+                  return (
+                    <path
+                      key={i}
+                      d={d}
+                      fill="none"
+                      stroke={stroke}
+                      strokeWidth={e.active ? 2.5 : 1.5}
+                      strokeDasharray={e.upgrade ? "5 4" : undefined}
+                      style={{
+                        opacity: faded ? 0.1 : 1,
+                        ...(e.active
+                          ? {
+                              filter: `drop-shadow(0 0 5px ${e.upgrade ? "rgba(125,211,252,0.5)" : "rgba(251,191,36,0.6)"})`,
+                            }
+                          : {}),
+                      }}
+                    />
+                  );
+                })}
+            </svg>
 
-          <div className="relative flex flex-col gap-10">
-            {tiers.map((tier, ti) => (
-              <div key={ti} className="relative">
-                <div className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Tier {toRoman(ti + 1)}
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  {tier.map((n) => {
+            <div className="relative flex flex-col gap-y-12">
+              {bands.map((band, bi) => (
+                <div
+                  key={bi}
+                  className="grid items-start gap-x-5 gap-y-14"
+                  style={{
+                    gridTemplateColumns: `repeat(${band.cols}, 104px)`,
+                  }}
+                >
+                  {band.cells.map(({ node: n, col, row }) => {
                     const isSelected = selected.has(n.key);
                     const lit = highlight.has(n.key);
                     const faded = dimmed && !lit;
@@ -633,15 +729,24 @@ export function TownPlanner({
                           if (el) cardRefs.current.set(n.key, el);
                           else cardRefs.current.delete(n.key);
                         }}
-                        onMouseEnter={() => setHoverNode(n.key)}
-                        onMouseLeave={() => setHoverNode(null)}
+                        onMouseEnter={(e) => {
+                          setHoverNode(n.key);
+                          setTip({
+                            key: n.key,
+                            rect: e.currentTarget.getBoundingClientRect(),
+                          });
+                        }}
+                        onMouseLeave={() => {
+                          setHoverNode(null);
+                          setTip(null);
+                        }}
                         onClick={() => toggleNode(n.key)}
                         title={
                           isSelected
                             ? "Remove from build order"
                             : "Add to build order"
                         }
-                        className={`group relative w-[176px] cursor-pointer rounded-md border p-3 transition-all duration-200 ${
+                        className={`group relative flex w-[104px] cursor-pointer flex-col items-center gap-1.5 self-start rounded-md border p-2 text-center transition-all duration-200 ${
                           isSelected
                             ? "border-amber-400/90 bg-amber-950/40"
                             : lit
@@ -649,6 +754,8 @@ export function TownPlanner({
                               : "border-slate-700/60 bg-[#13151a]"
                         }`}
                         style={{
+                          gridColumnStart: col + 1,
+                          gridRowStart: row + 1,
                           opacity: faded ? 0.32 : 1,
                           boxShadow: isSelected
                             ? "0 0 0 1px rgba(245,200,110,0.45), 0 8px 26px rgba(0,0,0,0.5)"
@@ -660,75 +767,38 @@ export function TownPlanner({
                             ✓
                           </span>
                         )}
-                        <Corner className="left-1 top-1" />
-                        <Corner className="right-1 top-1 rotate-90" />
-                        <Corner className="left-1 bottom-1 -rotate-90" />
-                        <Corner className="right-1 bottom-1 rotate-180" />
-
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/40">
-                            {icons?.[n.id] ? (
-                              <SpriteIcon
-                                icon={icons[n.id]}
-                                appName={appName}
-                                size={40}
-                                iconsHash={iconsHash}
-                              />
-                            ) : (
-                              <span className="text-slate-600 text-lg">⌂</span>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate text-[13px] font-bold tracking-wide text-slate-100">
-                                {n.name}
-                              </span>
-                              <span
-                                className={`shrink-0 rounded-sm border px-1 text-[9px] font-semibold leading-tight ${
-                                  n.level > 1
-                                    ? "border-sky-600/50 bg-sky-950/40 text-sky-300/90"
-                                    : "border-slate-700/50 bg-black/40 text-slate-400"
-                                }`}
-                              >
-                                Lv {n.level}
-                              </span>
-                            </div>
-                            {n.cost.length > 0 && (
-                              <div className="mt-1">{renderCost(n.cost)}</div>
-                            )}
-                          </div>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/40">
+                          {icons?.[n.id] ? (
+                            <SpriteIcon
+                              icon={icons[n.id]}
+                              appName={appName}
+                              size={36}
+                              iconsHash={iconsHash}
+                            />
+                          ) : (
+                            <span className="text-slate-600 text-lg">⌂</span>
+                          )}
                         </div>
-
-                        {n.recruits.length > 0 && (
-                          <div className="mt-2.5 flex flex-wrap gap-1 border-t border-slate-800 pt-2">
-                            {n.recruits.map((r) => (
-                              <span
-                                key={r.id}
-                                className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[9.5px] tracking-wide transition-colors ${
-                                  availableTroops.has(r.id)
-                                    ? "bg-amber-400/25 text-amber-100"
-                                    : "bg-black/40 text-slate-300/90"
-                                }`}
-                              >
-                                {icons?.[r.id] && (
-                                  <SpriteIcon
-                                    icon={icons[r.id]}
-                                    appName={appName}
-                                    size={14}
-                                    iconsHash={iconsHash}
-                                  />
-                                )}
-                                {r.name}
-                              </span>
-                            ))}
+                        <div className="w-full">
+                          <div className="line-clamp-2 text-[11px] font-bold leading-tight tracking-wide text-slate-100">
+                            {n.name}
                           </div>
-                        )}
+                          <span
+                            className={`mt-1 inline-block rounded-sm border px-1 text-[9px] font-semibold leading-tight ${
+                              n.level > 1
+                                ? "border-sky-600/50 bg-sky-950/40 text-sky-300/90"
+                                : "border-slate-700/50 bg-black/40 text-slate-400"
+                            }`}
+                          >
+                            Lv {n.level}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -834,19 +904,79 @@ export function TownPlanner({
           </div>
         </div>
       )}
+
+      {/* Card hover tooltip — cost + recruits, portalled past the scroll clip. */}
+      {mounted &&
+        tip &&
+        (() => {
+          const n = byKey.get(tip.key);
+          if (!n || (n.cost.length === 0 && n.recruits.length === 0))
+            return null;
+          const r = tip.rect;
+          const TW = 240;
+          let x = r.left;
+          if (x + TW > window.innerWidth - 8) x = window.innerWidth - TW - 8;
+          if (x < 8) x = 8;
+          const below = r.top < 240;
+          return createPortal(
+            <div
+              className="pointer-events-none fixed w-60 rounded-lg border border-slate-700 bg-zinc-900 p-3 shadow-2xl"
+              style={{
+                left: x,
+                top: below ? r.bottom + 6 : r.top - 6,
+                transform: below ? undefined : "translateY(-100%)",
+                zIndex: 99999,
+              }}
+            >
+              <div className="mb-2 flex items-baseline gap-1.5">
+                <span className="text-[13px] font-bold text-slate-100">
+                  {n.name}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  Lv {n.level}
+                </span>
+              </div>
+              {n.cost.length > 0 && (
+                <div className={n.recruits.length > 0 ? "mb-2" : ""}>
+                  <div className="mb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Cost
+                  </div>
+                  {renderCost(n.cost)}
+                </div>
+              )}
+              {n.recruits.length > 0 && (
+                <div>
+                  <div className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Recruits
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {n.recruits.map((rc) => (
+                      <span
+                        key={rc.id}
+                        className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] tracking-wide ${
+                          availableTroops.has(rc.id)
+                            ? "bg-amber-400/25 text-amber-100"
+                            : "bg-black/40 text-slate-300/90"
+                        }`}
+                      >
+                        {icons?.[rc.id] && (
+                          <SpriteIcon
+                            icon={icons[rc.id]}
+                            appName={appName}
+                            size={14}
+                            iconsHash={iconsHash}
+                          />
+                        )}
+                        {rc.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>,
+            document.body,
+          );
+        })()}
     </div>
-  );
-}
-
-function toRoman(n: number): string {
-  return ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"][n - 1] ?? String(n);
-}
-
-/** Small L-shaped corner flourish on each building card. */
-function Corner({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`pointer-events-none absolute h-2 w-2 border-l border-t border-slate-700/40 ${className}`}
-    />
   );
 }
