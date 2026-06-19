@@ -6,6 +6,10 @@ import { EntityTooltip } from "@/lib/db/entity-tooltip";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { TownPlanner } from "@/games/songs-of-conquest/town-planner";
 import {
+  SkillPoolPlanner,
+  type SkillPool,
+} from "@/games/songs-of-conquest/skill-planner";
+import {
   UnitView,
   type UnitVariant,
 } from "@/games/songs-of-conquest/unit-view";
@@ -73,6 +77,9 @@ export function SocEntityView(props: {
     | { buildings: Parameters<typeof TownPlanner>[0]["buildings"] }
     | undefined;
   const unit = props.props?._unit as { variants: UnitVariant[] } | undefined;
+  const skillPool = props.props?._skillPool as
+    | { pools: SkillPool[] }
+    | undefined;
 
   return (
     <>
@@ -185,6 +192,15 @@ export function SocEntityView(props: {
           )}
         </div>
       ))}
+      {skillPool?.pools?.length ? (
+        <SkillPoolPlanner
+          pools={skillPool.pools}
+          icons={icons}
+          appName={appName}
+          iconsHash={iconsHash}
+          dict={dict}
+        />
+      ) : null}
       {townGraph && townGraph.buildings.length > 0 && (
         <TownPlanner
           buildings={townGraph.buildings}
