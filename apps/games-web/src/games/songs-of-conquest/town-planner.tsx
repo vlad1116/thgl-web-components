@@ -12,7 +12,13 @@ type IconSprite = {
   height: number;
 };
 type CostEntry = { amount: number; name: string; iconId?: string };
-type Recruit = { id: string; name: string; research?: number[] };
+type Recruit = {
+  id: string;
+  name: string;
+  research?: number[];
+  order?: number; // canonical roster order (for sorting pills)
+  tier?: number; // unit variant level (1 vanilla / 2 upgraded / 3 super)
+};
 type Level = {
   level: number;
   cost: CostEntry[];
@@ -36,7 +42,13 @@ type Node = {
   level: number;
   name: string;
   cost: CostEntry[];
-  recruits: { id: string; name: string; research: number[] }[];
+  recruits: {
+    id: string;
+    name: string;
+    research: number[];
+    order: number;
+    tier: number;
+  }[];
   requires: string[]; // prerequisite node keys
 };
 
@@ -90,6 +102,8 @@ export function TownPlanner({
             id: r.id,
             name: r.name,
             research: r.research ?? [],
+            order: r.order ?? 999,
+            tier: r.tier ?? 1,
           })),
           requires: [
             ...(lvl.level > 1 ? [`${b.id}/${lvl.level - 1}`] : []),
@@ -268,7 +282,14 @@ export function TownPlanner({
   const troops = useMemo(() => {
     const m = new Map<
       string,
-      { id: string; name: string; research: number[]; from: string[] }
+      {
+        id: string;
+        name: string;
+        research: number[];
+        order: number;
+        tier: number;
+        from: string[];
+      }
     >();
     for (const n of nodes)
       for (const u of n.recruits) {
@@ -276,12 +297,18 @@ export function TownPlanner({
           id: u.id,
           name: u.name,
           research: u.research,
+          order: u.order,
+          tier: u.tier,
           from: [],
         };
         e.from.push(n.key);
         m.set(u.id, e);
       }
-    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // Canonical roster order, then variant tier (Lv 1 → 2 → 3 within a family).
+    return [...m.values()].sort(
+      (a, b) =>
+        a.order - b.order || a.tier - b.tier || a.name.localeCompare(b.name),
+    );
   }, [nodes]);
 
   // troop id → the building LEVEL node that trains it + its gating research.
@@ -390,6 +417,7 @@ export function TownPlanner({
     (key: string) => {
       setHoverNode(null);
       setHoverTroop(null);
+      setTip(null); // touch/"desktop mode on mobile": no mouseleave fires on tap
       const { sel, res } = computeToggleNode(key);
       setSelected(sel);
       setSelectedResearch(res);
@@ -665,7 +693,9 @@ export function TownPlanner({
           Build Tree — click a building level to add it &amp; its prerequisites;
           hover to trace
         </div>
-        <div className="overflow-x-auto pb-1 sidebar-scroll">
+        {/* pt-2 keeps the top row's selected (✓) badge from being clipped by
+            the scroll container's vertical overflow. */}
+        <div className="overflow-x-auto pt-2 pb-1 sidebar-scroll">
           <div ref={containerRef} className="relative inline-block min-w-full">
             <svg
               className="pointer-events-none absolute inset-0"
@@ -834,6 +864,16 @@ export function TownPlanner({
                     />
                   )}
                   {tr.name}
+                  <span
+                    className={`rounded-sm px-1 text-[8px] font-bold leading-tight ${
+                      on
+                        ? "bg-amber-400/30 text-amber-100"
+                        : "bg-black/40 text-slate-400"
+                    }`}
+                    title={`Level ${tr.tier} unit`}
+                  >
+                    {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
+                  </span>
                 </button>
               );
             })}
@@ -950,26 +990,31 @@ export function TownPlanner({
                     Recruits
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {n.recruits.map((rc) => (
-                      <span
-                        key={rc.id}
-                        className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] tracking-wide ${
-                          availableTroops.has(rc.id)
-                            ? "bg-amber-400/25 text-amber-100"
-                            : "bg-black/40 text-slate-300/90"
-                        }`}
-                      >
-                        {icons?.[rc.id] && (
-                          <SpriteIcon
-                            icon={icons[rc.id]}
-                            appName={appName}
-                            size={14}
-                            iconsHash={iconsHash}
-                          />
-                        )}
-                        {rc.name}
-                      </span>
-                    ))}
+                    {[...n.recruits]
+                      .sort((a, b) => a.order - b.order || a.tier - b.tier)
+                      .map((rc) => (
+                        <span
+                          key={rc.id}
+                          className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] tracking-wide ${
+                            availableTroops.has(rc.id)
+                              ? "bg-amber-400/25 text-amber-100"
+                              : "bg-black/40 text-slate-300/90"
+                          }`}
+                        >
+                          {icons?.[rc.id] && (
+                            <SpriteIcon
+                              icon={icons[rc.id]}
+                              appName={appName}
+                              size={14}
+                              iconsHash={iconsHash}
+                            />
+                          )}
+                          {rc.name}
+                          <span className="text-[8px] font-bold text-slate-400">
+                            {["I", "II", "III"][rc.tier - 1] ?? rc.tier}
+                          </span>
+                        </span>
+                      ))}
                   </div>
                 </div>
               )}
