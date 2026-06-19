@@ -1,11 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Cinzel } from "next/font/google";
 import { SpriteIcon } from "@/lib/db/sprite-icon";
 import { resolveDict } from "@/lib/db/resolve-dict";
-
-const cinzel = Cinzel({ subsets: ["latin"], weight: ["500", "700"] });
 
 type IconSprite = {
   url: string;
@@ -281,12 +278,10 @@ export function SkillPoolPlanner({
     <div className="mt-2 mb-6">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3
-            className={`${cinzel.className} text-lg font-bold text-amber-100`}
-          >
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Skill Tree
-          </h3>
-          <p className="text-xs text-muted-foreground">
+          </div>
+          <p className="max-w-2xl text-xs text-muted-foreground/80">
             Skills draftable at each wielder level — each pick is one level
             (dots show progress). Click to plan a build; a level needs the one
             before it plus any prerequisites. Hover to trace what it needs and
@@ -307,12 +302,10 @@ export function SkillPoolPlanner({
         {enrichedPools.map((pool, pi) => (
           <div key={pi}>
             <div className="mb-2 flex items-center gap-2">
-              <span
-                className={`${cinzel.className} shrink-0 text-sm font-bold uppercase tracking-wide text-amber-200/90`}
-              >
+              <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 {pool.label}
               </span>
-              <span className="h-px flex-1 bg-gradient-to-r from-amber-800/40 to-transparent" />
+              <span className="h-px flex-1 bg-slate-800" />
             </div>
             <div className="flex flex-wrap gap-2">{pool.nodes.map(card)}</div>
           </div>

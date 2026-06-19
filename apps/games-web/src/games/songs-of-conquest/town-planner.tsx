@@ -1,10 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cinzel } from "next/font/google";
 import { SpriteIcon } from "@/lib/db/sprite-icon";
-
-const cinzel = Cinzel({ subsets: ["latin"], weight: ["500", "700", "900"] });
 
 type IconSprite = {
   url: string;
@@ -346,7 +343,7 @@ export function TownPlanner({
           key={i}
           title={c.name}
           className={`inline-flex items-center gap-0.5 text-[11px] font-semibold ${
-            muted ? "text-amber-300/70" : "text-amber-200/90"
+            muted ? "text-slate-400" : "text-slate-200"
           }`}
         >
           {c.amount}
@@ -358,7 +355,7 @@ export function TownPlanner({
               iconsHash={iconsHash}
             />
           ) : (
-            <span className="text-amber-500/60">{" " + c.name}</span>
+            <span className="text-slate-400">{" " + c.name}</span>
           )}
         </span>
       ))}
@@ -366,29 +363,13 @@ export function TownPlanner({
   );
 
   return (
-    <div
-      className={`${cinzel.className} relative mt-8 overflow-hidden rounded-lg border border-amber-900/40 bg-[#0e1014] p-5 sm:p-7`}
-      style={{
-        backgroundImage:
-          "radial-gradient(120% 80% at 50% -10%, rgba(214,178,102,0.10), transparent 60%), radial-gradient(80% 60% at 50% 120%, rgba(120,90,40,0.08), transparent 60%)",
-      }}
-    >
-      <div className="pointer-events-none absolute inset-1.5 rounded-md border border-amber-700/20" />
-
-      <header className="relative mb-6 flex items-end justify-between gap-4">
+    <div className="relative mt-2 mb-6">
+      <header className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.45em] text-amber-600/80">
-            {factionLabel ?? "Stronghold"}
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Town Build{factionLabel ? ` · ${factionLabel}` : ""}
           </div>
-          <h2
-            className="text-2xl sm:text-3xl font-black tracking-[0.18em] text-amber-100"
-            style={{
-              textShadow: "0 1px 0 #000, 0 0 18px rgba(214,178,102,0.25)",
-            }}
-          >
-            TOWN BUILD
-          </h2>
-          <p className="mt-1 text-[11px] tracking-wide text-amber-700/60">
+          <p className="max-w-2xl text-xs text-muted-foreground/80">
             Click building levels to plan a build order · hover to trace what
             each needs &amp; unlocks
           </p>
@@ -396,7 +377,7 @@ export function TownPlanner({
         {hasSelection && (
           <button
             onClick={clear}
-            className="shrink-0 rounded border border-amber-700/40 bg-amber-950/30 px-3 py-1 text-[11px] uppercase tracking-widest text-amber-300/90 transition-colors hover:bg-amber-900/30"
+            className="shrink-0 rounded border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-slate-300 transition-colors hover:border-amber-700/60 hover:text-amber-200"
           >
             Reset
           </button>
@@ -435,7 +416,7 @@ export function TownPlanner({
         <div className="relative flex flex-col gap-10">
           {tiers.map((tier, ti) => (
             <div key={ti} className="relative">
-              <div className="mb-2 text-[10px] uppercase tracking-[0.35em] text-amber-700/50">
+              <div className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
                 Tier {toRoman(ti + 1)}
               </div>
               <div className="flex flex-wrap gap-4">
@@ -492,7 +473,7 @@ export function TownPlanner({
                       <Corner className="right-1 bottom-1 rotate-180" />
 
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-amber-800/40 bg-black/40">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/40">
                           {icons?.[n.id] ? (
                             <SpriteIcon
                               icon={icons[n.id]}
@@ -501,19 +482,19 @@ export function TownPlanner({
                               iconsHash={iconsHash}
                             />
                           ) : (
-                            <span className="text-amber-700/50 text-lg">⌂</span>
+                            <span className="text-slate-600 text-lg">⌂</span>
                           )}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="truncate text-[13px] font-bold tracking-wide text-amber-50">
+                            <span className="truncate text-[13px] font-bold tracking-wide text-slate-100">
                               {n.name}
                             </span>
                             <span
                               className={`shrink-0 rounded-sm border px-1 text-[9px] font-semibold leading-tight ${
                                 n.level > 1
                                   ? "border-sky-600/50 bg-sky-950/40 text-sky-300/90"
-                                  : "border-amber-700/40 bg-black/40 text-amber-500/80"
+                                  : "border-slate-700/50 bg-black/40 text-slate-400"
                               }`}
                             >
                               Lv {n.level}
@@ -526,7 +507,7 @@ export function TownPlanner({
                       </div>
 
                       {n.recruits.length > 0 && (
-                        <div className="mt-2.5 flex flex-wrap gap-1 border-t border-amber-900/30 pt-2">
+                        <div className="mt-2.5 flex flex-wrap gap-1 border-t border-slate-800 pt-2">
                           {n.recruits.map((r) => (
                             <span
                               key={r.id}
@@ -560,8 +541,8 @@ export function TownPlanner({
 
       {/* ── Muster roll ── */}
       {troops.length > 0 && (
-        <div className="relative mt-8 border-t border-amber-900/30 pt-5">
-          <div className="mb-3 text-[10px] uppercase tracking-[0.35em] text-amber-700/60">
+        <div className="relative mt-8 border-t border-slate-800 pt-5">
+          <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
             Muster Roll — hover a troop to trace where it's trained
           </div>
           <div className="flex flex-wrap gap-2">
@@ -602,15 +583,15 @@ export function TownPlanner({
 
       {/* ── Build Order ── */}
       {buildOrder.length > 0 && (
-        <div className="relative mt-8 border-t border-amber-900/30 pt-5">
-          <div className="mb-3 text-[10px] uppercase tracking-[0.35em] text-amber-700/60">
+        <div className="relative mt-8 border-t border-slate-800 pt-5">
+          <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
             Build Order — {buildOrder.length} step
             {buildOrder.length > 1 ? "s" : ""}
           </div>
-          <div className="overflow-hidden rounded-md border border-amber-900/30">
+          <div className="overflow-hidden rounded-md border border-slate-800">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-black/30 text-[10px] uppercase tracking-wider text-amber-700/70">
+                <tr className="bg-black/30 text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="w-8 px-3 py-2 text-left font-semibold">#</th>
                   <th className="px-3 py-2 text-left font-semibold">Build</th>
                   <th className="px-3 py-2 text-left font-semibold">Cost</th>
@@ -635,7 +616,7 @@ export function TownPlanner({
                             iconsHash={iconsHash}
                           />
                         )}
-                        <span className="text-amber-50">
+                        <span className="text-slate-100">
                           {s.name}
                           {s.level > 1 && (
                             <span className="text-sky-300/80">
@@ -669,7 +650,7 @@ function toRoman(n: number): string {
 function Corner({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`pointer-events-none absolute h-2 w-2 border-l border-t border-amber-600/40 ${className}`}
+      className={`pointer-events-none absolute h-2 w-2 border-l border-t border-slate-700/40 ${className}`}
     />
   );
 }

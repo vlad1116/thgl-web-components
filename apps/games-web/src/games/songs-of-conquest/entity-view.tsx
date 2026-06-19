@@ -6,6 +6,10 @@ import { EntityTooltip } from "@/lib/db/entity-tooltip";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { TownPlanner } from "@/games/songs-of-conquest/town-planner";
 import {
+  ResearchList,
+  type ResearchItem,
+} from "@/games/songs-of-conquest/research-list";
+import {
   SkillPoolPlanner,
   type SkillPool,
 } from "@/games/songs-of-conquest/skill-planner";
@@ -80,6 +84,7 @@ export function SocEntityView(props: {
   const skillPool = props.props?._skillPool as
     | { pools: SkillPool[] }
     | undefined;
+  const research = props.props?._research as ResearchItem[] | undefined;
 
   return (
     <>
@@ -192,6 +197,15 @@ export function SocEntityView(props: {
           )}
         </div>
       ))}
+      {research?.length ? (
+        <ResearchList
+          research={research}
+          icons={icons}
+          appName={appName}
+          iconsHash={iconsHash}
+          locale={locale}
+        />
+      ) : null}
       {skillPool?.pools?.length ? (
         <SkillPoolPlanner
           pools={skillPool.pools}

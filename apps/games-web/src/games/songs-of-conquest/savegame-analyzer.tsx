@@ -1,9 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Cinzel } from "next/font/google";
-
-const cinzel = Cinzel({ subsets: ["latin"], weight: ["700", "900"] });
 
 const RESOURCES = [
   "Gold",
@@ -195,11 +192,7 @@ export function SavegameAnalyzer() {
   if (!save) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1
-          className={`${cinzel.className} text-3xl font-black tracking-[0.12em] text-amber-100`}
-        >
-          Savegame Analyzer
-        </h1>
+        <h1 className="text-2xl font-bold text-slate-100">Savegame Analyzer</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Drop a Songs of Conquest savegame to chart each team's progress, army
           value, battles and economy round by round. Everything is parsed
@@ -280,16 +273,14 @@ export function SavegameAnalyzer() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1
-            className={`${cinzel.className} text-3xl font-black tracking-[0.12em] text-amber-100`}
-          >
+          <h1 className="text-2xl font-bold text-slate-100">
             {m.MapName || "Savegame"}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">{fileName}</p>
         </div>
         <button
           onClick={() => setSave(null)}
-          className="rounded border border-amber-700/40 bg-amber-950/30 px-3 py-1 text-[11px] uppercase tracking-widest text-amber-300/90 hover:bg-amber-900/30"
+          className="shrink-0 rounded border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-slate-300 transition-colors hover:border-amber-700/60 hover:text-amber-200"
         >
           Load another
         </button>
