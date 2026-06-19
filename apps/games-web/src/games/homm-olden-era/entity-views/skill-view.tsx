@@ -76,7 +76,12 @@ function fillSkillLevelPlaceholders(
   for (const b of bonuses) {
     for (const p of b.params ?? []) {
       const n = parseFloat(String(p));
-      if (!isNaN(n) && n !== 0 && String(p) !== "true" && String(p) !== "false") {
+      if (
+        !isNaN(n) &&
+        n !== 0 &&
+        String(p) !== "true" &&
+        String(p) !== "false"
+      ) {
         const abs = Math.abs(n);
         numericValues.push(
           abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
@@ -152,6 +157,7 @@ export function SkillView({
   entryId,
   iconsHash,
   parentSkill,
+  compatibleFrom,
 }: {
   name: string;
   desc: string;
@@ -164,225 +170,306 @@ export function SkillView({
   entryId?: string;
   iconsHash?: string;
   parentSkill?: { id: string; level: number } | null;
+  /** Reverse compatibility: other skills whose sub-skills target THIS skill. */
+  compatibleFrom?: { id: string; via: string[] }[];
 }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+        {icon && (
+          <SpriteIcon
+            icon={icon}
+            appName={APP_NAME}
+            size={64}
+            iconsHash={iconsHash}
+          />
+        )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
               {isSubSkill ? resolveDict(dict, "ui.sub_skill") : props.skillType}
             </span>
-            {isSubSkill && parentSkill && (() => {
-              const parentName = resolveDict(dict, parentSkill.id);
-              const levelLabel = ["Basic", "Advanced", "Expert"][parentSkill.level - 1]
-                ?? `Lv. ${parentSkill.level}`;
-              return (
-                <Link
-                  href={localizePath(`/db/skills/${parentSkill.id}`, locale)}
-                  prefetch={false}
-                  className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  {parentName} ({levelLabel})
-                </Link>
-              );
-            })()}
+            {isSubSkill &&
+              parentSkill &&
+              (() => {
+                const parentName = resolveDict(dict, parentSkill.id);
+                const levelLabel =
+                  ["Basic", "Advanced", "Expert"][parentSkill.level - 1] ??
+                  `Lv. ${parentSkill.level}`;
+                return (
+                  <Link
+                    href={localizePath(`/db/skills/${parentSkill.id}`, locale)}
+                    prefetch={false}
+                    className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    {parentName} ({levelLabel})
+                  </Link>
+                );
+              })()}
           </div>
         </div>
       </div>
 
-      {desc && desc !== name && !desc.includes("_desc") && (() => {
-        const stripped = desc.replace(/<[^>]+>/g, "");
-        // Prefer the pre-computed `descParams` for sub-skills (those carry
-        // values pulled from chased buff references, so they cover cases the
-        // generic bonus-param walk misses — e.g. Battle Frenzy's +2 Attack).
-        let substituted: string;
-        if (props.descParams && props.descParams.length > 0) {
-          substituted = stripped.replace(/\{(\d+)\}/g, (_, idx) => {
-            const v = props.descParams?.[parseInt(idx, 10)];
-            return v != null ? String(v) : "?";
-          });
-        } else {
-          substituted = fillSkillLevelPlaceholders(
-            stripped,
-            props.levels?.[0]?.bonuses ?? props.bonuses ?? [],
+      {desc &&
+        desc !== name &&
+        !desc.includes("_desc") &&
+        (() => {
+          const stripped = desc.replace(/<[^>]+>/g, "");
+          // Prefer the pre-computed `descParams` for sub-skills (those carry
+          // values pulled from chased buff references, so they cover cases the
+          // generic bonus-param walk misses — e.g. Battle Frenzy's +2 Attack).
+          let substituted: string;
+          if (props.descParams && props.descParams.length > 0) {
+            substituted = stripped.replace(/\{(\d+)\}/g, (_, idx) => {
+              const v = props.descParams?.[parseInt(idx, 10)];
+              return v != null ? String(v) : "?";
+            });
+          } else {
+            substituted = fillSkillLevelPlaceholders(
+              stripped,
+              props.levels?.[0]?.bonuses ?? props.bonuses ?? [],
+            );
+          }
+          return (
+            <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
+              {renderDescWithSkillLinks(substituted, database, dict, locale)}
+            </p>
           );
-        }
-        return (
-          <p className="text-muted-foreground italic border-l-2 border-amber-800/50 pl-3">
-            {renderDescWithSkillLinks(substituted, database, dict, locale)}
-          </p>
-        );
-      })()}
+        })()}
 
-      {!isSubSkill && props.compatibleWith && props.compatibleWith.length > 0 && (
+      {!isSubSkill &&
+        props.compatibleWith &&
+        props.compatibleWith.length > 0 && (
+          <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-3">
+            <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+              Compatible With
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {props.compatibleWith.map((c) => (
+                <EntityLinkCard
+                  key={c.id}
+                  itemId={c.id}
+                  database={database}
+                  locale={locale}
+                  dict={dict}
+                  iconsHash={iconsHash}
+                />
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Skills referenced as synergies in this skill&rsquo;s sub-skill
+              descriptions (e.g. &ldquo;doubled if the hero
+              knows&hellip;&rdquo;).
+            </p>
+          </div>
+        )}
+
+      {!isSubSkill && compatibleFrom && compatibleFrom.length > 0 && (
         <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-3">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-            Compatible With
+            Compatible From
           </h2>
           <div className="flex flex-wrap gap-2">
-            {props.compatibleWith.map((c) => (
-              <EntityLinkCard
-                key={c.id}
-                itemId={c.id}
-                database={database}
-                locale={locale}
-                dict={dict}
-                iconsHash={iconsHash}
-              />
-            ))}
+            {compatibleFrom.map((c) => {
+              const skillName = resolveDict(dict, c.id);
+              return (
+                <div
+                  key={c.id}
+                  className="bg-slate-900/30 border border-slate-800/50 rounded px-3 py-2"
+                >
+                  <Link
+                    href={localizePath(`/db/skills/${c.id}`, locale)}
+                    prefetch={false}
+                    className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    {skillName}
+                  </Link>
+                  {c.via.length > 0 && (
+                    <span className="block text-xs text-muted-foreground">
+                      via{" "}
+                      {c.via.map((sub, i) => (
+                        <span key={sub}>
+                          {i > 0 && ", "}
+                          <Link
+                            href={localizePath(`/db/skills/${sub}`, locale)}
+                            prefetch={false}
+                            className="text-amber-400/80 hover:text-amber-300 transition-colors"
+                          >
+                            {resolveDict(dict, sub)}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Skills referenced as synergies in this skill&rsquo;s sub-skill descriptions (e.g. &ldquo;doubled if the hero knows&hellip;&rdquo;).
+            Skills whose sub-skills enhance this one.
           </p>
         </div>
       )}
 
-      {props.avatarSummon && (() => {
-        const av = props.avatarSummon!;
-        const pct = (v?: number) =>
-          v == null ? null : `${Math.round(v * 100)}%`;
-        return (
-          <div>
-            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-              {resolveDict(dict, "ui.summoned_unit")}
-            </h2>
-            <p className="text-xs text-muted-foreground mb-3">
-              {resolveDict(dict, "ui.summon_scaling_note")}
-            </p>
-            <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-1 text-sm">
-              {av.spellPowerScaling != null && (
-                <div>
-                  <span className="text-muted-foreground">
-                    {resolveDict(dict, "ui.summon_sp_scaling")}:{" "}
-                  </span>
-                  <span className="font-medium text-amber-300">
-                    {pct(av.spellPowerScaling)}
-                  </span>
-                </div>
-              )}
-              {av.knowledgeScaling != null && (
-                <div>
-                  <span className="text-muted-foreground">
-                    {resolveDict(dict, "ui.summon_knowledge_scaling")}:{" "}
-                  </span>
-                  <span className="font-medium text-amber-300">
-                    {pct(av.knowledgeScaling)}
-                  </span>
-                </div>
-              )}
-              {av.base && (
-                <div className="pt-1 text-muted-foreground">
-                  {resolveDict(dict, "ui.summon_base_stats")} (
-                  {resolveDict(dict, av.receiverName)}):{" "}
-                  <span className="text-slate-200">
-                    {resolveDict(dict, "ui.hp")} {av.base.hp} · {resolveDict(dict, "ui.dmg")}{" "}
-                    {av.base.damageMin === av.base.damageMax
-                      ? av.base.damageMin
-                      : `${av.base.damageMin}–${av.base.damageMax}`}{" "}
-                    · {resolveDict(dict, "ui.init")} {av.base.initiative} ·{" "}
-                    {resolveDict(dict, "ui.speed")} {av.base.speed}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-
-      {props.diplomacy && (() => {
-        const d = props.diplomacy!;
-        const fmtPct = (v: number) =>
-          `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`;
-        return (
-          <div>
-            <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-              {resolveDict(dict, "ui.diplomacy_how")}
-            </h2>
-            <p className="text-xs text-muted-foreground mb-3">
-              {resolveDict(dict, "ui.diplomacy_how_note")}
-            </p>
-            <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-3 text-sm">
-              {/* Per-level efficiency */}
-              <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                  {resolveDict(dict, "ui.diplomacy_efficiency")}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {d.efficiencyPerLevel.map((eff, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-1 rounded border border-slate-700 bg-slate-900/40"
-                    >
-                      {SKILL_LEVEL_LABELS[i] ?? `Lv. ${i + 1}`}:{" "}
-                      <span className="text-amber-300 font-medium">{fmtPct(eff)}</span>
+      {props.avatarSummon &&
+        (() => {
+          const av = props.avatarSummon!;
+          const pct = (v?: number) =>
+            v == null ? null : `${Math.round(v * 100)}%`;
+          return (
+            <div>
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+                {resolveDict(dict, "ui.summoned_unit")}
+              </h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                {resolveDict(dict, "ui.summon_scaling_note")}
+              </p>
+              <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-1 text-sm">
+                {av.spellPowerScaling != null && (
+                  <div>
+                    <span className="text-muted-foreground">
+                      {resolveDict(dict, "ui.summon_sp_scaling")}:{" "}
                     </span>
-                  ))}
-                </div>
+                    <span className="font-medium text-amber-300">
+                      {pct(av.spellPowerScaling)}
+                    </span>
+                  </div>
+                )}
+                {av.knowledgeScaling != null && (
+                  <div>
+                    <span className="text-muted-foreground">
+                      {resolveDict(dict, "ui.summon_knowledge_scaling")}:{" "}
+                    </span>
+                    <span className="font-medium text-amber-300">
+                      {pct(av.knowledgeScaling)}
+                    </span>
+                  </div>
+                )}
+                {av.base && (
+                  <div className="pt-1 text-muted-foreground">
+                    {resolveDict(dict, "ui.summon_base_stats")} (
+                    {resolveDict(dict, av.receiverName)}):{" "}
+                    <span className="text-slate-200">
+                      {resolveDict(dict, "ui.hp")} {av.base.hp} ·{" "}
+                      {resolveDict(dict, "ui.dmg")}{" "}
+                      {av.base.damageMin === av.base.damageMax
+                        ? av.base.damageMin
+                        : `${av.base.damageMin}–${av.base.damageMax}`}{" "}
+                      · {resolveDict(dict, "ui.init")} {av.base.initiative} ·{" "}
+                      {resolveDict(dict, "ui.speed")} {av.base.speed}
+                    </span>
+                  </div>
+                )}
               </div>
-              {/* Base chance curve */}
-              {d.valueChancePairs && d.valueChancePairs.length > 0 && (
+            </div>
+          );
+        })()}
+
+      {props.diplomacy &&
+        (() => {
+          const d = props.diplomacy!;
+          const fmtPct = (v: number) =>
+            `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`;
+          return (
+            <div>
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+                {resolveDict(dict, "ui.diplomacy_how")}
+              </h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                {resolveDict(dict, "ui.diplomacy_how_note")}
+              </p>
+              <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4 space-y-3 text-sm">
+                {/* Per-level efficiency */}
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                    {resolveDict(dict, "ui.diplomacy_base_chance")}
+                    {resolveDict(dict, "ui.diplomacy_efficiency")}
                   </div>
-                  <div className="border border-slate-800 rounded overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="bg-slate-900/60 border-b border-slate-800 text-xs text-muted-foreground">
-                          <th className="px-3 py-1.5 font-medium">
-                            {resolveDict(dict, "ui.diplomacy_ratio")}
-                          </th>
-                          <th className="px-3 py-1.5 font-medium">
-                            {resolveDict(dict, "ui.diplomacy_chance")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {d.valueChancePairs.map((p, i) => (
-                          <tr key={i} className="border-b border-slate-800/50 last:border-0">
-                            <td className="px-3 py-1.5">{p.value.toFixed(2)}×</td>
-                            <td
-                              className={`px-3 py-1.5 font-medium ${
-                                p.chance < 0 ? "text-red-400" : p.chance > 0 ? "text-green-400" : "text-slate-300"
-                              }`}
-                            >
-                              {fmtPct(p.chance)}
-                            </td>
+                  <div className="flex flex-wrap gap-2">
+                    {d.efficiencyPerLevel.map((eff, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 rounded border border-slate-700 bg-slate-900/40"
+                      >
+                        {SKILL_LEVEL_LABELS[i] ?? `Lv. ${i + 1}`}:{" "}
+                        <span className="text-amber-300 font-medium">
+                          {fmtPct(eff)}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Base chance curve */}
+                {d.valueChancePairs && d.valueChancePairs.length > 0 && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                      {resolveDict(dict, "ui.diplomacy_base_chance")}
+                    </div>
+                    <div className="border border-slate-800 rounded overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="bg-slate-900/60 border-b border-slate-800 text-xs text-muted-foreground">
+                            <th className="px-3 py-1.5 font-medium">
+                              {resolveDict(dict, "ui.diplomacy_ratio")}
+                            </th>
+                            <th className="px-3 py-1.5 font-medium">
+                              {resolveDict(dict, "ui.diplomacy_chance")}
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {d.valueChancePairs.map((p, i) => (
+                            <tr
+                              key={i}
+                              className="border-b border-slate-800/50 last:border-0"
+                            >
+                              <td className="px-3 py-1.5">
+                                {p.value.toFixed(2)}×
+                              </td>
+                              <td
+                                className={`px-3 py-1.5 font-medium ${
+                                  p.chance < 0
+                                    ? "text-red-400"
+                                    : p.chance > 0
+                                      ? "text-green-400"
+                                      : "text-slate-300"
+                                }`}
+                              >
+                                {fmtPct(p.chance)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      One input only (1.00× = even strength). It is combined
+                      with the factors below — so an even fight is not
+                      automatically 0%.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    One input only (1.00× = even strength). It is combined with
-                    the factors below — so an even fight is not automatically 0%.
+                )}
+                {/* Other contributing factors */}
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                    {resolveDict(dict, "ui.diplomacy_factors")}
+                  </div>
+                  <p className="text-muted-foreground">
+                    {resolveDict(dict, "ui.diplomacy_factors_list")}
                   </p>
                 </div>
-              )}
-              {/* Other contributing factors */}
-              <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                  {resolveDict(dict, "ui.diplomacy_factors")}
-                </div>
-                <p className="text-muted-foreground">
-                  {resolveDict(dict, "ui.diplomacy_factors_list")}
-                </p>
+                {d.unitCostExtraCharge != null && (
+                  <div className="text-muted-foreground">
+                    {resolveDict(dict, "ui.diplomacy_cost")}:{" "}
+                    <span className="text-amber-300 font-medium">
+                      {d.unitCostExtraCharge}× squad gold value
+                    </span>
+                  </div>
+                )}
               </div>
-              {d.unitCostExtraCharge != null && (
-                <div className="text-muted-foreground">
-                  {resolveDict(dict, "ui.diplomacy_cost")}:{" "}
-                  <span className="text-amber-300 font-medium">
-                    {d.unitCostExtraCharge}× squad gold value
-                  </span>
-                </div>
-              )}
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {isSubSkill && props.bonuses && props.bonuses.length > 0 && (
         <div>
@@ -408,8 +495,16 @@ export function SkillView({
               >
                 <span className="text-muted-foreground">
                   {resolveDict(dict, `faction_${cw.faction}`)}{" "}
-                  <span className={cw.classType === "might" ? "text-red-400" : "text-indigo-400"}>
-                    {cw.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
+                  <span
+                    className={
+                      cw.classType === "might"
+                        ? "text-red-400"
+                        : "text-indigo-400"
+                    }
+                  >
+                    {cw.classType === "might"
+                      ? resolveDict(dict, "ui.might")
+                      : resolveDict(dict, "ui.magic_class")}
                   </span>
                 </span>
                 <span className="font-medium tabular-nums">{cw.pct}%</span>
@@ -424,8 +519,12 @@ export function SkillView({
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-900/60 border-b border-slate-800">
-                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground w-16">{resolveDict(dict, "ui.level_header")}</th>
-                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">{resolveDict(dict, "ui.effect_header")}</th>
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground w-16">
+                  {resolveDict(dict, "ui.level_header")}
+                </th>
+                <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                  {resolveDict(dict, "ui.effect_header")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -433,7 +532,9 @@ export function SkillView({
                 let levelDesc: string | undefined;
                 if (entryId) {
                   const key = `${entryId}_level_${level.level}_desc`;
-                  const resolved = dict[key] ? resolveDict(dict, key) : undefined;
+                  const resolved = dict[key]
+                    ? resolveDict(dict, key)
+                    : undefined;
                   if (resolved && resolved !== key) {
                     // Strip HTML, then fill `{N}` placeholders. Prefer the
                     // pre-resolved `level.descParams` (buff-reference chains
@@ -447,7 +548,10 @@ export function SkillView({
                         return v != null ? String(v) : "?";
                       });
                     } else {
-                      levelDesc = fillSkillLevelPlaceholders(stripped, level.bonuses);
+                      levelDesc = fillSkillLevelPlaceholders(
+                        stripped,
+                        level.bonuses,
+                      );
                     }
                   }
                 }
@@ -476,16 +580,31 @@ export function SkillView({
                     <td className="px-4 py-3">
                       {levelDesc && (
                         <p className="text-sm text-muted-foreground mb-2 whitespace-pre-line">
-                          {renderDescWithSkillLinks(levelDesc, database, dict, locale)}
+                          {renderDescWithSkillLinks(
+                            levelDesc,
+                            database,
+                            dict,
+                            locale,
+                          )}
                         </p>
                       )}
 
                       {visibleBonuses.length > 0 && (
-                        <BonusList bonuses={visibleBonuses} dict={dict} locale={locale} />
+                        <BonusList
+                          bonuses={visibleBonuses}
+                          dict={dict}
+                          locale={locale}
+                        />
                       )}
 
                       {level.subSkills && level.subSkills.length > 0 && (
-                        <div className={(visibleBonuses.length || levelDesc) ? "mt-3 pt-3 border-t border-slate-800/50" : ""}>
+                        <div
+                          className={
+                            visibleBonuses.length || levelDesc
+                              ? "mt-3 pt-3 border-t border-slate-800/50"
+                              : ""
+                          }
+                        >
                           <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
                             {resolveDict(dict, "ui.unlocks_sub_skills")}
                           </div>

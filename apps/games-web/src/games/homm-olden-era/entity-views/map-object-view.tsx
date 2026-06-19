@@ -299,6 +299,18 @@ export function MapObjectView({
         </p>
       )}
 
+      {entryId === "market" && (
+        <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 px-4 py-3">
+          <Link
+            prefetch={false}
+            href={localizePath("/db/buildings/human_Build_Market", locale)}
+            className="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            Trade rates & calculator → Marketplace
+          </Link>
+        </div>
+      )}
+
       {(() => {
         if (!entryId) return null;
         const narrative = resolveDict(dict, `${entryId}_narrative`);

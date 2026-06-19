@@ -36,6 +36,8 @@ type BuildingProps = {
   extraChargeSell?: number;
   /** Artifact Merchant stock per rarity (Common, Rare, Epic, Legendary). */
   itemsCountPerRarity?: number[];
+  /** Artifact Value [min, max] per rarity tier. */
+  artifactValueByRarity?: Record<string, [number, number]>;
 };
 
 type IconSprite = {
@@ -73,14 +75,22 @@ export function BuildingView({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+        {icon && (
+          <SpriteIcon
+            icon={icon}
+            appName={APP_NAME}
+            size={64}
+            iconsHash={iconsHash}
+          />
+        )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-sm px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               {categoryLabel}
             </span>
-            <Link prefetch={false}
+            <Link
+              prefetch={false}
               href={localizePath(`/db/factions/${props.faction}`, locale)}
               className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
             >
@@ -120,7 +130,8 @@ export function BuildingView({
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground shrink-0 ml-2">
-                  +{u.weeklyGrowth}/{resolveDict(dict, "ui.weekly_growth").toLowerCase()}
+                  +{u.weeklyGrowth}/
+                  {resolveDict(dict, "ui.weekly_growth").toLowerCase()}
                 </span>
               </div>
             ))}
@@ -142,7 +153,8 @@ export function BuildingView({
                 {resolveDict(dict, "ui.artifact_buy_price")}:{" "}
               </span>
               <span className="font-medium text-amber-300">
-                {props.extraChargePurchase}× {resolveDict(dict, "ui.artifact_base_value")}
+                {props.extraChargePurchase}×{" "}
+                {resolveDict(dict, "ui.artifact_base_value")}
               </span>
             </div>
             {props.extraChargeSell != null && (
@@ -151,7 +163,8 @@ export function BuildingView({
                   {resolveDict(dict, "ui.artifact_sell_price")}:{" "}
                 </span>
                 <span className="font-medium text-amber-300">
-                  {resolveDict(dict, "ui.artifact_base_value")} ÷ {props.extraChargeSell}
+                  {resolveDict(dict, "ui.artifact_base_value")} ÷{" "}
+                  {props.extraChargeSell}
                 </span>
               </div>
             )}
@@ -168,57 +181,130 @@ export function BuildingView({
             {resolveDict(dict, "ui.artifact_stock_note")}
           </p>
           <div className="flex flex-wrap gap-2">
-            {(["common", "rare", "epic", "legendary"] as const).map((rarity, i) => {
-              const count = props.itemsCountPerRarity![i];
-              if (count == null || count === 0) return null;
-              return (
-                <div
-                  key={rarity}
-                  className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
-                >
-                  <div className="text-lg font-semibold text-amber-300">{count}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {resolveDict(dict, `ui.rarity_${rarity}`)}
+            {(["common", "rare", "epic", "legendary"] as const).map(
+              (rarity, i) => {
+                const count = props.itemsCountPerRarity![i];
+                if (count == null || count === 0) return null;
+                return (
+                  <div
+                    key={rarity}
+                    className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
+                  >
+                    <div className="text-lg font-semibold text-amber-300">
+                      {count}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {resolveDict(dict, `ui.rarity_${rarity}`)}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              },
+            )}
           </div>
         </div>
       )}
 
-      {props.exchangeRates && props.exchangeRates.length > 0 && (() => {
-        // Build plain name/icon maps for the client calculator.
-        const resNames: Record<string, string> = {};
-        const resIcons: Record<string, IconSprite> = {};
-        for (const row of props.exchangeRates!) {
-          resNames[row.resName] = resolveDict(dict, `resource_${row.resName}`);
-          const ic = resourceIcons.get(row.resName);
-          if (ic) resIcons[row.resName] = ic;
-          for (const ex of row.exchange) {
-            resNames[ex.name] = resolveDict(dict, `resource_${ex.name}`);
-            const ie = resourceIcons.get(ex.name);
-            if (ie) resIcons[ex.name] = ie;
-          }
-        }
-        return (
+      {props.artifactValueByRarity &&
+        props.extraChargePurchase != null &&
+        props.extraChargeSell != null && (
           <div>
             <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
-              {resolveDict(dict, "ui.exchange_rates")}
+              {resolveDict(dict, "ui.artifact_value_by_tier")}
             </h2>
             <p className="text-xs text-muted-foreground mb-3">
-              {resolveDict(dict, "ui.exchange_rates_note")}
+              {resolveDict(dict, "ui.artifact_value_by_tier_note")}
             </p>
-            <MarketplaceCalculator
-              rates={props.exchangeRates!}
-              resourceNames={resNames}
-              resourceIcons={resIcons}
-              iconsHash={iconsHash}
-              appName={APP_NAME}
-            />
+            <div className="border border-slate-800 rounded-lg overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-900/60 border-b border-slate-800">
+                    <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground" />
+                    <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                      {resolveDict(dict, "ui.artifact_value_col")}
+                    </th>
+                    <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                      {resolveDict(dict, "ui.artifact_buy_price")}
+                    </th>
+                    <th className="px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                      {resolveDict(dict, "ui.artifact_sell_price")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(["common", "rare", "epic", "legendary"] as const).map(
+                    (rarity) => {
+                      const range = props.artifactValueByRarity![rarity];
+                      if (!range) return null;
+                      const [min, max] = range;
+                      const buyMin = min * props.extraChargePurchase!;
+                      const buyMax = max * props.extraChargePurchase!;
+                      const sellMin = Math.floor(min / props.extraChargeSell!);
+                      const sellMax = Math.floor(max / props.extraChargeSell!);
+                      return (
+                        <tr
+                          key={rarity}
+                          className="border-b border-slate-800/50 last:border-0"
+                        >
+                          <td className="px-4 py-3 text-sm font-medium text-amber-300">
+                            {resolveDict(dict, `ui.rarity_${rarity}`)}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {min.toLocaleString()}–{max.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {buyMin.toLocaleString()}–{buyMax.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {sellMin.toLocaleString()}–
+                            {sellMax.toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    },
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        );
-      })()}
+        )}
+
+      {props.exchangeRates &&
+        props.exchangeRates.length > 0 &&
+        (() => {
+          // Build plain name/icon maps for the client calculator.
+          const resNames: Record<string, string> = {};
+          const resIcons: Record<string, IconSprite> = {};
+          for (const row of props.exchangeRates!) {
+            resNames[row.resName] = resolveDict(
+              dict,
+              `resource_${row.resName}`,
+            );
+            const ic = resourceIcons.get(row.resName);
+            if (ic) resIcons[row.resName] = ic;
+            for (const ex of row.exchange) {
+              resNames[ex.name] = resolveDict(dict, `resource_${ex.name}`);
+              const ie = resourceIcons.get(ex.name);
+              if (ie) resIcons[ex.name] = ie;
+            }
+          }
+          return (
+            <div>
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
+                {resolveDict(dict, "ui.exchange_rates")}
+              </h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                {resolveDict(dict, "ui.exchange_rates_note")}
+              </p>
+              <MarketplaceCalculator
+                rates={props.exchangeRates!}
+                resourceNames={resNames}
+                resourceIcons={resIcons}
+                iconsHash={iconsHash}
+                appName={APP_NAME}
+              />
+            </div>
+          );
+        })()}
 
       {props.levels && props.levels.length > 0 && (
         <div className="border border-slate-800 rounded-lg overflow-hidden">
@@ -279,14 +365,23 @@ export function BuildingView({
                         <div className="space-y-1">
                           {level.prerequisites.map((req) => {
                             const reqId = `${props.faction}_${req.sid}`;
-                            const reqName = resolveDict(dict, `${reqId}_level_${req.level}`);
+                            const reqName = resolveDict(
+                              dict,
+                              `${reqId}_level_${req.level}`,
+                            );
                             const fallbackName = resolveDict(dict, reqId);
-                            const displayName = reqName !== `${reqId}_level_${req.level}` ? reqName : fallbackName;
+                            const displayName =
+                              reqName !== `${reqId}_level_${req.level}`
+                                ? reqName
+                                : fallbackName;
                             return (
                               <Link
                                 key={`${req.sid}_${req.level}`}
                                 prefetch={false}
-                                href={localizePath(`/db/buildings/${reqId}`, locale)}
+                                href={localizePath(
+                                  `/db/buildings/${reqId}`,
+                                  locale,
+                                )}
                                 className="block text-sm text-amber-400 hover:text-amber-300 transition-colors"
                               >
                                 {displayName} Lv.{req.level}

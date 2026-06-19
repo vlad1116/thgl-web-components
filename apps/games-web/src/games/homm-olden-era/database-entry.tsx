@@ -1,5 +1,11 @@
 import { notFound } from "next/navigation";
-import { fetchDatabaseIndex, fetchDatabaseType, fetchDict, fetchVersion, type DatabaseConfig } from "@repo/lib";
+import {
+  fetchDatabaseIndex,
+  fetchDatabaseType,
+  fetchDict,
+  fetchVersion,
+  type DatabaseConfig,
+} from "@repo/lib";
 import { JSONLDScript } from "@repo/ui/apps";
 import { resolveDict } from "@/lib/db/resolve-dict";
 import { entityPageJsonLd } from "@/lib/db/json-ld";
@@ -24,7 +30,12 @@ type IconSprite = {
   height: number;
 };
 
-function collectKeys(dict: Record<string, string>, props: Record<string, any>, id: string, entryType: string): Set<string> {
+function collectKeys(
+  dict: Record<string, string>,
+  props: Record<string, any>,
+  id: string,
+  entryType: string,
+): Set<string> {
   const keys = new Set<string>();
 
   const dictKey = entryType === "factions" ? `faction_${id}` : id;
@@ -37,19 +48,46 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
     if (k.startsWith("ui.")) keys.add(k);
   }
 
-  for (const k of ["units", "heroes", "spells", "items", "item_sets", "skills", "factions",
-    "specializations", "faction_laws", "sub_skills", "buildings", "map_objects"]) {
+  for (const k of [
+    "units",
+    "heroes",
+    "spells",
+    "items",
+    "item_sets",
+    "skills",
+    "factions",
+    "specializations",
+    "faction_laws",
+    "sub_skills",
+    "buildings",
+    "map_objects",
+  ]) {
     keys.add(k);
   }
 
-  if (entryType === "units" || entryType === "heroes" || entryType === "buildings") {
-    for (const r of ["gold", "wood", "ore", "dust", "crystals", "gemstones", "mercury"]) {
+  if (
+    entryType === "units" ||
+    entryType === "heroes" ||
+    entryType === "buildings"
+  ) {
+    for (const r of [
+      "gold",
+      "wood",
+      "ore",
+      "dust",
+      "crystals",
+      "gemstones",
+      "mercury",
+    ]) {
       keys.add(`resource_${r}`);
     }
   }
 
   if (entryType === "heroes" && typeof props.specialization === "string") {
-    const baseId = (props.specialization as string).replace("_specialization", "");
+    const baseId = (props.specialization as string).replace(
+      "_specialization",
+      "",
+    );
     keys.add(`${baseId}_spec`);
     keys.add(`${baseId}_spec_desc`);
   }
@@ -84,7 +122,10 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
     }
   }
 
-  if ((entryType === "skills" || entryType === "sub_skills") && Array.isArray(props.levels)) {
+  if (
+    (entryType === "skills" || entryType === "sub_skills") &&
+    Array.isArray(props.levels)
+  ) {
     for (const lvl of props.levels) {
       const level = lvl?.level;
       if (typeof level === "number") {
@@ -97,7 +138,10 @@ function collectKeys(dict: Record<string, string>, props: Record<string, any>, i
   return keys;
 }
 
-function sliceDict(dict: Record<string, string>, keys: Set<string>): Record<string, string> {
+function sliceDict(
+  dict: Record<string, string>,
+  keys: Set<string>,
+): Record<string, string> {
   const result: Record<string, string> = {};
   for (const key of keys) {
     const value = dict[key];
@@ -139,18 +183,19 @@ export async function DatabaseEntryContent({
   const needsBuildings = entryType === "factions";
   const needsSpecializations = entryType === "heroes";
   const needsSkills = entryType === "sub_skills";
-  const [entryCat, buildingsCat, specializationsCat, skillsCat] = await Promise.all([
-    fetchDatabaseType(APP_NAME, entryType),
-    needsBuildings
-      ? fetchDatabaseType(APP_NAME, "buildings")
-      : Promise.resolve(null),
-    needsSpecializations
-      ? fetchDatabaseType(APP_NAME, "specializations")
-      : Promise.resolve(null),
-    needsSkills
-      ? fetchDatabaseType(APP_NAME, "skills")
-      : Promise.resolve(null),
-  ]);
+  const [entryCat, buildingsCat, specializationsCat, skillsCat] =
+    await Promise.all([
+      fetchDatabaseType(APP_NAME, entryType),
+      needsBuildings
+        ? fetchDatabaseType(APP_NAME, "buildings")
+        : Promise.resolve(null),
+      needsSpecializations
+        ? fetchDatabaseType(APP_NAME, "specializations")
+        : Promise.resolve(null),
+      needsSkills
+        ? fetchDatabaseType(APP_NAME, "skills")
+        : Promise.resolve(null),
+    ]);
 
   let item: DatabaseConfig[number]["items"][number] | undefined;
   if (id) {
@@ -161,10 +206,7 @@ export async function DatabaseEntryContent({
   if (!item) notFound();
 
   const database: DatabaseConfig = buildingsCat
-    ? [
-        ...index.filter((cat) => cat.type !== "buildings"),
-        buildingsCat,
-      ]
+    ? [...index.filter((cat) => cat.type !== "buildings"), buildingsCat]
     : index;
 
   const dictKey = entryType === "factions" ? `faction_${item.id}` : item.id;
@@ -219,7 +261,18 @@ export async function DatabaseEntryContent({
         icon: i.icon,
         groupId: i.groupId,
         itemSet: i.props?.itemSet,
-        ...(cat.type === "factions" && i.props?.ultimateSkills ? { props: { ultimateSkills: i.props.ultimateSkills } } : {}),
+        ...(cat.type === "factions" && i.props?.ultimateSkills
+          ? { props: { ultimateSkills: i.props.ultimateSkills } }
+          : {}),
+        // Faction page renders its laws grouped by tier with a per-law point
+        // cost subtitle. The popup data still comes from the tooltip API, but
+        // the cheap `unlockCost` is needed inline, so pass it through (only
+        // when viewing a faction — keeps every other page's payload lean).
+        ...(entryType === "factions" &&
+        cat.type === "faction_laws" &&
+        typeof (i.props as any)?.unlockCost === "number"
+          ? { props: { unlockCost: (i.props as any).unlockCost } }
+          : {}),
       };
     }),
   }));
@@ -244,7 +297,7 @@ export async function DatabaseEntryContent({
       for (const i of cat.items) {
         if ((i.props as any)?.faction !== item.id) continue;
         neededKeys.add(i.id);
-        for (const lvl of ((i.props as any).levels ?? [])) {
+        for (const lvl of (i.props as any).levels ?? []) {
           if (lvl.name) neededKeys.add(lvl.name);
         }
       }
@@ -283,9 +336,43 @@ export async function DatabaseEntryContent({
       neededKeys.add(`${parentSkill.id}_level_${parentSkill.level}`);
     }
   }
+  // Reverse skill compatibility ("Compatible from"): scan every OTHER skill's
+  // `props.compatibleWith` for entries whose `id` is the current skill, and
+  // surface those source skills + the sub-skill(s) that target this one. Must
+  // be computed here (full props available) — the lite database strips props.
+  let compatibleFrom: { id: string; via: string[] }[] = [];
+  if (entryType === "skills") {
+    for (const skill of entryCat.items) {
+      if (skill.id === item.id) continue;
+      const cw = ((skill.props as any)?.compatibleWith ?? []) as {
+        id: string;
+        via?: string[];
+      }[];
+      for (const entry of cw) {
+        if (entry.id === item.id) {
+          compatibleFrom.push({ id: skill.id, via: entry.via ?? [] });
+        }
+      }
+    }
+    for (const cf of compatibleFrom) {
+      neededKeys.add(cf.id);
+      for (const sub of cf.via) neededKeys.add(sub);
+    }
+  }
+
   const slicedDict = sliceDict(dict, neededKeys);
 
-  const viewProps = { name, desc, icon, props, dict: slicedDict, database: liteDatabase, locale, entryId: item.id, iconsHash };
+  const viewProps = {
+    name,
+    desc,
+    icon,
+    props,
+    dict: slicedDict,
+    database: liteDatabase,
+    locale,
+    entryId: item.id,
+    iconsHash,
+  };
 
   // Section segment for the public URL — drives JSON-LD `url` and is
   // independent of the internal database type (e.g. items/item_sets both
@@ -325,12 +412,15 @@ export async function DatabaseEntryContent({
         {entryType === "units" && <UnitView {...viewProps} />}
         {entryType === "heroes" && <HeroView {...viewProps} />}
         {entryType === "spells" && <SpellView {...viewProps} />}
-        {(entryType === "items" || entryType === "item_sets") && <ItemView {...viewProps} />}
+        {(entryType === "items" || entryType === "item_sets") && (
+          <ItemView {...viewProps} />
+        )}
         {(entryType === "skills" || entryType === "sub_skills") && (
           <SkillView
             {...viewProps}
             isSubSkill={entryType === "sub_skills"}
             parentSkill={parentSkill}
+            compatibleFrom={compatibleFrom}
           />
         )}
         {(entryType === "factions" || entryType === "specializations") && (

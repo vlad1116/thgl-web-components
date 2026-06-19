@@ -16,7 +16,13 @@ type UltimateSkill = {
 type FactionProps = {
   biome?: string;
   resourceName?: string;
-  lawTiers?: { unlockAt: number; lawCount: number }[];
+  lawTiers?: {
+    unlockAt: number;
+    lawCount: number;
+    /** The in-game columns for this tier (typically 2), each holding the law
+     *  ids it contains in display order. */
+    groups?: { laws: string[] }[];
+  }[];
   ultimateSkills?: UltimateSkill[];
   faction?: string;
   bonuses?: {
@@ -47,27 +53,39 @@ type IconSprite = {
   height: number;
 };
 
-function substituteTemplate(text: string, bonuses?: FactionProps["bonuses"]): string {
+function substituteTemplate(
+  text: string,
+  bonuses?: FactionProps["bonuses"],
+): string {
   if (!bonuses || bonuses.length === 0) return text;
   const values: string[] = [];
   for (const bonus of bonuses) {
     for (const p of bonus.params) {
       const num = parseFloat(String(p));
-      if (!isNaN(num) && num !== 0 && String(p) !== "true" && String(p) !== "false") {
+      if (
+        !isNaN(num) &&
+        num !== 0 &&
+        String(p) !== "true" &&
+        String(p) !== "false"
+      ) {
         const abs = Math.abs(num);
         // Push the bare integer for fractional values (e.g. 0.2 → "20") rather
         // than appending "%" — the source text almost always already carries
         // the `%` after `{0}` (e.g. "+{0}% Law points"), so appending here
         // produces `%%`. Matches the convention used by the entity-tooltip
         // route and spell-view's placeholder filler.
-        values.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
+        values.push(
+          abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+        );
       }
     }
     if (bonus.upgrade) {
       const inc = bonus.upgrade.increment;
       if (inc !== 0) {
         const abs = Math.abs(inc);
-        values.push(abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs));
+        values.push(
+          abs > 0 && abs < 1 ? `${Math.round(abs * 100)}` : String(abs),
+        );
       }
       if (bonus.upgrade.levelStep) values.push(String(bonus.upgrade.levelStep));
     }
@@ -105,13 +123,21 @@ export function FactionView({
 }) {
   const isFaction = !!props.biome;
   const isSpecialization = !isFaction && !isFactionLaw;
-  const resolvedDesc = desc !== name ? substituteTemplate(desc, props.bonuses) : "";
+  const resolvedDesc =
+    desc !== name ? substituteTemplate(desc, props.bonuses) : "";
 
   if (isSpecialization) {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-4">
-          {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+          {icon && (
+            <SpriteIcon
+              icon={icon}
+              appName={APP_NAME}
+              size={64}
+              iconsHash={iconsHash}
+            />
+          )}
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
             <span className="text-xs px-2 py-0.5 rounded bg-cyan-900/30 text-cyan-400 border border-cyan-800/50">
@@ -153,7 +179,14 @@ export function FactionView({
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-4">
-          {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+          {icon && (
+            <SpriteIcon
+              icon={icon}
+              appName={APP_NAME}
+              size={64}
+              iconsHash={iconsHash}
+            />
+          )}
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -211,7 +244,11 @@ export function FactionView({
                   {resolveDict(dict, "ui.effects")}
                 </h2>
                 <div className="bg-slate-900/30 border border-slate-800/50 rounded-lg p-4">
-                  <BonusList bonuses={props.bonuses} dict={dict} locale={locale} />
+                  <BonusList
+                    bonuses={props.bonuses}
+                    dict={dict}
+                    locale={locale}
+                  />
                 </div>
               </div>
             )}
@@ -224,7 +261,14 @@ export function FactionView({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4">
-        {icon && <SpriteIcon icon={icon} appName={APP_NAME} size={64} iconsHash={iconsHash} />}
+        {icon && (
+          <SpriteIcon
+            icon={icon}
+            appName={APP_NAME}
+            size={64}
+            iconsHash={iconsHash}
+          />
+        )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -260,12 +304,16 @@ export function FactionView({
                 className="bg-slate-900/50 border border-slate-800 rounded px-3 py-2 text-center"
               >
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {tier.unlockAt === 0 ? resolveDict(dict, "ui.start") : `${tier.unlockAt} ${resolveDict(dict, "ui.pts")}`}
+                  {tier.unlockAt === 0
+                    ? resolveDict(dict, "ui.start")
+                    : `${tier.unlockAt} ${resolveDict(dict, "ui.pts")}`}
                 </div>
                 <div className="text-lg font-semibold text-amber-400">
                   {tier.lawCount}
                 </div>
-                <div className="text-[10px] text-muted-foreground">{resolveDict(dict, "ui.laws")}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {resolveDict(dict, "ui.laws")}
+                </div>
               </div>
             ))}
           </div>
@@ -283,11 +331,18 @@ export function FactionView({
               const ultDesc = resolveDict(dict, `${ult.id}_desc`);
               const hasDesc = ultDesc && ultDesc !== `${ult.id}_desc`;
               return (
-                <div key={ult.id} className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3 space-y-2">
+                <div
+                  key={ult.id}
+                  className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3 space-y-2"
+                >
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{ultName}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded border ${ult.classType === "might" ? "text-red-400 border-red-800/50 bg-red-900/20" : "text-indigo-400 border-indigo-800/50 bg-indigo-900/20"}`}>
-                      {ult.classType === "might" ? resolveDict(dict, "ui.might") : resolveDict(dict, "ui.magic_class")}
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded border ${ult.classType === "might" ? "text-red-400 border-red-800/50 bg-red-900/20" : "text-indigo-400 border-indigo-800/50 bg-indigo-900/20"}`}
+                    >
+                      {ult.classType === "might"
+                        ? resolveDict(dict, "ui.might")
+                        : resolveDict(dict, "ui.magic_class")}
                     </span>
                   </div>
                   {hasDesc && (
@@ -296,10 +351,14 @@ export function FactionView({
                     </p>
                   )}
                   <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-xs text-muted-foreground shrink-0">Requires:</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      Requires:
+                    </span>
                     {ult.requiredSkills.map((req, ri) => (
                       <span key={ri} className="inline-flex items-center">
-                        {ri > 0 && <span className="text-slate-600 mx-0.5">·</span>}
+                        {ri > 0 && (
+                          <span className="text-slate-600 mx-0.5">·</span>
+                        )}
                         <EntityLink
                           itemId={req.skill}
                           database={database}
@@ -311,7 +370,9 @@ export function FactionView({
                         />
                       </span>
                     ))}
-                    <span className="text-xs text-muted-foreground">(all at Lv.{ult.requiredSkills[0]?.level})</span>
+                    <span className="text-xs text-muted-foreground">
+                      (all at Lv.{ult.requiredSkills[0]?.level})
+                    </span>
                   </div>
                 </div>
               );
@@ -321,40 +382,104 @@ export function FactionView({
       )}
 
       {(() => {
-        // Sort laws by point cost ascending (cheapest first) so the list
-        // mirrors how players actually pick laws — start cheap, work up.
         const laws = database
           .filter((cat: any) => cat.type === "faction_laws")
           .flatMap((cat: any) => cat.items)
-          .filter((item: any) => item.groupId === entryId)
-          .sort(
-            (a: any, b: any) =>
-              (a.props?.unlockCost ?? 0) - (b.props?.unlockCost ?? 0),
-          );
+          .filter((item: any) => item.groupId === entryId);
         if (laws.length === 0) return null;
+
         const ptsLabel = resolveDict(dict, "ui.pts");
+        const tierLabel = resolveDict(dict, "ui.law_tier");
+        const unlockLabel = resolveDict(dict, "ui.law_tier_unlock");
+        const tierPtsLabel = resolveDict(dict, "ui.law_tier_points");
+
+        const lawById = new Map<string, any>(laws.map((l: any) => [l.id, l]));
+        const subtitleFor = (law: any) =>
+          typeof law?.props?.unlockCost === "number"
+            ? `${law.props.unlockCost} ${ptsLabel}`
+            : undefined;
+
+        const tiers = props.lawTiers ?? [];
+        // Track which laws were placed via lawTiers so any stragglers (laws
+        // that exist in the database but aren't referenced by a tier) can
+        // still be rendered in a fallback section — nothing gets dropped.
+        const placed = new Set<string>();
+        for (const tier of tiers) {
+          for (const group of tier.groups ?? []) {
+            for (const lawId of group.laws) placed.add(lawId);
+          }
+        }
+        const leftovers = laws.filter((l: any) => !placed.has(l.id));
+
         return (
           <div>
             <h2 className="text-sm uppercase tracking-wider text-muted-foreground mb-2">
               {resolveDict(dict, "faction_laws")}
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {laws.map((law: any) => (
-                <EntityLinkCard
-                  key={law.id}
-                  itemId={law.id}
-                  database={database}
-                  locale={locale}
-                  dict={dict}
-                  iconsHash={iconsHash}
-                  subtitle={
-                    typeof law.props?.unlockCost === "number"
-                      ? `${law.props.unlockCost} ${ptsLabel}`
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
+
+            {tiers.length > 0 ? (
+              <div className="space-y-4">
+                {tiers.map((tier, ti) => {
+                  const groups = tier.groups ?? [];
+                  if (groups.length === 0) return null;
+                  return (
+                    <div
+                      key={ti}
+                      className="border border-slate-800/60 rounded-lg bg-slate-900/20 p-3"
+                    >
+                      <div className="flex items-baseline justify-between mb-2">
+                        <span className="text-xs uppercase tracking-wider text-amber-400">
+                          {tierLabel} {ti + 1}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {unlockLabel} {tier.unlockAt} {tierPtsLabel}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {groups.map((group, gi) => (
+                          <div key={gi} className="flex flex-col gap-2">
+                            {group.laws.map((lawId) => (
+                              <EntityLinkCard
+                                key={lawId}
+                                itemId={lawId}
+                                database={database}
+                                locale={locale}
+                                dict={dict}
+                                iconsHash={iconsHash}
+                                subtitle={subtitleFor(lawById.get(lawId))}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {leftovers.length > 0 && (
+              <div className={tiers.length > 0 ? "mt-4" : undefined}>
+                <div className="flex flex-wrap gap-2">
+                  {leftovers
+                    .sort(
+                      (a: any, b: any) =>
+                        (a.props?.unlockCost ?? 0) - (b.props?.unlockCost ?? 0),
+                    )
+                    .map((law: any) => (
+                      <EntityLinkCard
+                        key={law.id}
+                        itemId={law.id}
+                        database={database}
+                        locale={locale}
+                        dict={dict}
+                        iconsHash={iconsHash}
+                        subtitle={subtitleFor(law)}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
