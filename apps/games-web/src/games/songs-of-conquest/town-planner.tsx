@@ -11,18 +11,21 @@ type IconSprite = {
   height: number;
 };
 type CostEntry = { amount: number; name: string; iconId?: string };
+type Recruit = { id: string; name: string; research?: number[] };
 type Level = {
   level: number;
   cost: CostEntry[];
   requires: string[];
-  recruits?: { id: string; name: string }[];
+  recruits?: Recruit[];
 };
+type Research = { id: number; name: string; cost: CostEntry[] };
 type Building = {
   id: string;
   name: string;
   costEntries?: CostEntry[];
   levels?: Level[];
-  recruits?: { id: string; name: string }[];
+  recruits?: Recruit[];
+  research?: Research[];
 };
 
 /** One planner node = a specific building LEVEL (Farm Lv 1, Farm Lv 2, …). */
@@ -32,17 +35,21 @@ type Node = {
   level: number;
   name: string;
   cost: CostEntry[];
-  recruits: { id: string; name: string }[];
+  recruits: { id: string; name: string; research: number[] }[];
   requires: string[]; // prerequisite node keys
 };
 
 /**
- * Songs of Conquest "Town Build" planner — heraldic war-room build tree.
+ * Songs of Conquest "Town Build" planner — an interactive build calculator.
  *
- * Each building LEVEL is its own card (Farm Lv 1 → Farm Lv 2, …), laid out in
- * dependency tiers with gilded connector threads. Click cards to assemble a
- * build plan; the Build Order table lists the topologically-sorted steps with
- * per-step + cumulative cost. Hover to trace what a level needs and unlocks.
+ * Each building LEVEL is its own card (Barracks Lv 1 → Lv 2, …), laid out in
+ * dependency tiers with connector threads. It's a persistent multi-select:
+ * click a building level (or a troop in Available Troops) to add it + every
+ * prerequisite to the plan. Picking a research-gated troop (e.g. Rangers) also
+ * selects its gating research ("↳ Call on the Rangers") and its building — which
+ * in turn makes every other troop that building trains (e.g. Footmen) available.
+ * The Build Order lists the topologically-sorted steps + research rows with
+ * per-step and cumulative cost.
  */
 export function TownPlanner({
   buildings,
@@ -78,7 +85,11 @@ export function TownPlanner({
           level: lvl.level,
           name: b.name,
           cost: lvl.cost ?? [],
-          recruits: lvl.recruits ?? [],
+          recruits: (lvl.recruits ?? []).map((r) => ({
+            id: r.id,
+            name: r.name,
+            research: r.research ?? [],
+          })),
           requires: [
             ...(lvl.level > 1 ? [`${b.id}/${lvl.level - 1}`] : []),
             ...(lvl.requires ?? []).map((r) => `${r}/1`),
@@ -109,20 +120,47 @@ export function TownPlanner({
     const max = Math.max(0, ...[...depth.values()]);
     const rows: Node[][] = Array.from({ length: max + 1 }, () => []);
     nodes.forEach((n) => rows[depth.get(n.key) ?? 0].push(n));
-    return rows.filter((r) => r.length);
-  }, [nodes, byKey]);
+    const tierRows = rows.filter((r) => r.length);
 
-  // Muster roll: each troop and the node(s) that train it.
-  const troops = useMemo(() => {
-    const m = new Map<string, { id: string; name: string; from: string[] }>();
+    // Crossing-minimization (barycenter heuristic): order each tier by the mean
+    // position of its neighbours (prerequisites above + dependents below), swept
+    // top-down then bottom-up until it settles — so the dependency edges read as
+    // a clean tree instead of crossing spaghetti.
+    const deps = new Map<string, string[]>();
     for (const n of nodes)
-      for (const u of n.recruits) {
-        const e = m.get(u.id) ?? { id: u.id, name: u.name, from: [] };
-        e.from.push(n.key);
-        m.set(u.id, e);
+      for (const r of n.requires) {
+        if (!deps.has(r)) deps.set(r, []);
+        deps.get(r)!.push(n.key);
       }
-    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [nodes]);
+    const pos = new Map<string, number>();
+    tierRows.forEach((t) => t.forEach((n, i) => pos.set(n.key, i)));
+    const neigh = (n: Node) => [...n.requires, ...(deps.get(n.key) ?? [])];
+    for (let pass = 0; pass < 6; pass++) {
+      const order = tierRows.map((_, i) => i);
+      if (pass % 2) order.reverse();
+      for (const ti of order) {
+        const tier = tierRows[ti];
+        const bary = new Map<string, number>();
+        for (const n of tier) {
+          const ns = neigh(n).filter((k) => pos.has(k));
+          bary.set(
+            n.key,
+            ns.length
+              ? ns.reduce((s, k) => s + pos.get(k)!, 0) / ns.length
+              : pos.get(n.key)!,
+          );
+        }
+        tier.sort(
+          (a, b) =>
+            bary.get(a.key)! - bary.get(b.key)! ||
+            a.name.localeCompare(b.name) ||
+            a.level - b.level,
+        );
+        tier.forEach((n, i) => pos.set(n.key, i));
+      }
+    }
+    return tierRows;
+  }, [nodes, byKey]);
 
   // Reverse adjacency: node key → node keys that require it.
   const dependents = useMemo(() => {
@@ -135,35 +173,184 @@ export function TownPlanner({
     return m;
   }, [nodes]);
 
-  // Build plan: multi-select set of node keys (click to toggle).
-  const [plan, setPlan] = useState<Set<string>>(new Set());
-  const [pinnedTroop, setPinnedTroop] = useState<string | null>(null);
+  // Recruitable troops (for the Available Troops list) — each with the research
+  // that gates it + the node(s) that train it (for hover-tracing).
+  const troops = useMemo(() => {
+    const m = new Map<
+      string,
+      { id: string; name: string; research: number[]; from: string[] }
+    >();
+    for (const n of nodes)
+      for (const u of n.recruits) {
+        const e = m.get(u.id) ?? {
+          id: u.id,
+          name: u.name,
+          research: u.research,
+          from: [],
+        };
+        e.from.push(n.key);
+        m.set(u.id, e);
+      }
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [nodes]);
+
+  // troop id → the building LEVEL node that trains it + its gating research.
+  const unitProducer = useMemo(() => {
+    const m = new Map<string, { key: string; research: number[] }>();
+    for (const n of nodes)
+      for (const r of n.recruits)
+        m.set(r.id, { key: n.key, research: r.research });
+    return m;
+  }, [nodes]);
+
+  // Research catalog: id → {name, cost, owner building id} + owner → ids.
+  const { researchById, researchByOwner } = useMemo(() => {
+    const byId = new Map<
+      number,
+      { id: number; name: string; cost: CostEntry[]; owner: string }
+    >();
+    const byOwner = new Map<string, number[]>();
+    for (const b of buildings)
+      for (const r of b.research ?? []) {
+        byId.set(r.id, { ...r, owner: b.id });
+        (byOwner.get(b.id) ?? byOwner.set(b.id, []).get(b.id)!).push(r.id);
+      }
+    return { researchById: byId, researchByOwner: byOwner };
+  }, [buildings]);
+
+  // ─── Selection state (persistent multi-select) ─────────────────────────
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedResearch, setSelectedResearch] = useState<Set<number>>(
+    new Set(),
+  );
   const [hoverNode, setHoverNode] = useState<string | null>(null);
   const [hoverTroop, setHoverTroop] = useState<string | null>(null);
-  const activeTroop = pinnedTroop ?? hoverTroop;
-  const planActive = plan.size > 0;
-  const hasSelection = planActive || !!pinnedTroop;
+  const hasSelection = selected.size > 0;
 
-  // Build Order: the planned nodes + every prerequisite node, topologically
-  // sorted, with per-step + running cost.
+  // Toggle a building-level node: select it + every prerequisite, or (if already
+  // selected) deselect it + every dependent — and clear research owned by any
+  // deselected level-1 building.
+  const computeToggleNode = useCallback(
+    (key: string): { sel: Set<string>; res: Set<number> } => {
+      const sel = new Set(selected);
+      const res = new Set(selectedResearch);
+      if (sel.has(key)) {
+        const removed = new Set<string>();
+        const collect = (k: string) => {
+          if (removed.has(k)) return;
+          removed.add(k);
+          for (const d of dependents.get(k) ?? []) if (sel.has(d)) collect(d);
+        };
+        collect(key);
+        for (const k of removed) {
+          const n = byKey.get(k);
+          if (n && n.level === 1)
+            for (const rid of researchByOwner.get(n.id) ?? []) res.delete(rid);
+          sel.delete(k);
+        }
+      } else {
+        const add = (k: string) => {
+          if (sel.has(k)) return;
+          sel.add(k);
+          for (const r of byKey.get(k)?.requires ?? []) add(r);
+        };
+        add(key);
+      }
+      return { sel, res };
+    },
+    [selected, selectedResearch, byKey, dependents, researchByOwner],
+  );
+
+  // Click a troop: if it needs research not yet selected, select that research +
+  // its building (and prerequisites); otherwise toggle the producing building.
+  const toggleTroop = useCallback(
+    (troopId: string) => {
+      const prod = unitProducer.get(troopId);
+      if (!prod) return;
+      setHoverNode(null);
+      setHoverTroop(null);
+      const anyUnselected = prod.research.some(
+        (id) => !selectedResearch.has(id),
+      );
+      if (prod.research.length && anyUnselected) {
+        const sel = new Set(selected);
+        const res = new Set(selectedResearch);
+        const add = (k: string) => {
+          if (sel.has(k)) return;
+          sel.add(k);
+          for (const r of byKey.get(k)?.requires ?? []) add(r);
+        };
+        add(prod.key);
+        prod.research.forEach((id) => res.add(id));
+        setSelected(sel);
+        setSelectedResearch(res);
+      } else {
+        const { sel, res } = computeToggleNode(prod.key);
+        setSelected(sel);
+        setSelectedResearch(res);
+      }
+    },
+    [unitProducer, selected, selectedResearch, byKey, computeToggleNode],
+  );
+
+  const toggleNode = useCallback(
+    (key: string) => {
+      setHoverNode(null);
+      setHoverTroop(null);
+      const { sel, res } = computeToggleNode(key);
+      setSelected(sel);
+      setSelectedResearch(res);
+    },
+    [computeToggleNode],
+  );
+
+  const clear = () => {
+    setSelected(new Set());
+    setSelectedResearch(new Set());
+    setHoverNode(null);
+    setHoverTroop(null);
+  };
+
+  // Troops currently available = trained by a selected building whose gating
+  // research (if any) is satisfied. Selecting Rangers (→ Barracks + research)
+  // therefore also lights up Footmen (same Barracks, no research).
+  const availableTroops = useMemo(() => {
+    const set = new Set<string>();
+    for (const n of nodes) {
+      if (!selected.has(n.key)) continue;
+      for (const r of n.recruits)
+        if (r.research.every((id) => selectedResearch.has(id))) set.add(r.id);
+    }
+    return set;
+  }, [nodes, selected, selectedResearch]);
+
+  // Build Order: selected nodes topologically sorted, with each selected
+  // research inserted right after its (level-1) building, + per-step & running
+  // cost.
+  type BuildStep = {
+    key: string;
+    id: string;
+    level: number;
+    name: string;
+    cost: CostEntry[];
+    cumulative: CostEntry[];
+    isResearch: boolean;
+  };
   const buildOrder = useMemo(() => {
-    if (plan.size === 0)
-      return [] as {
-        key: string;
-        id: string;
-        level: number;
-        name: string;
-        cost: CostEntry[];
-        cumulative: CostEntry[];
-      }[];
-    const need = new Set<string>();
-    const add = (k: string) => {
-      if (need.has(k)) return;
-      need.add(k);
-      byKey.get(k)?.requires.forEach(add);
-    };
-    plan.forEach(add);
-    const keys = [...need];
+    if (!selected.size) return [] as BuildStep[];
+    const keys = [...selected];
+    const indeg = new Map<string, number>();
+    const children = new Map<string, string[]>();
+    keys.forEach((k) => indeg.set(k, 0));
+    keys.forEach((k) =>
+      (byKey.get(k)?.requires ?? [])
+        .filter((r) => selected.has(r))
+        .forEach((r) => {
+          indeg.set(k, (indeg.get(k) ?? 0) + 1);
+          if (!children.has(r)) children.set(r, []);
+          children.get(r)!.push(k);
+        }),
+    );
     const name = (k: string) => byKey.get(k)?.name ?? k;
     const cmp = (a: string, b: string) => {
       const na = name(a),
@@ -172,18 +359,6 @@ export function TownPlanner({
         ? (byKey.get(a)?.level ?? 0) - (byKey.get(b)?.level ?? 0)
         : na.localeCompare(nb);
     };
-    const indeg = new Map<string, number>();
-    const children = new Map<string, string[]>();
-    keys.forEach((k) => indeg.set(k, 0));
-    keys.forEach((k) =>
-      (byKey.get(k)?.requires ?? [])
-        .filter((r) => need.has(r))
-        .forEach((r) => {
-          indeg.set(k, (indeg.get(k) ?? 0) + 1);
-          if (!children.has(r)) children.set(r, []);
-          children.get(r)!.push(k);
-        }),
-    );
     const ready = keys.filter((k) => (indeg.get(k) ?? 0) === 0).sort(cmp);
     const ordered: string[] = [];
     while (ready.length) {
@@ -198,32 +373,55 @@ export function TownPlanner({
       }
     }
     const running = new Map<string, { amount: number; iconId?: string }>();
-    return ordered.map((k) => {
-      const n = byKey.get(k)!;
-      n.cost.forEach((c) => {
+    const addCost = (cost: CostEntry[]) =>
+      cost.forEach((c) => {
         const e = running.get(c.name) ?? { amount: 0, iconId: c.iconId };
         e.amount += c.amount;
         running.set(c.name, e);
       });
-      return {
+    const snap = (): CostEntry[] =>
+      [...running].map(([nm, e]) => ({
+        name: nm,
+        amount: e.amount,
+        iconId: e.iconId,
+      }));
+    const rows: BuildStep[] = [];
+    for (const k of ordered) {
+      const n = byKey.get(k)!;
+      addCost(n.cost);
+      rows.push({
         key: k,
         id: n.id,
         level: n.level,
         name: n.name,
         cost: n.cost,
-        cumulative: [...running].map(([nm, e]) => ({
-          name: nm,
-          amount: e.amount,
-          iconId: e.iconId,
-        })),
-      };
-    });
-  }, [plan, byKey]);
+        cumulative: snap(),
+        isResearch: false,
+      });
+      if (n.level === 1)
+        for (const rid of researchByOwner.get(n.id) ?? []) {
+          if (!selectedResearch.has(rid)) continue;
+          const r = researchById.get(rid);
+          if (!r) continue;
+          addCost(r.cost);
+          rows.push({
+            key: `research-${rid}`,
+            id: n.id,
+            level: 1,
+            name: r.name,
+            cost: r.cost,
+            cumulative: snap(),
+            isResearch: true,
+          });
+        }
+    }
+    return rows;
+  }, [selected, selectedResearch, byKey, researchByOwner, researchById]);
 
-  // Highlight: whole build-order set when planning; else hovered node's
-  // prereq+enable chain, or a troop's training nodes + their prerequisites.
+  // Highlight: the selected build, plus — additively — a hovered node's
+  // prereq+dependent chain or a hovered troop's training chain (for tracing).
   const highlight = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(selected);
     const up = (k: string) => {
       if (set.has(k)) return;
       set.add(k);
@@ -236,26 +434,36 @@ export function TownPlanner({
         down(d);
       }
     };
-    // The plan's full build order, plus — additively — the hovered node's
-    // prereq+enable chain (so you can still inspect connections while planning).
-    if (planActive) buildOrder.forEach((s) => set.add(s.key));
     if (hoverNode) {
       up(hoverNode);
       down(hoverNode);
     }
-    if (activeTroop) troops.find((t) => t.id === activeTroop)?.from.forEach(up);
+    if (hoverTroop)
+      (troops.find((t) => t.id === hoverTroop)?.from ?? []).forEach(up);
     return set;
-  }, [
-    planActive,
-    buildOrder,
-    hoverNode,
-    activeTroop,
-    byKey,
-    troops,
-    dependents,
-  ]);
+  }, [selected, hoverNode, hoverTroop, byKey, dependents, troops]);
 
-  const dimmed = highlight.size > 0;
+  // Dim the rest only while hovering (to focus a trace); a plain selection keeps
+  // the whole tree visible so you can keep adding buildings.
+  const dimmed = !!(hoverNode || hoverTroop);
+
+  const edges = useMemo(() => {
+    const out: {
+      from: string;
+      to: string;
+      upgrade: boolean;
+      active: boolean;
+    }[] = [];
+    for (const n of nodes)
+      for (const req of n.requires)
+        out.push({
+          from: n.key,
+          to: req,
+          upgrade: byKey.get(req)?.id === n.id, // same building = upgrade edge
+          active: highlight.has(n.key) && highlight.has(req),
+        });
+    return out;
+  }, [nodes, byKey, highlight]);
 
   // ─── Connector geometry ────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null);
@@ -299,24 +507,6 @@ export function TownPlanner({
     };
   }, [measure, tiers]);
 
-  const edges = useMemo(() => {
-    const out: {
-      from: string;
-      to: string;
-      upgrade: boolean;
-      active: boolean;
-    }[] = [];
-    for (const n of nodes)
-      for (const req of n.requires)
-        out.push({
-          from: n.key,
-          to: req,
-          upgrade: byKey.get(req)?.id === n.id, // same building = upgrade edge
-          active: highlight.has(n.key) && highlight.has(req),
-        });
-    return out;
-  }, [nodes, byKey, highlight]);
-
   const path = (from: string, to: string) => {
     const a = rects.get(from);
     const b = rects.get(to);
@@ -327,13 +517,6 @@ export function TownPlanner({
       y2 = b.y + b.h;
     const my = (y1 + y2) / 2;
     return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
-  };
-
-  const clear = () => {
-    setPlan(new Set());
-    setPinnedTroop(null);
-    setHoverNode(null);
-    setHoverTroop(null);
   };
 
   const renderCost = (entries: CostEntry[], muted = false) => (
@@ -363,15 +546,15 @@ export function TownPlanner({
   );
 
   return (
-    <div className="relative mt-2 mb-6">
-      <header className="mb-3 flex flex-wrap items-end justify-between gap-3">
+    <div className="relative mt-2 mb-6 flex flex-col">
+      <header className="order-1 mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Town Build{factionLabel ? ` · ${factionLabel}` : ""}
           </div>
           <p className="max-w-2xl text-xs text-muted-foreground/80">
-            Click building levels to plan a build order · hover to trace what
-            each needs &amp; unlocks
+            Pick a troop or click building levels to assemble a build order ·
+            hover to trace what each needs &amp; unlocks
           </p>
         </div>
         {hasSelection && (
@@ -384,181 +567,188 @@ export function TownPlanner({
         )}
       </header>
 
-      <div ref={containerRef} className="relative">
-        <svg
-          className="pointer-events-none absolute inset-0"
-          width={size.w}
-          height={size.h}
-          style={{ overflow: "visible" }}
-        >
-          {mounted &&
-            edges
-              .filter((e) => e.active)
-              .map((e, i) => (
-                <path
-                  key={`a${i}`}
-                  d={path(e.from, e.to)}
-                  fill="none"
-                  stroke={
-                    e.upgrade
-                      ? "rgba(160,205,245,0.9)"
-                      : "rgba(245,200,110,0.95)"
-                  }
-                  strokeWidth={2.5}
-                  strokeDasharray={e.upgrade ? "5 4" : undefined}
-                  style={{
-                    filter: `drop-shadow(0 0 5px ${e.upgrade ? "rgba(160,205,245,0.5)" : "rgba(245,200,110,0.6)"})`,
-                  }}
-                />
-              ))}
-        </svg>
+      <div className="relative order-4 mt-8 border-t border-slate-800 pt-5">
+        <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+          Build Tree — click a building level to add it &amp; its prerequisites;
+          hover to trace
+        </div>
+        <div ref={containerRef} className="relative">
+          <svg
+            className="pointer-events-none absolute inset-0"
+            width={size.w}
+            height={size.h}
+            style={{ overflow: "visible" }}
+          >
+            {mounted &&
+              edges.map((e, i) => {
+                const d = path(e.from, e.to);
+                if (!d) return null;
+                const faded = dimmed && !e.active;
+                // Default: faint slate so the whole tree is visible. Active (the
+                // selected/hovered chain): bright — sky for an upgrade edge,
+                // amber (the functional accent) for a prerequisite edge.
+                const stroke = e.upgrade
+                  ? e.active
+                    ? "rgba(125,211,252,0.9)"
+                    : "rgba(125,211,252,0.4)"
+                  : e.active
+                    ? "rgba(251,191,36,0.9)"
+                    : "rgba(148,163,184,0.45)";
+                return (
+                  <path
+                    key={i}
+                    d={d}
+                    fill="none"
+                    stroke={stroke}
+                    strokeWidth={e.active ? 2.5 : 1.5}
+                    strokeDasharray={e.upgrade ? "5 4" : undefined}
+                    style={{
+                      opacity: faded ? 0.1 : 1,
+                      ...(e.active
+                        ? {
+                            filter: `drop-shadow(0 0 5px ${e.upgrade ? "rgba(125,211,252,0.5)" : "rgba(251,191,36,0.6)"})`,
+                          }
+                        : {}),
+                    }}
+                  />
+                );
+              })}
+          </svg>
 
-        <div className="relative flex flex-col gap-10">
-          {tiers.map((tier, ti) => (
-            <div key={ti} className="relative">
-              <div className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                Tier {toRoman(ti + 1)}
-              </div>
-              <div className="flex flex-wrap gap-4">
-                {tier.map((n) => {
-                  const planned = plan.has(n.key);
-                  const lit = highlight.has(n.key);
-                  const faded = dimmed && !lit;
-                  return (
-                    <div
-                      key={n.key}
-                      ref={(el) => {
-                        if (el) cardRefs.current.set(n.key, el);
-                        else cardRefs.current.delete(n.key);
-                      }}
-                      onMouseEnter={() => setHoverNode(n.key)}
-                      onMouseLeave={() => setHoverNode(null)}
-                      onClick={() => {
-                        setHoverNode(null);
-                        setHoverTroop(null);
-                        setPinnedTroop(null);
-                        setPlan((cur) => {
-                          const next = new Set(cur);
-                          next.has(n.key)
-                            ? next.delete(n.key)
-                            : next.add(n.key);
-                          return next;
-                        });
-                      }}
-                      title={
-                        planned ? "Remove from build plan" : "Add to build plan"
-                      }
-                      className={`group relative w-[176px] cursor-pointer rounded-md border p-3 transition-all duration-200 ${
-                        planned
-                          ? "border-amber-400/90 bg-amber-950/40"
-                          : lit
-                            ? "border-amber-600/60 bg-[#15171d]"
-                            : "border-slate-700/60 bg-[#13151a]"
-                      }`}
-                      style={{
-                        opacity: faded ? 0.32 : 1,
-                        boxShadow: planned
-                          ? "0 0 0 1px rgba(245,200,110,0.45), 0 8px 26px rgba(0,0,0,0.5)"
-                          : "0 6px 18px rgba(0,0,0,0.4)",
-                      }}
-                    >
-                      {planned && (
-                        <span className="absolute -right-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-amber-400/80 bg-amber-500 text-[11px] font-bold text-black">
-                          ✓
-                        </span>
-                      )}
-                      <Corner className="left-1 top-1" />
-                      <Corner className="right-1 top-1 rotate-90" />
-                      <Corner className="left-1 bottom-1 -rotate-90" />
-                      <Corner className="right-1 bottom-1 rotate-180" />
+          <div className="relative flex flex-col gap-10">
+            {tiers.map((tier, ti) => (
+              <div key={ti} className="relative">
+                <div className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Tier {toRoman(ti + 1)}
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  {tier.map((n) => {
+                    const isSelected = selected.has(n.key);
+                    const lit = highlight.has(n.key);
+                    const faded = dimmed && !lit;
+                    return (
+                      <div
+                        key={n.key}
+                        ref={(el) => {
+                          if (el) cardRefs.current.set(n.key, el);
+                          else cardRefs.current.delete(n.key);
+                        }}
+                        onMouseEnter={() => setHoverNode(n.key)}
+                        onMouseLeave={() => setHoverNode(null)}
+                        onClick={() => toggleNode(n.key)}
+                        title={
+                          isSelected
+                            ? "Remove from build order"
+                            : "Add to build order"
+                        }
+                        className={`group relative w-[176px] cursor-pointer rounded-md border p-3 transition-all duration-200 ${
+                          isSelected
+                            ? "border-amber-400/90 bg-amber-950/40"
+                            : lit
+                              ? "border-amber-600/60 bg-[#15171d]"
+                              : "border-slate-700/60 bg-[#13151a]"
+                        }`}
+                        style={{
+                          opacity: faded ? 0.32 : 1,
+                          boxShadow: isSelected
+                            ? "0 0 0 1px rgba(245,200,110,0.45), 0 8px 26px rgba(0,0,0,0.5)"
+                            : "0 6px 18px rgba(0,0,0,0.4)",
+                        }}
+                      >
+                        {isSelected && (
+                          <span className="absolute -right-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-amber-400/80 bg-amber-500 text-[11px] font-bold text-black">
+                            ✓
+                          </span>
+                        )}
+                        <Corner className="left-1 top-1" />
+                        <Corner className="right-1 top-1 rotate-90" />
+                        <Corner className="left-1 bottom-1 -rotate-90" />
+                        <Corner className="right-1 bottom-1 rotate-180" />
 
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/40">
-                          {icons?.[n.id] ? (
-                            <SpriteIcon
-                              icon={icons[n.id]}
-                              appName={appName}
-                              size={40}
-                              iconsHash={iconsHash}
-                            />
-                          ) : (
-                            <span className="text-slate-600 text-lg">⌂</span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate text-[13px] font-bold tracking-wide text-slate-100">
-                              {n.name}
-                            </span>
-                            <span
-                              className={`shrink-0 rounded-sm border px-1 text-[9px] font-semibold leading-tight ${
-                                n.level > 1
-                                  ? "border-sky-600/50 bg-sky-950/40 text-sky-300/90"
-                                  : "border-slate-700/50 bg-black/40 text-slate-400"
-                              }`}
-                            >
-                              Lv {n.level}
-                            </span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/40">
+                            {icons?.[n.id] ? (
+                              <SpriteIcon
+                                icon={icons[n.id]}
+                                appName={appName}
+                                size={40}
+                                iconsHash={iconsHash}
+                              />
+                            ) : (
+                              <span className="text-slate-600 text-lg">⌂</span>
+                            )}
                           </div>
-                          {n.cost.length > 0 && (
-                            <div className="mt-1">{renderCost(n.cost)}</div>
-                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate text-[13px] font-bold tracking-wide text-slate-100">
+                                {n.name}
+                              </span>
+                              <span
+                                className={`shrink-0 rounded-sm border px-1 text-[9px] font-semibold leading-tight ${
+                                  n.level > 1
+                                    ? "border-sky-600/50 bg-sky-950/40 text-sky-300/90"
+                                    : "border-slate-700/50 bg-black/40 text-slate-400"
+                                }`}
+                              >
+                                Lv {n.level}
+                              </span>
+                            </div>
+                            {n.cost.length > 0 && (
+                              <div className="mt-1">{renderCost(n.cost)}</div>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {n.recruits.length > 0 && (
-                        <div className="mt-2.5 flex flex-wrap gap-1 border-t border-slate-800 pt-2">
-                          {n.recruits.map((r) => (
-                            <span
-                              key={r.id}
-                              className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[9.5px] tracking-wide transition-colors ${
-                                activeTroop === r.id
-                                  ? "bg-amber-400/25 text-amber-100"
-                                  : "bg-black/40 text-slate-300/90"
-                              }`}
-                            >
-                              {icons?.[r.id] && (
-                                <SpriteIcon
-                                  icon={icons[r.id]}
-                                  appName={appName}
-                                  size={14}
-                                  iconsHash={iconsHash}
-                                />
-                              )}
-                              {r.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {n.recruits.length > 0 && (
+                          <div className="mt-2.5 flex flex-wrap gap-1 border-t border-slate-800 pt-2">
+                            {n.recruits.map((r) => (
+                              <span
+                                key={r.id}
+                                className={`inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[9.5px] tracking-wide transition-colors ${
+                                  availableTroops.has(r.id)
+                                    ? "bg-amber-400/25 text-amber-100"
+                                    : "bg-black/40 text-slate-300/90"
+                                }`}
+                              >
+                                {icons?.[r.id] && (
+                                  <SpriteIcon
+                                    icon={icons[r.id]}
+                                    appName={appName}
+                                    size={14}
+                                    iconsHash={iconsHash}
+                                  />
+                                )}
+                                {r.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Muster roll ── */}
+      {/* ── Available troops ── */}
       {troops.length > 0 && (
-        <div className="relative mt-8 border-t border-slate-800 pt-5">
+        <div className="relative order-2 mt-5 border-t border-slate-800 pt-5">
           <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Muster Roll — hover a troop to trace where it's trained
+            Available Troops — click to add what trains it to the build order,
+            hover to trace
           </div>
           <div className="flex flex-wrap gap-2">
             {troops.map((tr) => {
-              const on = activeTroop === tr.id;
+              const on = availableTroops.has(tr.id);
               return (
                 <button
                   key={tr.id}
                   onMouseEnter={() => setHoverTroop(tr.id)}
                   onMouseLeave={() => setHoverTroop(null)}
-                  onClick={() => {
-                    setHoverNode(null);
-                    setHoverTroop(null);
-                    setPlan(new Set());
-                    setPinnedTroop((cur) => (cur === tr.id ? null : tr.id));
-                  }}
+                  onClick={() => toggleTroop(tr.id)}
                   className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] tracking-wide transition-all ${
                     on
                       ? "border-amber-400/70 bg-amber-950/50 text-amber-100"
@@ -583,7 +773,7 @@ export function TownPlanner({
 
       {/* ── Build Order ── */}
       {buildOrder.length > 0 && (
-        <div className="relative mt-8 border-t border-slate-800 pt-5">
+        <div className="relative order-3 mt-5 border-t border-slate-800 pt-5">
           <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
             Build Order — {buildOrder.length} step
             {buildOrder.length > 1 ? "s" : ""}
@@ -608,7 +798,7 @@ export function TownPlanner({
                     </td>
                     <td className="px-3 py-1.5">
                       <span className="inline-flex items-center gap-1.5">
-                        {icons?.[s.id] && (
+                        {!s.isResearch && icons?.[s.id] && (
                           <SpriteIcon
                             icon={icons[s.id]}
                             appName={appName}
@@ -616,15 +806,21 @@ export function TownPlanner({
                             iconsHash={iconsHash}
                           />
                         )}
-                        <span className="text-slate-100">
-                          {s.name}
-                          {s.level > 1 && (
-                            <span className="text-sky-300/80">
-                              {" "}
-                              · Lv {s.level}
-                            </span>
-                          )}
-                        </span>
+                        {s.isResearch ? (
+                          <span className="italic text-muted-foreground">
+                            ↳ {s.name}
+                          </span>
+                        ) : (
+                          <span className="text-slate-100">
+                            {s.name}
+                            {s.level > 1 && (
+                              <span className="text-sky-300/80">
+                                {" "}
+                                · Lv {s.level}
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className="px-3 py-1.5">{renderCost(s.cost)}</td>
@@ -646,7 +842,7 @@ function toRoman(n: number): string {
   return ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"][n - 1] ?? String(n);
 }
 
-/** Small L-shaped gilded corner flourish. */
+/** Small L-shaped corner flourish on each building card. */
 function Corner({ className = "" }: { className?: string }) {
   return (
     <span
