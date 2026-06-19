@@ -1,5 +1,30 @@
 import { createDwellTracker } from "./dwell-tracker";
 
+describe("createDwellTracker first position", () => {
+  it("returns the position at which an actor was first seen, not later ones", () => {
+    const t = createDwellTracker({ dwellMs: 5000, graceMs: 1500 });
+    t.observe([{ address: 1, x: 100, y: 200, z: 0 }], 0);
+    // Same actor reported at a drifted position later (a wandering bug).
+    t.observe([{ address: 1, x: 999, y: 888, z: 7 }], 1000);
+    expect(t.getFirstPosition(1)).toEqual({ x: 100, y: 200, z: 0 });
+  });
+
+  it("returns undefined for an unknown address or when no position was given", () => {
+    const t = createDwellTracker();
+    expect(t.getFirstPosition(42)).toBeUndefined();
+    t.observe([{ address: 1 }], 0); // no coords
+    expect(t.getFirstPosition(1)).toBeUndefined();
+  });
+
+  it("re-anchors the first position when the actor resets past the grace window", () => {
+    const t = createDwellTracker({ dwellMs: 5000, graceMs: 1500 });
+    t.observe([{ address: 1, x: 100, y: 100, z: 0 }], 0);
+    // Gone for >grace, reappears elsewhere: anchor moves to the new position.
+    t.observe([{ address: 1, x: 500, y: 500, z: 0 }], 3000);
+    expect(t.getFirstPosition(1)).toEqual({ x: 500, y: 500, z: 0 });
+  });
+});
+
 describe("createDwellTracker", () => {
   it("is not stable before the dwell threshold elapses", () => {
     const t = createDwellTracker({ dwellMs: 5000, graceMs: 1500 });

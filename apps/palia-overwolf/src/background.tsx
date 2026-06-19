@@ -143,7 +143,13 @@ function sendActorsToAPI(actors: Actor[]): void {
     return;
   }
 
-  const staticActors = newActors.map(({ address, path, ...actor }) => actor);
+  // Report the FIRST position we saw this actor at (anchored when dwell
+  // tracking began), not its drifted live position — so a moving bug's
+  // sightings concentrate near its spawn for server-side consensus.
+  const staticActors = newActors.map(({ address, path, ...actor }) => {
+    const firstPos = dwellTracker.getFirstPosition(address);
+    return firstPos ? { ...actor, ...firstPos } : actor;
+  });
 
   fetch("https://palia-api.th.gl/nodes", {
     method: "POST",
