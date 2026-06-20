@@ -108,7 +108,8 @@ export function DetailSidebarClient({
                       height={item.icon.height}
                       style={{
                         objectPosition: `-${item.icon.x}px -${item.icon.y}px`,
-                        zoom: 20 / 64,
+                        // scale by the cell's own width (SoC uses 128px cells)
+                        zoom: 20 / (item.icon.width || 64),
                       }}
                     />
                   )}
