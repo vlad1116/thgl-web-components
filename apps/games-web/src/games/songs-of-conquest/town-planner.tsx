@@ -21,6 +21,16 @@ type Recruit = {
   tier?: number; // unit variant level (1 vanilla / 2 upgraded / 3 super)
   iconId?: string; // the variant's OWN icon (upgrades look different)
   essence?: Essence[]; // essence affinity ("mana bubbles")
+  symbiosis?: string[]; // Roots: essence keys granted to nearby allies
+};
+
+// In-game essence colours (matches the dots shown on units in SoC).
+const ESSENCE_COLOR: Record<string, string> = {
+  order: "#3d4fd6",
+  chaos: "#cd3cd9",
+  destruction: "#d74034",
+  creation: "#f2df33",
+  arcana: "#00c6b2",
 };
 type Level = {
   level: number;
@@ -53,6 +63,7 @@ type Node = {
     tier: number;
     iconId: string;
     essence?: Essence[];
+    symbiosis?: string[];
   }[];
   requires: string[]; // prerequisite node keys
 };
@@ -111,6 +122,7 @@ export function TownPlanner({
             tier: r.tier ?? 1,
             iconId: r.iconId ?? r.id,
             essence: r.essence,
+            symbiosis: r.symbiosis,
           })),
           requires: [
             ...(lvl.level > 1 ? [`${b.id}/${lvl.level - 1}`] : []),
@@ -297,6 +309,7 @@ export function TownPlanner({
         tier: number;
         iconId: string;
         essence?: Essence[];
+        symbiosis?: string[];
         from: string[];
       }
     >();
@@ -310,6 +323,7 @@ export function TownPlanner({
           tier: u.tier,
           iconId: u.iconId,
           essence: u.essence,
+          symbiosis: u.symbiosis,
           from: [],
         };
         e.from.push(n.key);
@@ -911,29 +925,40 @@ export function TownPlanner({
                             {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
                           </span>
                         </span>
-                        {tr.essence && tr.essence.length > 0 && (
+                        {((tr.essence && tr.essence.length > 0) ||
+                          (tr.symbiosis && tr.symbiosis.length > 0)) && (
                           <span className="flex flex-wrap items-center gap-1">
-                            {tr.essence.map((es) => {
-                              const eic = icons?.[es.iconId];
-                              if (!eic) return null;
-                              return (
-                                <span
-                                  key={es.key}
-                                  className="inline-flex items-center gap-0.5"
-                                  title={`${essenceLabel(es.key)} Essence ×${es.amount}`}
-                                >
-                                  {Array.from({ length: es.amount }, (_, i) => (
-                                    <SpriteIcon
-                                      key={i}
-                                      icon={eic}
-                                      appName={appName}
-                                      size={12}
-                                      iconsHash={iconsHash}
-                                    />
-                                  ))}
-                                </span>
-                              );
-                            })}
+                            {/* essence affinity — filled coloured circles (one per
+                                point), matching the in-game mana dots */}
+                            {tr.essence?.map((es) => (
+                              <span
+                                key={es.key}
+                                className="inline-flex items-center gap-0.5"
+                                title={`${essenceLabel(es.key)} Essence ×${es.amount}`}
+                              >
+                                {Array.from({ length: es.amount }, (_, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-block h-2.5 w-2.5 rounded-full"
+                                    style={{
+                                      backgroundColor:
+                                        ESSENCE_COLOR[es.key] ?? "#888",
+                                    }}
+                                  />
+                                ))}
+                              </span>
+                            ))}
+                            {/* Roots Symbiosis — hollow circles (granted to allies) */}
+                            {tr.symbiosis?.map((key) => (
+                              <span
+                                key={`sym-${key}`}
+                                className="inline-block h-2.5 w-2.5 rounded-full border-2"
+                                style={{
+                                  borderColor: ESSENCE_COLOR[key] ?? "#888",
+                                }}
+                                title={`Symbiosis: grants ${essenceLabel(key)} Essence to nearby allies`}
+                              />
+                            ))}
                           </span>
                         )}
                       </span>
