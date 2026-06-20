@@ -12,12 +12,15 @@ type IconSprite = {
   height: number;
 };
 type CostEntry = { amount: number; name: string; iconId?: string };
+type Essence = { key: string; amount: number; iconId: string };
 type Recruit = {
   id: string;
   name: string;
   research?: number[];
   order?: number; // canonical roster order (for sorting pills)
   tier?: number; // unit variant level (1 vanilla / 2 upgraded / 3 super)
+  iconId?: string; // the variant's OWN icon (upgrades look different)
+  essence?: Essence[]; // essence affinity ("mana bubbles")
 };
 type Level = {
   level: number;
@@ -48,6 +51,8 @@ type Node = {
     research: number[];
     order: number;
     tier: number;
+    iconId: string;
+    essence?: Essence[];
   }[];
   requires: string[]; // prerequisite node keys
 };
@@ -104,6 +109,8 @@ export function TownPlanner({
             research: r.research ?? [],
             order: r.order ?? 999,
             tier: r.tier ?? 1,
+            iconId: r.iconId ?? r.id,
+            essence: r.essence,
           })),
           requires: [
             ...(lvl.level > 1 ? [`${b.id}/${lvl.level - 1}`] : []),
@@ -288,6 +295,8 @@ export function TownPlanner({
         research: number[];
         order: number;
         tier: number;
+        iconId: string;
+        essence?: Essence[];
         from: string[];
       }
     >();
@@ -299,6 +308,8 @@ export function TownPlanner({
           research: u.research,
           order: u.order,
           tier: u.tier,
+          iconId: u.iconId,
+          essence: u.essence,
           from: [],
         };
         e.from.push(n.key);
@@ -855,39 +866,76 @@ export function TownPlanner({
           </div>
           <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
             {troopFamilies.map((fam) => (
-              <div key={fam[0].order} className="flex w-[136px] flex-col gap-1">
+              <div
+                key={fam[0].order}
+                className="flex w-[150px] flex-col gap-1.5"
+              >
                 {fam.map((tr) => {
                   const on = availableTroops.has(tr.id);
+                  const ic = icons?.[tr.iconId] ?? icons?.[tr.id];
                   return (
                     <button
                       key={tr.id}
                       onMouseEnter={() => setHoverTroop(tr.id)}
                       onMouseLeave={() => setHoverTroop(null)}
                       onClick={() => toggleTroop(tr.id)}
-                      className={`flex items-center gap-1.5 rounded border px-2 py-1 text-left text-[11px] tracking-wide transition-all ${
+                      className={`flex items-center gap-2 rounded border px-2 py-1.5 text-left transition-all ${
                         on
                           ? "border-amber-400/70 bg-amber-950/50 text-amber-100"
                           : "border-slate-700/60 bg-[#13151a] text-slate-300 hover:border-amber-700/50"
                       }`}
                     >
-                      {icons?.[tr.id] && (
-                        <SpriteIcon
-                          icon={icons[tr.id]}
-                          appName={appName}
-                          size={18}
-                          iconsHash={iconsHash}
-                        />
+                      {ic && (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-slate-700/50 bg-black/30">
+                          <SpriteIcon
+                            icon={ic}
+                            appName={appName}
+                            size={32}
+                            iconsHash={iconsHash}
+                          />
+                        </span>
                       )}
-                      <span className="min-w-0 flex-1 truncate">{tr.name}</span>
-                      <span
-                        className={`shrink-0 rounded-sm px-1 text-[8px] font-bold leading-tight ${
-                          on
-                            ? "bg-amber-400/30 text-amber-100"
-                            : "bg-black/40 text-slate-400"
-                        }`}
-                        title={`Level ${tr.tier} unit`}
-                      >
-                        {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="flex items-center gap-1">
+                          <span className="min-w-0 flex-1 truncate text-[12px] font-medium tracking-wide">
+                            {tr.name}
+                          </span>
+                          <span
+                            className={`shrink-0 rounded-sm px-1 text-[8px] font-bold leading-tight ${
+                              on
+                                ? "bg-amber-400/30 text-amber-100"
+                                : "bg-black/40 text-slate-400"
+                            }`}
+                            title={`Level ${tr.tier} unit`}
+                          >
+                            {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
+                          </span>
+                        </span>
+                        {tr.essence && tr.essence.length > 0 && (
+                          <span className="flex flex-wrap items-center gap-1">
+                            {tr.essence.map((es) => {
+                              const eic = icons?.[es.iconId];
+                              if (!eic) return null;
+                              return (
+                                <span
+                                  key={es.key}
+                                  className="inline-flex items-center gap-0.5"
+                                  title={`${essenceLabel(es.key)} Essence ×${es.amount}`}
+                                >
+                                  {Array.from({ length: es.amount }, (_, i) => (
+                                    <SpriteIcon
+                                      key={i}
+                                      icon={eic}
+                                      appName={appName}
+                                      size={12}
+                                      iconsHash={iconsHash}
+                                    />
+                                  ))}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        )}
                       </span>
                     </button>
                   );
@@ -1018,9 +1066,9 @@ export function TownPlanner({
                               : "bg-black/40 text-slate-300/90"
                           }`}
                         >
-                          {icons?.[rc.id] && (
+                          {(icons?.[rc.iconId] ?? icons?.[rc.id]) && (
                             <SpriteIcon
-                              icon={icons[rc.id]}
+                              icon={(icons?.[rc.iconId] ?? icons?.[rc.id])!}
                               appName={appName}
                               size={14}
                               iconsHash={iconsHash}
@@ -1041,4 +1089,9 @@ export function TownPlanner({
         })()}
     </div>
   );
+}
+
+/** Capitalize an essence key (order → Order) for the bubble tooltip. */
+function essenceLabel(key: string): string {
+  return key ? key[0].toUpperCase() + key.slice(1) : key;
 }
