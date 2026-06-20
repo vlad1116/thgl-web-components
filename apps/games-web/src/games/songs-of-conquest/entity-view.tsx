@@ -85,6 +85,7 @@ export function SocEntityView(props: {
     | { pools: SkillPool[] }
     | undefined;
   const research = props.props?._research as ResearchItem[] | undefined;
+  const dlc = props.props?._dlc as string | undefined;
 
   return (
     <>
@@ -92,6 +93,7 @@ export function SocEntityView(props: {
         {...props}
         statIcons={SOC_STAT_ICONS}
         monoDetails={false}
+        badges={dlc ? [{ label: "DLC", title: dlc }] : undefined}
       />
       {unit && unit.variants.length > 0 && (
         <UnitView

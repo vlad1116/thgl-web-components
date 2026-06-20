@@ -109,11 +109,15 @@ export function GenericEntityView({
   tiles,
   statIcons,
   monoDetails = true,
+  badges,
 }: {
   id: string;
   name: string;
   desc?: string;
   groupLabel?: string;
+  /** Extra header badges next to the group label (e.g. a "DLC" tag). Generic —
+   *  the caller decides what to show. */
+  badges?: { label: string; title?: string }[];
   icon?: IconSprite;
   props?: Record<string, unknown>;
   iconsHash?: string;
@@ -238,6 +242,15 @@ export function GenericEntityView({
                 {groupLabel}
               </span>
             )}
+            {badges?.map((b) => (
+              <span
+                key={b.label}
+                title={b.title}
+                className="px-2 py-0.5 rounded border border-amber-600/50 bg-amber-950/40 font-semibold text-amber-300"
+              >
+                {b.label}
+              </span>
+            ))}
           </div>
         </div>
       </div>

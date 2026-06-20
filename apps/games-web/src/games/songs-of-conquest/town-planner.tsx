@@ -311,6 +311,19 @@ export function TownPlanner({
     );
   }, [nodes]);
 
+  // Group troops into unit families (same `order` = base + its upgrades), so the
+  // Available Troops list can stack each family's ranks vertically (Lv 1 on top)
+  // like the in-game roster, families left→right in canonical order.
+  const troopFamilies = useMemo(() => {
+    const fams: (typeof troops)[] = [];
+    for (const tr of troops) {
+      const last = fams[fams.length - 1];
+      if (last && last[0].order === tr.order) last.push(tr);
+      else fams.push([tr]);
+    }
+    return fams;
+  }, [troops]);
+
   // troop id → the building LEVEL node that trains it + its gating research.
   const unitProducer = useMemo(() => {
     const m = new Map<string, { key: string; research: number[] }>();
@@ -837,46 +850,50 @@ export function TownPlanner({
       {troops.length > 0 && (
         <div className="relative order-2 mt-5 border-t border-slate-800 pt-5">
           <div className="mb-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Available Troops — click to add what trains it to the build order,
-            hover to trace
+            Available Troops — each unit&apos;s ranks stacked; click to add what
+            trains it to the build order, hover to trace
           </div>
-          <div className="flex flex-wrap gap-2">
-            {troops.map((tr) => {
-              const on = availableTroops.has(tr.id);
-              return (
-                <button
-                  key={tr.id}
-                  onMouseEnter={() => setHoverTroop(tr.id)}
-                  onMouseLeave={() => setHoverTroop(null)}
-                  onClick={() => toggleTroop(tr.id)}
-                  className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] tracking-wide transition-all ${
-                    on
-                      ? "border-amber-400/70 bg-amber-950/50 text-amber-100"
-                      : "border-slate-700/60 bg-[#13151a] text-slate-300 hover:border-amber-700/50"
-                  }`}
-                >
-                  {icons?.[tr.id] && (
-                    <SpriteIcon
-                      icon={icons[tr.id]}
-                      appName={appName}
-                      size={18}
-                      iconsHash={iconsHash}
-                    />
-                  )}
-                  {tr.name}
-                  <span
-                    className={`rounded-sm px-1 text-[8px] font-bold leading-tight ${
-                      on
-                        ? "bg-amber-400/30 text-amber-100"
-                        : "bg-black/40 text-slate-400"
-                    }`}
-                    title={`Level ${tr.tier} unit`}
-                  >
-                    {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
+            {troopFamilies.map((fam) => (
+              <div key={fam[0].order} className="flex w-[136px] flex-col gap-1">
+                {fam.map((tr) => {
+                  const on = availableTroops.has(tr.id);
+                  return (
+                    <button
+                      key={tr.id}
+                      onMouseEnter={() => setHoverTroop(tr.id)}
+                      onMouseLeave={() => setHoverTroop(null)}
+                      onClick={() => toggleTroop(tr.id)}
+                      className={`flex items-center gap-1.5 rounded border px-2 py-1 text-left text-[11px] tracking-wide transition-all ${
+                        on
+                          ? "border-amber-400/70 bg-amber-950/50 text-amber-100"
+                          : "border-slate-700/60 bg-[#13151a] text-slate-300 hover:border-amber-700/50"
+                      }`}
+                    >
+                      {icons?.[tr.id] && (
+                        <SpriteIcon
+                          icon={icons[tr.id]}
+                          appName={appName}
+                          size={18}
+                          iconsHash={iconsHash}
+                        />
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{tr.name}</span>
+                      <span
+                        className={`shrink-0 rounded-sm px-1 text-[8px] font-bold leading-tight ${
+                          on
+                            ? "bg-amber-400/30 text-amber-100"
+                            : "bg-black/40 text-slate-400"
+                        }`}
+                        title={`Level ${tr.tier} unit`}
+                      >
+                        {["I", "II", "III"][tr.tier - 1] ?? tr.tier}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
       )}
