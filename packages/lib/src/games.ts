@@ -815,12 +815,6 @@ export const games: Array<Game> = [
     title: "Songs of Conquest",
     logo: "https://www.th.gl/global_icons/songs-of-conquest.webp",
     web: "https://soc.th.gl",
-    overwolf: {
-      id: "jjeemjmkdjlmookbecggoebemjieoihjhhkfmmbl",
-      title: "Songs of Conquest",
-      protocol: "thgl-soc",
-      url: "https://www.overwolf.com/app/Leon_Machens-SoC.gg",
-    },
     patreonTierIDs: DEFAULT_PATREON_TIER_IDS,
   },
   {
