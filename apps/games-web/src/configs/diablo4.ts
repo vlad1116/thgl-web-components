@@ -5,6 +5,7 @@ const preview = (mapId: string) =>
 
 export const diablo4 = resolveAppConfig({
   name: "diablo4",
+  appUrl: "https://arpg-life.ru/d4-map",
   supportedLocales: ["en", "ru"],
   withoutLiveMode: true,
   internalLinks: [
