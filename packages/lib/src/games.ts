@@ -812,12 +812,12 @@ export const games: Array<Game> = [
   {
     id: "songs-of-conquest",
     discordId: "songs-of-conquest",
-    title: "Songs Of Conquest",
+    title: "Songs of Conquest",
     logo: "https://www.th.gl/global_icons/songs-of-conquest.webp",
     web: "https://soc.th.gl",
     overwolf: {
       id: "jjeemjmkdjlmookbecggoebemjieoihjhhkfmmbl",
-      title: "Songs Of Conquest",
+      title: "Songs of Conquest",
       protocol: "thgl-soc",
       url: "https://www.overwolf.com/app/Leon_Machens-SoC.gg",
     },
