@@ -933,9 +933,6 @@ export function getCurrentGameId(): string | null {
     return games.find((g) => g.overwolf?.id === ext)?.id ?? null;
   }
   let sub = window.location.hostname.split(".")[0];
-  // Staging subdomain (<game>-staging.th.gl) maps to the same game as
-  // <game>.th.gl, so game-scoped state keys to the real id, not "<game>-staging".
-  if (sub.endsWith("-staging")) sub = sub.slice(0, -"-staging".length);
   if (!sub || ["www", "app", "localhost", "127", "0"].includes(sub))
     return null;
   // Map the tenant subdomain back to the canonical id; fall back to the raw
