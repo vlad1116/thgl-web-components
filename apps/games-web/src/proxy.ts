@@ -233,6 +233,11 @@ export function proxy(req: NextRequest) {
   // Unlike once-human these need slug transformation (lowercase + join with _),
   // so they can't be plain next.config redirects.
   if (config.name === "songs-of-conquest") {
+    // Legacy /privacy (+ /<locale>/privacy) → the canonical THGL privacy policy
+    // on www (the standalone site's own privacy page isn't carried over).
+    if (/^(\/[a-z-]+)?\/privacy\/?$/.test(path)) {
+      return NextResponse.redirect("https://www.th.gl/privacy-policy", 308);
+    }
     const dest = socLegacyRedirect(path, config.supportedLocales);
     if (dest && dest !== path) {
       url.pathname = dest;
@@ -255,8 +260,8 @@ export function proxy(req: NextRequest) {
  *   /buildings/Arleon/Farm      → /db/building/arleon_farm
  *   /random-events/Generic/Foo  → /db/random-event/generic_foo
  *   /wielders                   → /db/wielder        (section index)
- *   /towns/Arleon               → /db/faction/arleon (town builds live on the
- *                                 faction page until the planner is ported)
+ *   /towns/Arleon               → /db/town/arleon    (interactive build planner)
+ *   /savegames                  → /db/savegame
  *   /de/units/Arleon/Ranger     → /de/db/unit/arleon_ranger (locale preserved)
  */
 const SOC_SECTION_MAP: Record<string, string> = {
