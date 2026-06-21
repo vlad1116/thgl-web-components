@@ -5,22 +5,26 @@ const preview = (mapId: string) =>
 
 export const diablo4 = resolveAppConfig({
   name: "diablo4",
-  supportedLocales: ["en"],
-  appUrl: "https://www.overwolf.com/app/Leon_Machens-Diablo_4_Map",
+  supportedLocales: ["en", "ru"],
   withoutLiveMode: true,
   internalLinks: [
     {
-      title: "Diablo IV Map",
+      title: "Карта Diablo IV",
       description:
-        "Explore Diablo 4 Interactive Maps with real-time position tracking. Find Altars of Lilith, dungeons, bosses, events, and more.",
+        "Интерактивная карта Diablo IV с отмеченными локациями: алтари, подземелья, точки телепорта и многое другое.",
       href: "/maps/Sanctuary",
       iconName: "Map",
-      linkText: "Explore the Map",
+      linkText: "Открыть карту",
       bgImage: preview("Sanctuary"),
     },
   ],
   externalLinks: [],
-  keywords: ["Dungeons", "World Events", "Strongholds", "Nightmare Dungeons"],
+  keywords: [
+    "Подземелья",
+    "Алтари Лилит",
+    "Точки телепорта",
+    "Интерактивная карта",
+  ],
   topFilters: [
     "altarsOfLilith",
     "tenetOfAkarat",

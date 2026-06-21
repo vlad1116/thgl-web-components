@@ -1,69 +1,11 @@
 import { type AppConfig, isDevForgeHost } from "@repo/lib";
-import { avowed } from "./avowed";
-import { blueProtocolStarResonance } from "./blue-protocol-star-resonance";
-import { chronoOdyssey } from "./chrono-odyssey";
-import { conanExiles } from "./conan-exiles";
-import { crimsonDesert } from "./crimson-desert";
 import { diablo4 } from "./diablo4";
-import { drakantos } from "./drakantos";
-import { duetNightAbyss } from "./duet-night-abyss";
-import { duneAwakening } from "./dune-awakening";
-import { gothic1Remake } from "./gothic-1-remake";
-import { grounded2 } from "./grounded2";
-import { hogwartsLegacy } from "./hogwarts-legacy";
-import { hommOldenEra } from "./homm-olden-era";
-import { infinityNikki } from "./infinity-nikki";
-import { nightCrows } from "./night-crows";
-import { onceHuman } from "./once-human";
-import { palia } from "./palia";
-import { palworld } from "./palworld";
-import { paxDei } from "./pax-dei";
-import { rsdragonwilds } from "./rsdragonwilds";
-import { satisfactory } from "./satisfactory";
-import { songsOfConquest } from "./songs-of-conquest";
-import { soulframe } from "./soulframe";
-import { soulmask } from "./soulmask";
-import { starsandIsland } from "./starsand-island";
-import { subnautica2 } from "./subnautica-2";
-import { thglApp } from "./thgl-app";
-import { thglWeb } from "./thgl-web";
-import { wutheringWaves } from "./wuthering-waves";
 
 /**
  * All app configs that this multi-tenant deployment serves.
  * Add a new game by importing its config and adding it to this array.
  */
-const ALL_CONFIGS: AppConfig[] = [
-  avowed,
-  blueProtocolStarResonance,
-  chronoOdyssey,
-  conanExiles,
-  crimsonDesert,
-  diablo4,
-  drakantos,
-  duetNightAbyss,
-  duneAwakening,
-  gothic1Remake,
-  grounded2,
-  hogwartsLegacy,
-  hommOldenEra,
-  infinityNikki,
-  nightCrows,
-  onceHuman,
-  palia,
-  palworld,
-  paxDei,
-  rsdragonwilds,
-  satisfactory,
-  songsOfConquest,
-  soulframe,
-  soulmask,
-  starsandIsland,
-  subnautica2,
-  thglApp,
-  thglWeb,
-  wutheringWaves,
-];
+const ALL_CONFIGS: AppConfig[] = [diablo4];
 
 /**
  * Registry keyed by hostname subdomain (AppConfig.domain). This is what
