@@ -63,7 +63,7 @@ export function createRootLayout(appConfig: AppConfig) {
     const [staticDict, fullDict, version] = await Promise.all([
       getStaticDictionary(appConfig.name, locale),
       getFullDictionary(appConfig.name, locale),
-      fetchVersion(appConfig.name),
+      fetchVersion(appConfig.name).catch(() => null),
     ]);
 
     const dict: Record<string, string> = { ...staticDict };
@@ -76,9 +76,11 @@ export function createRootLayout(appConfig: AppConfig) {
       dict[key] = value;
       if (value[0] === "@" && fullDict[value]) dict[value] = fullDict[value];
     };
-    for (const group of version.data.filters) {
-      addName(group.group);
-      for (const value of group.values) addName(value.id);
+    if (version) {
+      for (const group of version.data.filters) {
+        addName(group.group);
+        for (const value of group.values) addName(value.id);
+      }
     }
 
     return (
@@ -95,7 +97,7 @@ export function createRootLayout(appConfig: AppConfig) {
               settingsDialogContent={
                 <SettingsDialogContent
                   activeApp={appConfig.name}
-                  filters={version.data.filters}
+                  filters={version?.data.filters ?? []}
                 />
               }
               settingsTitle={dict["settings"]}
@@ -109,7 +111,11 @@ export function createRootLayout(appConfig: AppConfig) {
 
               <Links
                 appConfig={appConfig}
-                hasMap={Object.keys(version.data.tiles ?? {}).length > 0}
+                hasMap={
+                  version
+                    ? Object.keys(version.data.tiles ?? {}).length > 0
+                    : true
+                }
               >
                 {appConfig.supportedLocales.length > 1 && (
                   <Suspense>
