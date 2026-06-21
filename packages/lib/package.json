@@ -34,7 +34,7 @@
     }
   },
   "scripts": {
-    "build": "tsup --format esm",
+    "build": "node ../../scripts/guard-no-dev-server.mjs && tsup --format esm",
     "clean": "rimraf dist node_modules",
     "dev": "tsup --format esm --watch --dts",
     "lint": "eslint src/",

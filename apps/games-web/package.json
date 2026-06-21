@@ -13,7 +13,7 @@
     "ios_saf >= 15"
   ],
   "scripts": {
-    "build": "next build",
+    "build": "node ../../scripts/guard-no-dev-server.mjs && next build",
     "clean": "rimraf .next node_modules",
     "dev": "next dev -p 3100",
     "lint": "eslint src/",
